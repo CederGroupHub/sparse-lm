@@ -7,7 +7,7 @@ import warnings
 import math
 from cvxopt import matrix, spdiag, mul, div, sqrt
 from cvxopt import blas, lapack, solvers
-from smol.learn.base import BaseEstimator
+from .base import BaseEstimator
 
 
 class WDRLasso(BaseEstimator):
