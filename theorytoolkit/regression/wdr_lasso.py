@@ -16,7 +16,7 @@ class WDRLasso(Estimator):
     by WD Richards.
     """
 
-    def __init__(self, fit_intercept=True, normalize=False, copy_X=True):
+    def __init__(self, fit_intercept=False, normalize=False, copy_X=True):
         super().__init__(fit_intercept, normalize, copy_X)
         self.mus = None
         self.cvs = None
@@ -24,8 +24,7 @@ class WDRLasso(Estimator):
     def fit(self, X, y, sample_weight=None, mu=None):
         """Fit the estimator."""
         if mu is None:
-            mu = self._get_optimum_mu(X, y,
-                                      sample_weight)
+            mu = self._get_optimum_mu(X, y, sample_weight)
         super().fit(X, y, sample_weight=sample_weight, mu=mu)
 
     def _solve(self, X, y, mu):

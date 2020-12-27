@@ -4,8 +4,8 @@ __author__ = "Luis Barroso-Luque"
 from abc import ABCMeta, abstractmethod
 import numpy as np
 from sklearn.base import RegressorMixin
-from sklearn.linear_model.base import LinearModel
-from sklearn.linear_model.base import  _rescale_data, _check_sample_weight
+from sklearn.linear_model._base import LinearModel
+from sklearn.linear_model._base import  _rescale_data, _check_sample_weight
 
 
 class Estimator(LinearModel, RegressorMixin, metaclass=ABCMeta):
@@ -16,7 +16,7 @@ class Estimator(LinearModel, RegressorMixin, metaclass=ABCMeta):
     implement the solve method.
     """
 
-    def __init__(self, fit_intercept=True, normalize=False, copy_X=True):
+    def __init__(self, fit_intercept=False, normalize=False, copy_X=True):
         self.fit_intercept = fit_intercept
         self.normalize = normalize
         self.copy_X = copy_X
@@ -57,8 +57,8 @@ class Estimator(LinearModel, RegressorMixin, metaclass=ABCMeta):
         if sample_weight is not None:
             X, y = _rescale_data(X, y, sample_weight)
 
-        self._set_intercept(X_offset, y_offset, X_scale)
         self.coef_ = self._solve(X, y, *args, **kwargs)
+        self._set_intercept(X_offset, y_offset, X_scale)
 
         return self
 
@@ -68,7 +68,7 @@ class Estimator(LinearModel, RegressorMixin, metaclass=ABCMeta):
         return
 
 
-class CVXEstimator(Estimator):
+class CVXEstimator(Estimator, metaclass=ABCMeta):
     """
     Wrapper base class for estimators using cvxpy with a sklearn interface.
 
@@ -80,18 +80,53 @@ class CVXEstimator(Estimator):
     https://ajfriendcvxpy.readthedocs.io/en/latest/tutorial/advanced/index.html#solve-method-options
     """
     
-    def __init__(self, fit_intercept=True, normalize=False, copy_X=True,
+    def __init__(self, fit_intercept=False, normalize=False, copy_X=True,
                  warm_start=False, solver=None, verbose=False, **kwargs):
-        self.problem, self.beta = self._initialize_problem()
+        """
+        Args:
+            fit_intercept (bool):
+                Whether the intercept should be estimated or not.
+                If False, the data is assumed to be already centered.
+            normalize (bool):
+                This parameter is ignored when fit_intercept is set to False.
+                If True, the regressors X will be normalized before regression
+                by subtracting the mean and dividing by the l2-norm.
+                If you wish to standardize, please use StandardScaler before
+                calling fit on an estimator with normalize=False
+            copy_X (bool):
+                If True, X will be copied; else, it may be overwritten.
+            warm_start (bool):
+                When set to True, reuse the solution of the previous call to
+                fit as initialization, otherwise, just erase the previous
+                solution.
+            solver (str):
+                cvxpy backend solver to use. Supported solvers are:
+                ECOS, ECOS_BB, CVXOPT, SCS, GUROBI, Elemental.
+                GLPK and GLPK_MI (via CVXOPT GLPK interface)
+            verbose (bool):
+                Print cvxpy solver messages.
+            **kwargs:
+                Kewyard arguments passed to cvxpy solve.
+                See docs linked above for more information.
+        """
         self.warm_start = warm_start
         self._solver_opts = {'solver': solver, 'verbose': verbose, **kwargs}
+        self._problem, self._beta, self._X, self._y = None, None, None, None
         super().__init__(fit_intercept, normalize, copy_X)
 
     @abstractmethod
-    def _initialize_problem(self, *args, **kwargs):
-        """Define and create cvxpy optimization problem"""
-        return ()
+    def _initialize_problem(self, X, y, *args, **kwargs):
+        return
 
-    def _solve(self):
-        self.problem.solve(warm_start=self.warm_start, **self._solver_opts)
-        return self.beta.value
+    def _get_problem(self, X, y, *args, **kwargs):
+        """Define and create cvxpy optimization problem"""
+        if self._problem is None:
+            self._initialize_problem(X, y, *args, **kwargs)
+        elif not np.array_equal(X, self._X) or not np.array_equal(y, self._y):
+            self._initialize_problem(X, y, *args, **kwargs)
+        return self._problem
+    
+    def _solve(self, X, y, *args, **kwargs):
+        problem = self._get_problem(X, y, *args, **kwargs)
+        problem.solve(warm_start=self.warm_start, **self._solver_opts)
+        return self._beta.value
