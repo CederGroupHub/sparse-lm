@@ -1,5 +1,7 @@
+"""Base classes for in-house linear regression estimators.
 
-__author__ = "Luis Barroso-Luque"
+The classes make use of and follow the scikit-learn API.
+"""
 
 from abc import ABCMeta, abstractmethod
 import numpy as np
@@ -7,16 +9,39 @@ from sklearn.base import RegressorMixin
 from sklearn.linear_model._base import LinearModel
 from sklearn.linear_model._base import  _rescale_data, _check_sample_weight
 
+__author__ = "Luis Barroso-Luque"
+
 
 class Estimator(LinearModel, RegressorMixin, metaclass=ABCMeta):
     """
     Simple abstract estimator class based on sklearn linear model api to use
     different 'in-house'  solvers to fit a linear model. This should be used to
     create specific estimator classes by inheriting. New classes simple need to
-    implement the solve method.
+    implement the _solve method to solve for the regression model coefficients.
+
+    Keyword arguments are the same as those found in sklearn linear models.
     """
 
     def __init__(self, fit_intercept=False, normalize=False, copy_X=True):
+        """
+        fit_intercept : bool, default=True
+
+        If you wish to standardize, please use
+        :class:`~sklearn.preprocessing.StandardScaler` before calling ``fit``
+        on an estimator with ``normalize=False``.
+        Args:
+            fit_intercept (bool):
+                Whether the intercept should be estimated or not. If ``False``,
+                the data is assumed to be already centered. normalize : bool
+                default=False.
+            normalize (bool):
+                This parameter is ignored when ``fit_intercept`` is set to
+                False.
+                If True, the regressors X will be normalized before regression
+                by subtracting the mean and dividing by the l2-norm.
+            copy_X (bool):
+                If ``True``, X will be copied; else, it may be overwritten.
+        """
         self.fit_intercept = fit_intercept
         self.normalize = normalize
         self.copy_X = copy_X
@@ -60,17 +85,18 @@ class Estimator(LinearModel, RegressorMixin, metaclass=ABCMeta):
         self.coef_ = self._solve(X, y, *args, **kwargs)
         self._set_intercept(X_offset, y_offset, X_scale)
 
+        # return self for chaining fit and predict calls
         return self
 
     @abstractmethod
     def _solve(self, X, y, *args, **kwargs):
-        """Solve for the learn coefficients."""
+        """Solve for the model coefficients."""
         return
 
 
 class CVXEstimator(Estimator, metaclass=ABCMeta):
     """
-    Wrapper base class for estimators using cvxpy with a sklearn interface.
+    Base class for estimators using cvxpy with a sklearn interface.
 
     Note cvxpy can use one of many 3rd party solvers, default is most often
     CVXOPT. The solver can be specified by providing arguments to the cvxpy
@@ -81,7 +107,7 @@ class CVXEstimator(Estimator, metaclass=ABCMeta):
     """
     
     def __init__(self, fit_intercept=False, normalize=False, copy_X=True,
-                 warm_start=False, solver=None, verbose=False, **kwargs):
+                 warm_start=False, solver=None, **kwargs):
         """
         Args:
             fit_intercept (bool):
@@ -103,14 +129,13 @@ class CVXEstimator(Estimator, metaclass=ABCMeta):
                 cvxpy backend solver to use. Supported solvers are:
                 ECOS, ECOS_BB, CVXOPT, SCS, GUROBI, Elemental.
                 GLPK and GLPK_MI (via CVXOPT GLPK interface)
-            verbose (bool):
-                Print cvxpy solver messages.
             **kwargs:
                 Kewyard arguments passed to cvxpy solve.
                 See docs linked above for more information.
         """
         self.warm_start = warm_start
-        self._solver_opts = {'solver': solver, 'verbose': verbose, **kwargs}
+        self.solver = solver
+        self.solver_opts = kwargs
         self._problem, self._beta, self._X, self._y = None, None, None, None
         super().__init__(fit_intercept, normalize, copy_X)
 
@@ -127,6 +152,8 @@ class CVXEstimator(Estimator, metaclass=ABCMeta):
         return self._problem
     
     def _solve(self, X, y, *args, **kwargs):
+        """Solve the cvxpy problem."""
         problem = self._get_problem(X, y, *args, **kwargs)
-        problem.solve(warm_start=self.warm_start, **self._solver_opts)
+        problem.solve(solver=self.solver, warm_start=self.warm_start,
+                      **self.solver_opts)
         return self._beta.value
