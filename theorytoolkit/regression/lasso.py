@@ -9,6 +9,7 @@ Estimators follow scikit-learn interface, but use cvxpy to set up and solver
 optimization problem.
 """
 
+from warnings import warn
 import cvxpy as cp
 import numpy as np
 from theorytoolkit.regression.base import CVXEstimator
@@ -128,6 +129,14 @@ class SparseGroupLasso(GroupLasso):
                          warm_start=warm_start, solver=solver, **kwargs)
         if not 0 <= l1_ratio <= 1:
             raise ValueError('l1_ratio must be between 0 and 1.')
+        elif l1_ratio == 0.0:
+            warn(
+                'It is more efficient to use GroupLasso directly than '
+                'SparseGroupLasso with l1_ratio=0', UserWarning)
+        elif l1_ratio == 1.0:
+            warn(
+                'It is more efficient to use Lasso directly than '
+                'SparseGroupLasso with l1_ratio=1', UserWarning)
 
         self._lambda1 = cp.Parameter(nonneg=True, value=l1_ratio * alpha)
         self._lambda2 = cp.Parameter(nonneg=True, value=(1 - l1_ratio) * alpha)
