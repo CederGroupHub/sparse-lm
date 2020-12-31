@@ -1,10 +1,27 @@
 """Some utility functions to polish Cluster Expansion fits."""
 
-__author__ = "Luis Barroso-Luque"
+__author__ = "Luis Barroso-Luque, Fengyu Xie"
 __credits__ = "William Davidson Richard"
 
 from functools import wraps
+import signal
+from contextlib import contextmanager
 
+class TimeoutException(Exception): pass
+
+@contextmanager
+def time_limit(seconds):
+    """
+    Set time limit to a process, usually a single fit!
+    """
+    def signal_handler(signum, frame):
+        raise TimeoutException("Timed out!")
+    signal.signal(signal.SIGALRM, signal_handler)
+    signal.alarm(seconds)
+    try:
+        yield
+    finally:
+        signal.alarm(0)
 
 def constrain_dielectric(max_dielectric, ewald_ind=-1):
     """Constrain a fit method to keep dieletric 0<= e < max_dielectric.

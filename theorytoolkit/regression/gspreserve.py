@@ -19,6 +19,8 @@ class GSPreserveEstimator(BaseEstimator):
     """
 
     def __init__(self):
+        warnings.warn("This class is not well tested, and it's theoretic background may not be solid. Please do not rely on it!",\
+                      warnings.DeprecationWarning)
         super().__init__()
 
     def _solve(self, A, f, mu):
