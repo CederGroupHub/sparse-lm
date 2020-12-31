@@ -5,7 +5,7 @@
 * Adaptive Group Lasso
 * Adaptive Sparse Group Lasso
 
-Estimators follow scikit-learn interface, but use cvxpy to set up and solver
+Estimators follow scikit-learn interface, but use cvxpy to set up and solve
 optimization problem.
 """
 
@@ -26,6 +26,7 @@ class GroupLasso(CVXEstimator):
     """
 
     # TODO set weights by sizes, inverse sizes etc here
+    # TODO set groups by list of indices to allow overlap
     def __init__(self, groups, alpha=1.0, fit_intercept=False, normalize=False,
                  copy_X=True, warm_start=False, solver=None, **kwargs):
         """Initialize estimator.
@@ -63,9 +64,9 @@ class GroupLasso(CVXEstimator):
         self.groups = np.asarray(groups)
         self.group_masks = [self.groups == i for i in np.unique(groups)]
         self.sizes = np.sqrt([sum(mask) for mask in self.group_masks])
-        super().__init__(fit_intercept=fit_intercept, normalize=normalize,
-                         copy_X=copy_X, warm_start=warm_start, solver=solver,
-                         **kwargs)
+        super().__init__(alpha=alpha, fit_intercept=fit_intercept,
+                         normalize=normalize, copy_X=copy_X,
+                         warm_start=warm_start, solver=solver, **kwargs)
 
     def _initialize_problem(self, X, y):
         super()._initialize_problem(X, y)
@@ -216,10 +217,9 @@ class AdaptiveLasso(CVXEstimator):
                 Kewyard arguments passed to cvxpy solve.
                 See docs linked in CVXEstimator base class for more info.
         """
-        super().__init__(fit_intercept=fit_intercept, normalize=normalize,
-                         copy_X=copy_X, warm_start=warm_start, solver=solver,
-                         **kwargs)
-        self.alpha = alpha
+        super().__init__(alpha=alpha, fit_intercept=fit_intercept,
+                         normalize=normalize, copy_X=copy_X,
+                         warm_start=warm_start, solver=solver, **kwargs)
         self.tol = tol
         self.max_iter = max_iter
         self.eps = eps
