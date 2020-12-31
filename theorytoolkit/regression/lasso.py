@@ -1,4 +1,9 @@
 """A set of generalized lasso estimators.
+* Group Lasso
+* Sparse Group Lasso
+* Adaptive Lasso
+* Adaptive Group Lasso
+* Adaptive Sparse Group Lasso
 
 Estimators follow scikit-learn interface, but use cvxpy to set up and solver
 optimization problem.
@@ -11,17 +16,15 @@ from theorytoolkit.regression.base import CVXEstimator
 __author__ = "Luis Barroso-Luque"
 
 
-# TODO fix sklearn get_params warning
-# TODO clean up definitions by deriving from GroupLasso and AdaptiveLasso
-
-
 class GroupLasso(CVXEstimator):
     """Group Lasso implementation.
 
     Regularized model:
-
+        || X * Beta - y ||^2_2 + alpha * \sum_{G}||Beta_G||_2
+    Where G represents groups of features/coeficients
     """
 
+    # TODO set weights by sizes, inverse sizes etc here
     def __init__(self, groups, alpha=1.0, fit_intercept=False, normalize=False,
                  copy_X=True, warm_start=False, solver=None, **kwargs):
         """Initialize estimator.
@@ -57,36 +60,29 @@ class GroupLasso(CVXEstimator):
                 See docs linked in CVXEstimator base class for more info.
         """
         self.groups = np.asarray(groups)
-        self._alpha = cp.Parameter(value=alpha, nonneg=True)
-        super().__init__(fit_intercept, normalize, copy_X, warm_start, solver,
+        self.group_masks = [self.groups == i for i in np.unique(groups)]
+        self.sizes = np.sqrt([sum(mask) for mask in self.group_masks])
+        super().__init__(fit_intercept=fit_intercept, normalize=normalize,
+                         copy_X=copy_X, warm_start=warm_start, solver=solver,
                          **kwargs)
 
-    @property
-    def alpha(self):
-        return self._alpha.value
-
-    @alpha.setter
-    def alpha(self, val):
-        self._alpha.value = val
-
-    def _initialize_problem(self, X, y):  # TODO set weights by sizes etc here
-        self._X = X
-        self._y = y
-        group_inds = np.unique(self.groups)
-        sizes = np.sqrt([sum(self.groups == i) for i in group_inds])
-        self._beta = cp.Variable(X.shape[1])
+    def _initialize_problem(self, X, y):
+        super()._initialize_problem(X, y)
         grp_reg = cp.hstack(
-            [cp.norm2(self._beta[self.groups == i]) for i in group_inds])
+            [cp.norm2(self._beta[mask]) for mask in self.group_masks])
         objective = cp.sum_squares(X @ self._beta - y) \
-            + self.alpha * (sizes @ grp_reg)
+            + self._alpha * (self.sizes @ grp_reg)
         self._problem = cp.Problem(cp.Minimize(objective))
 
 
-class SparseGroupLasso(CVXEstimator):
+class SparseGroupLasso(GroupLasso):
     """Sparse Group Lasso.
 
     Regularized model:
-
+        || X * Beta - y ||^2_2
+            + alpha * l1_ratio * ||Beta||_1
+            + alpha * (1 - l1_ratio) * \sum_{G}||Beta_G||_2
+    Where G represents groups of features/coeficients
     """
 
     def __init__(self, groups, l1_ratio=0.5, alpha=1.0, fit_intercept=False,
@@ -126,28 +122,25 @@ class SparseGroupLasso(CVXEstimator):
                 Kewyard arguments passed to cvxpy solve.
                 See docs linked in CVXEstimator base class for more info.
         """
-        self.groups = np.asarray(groups)
-        self._alpha = cp.Parameter(value=alpha, nonneg=True)
-        self._lambda1 = cp.Parameter(nonneg=True)
-        self._lambda2 = cp.Parameter(nonneg=True)
-        self.l1_ratio = l1_ratio
-        super().__init__(fit_intercept, normalize, copy_X, warm_start, solver,
-                         **kwargs)
+        super().__init__(groups=groups, alpha=alpha,
+                         fit_intercept=fit_intercept,
+                         normalize=normalize, copy_X=copy_X,
+                         warm_start=warm_start, solver=solver, **kwargs)
+        if not 0 <= l1_ratio <= 1:
+            raise ValueError('l1_ratio must be between 0 and 1.')
 
-    @property
-    def alpha(self):
-        return self._alpha.value
+        self._lambda1 = cp.Parameter(nonneg=True, value=l1_ratio * alpha)
+        self._lambda2 = cp.Parameter(nonneg=True, value=(1 - l1_ratio) * alpha)
 
-    @alpha.setter
+    @CVXEstimator.alpha.setter
     def alpha(self, val):
         self._alpha.value = val
-        self.l1_ratio = self.l1_ratio
+        self._lambda1.value = self.l1_ratio * val
+        self._lambda2.value = (1 - self.l1_ratio) * val
 
     @property
     def l1_ratio(self):
-        if self._lambda1.value == 0:
-            return 0.0
-        return 1.0 - 0.5 * self._lambda2.value/self._lambda1.value
+        return self._lambda1.value / self.alpha
 
     @l1_ratio.setter
     def l1_ratio(self, val):
@@ -156,17 +149,13 @@ class SparseGroupLasso(CVXEstimator):
         self._lambda1.value = val * self.alpha
         self._lambda2.value = (1 - val) * self.alpha
 
-    def _initialize_problem(self, X, y):  # TODO set weights by sizes etc here
-        group_inds = np.unique(self.groups)
-        sizes = np.sqrt([sum(self.groups == i) for i in group_inds])
-        self._beta = cp.Variable(X.shape[1])
-        self._X = X
-        self._y = y
+    def _initialize_problem(self, X, y):
+        super()._initialize_problem(X, y)
         l1_reg = cp.norm1(self._beta)
         grp_reg = cp.hstack(
-            [cp.norm2(self._beta[self.groups == i]) for i in group_inds])
+            [cp.norm2(self._beta[mask]) for mask in self.group_masks])
         objective = cp.sum_squares(X @ self._beta - y) \
-            + self._lambda1 * l1_reg + self._lambda2 * (sizes @ grp_reg)
+            + self._lambda1 * l1_reg + self._lambda2 * (self.sizes @ grp_reg)
         self._problem = cp.Problem(cp.Minimize(objective))
 
 
@@ -175,9 +164,12 @@ class AdaptiveLasso(CVXEstimator):
 
     Also known as iteratively re-weighted Lasso.
     Regularized model:
-
+        || X * Beta - y ||^2_2 + alpha * ||w^T Beta||_1
+    Where w represents a vector of weights that is iteratively updated.
     """
-    def __init__(self, alpha=1.0, max_iter=5, eps=1E-10, tol=1E-10,
+
+    # TODO allow different weight updates
+    def __init__(self, alpha=1.0, max_iter=5, eps=1E-6, tol=1E-10,
                  fit_intercept=False, normalize=False, copy_X=True,
                  warm_start=False, solver=None, **kwargs):
         """Initialize estimator.
@@ -215,45 +207,53 @@ class AdaptiveLasso(CVXEstimator):
                 Kewyard arguments passed to cvxpy solve.
                 See docs linked in CVXEstimator base class for more info.
         """
-        self.alpha = alpha  # do not set as parameter to follow cvxpy DPP
+        super().__init__(fit_intercept=fit_intercept, normalize=normalize,
+                         copy_X=copy_X, warm_start=warm_start, solver=solver,
+                         **kwargs)
+        self.alpha = alpha
         self.tol = tol
         self.max_iter = max_iter
         self.eps = eps
-        super().__init__(fit_intercept, normalize, copy_X, warm_start, solver,
-                         **kwargs)
+        self._weights, self._previous_weights = None, None
 
     def _initialize_problem(self, X, y):
-        self._X = X
-        self._y = y
-        self._beta = cp.Variable(shape=X.shape[1])
-        self._w = cp.Parameter(shape=X.shape[1], nonneg=True,
-                               value=self.alpha * np.ones(X.shape[1]))
+        super()._initialize_problem(X, y)
+        self._weights = cp.Parameter(shape=X.shape[1], nonneg=True,
+                                     value=self.alpha * np.ones(X.shape[1]))
         objective = cp.sum_squares(X @ self._beta - y) \
-            + cp.norm1(cp.multiply(self._w, self._beta))
+            + cp.norm1(cp.multiply(self._weights, self._beta))
         self._problem = cp.Problem(cp.Minimize(objective))
+
+    def _update_weights(self, beta):
+        self._previous_weights = self._weights.value
+        self._weights.value = self.alpha / (abs(beta) + self.eps)
+
+    def _weights_converged(self):
+        return np.linalg.norm(
+            self._weights.value - self._previous_weights) <= self.tol
 
     def _solve(self, X, y):
         problem = self._get_problem(X, y)
         problem.solve(solver=self.solver, warm_start=self.warm_start,
                       **self.solver_opts)
-        w_prev = self._w.value
         for _ in range(self.max_iter - 1):
-            self._w.value = self.alpha / (abs(self._beta.value) + self.eps)
+            self._update_weights(self._beta.value)
             problem.solve(solver=self.solver, warm_start=self.warm_start,
                           **self.solver_opts)
-            if np.linalg.norm(self._w.value - w_prev) <= self.tol:
+            if self._weights_converged():
                 break
-            w_prev = self._w.value
         return self._beta.value
 
 
-class AdaptiveGroupLasso(CVXEstimator):
+class AdaptiveGroupLasso(AdaptiveLasso, GroupLasso):
     """Adaptive Group Lasso, iteratively re-weighted group lasso.
 
     Regularized model:
+        || X * Beta - y ||^2_2 + alpha * \sum_{G} w_G * ||Beta_G||_2
 
+    Where w represents a vector of weights that is iteratively updated.
     """
-    def __init__(self, groups, alpha=1.0, max_iter=5, eps=1E-10, tol=1E-10,
+    def __init__(self, groups, alpha=1.0, max_iter=5, eps=1E-6, tol=1E-10,
                  fit_intercept=False, normalize=False, copy_X=True,
                  warm_start=False, solver=None, **kwargs):
         """Initialize estimator.
@@ -295,54 +295,41 @@ class AdaptiveGroupLasso(CVXEstimator):
                 Kewyard arguments passed to cvxpy solve.
                 See docs linked in CVXEstimator base class for more info.
         """
-        self.groups = np.asarray(groups)
-        self.alpha = alpha
-        self.tol = tol
-        self.max_iter = max_iter
-        self.eps = eps
-        super().__init__(fit_intercept, normalize, copy_X, warm_start, solver,
-                         **kwargs)
+        # call with keywords to avoid MRO issues
+        super().__init__(groups=groups, alpha=alpha, max_iter=max_iter,
+                         eps=eps, tol=tol, fit_intercept=fit_intercept,
+                         normalize=normalize, copy_X=copy_X,
+                         warm_start=warm_start, solver=solver, **kwargs)
 
-    def _initialize_problem(self, X, y):  # TODO set weights by sizes etc here
-        self._X = X
-        self._y = y
-        group_inds = np.unique(self.groups)
-        sizes = np.sqrt([sum(self.groups == i) for i in group_inds])
-        self._beta = cp.Variable(X.shape[1])
-        self._w = cp.Parameter(shape=len(group_inds), nonneg=True,
-                               value=self.alpha * sizes)
-        grp_reg = self._w @ cp.hstack(
-            [cp.norm2(self._beta[self.groups == i]) for i in group_inds])
+    def _initialize_problem(self, X, y):
+        super()._initialize_problem(X, y)
+        self._weights = cp.Parameter(shape=len(self.group_masks), nonneg=True,
+                                     value=self.alpha * self.sizes)
+        grp_reg = self._weights @ cp.hstack(
+            [cp.norm2(self._beta[mask]) for mask in self.group_masks])
         objective = cp.sum_squares(X @ self._beta - y) + grp_reg
         self._problem = cp.Problem(cp.Minimize(objective))
 
-    def _solve(self, X, y):
-        problem = self._get_problem(X, y)
-        group_inds = np.unique(self.groups)
-        sizes = np.sqrt([sum(self.groups == i) for i in group_inds])
-        w_prev = self._w.value
-        problem.solve(solver=self.solver, warm_start=self.warm_start,
-                      **self.solver_opts)
-        for _ in range(self.max_iter - 1):
-            grp_norm = np.array(
-                [np.linalg.norm(self._beta.value[self.groups == gid]) for gid in group_inds])
-            self._w.value = (self.alpha * sizes) / (grp_norm + self.eps)
-            problem.solve(solver=self.solver, warm_start=self.warm_start,
-                          **self.solver_opts)
-            if np.linalg.norm(self._w.value - w_prev) <= self.tol:
-                break
-            w_prev = self._w.value
-        return self._beta.value
+    def _update_weights(self, beta):
+        self._previous_weights = self._weights.value
+        group_norms = np.array(
+            [np.linalg.norm(beta[mask]) for mask in self.group_masks])
+        self._weights.value = (self.alpha * self.sizes) / (group_norms + self.eps)
 
 
-class AdaptiveSparseGroupLasso(CVXEstimator):
+# TODO allow adaptive weights on lasso/group/both
+class AdaptiveSparseGroupLasso(AdaptiveLasso, SparseGroupLasso):
     """Adaptive Sparse Group Lasso, iteratively re-weighted sparse group lasso.
 
-        Regularized model:
+    Regularized model:
+        || X * Beta - y ||^2_2
+            + alpha * l1_ratio * ||w1^T Beta||_1
+            + alpha * (1 - l1_ratio) * \sum_{G} w2_G * ||Beta_G||_2
 
+    Where w1, w2 represent vectors of weights that is iteratively updated.
     """
 
-    def __init__(self, groups,  l1_ratio=0.5, alpha=1.0, max_iter=5, eps=1E-10,
+    def __init__(self, groups,  l1_ratio=0.5, alpha=1.0, max_iter=5, eps=1E-6,
                  tol=1E-10, fit_intercept=False, normalize=False, copy_X=True,
                  warm_start=False, solver=None, **kwargs):
         """Initialize estimator.
@@ -386,68 +373,38 @@ class AdaptiveSparseGroupLasso(CVXEstimator):
                 Kewyard arguments passed to cvxpy solve.
                 See docs linked in CVXEstimator base class for more info.
         """
-        self.groups = np.asarray(groups)
-        self.alpha = alpha
-        self._lambda1, self._lambda2 = None, None  # set with l1_ratio
-        self.l1_ratio = l1_ratio
-        self.tol = tol
-        self.max_iter = max_iter
-        self.eps = eps
-        super().__init__(fit_intercept, normalize, copy_X, warm_start, solver,
+        # call with keywords to avoid MRO issues
+        super().__init__(groups=groups, l1_ratio=l1_ratio, alpha=alpha,
+                         max_iter=max_iter, eps=eps, tol=tol,
+                         fit_intercept=fit_intercept, normalize=normalize,
+                         copy_X=copy_X, warm_start=warm_start, solver=solver,
                          **kwargs)
 
-    @property
-    def l1_ratio(self):
-        if self._lambda1.value == 0:
-            return 0.0
-        return 1.0 - 0.5 * self._lambda2.value / self._lambda1.value
-
-    @l1_ratio.setter
-    def l1_ratio(self, val):
-        if not 0 <= val <= 1:
-            raise ValueError('l1_ratio must be between 0 and 1.')
-        self._lambda1 = val * self.alpha
-        self._lambda2 = (1 - val) * self.alpha
-
     def _initialize_problem(self, X, y):
-        # TODO set weights by sizes etc here
-        # TODO allow adaptive weights on lasso/group/both
-        self._X = X
-        self._y = y
-        group_inds = np.unique(self.groups)
-        sizes = np.sqrt([sum(self.groups == i) for i in group_inds])
-        self._beta = cp.Variable(X.shape[1])
-        self._w_l1 = cp.Parameter(shape=X.shape[1], nonneg=True,
-                                  value=self._lambda1 * np.ones(X.shape[1]))
-        self._w_grp = cp.Parameter(shape=len(group_inds), nonneg=True,
-                                   value=self._lambda2 * sizes)
-        grp_reg = self._w_grp @ cp.hstack(
-            [cp.norm2(self._beta[self.groups == i]) for i in group_inds])
-        l1_reg = cp.norm1(cp.multiply(self._w_l1, self._beta))
+        super()._initialize_problem(X, y)
+        self._weights = (
+            cp.Parameter(shape=X.shape[1], nonneg=True,
+                         value=self._lambda1.value * np.ones(X.shape[1])),
+            cp.Parameter(shape=len(self.group_masks), nonneg=True,
+                         value=self._lambda2.value * self.sizes),
+            )
+        l1_reg = cp.norm1(cp.multiply(self._weights[0], self._beta))
+        grp_reg = self._weights[1] @ cp.hstack(
+            [cp.norm2(self._beta[mask]) for mask in self.group_masks])
         objective = cp.sum_squares(X @ self._beta - y) + l1_reg + grp_reg
         self._problem = cp.Problem(cp.Minimize(objective))
 
-    def _solve(self, X, y):
-        problem = self._get_problem(X, y)
-        group_inds = np.unique(self.groups)
-        sizes = np.sqrt([sum(self.groups == i) for i in group_inds])
-        w_gprev = self._w_grp.value
-        w_l1prev = self._w_l1.value
-        problem.solve(solver=self.solver, warm_start=self.warm_start,
-                      **self.solver_opts)
+    def _update_weights(self, beta):
+        self._previous_weights = [self._weights[0].value,
+                                  self._weights[1].value]
+        self._weights[0].value = self._lambda1.value / (abs(beta) + self.eps)
+        group_norms = np.array(
+            [np.linalg.norm(beta[mask]) for mask in self.group_masks])
+        self._weights[1].value = (self._lambda2.value * self.sizes) / (group_norms + self.eps)
 
-        for _ in range(self.max_iter - 1):
-            grp_norm = np.array(
-                [np.linalg.norm(self._beta.value[self.groups == gid])
-                 for gid in group_inds])
-            self._w_l1.value = self._lambda1 / (abs(self._beta.value) + self.eps)
-            self._w_grp.value = (self._lambda2 * sizes) / (grp_norm + self.eps)
-            problem.solve(solver=self.solver, warm_start=self.warm_start,
-                          **self.solver_opts)
-            if np.linalg.norm(self._w_grp.value - w_gprev) <= self.tol \
-                    and np.linalg.norm(self._w_l1.value - w_l1prev):
-                break
-            w_gprev = self._w_grp.value
-            w_l1prev = self._w_l1.value
-
-        return self._beta.value
+    def _weights_converged(self):
+        l1_converged = np.linalg.norm(
+            self._weights[0].value - self._previous_weights[0]) <= self.tol
+        group_converged = np.linalg.norm(
+            self._weights[1].value - self._previous_weights[1]) <= self.tol
+        return l1_converged and group_converged

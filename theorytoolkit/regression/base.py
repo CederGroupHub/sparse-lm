@@ -5,6 +5,7 @@ The classes make use of and follow the scikit-learn API.
 
 from abc import ABCMeta, abstractmethod
 import numpy as np
+import cvxpy as cp
 from sklearn.base import RegressorMixin
 from sklearn.linear_model._base import LinearModel
 from sklearn.linear_model._base import  _rescale_data, _check_sample_weight
@@ -16,7 +17,7 @@ class Estimator(LinearModel, RegressorMixin, metaclass=ABCMeta):
     """
     Simple abstract estimator class based on sklearn linear model api to use
     different 'in-house'  solvers to fit a linear model. This should be used to
-    create specific estimator classes by inheriting. New classes simple need to
+    create specific estimator classes by inheriting. New classes simply need to
     implement the _solve method to solve for the regression model coefficients.
 
     Keyword arguments are the same as those found in sklearn linear models.
@@ -106,10 +107,12 @@ class CVXEstimator(Estimator, metaclass=ABCMeta):
     https://ajfriendcvxpy.readthedocs.io/en/latest/tutorial/advanced/index.html#solve-method-options
     """
     
-    def __init__(self, fit_intercept=False, normalize=False, copy_X=True,
-                 warm_start=False, solver=None, **kwargs):
+    def __init__(self, alpha=1.0, fit_intercept=False, normalize=False,
+                 copy_X=True, warm_start=False, solver=None, **kwargs):
         """
         Args:
+            alpha (float):
+                Regularization hyper-parameter.
             fit_intercept (bool):
                 Whether the intercept should be estimated or not.
                 If False, the data is assumed to be already centered.
@@ -136,24 +139,39 @@ class CVXEstimator(Estimator, metaclass=ABCMeta):
         self.warm_start = warm_start
         self.solver = solver
         self.solver_opts = kwargs
+        self._alpha = cp.Parameter(value=alpha, nonneg=True)
         self._problem, self._beta, self._X, self._y = None, None, None, None
         super().__init__(fit_intercept, normalize, copy_X)
 
-    @abstractmethod
-    def _initialize_problem(self, X, y, *args, **kwargs):
-        return
+    @property
+    def alpha(self):
+        return self._alpha.value
 
-    def _get_problem(self, X, y, *args, **kwargs):
+    @alpha.setter
+    def alpha(self, val):
+        self._alpha.value = val
+
+    @abstractmethod
+    def _initialize_problem(self, X, y):
+        """Initialize cvxpy problem represeting regression model.
+
+        Here only the coeficient variable Beta and X, y caching is done.
+        """
+        self._beta = cp.Variable(X.shape[1])
+        self._X = X
+        self._y = y
+
+    def _get_problem(self, X, y):
         """Define and create cvxpy optimization problem"""
         if self._problem is None:
-            self._initialize_problem(X, y, *args, **kwargs)
+            self._initialize_problem(X, y)
         elif not np.array_equal(X, self._X) or not np.array_equal(y, self._y):
-            self._initialize_problem(X, y, *args, **kwargs)
+            self._initialize_problem(X, y)
         return self._problem
     
     def _solve(self, X, y, *args, **kwargs):
         """Solve the cvxpy problem."""
-        problem = self._get_problem(X, y, *args, **kwargs)
+        problem = self._get_problem(X, y)
         problem.solve(solver=self.solver, warm_start=self.warm_start,
                       **self.solver_opts)
         return self._beta.value
