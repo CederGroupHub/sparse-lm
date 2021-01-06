@@ -72,7 +72,7 @@ class GroupLasso(CVXEstimator):
         super()._initialize_problem(X, y)
         grp_reg = cp.hstack(
             [cp.norm2(self._beta[mask]) for mask in self.group_masks])
-        objective = cp.sum_squares(X @ self._beta - y) \
+        objective = 1 / (2 * X.shape[0]) * cp.sum_squares(X @ self._beta - y) \
             + self._alpha * (self.sizes @ grp_reg)
         self._problem = cp.Problem(cp.Minimize(objective))
 
@@ -164,7 +164,7 @@ class SparseGroupLasso(GroupLasso):
         l1_reg = cp.norm1(self._beta)
         grp_reg = cp.hstack(
             [cp.norm2(self._beta[mask]) for mask in self.group_masks])
-        objective = cp.sum_squares(X @ self._beta - y) \
+        objective = 1 / (2 * X.shape[0]) * cp.sum_squares(X @ self._beta - y) \
             + self._lambda1 * l1_reg + self._lambda2 * (self.sizes @ grp_reg)
         self._problem = cp.Problem(cp.Minimize(objective))
 
@@ -229,7 +229,7 @@ class AdaptiveLasso(CVXEstimator):
         super()._initialize_problem(X, y)
         self._weights = cp.Parameter(shape=X.shape[1], nonneg=True,
                                      value=self.alpha * np.ones(X.shape[1]))
-        objective = cp.sum_squares(X @ self._beta - y) \
+        objective = 1 / (2 * X.shape[0]) * cp.sum_squares(X @ self._beta - y) \
             + cp.norm1(cp.multiply(self._weights, self._beta))
         self._problem = cp.Problem(cp.Minimize(objective))
 
@@ -316,7 +316,8 @@ class AdaptiveGroupLasso(AdaptiveLasso, GroupLasso):
                                      value=self.alpha * self.sizes)
         grp_reg = self._weights @ cp.hstack(
             [cp.norm2(self._beta[mask]) for mask in self.group_masks])
-        objective = cp.sum_squares(X @ self._beta - y) + grp_reg
+        objective = 1 / (2 * X.shape[0]) * cp.sum_squares(X @ self._beta - y) \
+            + grp_reg
         self._problem = cp.Problem(cp.Minimize(objective))
 
     def _update_weights(self, beta):
@@ -400,7 +401,8 @@ class AdaptiveSparseGroupLasso(AdaptiveLasso, SparseGroupLasso):
         l1_reg = cp.norm1(cp.multiply(self._weights[0], self._beta))
         grp_reg = self._weights[1] @ cp.hstack(
             [cp.norm2(self._beta[mask]) for mask in self.group_masks])
-        objective = cp.sum_squares(X @ self._beta - y) + l1_reg + grp_reg
+        objective = 1 / (2 * X.shape[0]) * cp.sum_squares(X @ self._beta - y) \
+            + l1_reg + grp_reg
         self._problem = cp.Problem(cp.Minimize(objective))
 
     def _update_weights(self, beta):
