@@ -234,6 +234,9 @@ class AdaptiveLasso(CVXEstimator):
         self._problem = cp.Problem(cp.Minimize(objective))
 
     def _update_weights(self, beta):
+        if beta is None and self._problem.value == -np.inf:
+            raise RuntimeError(
+                f"{self._problem} is infeasible.")
         self._previous_weights = self._weights.value
         self._weights.value = self.alpha / (abs(beta) + self.eps)
 
@@ -247,7 +250,7 @@ class AdaptiveLasso(CVXEstimator):
                       **self.solver_opts)
         for _ in range(self.max_iter - 1):
             self._update_weights(self._beta.value)
-            problem.solve(solver=self.solver, warm_start=self.warm_start,
+            problem.solve(solver=self.solver, warm_start=True,
                           **self.solver_opts)
             if self._weights_converged():
                 break
