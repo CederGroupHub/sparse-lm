@@ -128,6 +128,7 @@ class SparseGroupLasso(GroupLasso):
                          fit_intercept=fit_intercept,
                          normalize=normalize, copy_X=copy_X,
                          warm_start=warm_start, solver=solver, **kwargs)
+
         if not 0 <= l1_ratio <= 1:
             raise ValueError('l1_ratio must be between 0 and 1.')
         elif l1_ratio == 0.0:
@@ -141,6 +142,8 @@ class SparseGroupLasso(GroupLasso):
 
         self._lambda1 = cp.Parameter(nonneg=True, value=l1_ratio * alpha)
         self._lambda2 = cp.Parameter(nonneg=True, value=(1 - l1_ratio) * alpha)
+        # save exact value so sklearn clone is happy dappy
+        self._l1_ratio = l1_ratio
 
     @CVXEstimator.alpha.setter
     def alpha(self, val):
@@ -150,12 +153,13 @@ class SparseGroupLasso(GroupLasso):
 
     @property
     def l1_ratio(self):
-        return self._lambda1.value / self.alpha
+        return self._l1_ratio
 
     @l1_ratio.setter
     def l1_ratio(self, val):
         if not 0 <= val <= 1:
             raise ValueError('l1_ratio must be between 0 and 1.')
+        self._l1_ratio = val
         self._lambda1.value = val * self.alpha
         self._lambda2.value = (1 - val) * self.alpha
 
