@@ -7,7 +7,7 @@ import warnings
 import math
 import cvxpy as cp
 from .base import BaseEstimator
-from .util import time_limit, TimeoutException
+from .utils import time_limit, TimeoutException
 
 class L2L0Estimator(BaseEstimator):
     """
