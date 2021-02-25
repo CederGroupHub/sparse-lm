@@ -16,7 +16,7 @@ class OLSEstimator(BaseEstimator):
     def __init__(self):
         super().__init__()
 
-    def fit(self, feature_matrix, target_vector, sample_weight=None):
+    def fit(self, feature_matrix, target_vector, sample_weight=None,**kwargs):
         """
         Fit the estimator. If mu not given, will optimize it.
         Inputs:
@@ -33,8 +33,7 @@ class OLSEstimator(BaseEstimator):
         #No mu needs to be optimized.
 
         super().fit(feature_matrix, target_vector,
-                    sample_weight=sample_weight, 
-                    mu=mu)
+                    sample_weight=sample_weight)
 
     def _solve(self, feature_matrix, target_vector):
         """

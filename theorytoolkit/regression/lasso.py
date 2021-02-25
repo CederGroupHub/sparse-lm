@@ -19,7 +19,7 @@ class LassoEstimator(BaseEstimator):
         super().__init__()
 
     def fit(self, feature_matrix, target_vector, sample_weight=None,\
-            mu=None, log_mu_ranges=[(-1,6)], log_mu_steps = [8]):
+            mu=None, log_mu_ranges=[(-3,6)], log_mu_steps = [8]):
         """
         Fit the estimator. If mu not given, will optimize it.
         Inputs:
@@ -42,11 +42,12 @@ class LassoEstimator(BaseEstimator):
                 Number of steps to search in each log_mu coordinate. Optional, but also
                 recommeneded.
         Return:
-            Optimized mu for storage convenience.
+            Optimized mu, cv score and coefficients.
             Fitter coefficients storeed in self.coef_.
         """
         if isinstance(mu,(int,float)):
             mu = [float(mu)]
+
         #Always call super().fit because this contains preprocessing of matrix 
         #and vector, such as centering and weighting!           
         if mu is None or len(mu)!=1:
@@ -55,9 +56,9 @@ class LassoEstimator(BaseEstimator):
                                      dim_mu=1,
                                      log_mu_ranges=log_mu_ranges,
                                      log_mu_steps=log_mu_steps)
-            if mu[0]<=np.power(10,log_mu_ranges[0][0]):
+            if mu[0]<=np.power(10,float(log_mu_ranges[0][0])):
                 warnings.warn("Minimun allowed mu taken!")
-            if mu[0]>=np.power(10,log_mu_ranges[0][1]):
+            if mu[0]>=np.power(10,float(log_mu_ranges[0][1])):
                 warnings.warn("Maximum allowed mu taken!")
 
         super().fit(feature_matrix, target_vector,

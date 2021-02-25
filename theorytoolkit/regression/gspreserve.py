@@ -1,7 +1,7 @@
 """
 Ground State Preserving solver from Wenxhuan Huang (implemented by Daniil?)
 """
-
+import warnings
 import logging
 import numpy as np
 from pymatgen import Composition
@@ -18,10 +18,11 @@ class GSPreserveEstimator(BaseEstimator):
     Estimator implementing WH's gs preserve fit.
     """
 
-    def __init__(self):
+    def __init__(self,structures):
         warnings.warn("This class is not well tested, and it's theoretic background may not be solid. Please do not rely on it!",\
-                      warnings.DeprecationWarning)
+                      DeprecationWarning)
         super().__init__()
+        self.structures = structures
 
     def _solve(self, A, f, mu):
         solvers.options['show_progress'] = False

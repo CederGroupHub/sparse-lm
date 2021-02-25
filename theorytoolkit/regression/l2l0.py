@@ -7,7 +7,7 @@ import warnings
 import math
 import cvxpy as cp
 from .base import BaseEstimator
-from .util import time_limit, TimeoutException
+from .utils import time_limit, TimeoutException
 
 class L2L0Estimator(BaseEstimator):
     """
@@ -56,7 +56,7 @@ class L2L0Estimator(BaseEstimator):
                 Time limit of each L1L0 solve in seconds. If time limit is exceeded, 
                 will raise an error.
         Return:
-            Optimized mu for storage convenience.            
+            Optimized mu, cv score and coefficients     
             Fitter coefficients storeed in self.coef_.       
         """ 
         #Always call super().fit because this contains preprocessing of matrix 
@@ -69,13 +69,13 @@ class L2L0Estimator(BaseEstimator):
                                      log_mu_ranges=log_mu_ranges,
                                      log_mu_steps=log_mu_steps,
                                      M=M, tlimit=tlimit)
-            if mu[0]<=np.power(10,log_mu_ranges[0][0]):
+            if mu[0]<=np.power(10,float(log_mu_ranges[0][0])):
                 warnings.warn("Minimun allowed mu_0 taken!")
-            if mu[0]>=np.power(10,log_mu_ranges[0][1]):
+            if mu[0]>=np.power(10,float(log_mu_ranges[0][1])):
                 warnings.warn("Maximum allowed mu_0 taken!")
-            if mu[1]<=np.power(10,log_mu_ranges[1][0]):
+            if mu[1]<=np.power(10,float(log_mu_ranges[1][0])):
                 warnings.warn("Minimun allowed mu_2 taken!")
-            if mu[1]>=np.power(10,log_mu_ranges[1][1]):
+            if mu[1]>=np.power(10,float(log_mu_ranges[1][1])):
                 warnings.warn("Maximum allowed mu_2 taken!")
 
         super().fit(feature_matrix, target_vector,
@@ -106,7 +106,7 @@ class L2L0Estimator(BaseEstimator):
         
         w = cp.Variable((d,))
         z0 = cp.Variable((d,),integer=True)
-        contraints = [0<=z0, z0<=1, M*z0>=w, M*z0>=-w]
+        constraints = [0<=z0, z0<=1, M*z0>=w, M*z0>=-w]
         #Hierarchy constraints.
         if hierarchy is not None:
             for sub_id,high_ids in enumerate(hierarchy):
