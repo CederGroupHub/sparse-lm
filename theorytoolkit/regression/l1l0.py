@@ -6,10 +6,11 @@ import numpy as np
 import warnings
 import math
 import cvxpy as cp
-from .base import BaseEstimator
+from .base import Estimator
 from .utils import time_limit, TimeoutException
 
-class L1L0Estimator(BaseEstimator):
+
+class L1L0Estimator(Estimator):
     """
     L1L0 estimator. Removed Gurobi dependency!
     Uses any solver it has in hand. If nothing, will use ECOS_BB.

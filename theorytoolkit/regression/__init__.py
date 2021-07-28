@@ -1,6 +1,6 @@
 """Contains classes to fit and modify fits of Cluster Expansions."""
-from .ols import OLSEstimator
-from .lasso import LassoEstimator
+from .ols import OrdinaryLeastSquares
+from .lasso import Lasso
 from .l1l0 import L1L0Estimator
 from .l2l0 import L2L0Estimator
 
@@ -9,8 +9,8 @@ from .lasso import GroupLasso, SparseGroupLasso, AdaptiveLasso, \
 from .utils import constrain_dielectric
 
 __all__ = [
-    'OLSEstimator',
-    'LassoEstimator',
+    'OrdinaryLeastSquares',
+    'Lasso',
     'L1L0Estimator',
     'L2L0Estimator',
     'GroupLasso',

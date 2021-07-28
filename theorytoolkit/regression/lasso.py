@@ -12,14 +12,13 @@ optimization problem.
 __author__ = "Luis Barroso-Luque, Fengyu Xie"
 
 from warnings import warn
+import warnings
 import cvxpy as cp
 import numpy as np
 from theorytoolkit.regression.base import CVXEstimator
 
-from .base import BaseEstimator
 
-
-class Lasso(BaseEstimator):
+class Lasso(CVXEstimator):
     """
     Lasso Estimator implemented with cvxpy.
     """
@@ -105,6 +104,94 @@ class Lasso(BaseEstimator):
         prob.solve()
 
         return w.value
+
+
+class AdaptiveLasso(CVXEstimator):
+    """Adaptive Lasso implementation.
+
+    Also known as iteratively re-weighted Lasso.
+    Regularized model:
+        || X * Beta - y ||^2_2 + alpha * ||w^T Beta||_1
+    Where w represents a vector of weights that is iteratively updated.
+    """
+
+    # TODO allow different weight updates
+    def __init__(self, alpha=1.0, max_iter=5, eps=1E-6, tol=1E-10,
+                 fit_intercept=False, normalize=False, copy_X=True,
+                 warm_start=False, solver=None, **kwargs):
+        """Initialize estimator.
+
+        Args:
+            alpha (float):
+                Regularization hyper-parameter.
+            max_iter (int):
+                Maximum number of re-weighting iteration steps.
+            eps (float):
+                Value to add to denominatar of weights.
+            tol (float):
+                Absolute convergence tolerance for difference between weights
+                at successive steps.
+            fit_intercept (bool):
+                Whether the intercept should be estimated or not.
+                If False, the data is assumed to be already centered.
+            normalize (bool):
+                This parameter is ignored when fit_intercept is set to False.
+                If True, the regressors X will be normalized before regression
+                by subtracting the mean and dividing by the l2-norm.
+                If you wish to standardize, please use StandardScaler before
+                calling fit on an estimator with normalize=False
+            copy_X (bool):
+                If True, X will be copied; else, it may be overwritten.
+            warm_start (bool):
+                When set to True, reuse the solution of the previous call to
+                fit as initialization, otherwise, just erase the previous
+                solution.
+            solver (str):
+                cvxpy backend solver to use. Supported solvers are:
+                ECOS, ECOS_BB, CVXOPT, SCS, GUROBI, Elemental.
+                GLPK and GLPK_MI (via CVXOPT GLPK interface)
+            **kwargs:
+                Kewyard arguments passed to cvxpy solve.
+                See docs linked in CVXEstimator base class for more info.
+        """
+        super().__init__(alpha=alpha, fit_intercept=fit_intercept,
+                         normalize=normalize, copy_X=copy_X,
+                         warm_start=warm_start, solver=solver, **kwargs)
+        self.tol = tol
+        self.max_iter = max_iter
+        self.eps = eps
+        self._weights, self._previous_weights = None, None
+
+    def _initialize_problem(self, X, y):
+        super()._initialize_problem(X, y)
+        self._weights = cp.Parameter(shape=X.shape[1], nonneg=True,
+                                     value=self.alpha * np.ones(X.shape[1]))
+        objective = 1 / (2 * X.shape[0]) * cp.sum_squares(X @ self._beta - y) \
+            + cp.norm1(cp.multiply(self._weights, self._beta))
+        self._problem = cp.Problem(cp.Minimize(objective))
+
+    def _update_weights(self, beta):
+        if beta is None and self._problem.value == -np.inf:
+            raise RuntimeError(
+                f"{self._problem} is infeasible.")
+        self._previous_weights = self._weights.value
+        self._weights.value = self.alpha / (abs(beta) + self.eps)
+
+    def _weights_converged(self):
+        return np.linalg.norm(
+            self._weights.value - self._previous_weights) <= self.tol
+
+    def _solve(self, X, y):
+        problem = self._get_problem(X, y)
+        problem.solve(solver=self.solver, warm_start=self.warm_start,
+                      **self.solver_opts)
+        for _ in range(self.max_iter - 1):
+            self._update_weights(self._beta.value)
+            problem.solve(solver=self.solver, warm_start=True,
+                          **self.solver_opts)
+            if self._weights_converged():
+                break
+        return self._beta.value
 
 
 class GroupLasso(CVXEstimator):
@@ -261,94 +348,6 @@ class SparseGroupLasso(GroupLasso):
         objective = 1 / (2 * X.shape[0]) * cp.sum_squares(X @ self._beta - y) \
             + self._lambda1 * l1_reg + self._lambda2 * (self.sizes @ grp_reg)
         self._problem = cp.Problem(cp.Minimize(objective))
-
-
-class AdaptiveLasso(CVXEstimator):
-    """Adaptive Lasso implementation.
-
-    Also known as iteratively re-weighted Lasso.
-    Regularized model:
-        || X * Beta - y ||^2_2 + alpha * ||w^T Beta||_1
-    Where w represents a vector of weights that is iteratively updated.
-    """
-
-    # TODO allow different weight updates
-    def __init__(self, alpha=1.0, max_iter=5, eps=1E-6, tol=1E-10,
-                 fit_intercept=False, normalize=False, copy_X=True,
-                 warm_start=False, solver=None, **kwargs):
-        """Initialize estimator.
-
-        Args:
-            alpha (float):
-                Regularization hyper-parameter.
-            max_iter (int):
-                Maximum number of re-weighting iteration steps.
-            eps (float):
-                Value to add to denominatar of weights.
-            tol (float):
-                Absolute convergence tolerance for difference between weights
-                at successive steps.
-            fit_intercept (bool):
-                Whether the intercept should be estimated or not.
-                If False, the data is assumed to be already centered.
-            normalize (bool):
-                This parameter is ignored when fit_intercept is set to False.
-                If True, the regressors X will be normalized before regression
-                by subtracting the mean and dividing by the l2-norm.
-                If you wish to standardize, please use StandardScaler before
-                calling fit on an estimator with normalize=False
-            copy_X (bool):
-                If True, X will be copied; else, it may be overwritten.
-            warm_start (bool):
-                When set to True, reuse the solution of the previous call to
-                fit as initialization, otherwise, just erase the previous
-                solution.
-            solver (str):
-                cvxpy backend solver to use. Supported solvers are:
-                ECOS, ECOS_BB, CVXOPT, SCS, GUROBI, Elemental.
-                GLPK and GLPK_MI (via CVXOPT GLPK interface)
-            **kwargs:
-                Kewyard arguments passed to cvxpy solve.
-                See docs linked in CVXEstimator base class for more info.
-        """
-        super().__init__(alpha=alpha, fit_intercept=fit_intercept,
-                         normalize=normalize, copy_X=copy_X,
-                         warm_start=warm_start, solver=solver, **kwargs)
-        self.tol = tol
-        self.max_iter = max_iter
-        self.eps = eps
-        self._weights, self._previous_weights = None, None
-
-    def _initialize_problem(self, X, y):
-        super()._initialize_problem(X, y)
-        self._weights = cp.Parameter(shape=X.shape[1], nonneg=True,
-                                     value=self.alpha * np.ones(X.shape[1]))
-        objective = 1 / (2 * X.shape[0]) * cp.sum_squares(X @ self._beta - y) \
-            + cp.norm1(cp.multiply(self._weights, self._beta))
-        self._problem = cp.Problem(cp.Minimize(objective))
-
-    def _update_weights(self, beta):
-        if beta is None and self._problem.value == -np.inf:
-            raise RuntimeError(
-                f"{self._problem} is infeasible.")
-        self._previous_weights = self._weights.value
-        self._weights.value = self.alpha / (abs(beta) + self.eps)
-
-    def _weights_converged(self):
-        return np.linalg.norm(
-            self._weights.value - self._previous_weights) <= self.tol
-
-    def _solve(self, X, y):
-        problem = self._get_problem(X, y)
-        problem.solve(solver=self.solver, warm_start=self.warm_start,
-                      **self.solver_opts)
-        for _ in range(self.max_iter - 1):
-            self._update_weights(self._beta.value)
-            problem.solve(solver=self.solver, warm_start=True,
-                          **self.solver_opts)
-            if self._weights_converged():
-                break
-        return self._beta.value
 
 
 class AdaptiveGroupLasso(AdaptiveLasso, GroupLasso):
