@@ -1,54 +1,94 @@
+"""Base classes for in-house linear regression estimators.
+
+__author__ = "Luis Barroso-Luque, Fengyu Xie"
+The classes make use of and follow the scikit-learn API.
+"""
 
 __author__ = "Luis Barroso-Luque, Fengyu Xie"
 
-from abc import ABC, abstractmethod
+from abc import ABCMeta, abstractmethod
 import numpy as np
-from smol.exceptions import NotFittedError
+import cvxpy as cp
+from sklearn.base import RegressorMixin
+from sklearn.linear_model._base import LinearModel
+from sklearn.linear_model._base import  _rescale_data, _check_sample_weight
 
-class BaseEstimator(ABC):
+
+class Estimator(LinearModel, RegressorMixin, metaclass=ABCMeta):
     """
-    A simple estimator class to use different 'in-house'  solvers to fit a
-    cluster-expansion. This should be used to create specific estimator classes
-    by inheriting. New classes simple need to implement the solve method.
-    The methods have the same signatures as most scikit-learn regressors, such
-    that those can be directly used instead of this to fit a cluster-expansion
-    The base estimator does not fit. It only has a predict function for
-    Expansions where the user supplies the ecis.
+    Simple abstract estimator class based on sklearn linear model api to use
+    different 'in-house'  solvers to fit a linear model. This should be used to
+    create specific estimator classes by inheriting. New classes simply need to
+    implement the _solve method to solve for the regression model coefficients.
+
+    Keyword arguments are the same as those found in sklearn linear models.
     """
 
-    def __init__(self):
-        self.coef_ = None
+    def __init__(self, fit_intercept=False, normalize=False, copy_X=True):
+        """
+        fit_intercept : bool, default=True
 
-    def fit(self, feature_matrix, target_vector, *args, sample_weight=None,
-            **kwargs):
+        If you wish to standardize, please use
+        :class:`~sklearn.preprocessing.StandardScaler` before calling ``fit``
+        on an estimator with ``normalize=False``.
+        Args:
+            fit_intercept (bool):
+                Whether the intercept should be estimated or not. If ``False``,
+                the data is assumed to be already centered. normalize : bool
+                default=False.
+            normalize (bool):
+                This parameter is ignored when ``fit_intercept`` is set to
+                False.
+                If True, the regressors X will be normalized before regression
+                by subtracting the mean and dividing by the l2-norm.
+            copy_X (bool):
+                If ``True``, X will be copied; else, it may be overwritten.
         """
-        Prepare fit input then fit. First, weighting. Then centering.
-        Point terms are not separated for linear regression. (Not implemented
-        yet).
+        self.fit_intercept = fit_intercept
+        self.normalize = normalize
+        self.copy_X = copy_X
+        self.coef_, self.intercept_ = None, None
+
+    def fit(self, X, y, sample_weight=None, *args, **kwargs):
+        """Prepare fit input with sklearn help then call fit method.
+
+        Args:
+            X (array-like):
+                Training data of shape (n_samples, n_features).
+            y (array-like):
+                Target values. Will be cast to X's dtype if necessary
+                of shape (n_samples,) or (n_samples, n_targets)
+            sample_weight (array-like):
+                Individual weights for each sample of shape (n_samples,)
+                default=None
+            *args:
+                Positional arguments passed to _fit method
+            **kwargs:
+                Keyword arguments passed to _fit method
+
+        Returns:
+            instance of self
         """
+        X, y = self._validate_data(X, y, accept_sparse=False,
+                                   y_numeric=True, multi_output=True)
+
         if sample_weight is not None:
-            feature_matrix = feature_matrix * sample_weight[:, None] ** 0.5
-            target_vector = target_vector * sample_weight ** 0.5
+            sample_weight = _check_sample_weight(sample_weight, X,
+                                                 dtype=X.dtype)
 
-        feature_av = np.mean(feature_matrix,axis=0)
-        #Since first column will become zero, reduce rank by 1.
-        feature_centered = (feature_matrix - feature_av)[:,1:]
-        target_av = np.mean(target_vector)
-        target_centered = target_vector - target_av
+        X, y, X_offset, y_offset, X_scale = self._preprocess_data(
+            X, y, fit_intercept=self.fit_intercept, normalize=self.normalize,
+            copy=self.copy_X, sample_weight=sample_weight,
+            return_mean=True)
 
-        #TODO: implement separate fitting of single-point terms. Is it necessary?
+        if sample_weight is not None:
+            X, y = _rescale_data(X, y, sample_weight)
 
-        coef_ = self._solve(feature_centered, target_centered,
-                                 *args, **kwargs)
-        self.coef_ = coef_.copy()
-        coef_0 = target_av-np.dot(feature_av[1:],coef_)
-        self.coef_ = np.concatenate(([coef_0],self.coef_))
+        self.coef_ = self._solve(X, y, *args, **kwargs)
+        self._set_intercept(X_offset, y_offset, X_scale)
 
-    def predict(self, feature_matrix):
-        """Predict a new value based on fit"""
-        if self.coef_ is None:
-            raise NotFittedError('This estimator has not been fitted.')
-        return np.dot(feature_matrix, self.coef_)
+        # return self for chaining fit and predict calls
+        return self
 
     def calc_cv_score(self, feature_matrix, target_vector, *args, sample_weight=None,\
                       k=5, **kwargs):
@@ -82,7 +122,7 @@ class BaseEstimator(ABC):
             for i in range(k):
                 ins = (partitions != i)  # in the sample for this iteration
                 oos = (partitions == i)  # out of the sample for this iteration
-    
+
                 self.fit(X[ins], y[ins],*args,\
                          sample_weight=weights[ins],\
                          **kwargs)
@@ -104,9 +144,9 @@ class BaseEstimator(ABC):
         If the estimator supports mu parameters, this method provides a quick, coordinate
         descent method to find the optimal mu for the model, by minimizing cv (maximizing
         cv score).
-        Any mu should be defined as a 1 dimensional array of length dim_mu, and the 
+        Any mu should be defined as a 1 dimensional array of length dim_mu, and the
         optimized log_mu's are constrained within log_mu_ranges.
-        The optimization will always start from the last dimension of mu, so in L0L1 or 
+        The optimization will always start from the last dimension of mu, so in L0L1 or
         L0L2, make sure that the last mu is your mu_1 or mu_2.
 
         Inputs:
@@ -119,7 +159,7 @@ class BaseEstimator(ABC):
                 allowed optimization ranges of log(mu). If not provided, will be guessed.
                 But I still highly recommend you to give this based on your experience.
             log_mu_steps(None|List[int]):
-                Number of steps to search in each log_mu coordinate. If not given, 
+                Number of steps to search in each log_mu coordinate. If not given,
                 Will set to 11 for each log_mu coordinate.
         Outputs:
             optimal mu as a 1D np.array, and optimal cv score
@@ -164,6 +204,88 @@ class BaseEstimator(ABC):
         return np.power(10,log_centers)
 
     @abstractmethod
-    def _solve(self, feature_matrix, target_vector, *args, **kwargs):
-        """Solve for the learn coefficients."""
+    def _solve(self, X, y, *args, **kwargs):
+        """Solve for the model coefficients."""
         return
+
+
+class CVXEstimator(Estimator, metaclass=ABCMeta):
+    """
+    Base class for estimators using cvxpy with a sklearn interface.
+
+    Note cvxpy can use one of many 3rd party solvers, default is most often
+    CVXOPT. The solver can be specified by providing arguments to the cvxpy
+    problem.solve function. And can be set by passing those arguments to the
+    constructur of this class
+    See documentation for more:
+    https://ajfriendcvxpy.readthedocs.io/en/latest/tutorial/advanced/index.html#solve-method-options
+    """
+
+    def __init__(self, alpha=1.0, fit_intercept=False, normalize=False,
+                 copy_X=True, warm_start=False, solver=None, **kwargs):
+        """
+        Args:
+            alpha (float):
+                Regularization hyper-parameter.
+            fit_intercept (bool):
+                Whether the intercept should be estimated or not.
+                If False, the data is assumed to be already centered.
+            normalize (bool):
+                This parameter is ignored when fit_intercept is set to False.
+                If True, the regressors X will be normalized before regression
+                by subtracting the mean and dividing by the l2-norm.
+                If you wish to standardize, please use StandardScaler before
+                calling fit on an estimator with normalize=False
+            copy_X (bool):
+                If True, X will be copied; else, it may be overwritten.
+            warm_start (bool):
+                When set to True, reuse the solution of the previous call to
+                fit as initialization, otherwise, just erase the previous
+                solution.
+            solver (str):
+                cvxpy backend solver to use. Supported solvers are:
+                ECOS, ECOS_BB, CVXOPT, SCS, GUROBI, Elemental.
+                GLPK and GLPK_MI (via CVXOPT GLPK interface)
+            **kwargs:
+                Kewyard arguments passed to cvxpy solve.
+                See docs linked above for more information.
+        """
+        self.warm_start = warm_start
+        self.solver = solver
+        self.solver_opts = kwargs
+        self._alpha = cp.Parameter(value=alpha, nonneg=True)
+        self._problem, self._beta, self._X, self._y = None, None, None, None
+        super().__init__(fit_intercept, normalize, copy_X)
+
+    @property
+    def alpha(self):
+        return self._alpha.value
+
+    @alpha.setter
+    def alpha(self, val):
+        self._alpha.value = val
+
+    @abstractmethod
+    def _initialize_problem(self, X, y):
+        """Initialize cvxpy problem represeting regression model.
+
+        Here only the coeficient variable Beta and X, y caching is done.
+        """
+        self._beta = cp.Variable(X.shape[1])
+        self._X = X
+        self._y = y
+
+    def _get_problem(self, X, y):
+        """Define and create cvxpy optimization problem"""
+        if self._problem is None:
+            self._initialize_problem(X, y)
+        elif not np.array_equal(X, self._X) or not np.array_equal(y, self._y):
+            self._initialize_problem(X, y)
+        return self._problem
+
+    def _solve(self, X, y, *args, **kwargs):
+        """Solve the cvxpy problem."""
+        problem = self._get_problem(X, y)
+        problem.solve(solver=self.solver, warm_start=self.warm_start,
+                      **self.solver_opts)
+        return self._beta.value
