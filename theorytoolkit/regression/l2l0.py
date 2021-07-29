@@ -4,10 +4,10 @@ __author__ = "Fengyu Xie"
 
 import numpy as np
 import warnings
-import math
 import cvxpy as cp
 from .base import Estimator
 from .utils import time_limit, TimeoutException
+
 
 class L2L0Estimator(Estimator):
     """
