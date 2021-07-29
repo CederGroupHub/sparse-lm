@@ -13,5 +13,5 @@ class OrdinaryLeastSquares(CVXEstimator):
 
     def _initialize_problem(self, X, y):
         super()._initialize_problem(X, y)
-        objective = 1 / (2 * X.shape[0]) * cp.sum_squares(X @ self._beta - y)
+        objective = cp.sum_squares(X @ self._beta - y)
         self._problem = cp.Problem(cp.Minimize(objective))

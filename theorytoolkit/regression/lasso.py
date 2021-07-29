@@ -21,92 +21,63 @@ from theorytoolkit.regression.base import CVXEstimator
 class Lasso(CVXEstimator):
     """
     Lasso Estimator implemented with cvxpy.
+
+    Regularized model:
+        || X * Beta - y ||^2_2 + alpha * ||Beta||_1
+    Where w represents a vector of weights that is iteratively updated.
     """
 
-    def __init__(self):
-        super().__init__()
-
-    def fit(self, feature_matrix, target_vector, sample_weight=None, \
-            mu=None, log_mu_ranges=[(-3, 6)], log_mu_steps=[8]):
+    def __init__(self, alpha=1.0, fit_intercept=False, normalize=False,
+                 copy_X=True, warm_start=False, solver=None, **kwargs):
         """
-        Fit the estimator. If mu not given, will optimize it.
-        Inputs:
-            feature_matrix(2d ArrayLike, n_structures*n_bit_orbits):
-                Feature matrix of structures.
-            target_vector(1d ArrayLike):
-                Physical properties to fit.
-            sample_weight(1d ArrayLike or None):
-                Weight of samples. If not given, rows will be treated with equal weights.
-            mu(1d arraylike of length 1 or None):
-                mu parameter in LASSO regularization penalty term. Form is:
-                L = ||Xw-y||^2 + mu * ||w||
-                If None given, will be optimized.
-                NOTE: You have to give mu as an array or list, because you have to match the form
-                      in super().optimize_mu. Refer to the source for more detail.
-            log_mu_ranges(None|List[(float,float)]):
-                allowed optimization ranges of log(mu). If not provided, will be guessed.
-                But I still highly recommend you to give this based on your experience.
-            log_mu_steps(None|List[int]):
-                Number of steps to search in each log_mu coordinate. Optional, but also
-                recommeneded.
-        Return:
-            Optimized mu, cv score and coefficients.
-            Fitter coefficients storeed in self.coef_.
+        Args:
+            alpha (float):
+                Regularization hyper-parameter.
+            fit_intercept (bool):
+                Whether the intercept should be estimated or not.
+                If False, the data is assumed to be already centered.
+            normalize (bool):
+                This parameter is ignored when fit_intercept is set to False.
+                If True, the regressors X will be normalized before regression
+                by subtracting the mean and dividing by the l2-norm.
+                If you wish to standardize, please use StandardScaler before
+                calling fit on an estimator with normalize=False
+            copy_X (bool):
+                If True, X will be copied; else, it may be overwritten.
+            warm_start (bool):
+                When set to True, reuse the solution of the previous call to
+                fit as initialization, otherwise, just erase the previous
+                solution.
+            solver (str):
+                cvxpy backend solver to use. Supported solvers are:
+                ECOS, ECOS_BB, CVXOPT, SCS, GUROBI, Elemental.
+                GLPK and GLPK_MI (via CVXOPT GLPK interface)
+            **kwargs:
+                Kewyard arguments passed to cvxpy solve.
+                See docs linked above for more information.
         """
-        if isinstance(mu, (int, float)):
-            mu = [float(mu)]
+        self._alpha = cp.Parameter(value=alpha, nonneg=True)
+        super().__init__(fit_intercept=fit_intercept, normalize=normalize,
+                         copy_X=copy_X, warm_start=warm_start, solver=solver,
+                         **kwargs)
 
-        # Always call super().fit because this contains preprocessing of matrix
-        # and vector, such as centering and weighting!
-        if mu is None or len(mu) != 1:
-            mu = super().optimize_mu(feature_matrix, target_vector,
-                                     sample_weight=sample_weight,
-                                     dim_mu=1,
-                                     log_mu_ranges=log_mu_ranges,
-                                     log_mu_steps=log_mu_steps)
-            if mu[0] <= np.power(10, float(log_mu_ranges[0][0])):
-                warnings.warn("Minimun allowed mu taken!")
-            if mu[0] >= np.power(10, float(log_mu_ranges[0][1])):
-                warnings.warn("Maximum allowed mu taken!")
+    @property
+    def alpha(self):
+        return self._alpha.value
 
-        super().fit(feature_matrix, target_vector,
-                    sample_weight=sample_weight,
-                    mu=mu)
-        return mu
+    @alpha.setter
+    def alpha(self, val):
+        self._alpha.value = val
 
-    def _solve(self, feature_matrix, target_vector, mu=[0]):
-        """
-        X and y should already have been adjusted to account for weighting.
-        mu(1D arraylike of length 1 or None):
-           mu parameter in LASSO regularization penalty term. Form is:
-           L = ||Xw-y|| + mu * ||w||
-           If None given, will be optimized.
-           I put mu as the last parameter, because in super().fit it is taken as
-           part of *kwargs.
-        """
-        if mu[0] < 0:
-            raise ValueError("Mu can not be negative!")
-
-        A = feature_matrix.copy()
-        b = target_vector.copy()
-        n = A.shape[0]
-        d = A.shape[1]
-
-        w = cp.Variable((d,))
-        z1 = cp.Variable((d,), pos=True)
-        constraints = [z1 >= w, z1 >= -w]
-        # Hierarchy constraints are not supported by regularization without L0
-
-        # Cost function
-        L = cp.sum_squares(A @ w - b) + mu[0] * cp.sum(z1)
-
-        prob = cp.Problem(cp.Minimize(L), constraints)
-        prob.solve()
-
-        return w.value
+    def _initialize_problem(self, X, y):
+        super()._initialize_problem(X, y)
+        # can also use cp.norm2(X @ self._beta - y)**2 not sure whats better
+        objective = 1 / (2 * X.shape[0]) * cp.sum_squares(X @ self._beta - y) \
+                    + self._alpha * cp.norm1(self._beta)
+        self._problem = cp.Problem(cp.Minimize(objective))
 
 
-class AdaptiveLasso(CVXEstimator):
+class AdaptiveLasso(Lasso):
     """Adaptive Lasso implementation.
 
     Also known as iteratively re-weighted Lasso.
@@ -194,7 +165,7 @@ class AdaptiveLasso(CVXEstimator):
         return self._beta.value
 
 
-class GroupLasso(CVXEstimator):
+class GroupLasso(Lasso):
     """Group Lasso implementation.
 
     Regularized model:
@@ -322,7 +293,7 @@ class SparseGroupLasso(GroupLasso):
         # save exact value so sklearn clone is happy dappy
         self._l1_ratio = l1_ratio
 
-    @CVXEstimator.alpha.setter
+    @Lasso.alpha.setter
     def alpha(self, val):
         self._alpha.value = val
         self._lambda1.value = self.l1_ratio * val

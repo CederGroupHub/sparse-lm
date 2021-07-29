@@ -221,12 +221,10 @@ class CVXEstimator(Estimator, metaclass=ABCMeta):
     https://ajfriendcvxpy.readthedocs.io/en/latest/tutorial/advanced/index.html#solve-method-options
     """
 
-    def __init__(self, alpha=1.0, fit_intercept=False, normalize=False,
+    def __init__(self, fit_intercept=False, normalize=False,
                  copy_X=True, warm_start=False, solver=None, **kwargs):
         """
         Args:
-            alpha (float):
-                Regularization hyper-parameter.
             fit_intercept (bool):
                 Whether the intercept should be estimated or not.
                 If False, the data is assumed to be already centered.
@@ -253,17 +251,8 @@ class CVXEstimator(Estimator, metaclass=ABCMeta):
         self.warm_start = warm_start
         self.solver = solver
         self.solver_opts = kwargs
-        self._alpha = cp.Parameter(value=alpha, nonneg=True)
         self._problem, self._beta, self._X, self._y = None, None, None, None
         super().__init__(fit_intercept, normalize, copy_X)
-
-    @property
-    def alpha(self):
-        return self._alpha.value
-
-    @alpha.setter
-    def alpha(self, val):
-        self._alpha.value = val
 
     @abstractmethod
     def _initialize_problem(self, X, y):
