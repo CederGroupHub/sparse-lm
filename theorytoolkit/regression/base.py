@@ -1,6 +1,5 @@
 """Base classes for in-house linear regression estimators.
 
-__author__ = "Luis Barroso-Luque, Fengyu Xie"
 The classes make use of and follow the scikit-learn API.
 """
 
@@ -156,7 +155,21 @@ class CVXEstimator(Estimator, metaclass=ABCMeta):
         Returns:
             cvpx Expression
         """
-        return
+        return None
+
+    def _gen_constraints(self, X, y):
+        """Generate constraints for optimization problem.
+
+        Args:
+            X (ndarray):
+                Covariate/Feature matrix
+            y (ndarray):
+                Target vector
+
+        Returns:
+            list of cvpx constraints
+        """
+        return None
 
     def _initialize_problem(self, X, y):
         """Initialize cvxpy problem from the generated objective function
@@ -171,7 +184,8 @@ class CVXEstimator(Estimator, metaclass=ABCMeta):
         self._X = X
         self._y = y
         objective = self._gen_objective(X, y)
-        self._problem = cp.Problem(cp.Minimize(objective))
+        constraints = self._gen_constraints(X, y)
+        self._problem = cp.Problem(cp.Minimize(objective), constraints)
 
     def _get_problem(self, X, y):
         """Define and create cvxpy optimization problem"""
