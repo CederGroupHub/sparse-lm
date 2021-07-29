@@ -29,7 +29,7 @@ class Estimator(LinearModel, RegressorMixin, metaclass=ABCMeta):
         fit_intercept : bool, default=True
 
         If you wish to standardize, please use
-        :class:`~sklearn.preprocessing.StandardScaler` before calling ``fit``
+        :class:`sklearn.preprocessing.StandardScaler` before calling ``fit``
         on an estimator with ``normalize=False``.
         Args:
             fit_intercept (bool):
@@ -255,14 +255,36 @@ class CVXEstimator(Estimator, metaclass=ABCMeta):
         super().__init__(fit_intercept, normalize, copy_X)
 
     @abstractmethod
-    def _initialize_problem(self, X, y):
-        """Initialize cvxpy problem represeting regression model.
+    def _gen_objective(self, X, y):
+        """Define the cvxpy objective function represeting regression model.
 
-        Here only the coeficient variable Beta and X, y caching is done.
+        The objective must be stated for a minimization problem.
+
+        Args:
+            X (ndarray):
+                Covariate/Feature matrix
+            y (ndarray):
+                Target vector
+
+        Returns:
+            cvpx Expression
+        """
+        return
+
+    def _initialize_problem(self, X, y):
+        """Initialize cvxpy problem from the generated objective function
+
+        Args:
+            X (ndarray):
+                Covariate/Feature matrix
+            y (ndarray):
+                Target vector
         """
         self._beta = cp.Variable(X.shape[1])
         self._X = X
         self._y = y
+        objective = self._gen_objective(X, y)
+        self._problem = cp.Problem(cp.Minimize(objective))
 
     def _get_problem(self, X, y):
         """Define and create cvxpy optimization problem"""

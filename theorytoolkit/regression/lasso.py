@@ -11,7 +11,6 @@ optimization problem.
 
 __author__ = "Luis Barroso-Luque, Fengyu Xie"
 
-from warnings import warn
 import warnings
 import cvxpy as cp
 import numpy as np
@@ -69,12 +68,11 @@ class Lasso(CVXEstimator):
     def alpha(self, val):
         self._alpha.value = val
 
-    def _initialize_problem(self, X, y):
-        super()._initialize_problem(X, y)
+    def _gen_objective(self, X, y):
         # can also use cp.norm2(X @ self._beta - y)**2 not sure whats better
         objective = 1 / (2 * X.shape[0]) * cp.sum_squares(X @ self._beta - y) \
                     + self._alpha * cp.norm1(self._beta)
-        self._problem = cp.Problem(cp.Minimize(objective))
+        return objective
 
 
 class AdaptiveLasso(Lasso):
@@ -133,13 +131,12 @@ class AdaptiveLasso(Lasso):
         self.eps = eps
         self._weights, self._previous_weights = None, None
 
-    def _initialize_problem(self, X, y):
-        super()._initialize_problem(X, y)
+    def _gen_objective(self, X, y):
         self._weights = cp.Parameter(shape=X.shape[1], nonneg=True,
                                      value=self.alpha * np.ones(X.shape[1]))
         objective = 1 / (2 * X.shape[0]) * cp.sum_squares(X @ self._beta - y) \
             + cp.norm1(cp.multiply(self._weights, self._beta))
-        self._problem = cp.Problem(cp.Minimize(objective))
+        return objective
 
     def _update_weights(self, beta):
         if beta is None and self._problem.value == -np.inf:
@@ -216,13 +213,12 @@ class GroupLasso(Lasso):
                          normalize=normalize, copy_X=copy_X,
                          warm_start=warm_start, solver=solver, **kwargs)
 
-    def _initialize_problem(self, X, y):
-        super()._initialize_problem(X, y)
+    def _gen_objective(self, X, y):
         grp_reg = cp.hstack(
             [cp.norm2(self._beta[mask]) for mask in self.group_masks])
         objective = 1 / (2 * X.shape[0]) * cp.sum_squares(X @ self._beta - y) \
             + self._alpha * (self.sizes @ grp_reg)
-        self._problem = cp.Problem(cp.Minimize(objective))
+        return objective
 
 
 class SparseGroupLasso(GroupLasso):
@@ -280,11 +276,11 @@ class SparseGroupLasso(GroupLasso):
         if not 0 <= l1_ratio <= 1:
             raise ValueError('l1_ratio must be between 0 and 1.')
         elif l1_ratio == 0.0:
-            warn(
+            warnings.warn(
                 'It is more efficient to use GroupLasso directly than '
                 'SparseGroupLasso with l1_ratio=0', UserWarning)
         elif l1_ratio == 1.0:
-            warn(
+            warnings.warn(
                 'It is more efficient to use Lasso directly than '
                 'SparseGroupLasso with l1_ratio=1', UserWarning)
 
@@ -311,14 +307,13 @@ class SparseGroupLasso(GroupLasso):
         self._lambda1.value = val * self.alpha
         self._lambda2.value = (1 - val) * self.alpha
 
-    def _initialize_problem(self, X, y):
-        super()._initialize_problem(X, y)
+    def _gen_objective(self, X, y):
         l1_reg = cp.norm1(self._beta)
         grp_reg = cp.hstack(
             [cp.norm2(self._beta[mask]) for mask in self.group_masks])
         objective = 1 / (2 * X.shape[0]) * cp.sum_squares(X @ self._beta - y) \
             + self._lambda1 * l1_reg + self._lambda2 * (self.sizes @ grp_reg)
-        self._problem = cp.Problem(cp.Minimize(objective))
+        return objective
 
 
 class AdaptiveGroupLasso(AdaptiveLasso, GroupLasso):
@@ -377,15 +372,14 @@ class AdaptiveGroupLasso(AdaptiveLasso, GroupLasso):
                          normalize=normalize, copy_X=copy_X,
                          warm_start=warm_start, solver=solver, **kwargs)
 
-    def _initialize_problem(self, X, y):
-        super()._initialize_problem(X, y)
+    def _gen_objective(self, X, y):
         self._weights = cp.Parameter(shape=len(self.group_masks), nonneg=True,
                                      value=self.alpha * self.sizes)
         grp_reg = self._weights @ cp.hstack(
             [cp.norm2(self._beta[mask]) for mask in self.group_masks])
         objective = 1 / (2 * X.shape[0]) * cp.sum_squares(X @ self._beta - y) \
             + grp_reg
-        self._problem = cp.Problem(cp.Minimize(objective))
+        return objective
 
     def _update_weights(self, beta):
         self._previous_weights = self._weights.value
@@ -457,8 +451,7 @@ class AdaptiveSparseGroupLasso(AdaptiveLasso, SparseGroupLasso):
                          copy_X=copy_X, warm_start=warm_start, solver=solver,
                          **kwargs)
 
-    def _initialize_problem(self, X, y):
-        super()._initialize_problem(X, y)
+    def _gen_objective(self, X, y):
         self._weights = (
             cp.Parameter(shape=X.shape[1], nonneg=True,
                          value=self._lambda1.value * np.ones(X.shape[1])),
@@ -470,7 +463,7 @@ class AdaptiveSparseGroupLasso(AdaptiveLasso, SparseGroupLasso):
             [cp.norm2(self._beta[mask]) for mask in self.group_masks])
         objective = 1 / (2 * X.shape[0]) * cp.sum_squares(X @ self._beta - y) \
             + l1_reg + grp_reg
-        self._problem = cp.Problem(cp.Minimize(objective))
+        return objective
 
     def _update_weights(self, beta):
         self._previous_weights = [self._weights[0].value,
