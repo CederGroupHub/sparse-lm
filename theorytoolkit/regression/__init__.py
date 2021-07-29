@@ -6,7 +6,7 @@ from .l2l0 import L2L0Estimator
 
 from .lasso import GroupLasso, SparseGroupLasso, AdaptiveLasso, \
     AdaptiveGroupLasso, AdaptiveSparseGroupLasso
-from .utils import constrain_dielectric
+from .tools import constrain_dielectric
 
 __all__ = [
     'OrdinaryLeastSquares',
@@ -17,6 +17,5 @@ __all__ = [
     'SparseGroupLasso',
     'AdaptiveLasso',
     'AdaptiveGroupLasso',
-    'AdaptiveSparseGroupLasso',
-    'constrain_dielectric'
+    'AdaptiveSparseGroupLasso'
 ]
