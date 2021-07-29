@@ -174,7 +174,7 @@ def optimize_mu(estimator, feature_matrix, target_vector, *args, sample_weight=N
             #  input this needs to be accounted for in here by updating the
             #  corresponding mu/alpha hyperparameter here before calling
             #  calc_cv
-            
+
             cur_cvs = [calc_cv_score(estimator, feature_matrix, target_vector,
                                      *args, sample_weight=sample_weight,
                                      mu=mu, **kwargs) for mu in cur_mus]
