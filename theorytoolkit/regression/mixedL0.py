@@ -23,9 +23,12 @@ class mixedL0(CVXEstimator, metaclass=ABCMeta):
     Only defines the shared variables...
     """
     def __init__(self, alpha=1.0, l0_ratio=0.5, big_M=100, hierarchy=None,
-                 **kwargs):
+                 fit_intercept=False, normalize=False,
+                 copy_X=True, warm_start=False, solver=None, **kwargs):
         """
         Args:
+            alpha (float):
+                Regularization hyper-parameter.
             l0_ratio (float):
                 Mixing parameter between l1 and l0 regularization.
             big_M (float):
@@ -37,11 +40,32 @@ class mixedL0(CVXEstimator, metaclass=ABCMeta):
                 Each sublist contains indices of other coefficients
                 that depend on the coefficient associated with each element of
                 the list.
+            fit_intercept (bool):
+                Whether the intercept should be estimated or not.
+                If False, the data is assumed to be already centered.
+            normalize (bool):
+                This parameter is ignored when fit_intercept is set to False.
+                If True, the regressors X will be normalized before regression
+                by subtracting the mean and dividing by the l2-norm.
+                If you wish to standardize, please use StandardScaler before
+                calling fit on an estimator with normalize=False
+            copy_X (bool):
+                If True, X will be copied; else, it may be overwritten.
+            warm_start (bool):
+                When set to True, reuse the solution of the previous call to
+                fit as initialization, otherwise, just erase the previous
+                solution.
+            solver (str):
+                cvxpy backend solver to use. Supported solvers are:
+                ECOS, ECOS_BB, CVXOPT, SCS, GUROBI, Elemental.
+                GLPK and GLPK_MI (via CVXOPT GLPK interface)
             **kwargs:
-                Keyword arguments to pass to CVXEstimator base class. See
-                CVXEstimator docstring for more information.
+                Kewyard arguments passed to cvxpy solve.
+                See docs linked above for more information.
         """
-        super().__init__(**kwargs)
+        super().__init__(fit_intercept=fit_intercept, normalize=normalize,
+                         copy_X=copy_X, warm_start=warm_start, solver=solver,
+                         **kwargs)
         
         if not 0 <= l0_ratio <= 1:
             raise ValueError('l0_ratio must be between 0 and 1.')
@@ -109,8 +133,13 @@ class L1L0(mixedL0):
         ||X * Beta - y||^2 + alpha * (1 - l0_ratio) * ||Beta||_0
                            + alpha * l0_ratio * ||Beta||_1
     """
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
+    def __init__(self, alpha=1.0, l0_ratio=0.5, big_M=100, hierarchy=None,
+                 fit_intercept=False, normalize=False,
+                 copy_X=True, warm_start=False, solver=None, **kwargs):
+        super().__init__(alpha=alpha, l0_ratio=l0_ratio, big_M=big_M,
+                         hierarchy=hierarchy, fit_intercept=fit_intercept,
+                         normalize=normalize, copy_X=copy_X,
+                         warm_start=warm_start, solver=solver, **kwargs)
         self._z1 = None
 
     def _gen_constraints(self, X, y):
