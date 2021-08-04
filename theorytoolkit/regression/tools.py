@@ -53,27 +53,27 @@ def constrain_dielectric(max_dielectric, ewald_ind=-1):
     return decorate_fit_method
 
 
-def calc_cv_score(estimator, feature_matrix, target_vector, *args,
-                  sample_weight=None, k=5, **kwargs):
-    """    Args:
-
-
+def calc_cv_score(estimator, X, y, k=5, sample_weight=None, **kwargs):
+    """
     Partition the sample into k partitions, calculate out-of-sample
     variance for each of these partitions, and add them together
 
     Args:
-        estimator: Estimator class with fit and predict methods
-        feature_matrix: feature matrix (scaled appropriately)
-        target_vector: data to fit (scaled appropriately)
-        k: number of partitions
+        estimator: 
+            Estimator class with fit and predict methods
+            feature_matrix: feature matrix (scaled appropriately)
+        k (int):
+            number of partitions, CV fold
+        X (ndarray):
+            feature matrix for fit
+        y (ndarray):
+            data to fit (scaled appropriately)
         **kwargs:
+            key word arguments to pass to estimator solve function.
 
     Returns:
         CV score
     """
-    X = feature_matrix
-    y = target_vector
-
     if sample_weight is None:
         weights = np.ones(len(X))
     else:
@@ -85,25 +85,19 @@ def calc_cv_score(estimator, feature_matrix, target_vector, *args,
     partitions = partitions[:len(y)]
 
     all_cv = []
-    #Compute 3 times and take average
+    # Compute 5 times and take average, why 5?
     for n in range(5):
         ssr = 0
-
         for i in range(k):
             ins = (partitions != i)  # in the sample for this iteration
             oos = (partitions == i)  # out of the sample for this iteration
 
-            # TODO this call needs to be updated to only take X, y
-            #  Other parameters like mu/alpha are set as estimator parameters
-            estimator.fit(X[ins], y[ins],
-                          *args, sample_weight=weights[ins],
-                          **kwargs)
+            estimator.fit(
+                X[ins], y[ins], sample_weight=weights[ins], **kwargs)
             res = (estimator.predict(X[oos]) - y[oos]) ** 2
-
             ssr += np.sum(res * weights[oos]) / np.average(weights[oos])
 
         cv = 1 - ssr / np.sum((y - np.average(y)) ** 2 * weights)
-
         all_cv.append(cv)
 
     return np.average(all_cv)
@@ -124,9 +118,9 @@ def optimize_mu(estimator, feature_matrix, target_vector, *args, sample_weight=N
     Inputs:
         estimator:
             Estimator class with fit and predict methods
-        feature_matrix:
+        X:
             feature matrix (scaled appropriately)
-        target_vector:
+        y:
             data to fit (scaled appropriately)
         dim_mu(int):
             length of arrayLike mu.
