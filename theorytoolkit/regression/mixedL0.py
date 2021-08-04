@@ -144,7 +144,6 @@ class L1L0(mixedL0):
 
     def _gen_constraints(self, X, y):
         """Generate the constraints used to solve l1l0 regularization"""
-
         self._z0 = cp.Variable(X.shape[1], integer=True)
         self._z1 = cp.Variable(X.shape[1], pos=True)
         constraints = [0 <= self._z0,
@@ -159,6 +158,8 @@ class L1L0(mixedL0):
             for sub_id, high_ids in enumerate(self.hierarchy):
                 for high_id in high_ids:
                     constraints.append(self._z0[high_id] <= self._z0[sub_id])
+
+        return constraints
 
     def _gen_objective(self, X, y):
         """Generate the objective function used in l1l0 regression model"""
@@ -192,6 +193,7 @@ class L2L0(mixedL0):
             for sub_id, high_ids in enumerate(self.hierarchy):
                 for high_id in high_ids:
                     constraints.append(self._z0[high_id] <= self._z0[sub_id])
+        return constraints
 
     def _gen_objective(self, X, y):
         """Generate the objective function used in l1l0 regression model"""
