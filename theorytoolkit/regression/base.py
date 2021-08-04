@@ -23,7 +23,8 @@ class Estimator(LinearModel, RegressorMixin, metaclass=ABCMeta):
     Keyword arguments are the same as those found in sklearn linear models.
     """
 
-    def __init__(self, fit_intercept=False, normalize=False, copy_X=True):
+    def __init__(self, fit_intercept: bool = False, normalize: bool = False,
+                 copy_X: bool = True):
         """
         fit_intercept : bool, default=True
 
