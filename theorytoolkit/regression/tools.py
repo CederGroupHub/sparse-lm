@@ -103,17 +103,18 @@ def calc_cv_score(estimator, X, y, k=5, sample_weight=None, **kwargs):
     return np.average(all_cv)
 
 
-def optimize_mu(estimator, feature_matrix, target_vector, *args, sample_weight=None,
-                dim_mu=0, n_iter=2, log_mu_ranges=None, log_mu_steps=None,
-                **kwargs):
+# TODO not sure if this will work for 2 hyperparameters...
+def optimize_alpha(estimator, feature_matrix, target_vector, sample_weight=None,
+                   dim_alpha=0, n_iter=2, log_alpha_ranges=None,
+                   log_alpha_steps=None, **kwargs):
     """
-    If the estimator supports mu parameters, this method provides a quick,
+    If the estimator supports alpha parameters, this method provides a quick,
     coordinate descent method to find the optimal mu for the model, by
     minimizing cv (maximizing cv score).
-    Any mu should be defined as a 1 dimensional array of length dim_mu, and the
-    optimized log_mu's are constrained within log_mu_ranges.
-    The optimization will always start from the last dimension of mu, so in
-    L0L1 or L0L2, make sure that the last mu is your mu_1 or mu_2.
+    Any alpha should be defined as a 1 dimensional array of length dim_alpha,
+    and the optimized log_alphas's are constrained within log_alpha_ranges.
+    The optimization will always start from the last dimension of alpha, so in
+    L0L1 or L0L2, make sure that the last alpha is your alpha_1 or alpha_2.
 
     Inputs:
         estimator:
@@ -122,60 +123,64 @@ def optimize_mu(estimator, feature_matrix, target_vector, *args, sample_weight=N
             feature matrix (scaled appropriately)
         y:
             data to fit (scaled appropriately)
-        dim_mu(int):
-            length of arrayLike mu.
+        dim_alpha(int):
+            length of arrayLike alpha.
         n_iter(int):
             number of coordinate descent iterations to do. By default, will do 3
             iterations.
-        log_mu_ranges(None|List[(float,float)]):
+        log_alpha_ranges(None|List[(float,float)]):
             allowed optimization ranges of log(mu). If not provided, will be guessed.
             But I still highly recommend you to give this based on your experience.
-        log_mu_steps(None|List[int]):
+        log_alpha_steps(None|List[int]):
             Number of steps to search in each log_mu coordinate. If not given,
             Will set to 11 for each log_mu coordinate.
     Outputs:
         optimal mu as a 1D np.array, and optimal cv score
     """
-    if dim_mu==0:
+    if dim_alpha==0:
         #No optimization needed.
         return None
-    if log_mu_ranges is not None and len(log_mu_ranges)!=dim_mu:
-        raise ValueError('Length of log(mu) search ranges does not match number of mus!')
-    if log_mu_steps is not None and len(log_mu_steps)!=dim_mu:
-        raise ValueError('Length of log(mu) search steps does not match number of mus!')
-    if log_mu_ranges is None:
-        log_mu_ranges = [(-5,5) for i in range(dim_mu)]
-    if log_mu_steps is None:
-        log_mu_steps = [11 for i in range(dim_mu)]
+    if log_alpha_ranges is not None and len(log_alpha_ranges)!=dim_alpha:
+        raise ValueError(
+            'Length of log(mu) search ranges does not match number of mus!')
+    if log_alpha_steps is not None and len(log_alpha_steps)!=dim_alpha:
+        raise ValueError(
+            'Length of log(mu) search steps does not match number of mus!')
+    if log_alpha_ranges is None:
+        log_alpha_ranges = [(-5, 5) for i in range(dim_alpha)]
+    if log_alpha_steps is None:
+        log_alpha_steps = [11 for i in range(dim_alpha)]
 
-    log_widths = np.array([ub-lb for ub,lb in log_mu_ranges],dtype=np.float64)
-    log_centers = np.array([(ub+lb)/2 for ub,lb in log_mu_ranges],dtype=np.float64)
+    log_widths = np.array(
+        [ub - lb for ub, lb in log_alpha_ranges], dtype=np.float64)
+    log_centers = np.array(
+        [(ub+lb) / 2 for ub, lb in log_alpha_ranges], dtype=np.float64)
     #cvs_opt = 0
 
     for it in range(n_iter):
-        for d in range(dim_mu):
+        for d in range(dim_alpha):
 
             lb = log_centers[-d]-log_widths[-d]/2
             ub = log_centers[-d]+log_widths[-d]/2
-            s = log_mu_steps[-d]
+            s = log_alpha_steps[-d]
 
             #print("Current log centers:",log_centers)
 
-            cur_mus = np.power(10, [log_centers for i in range(s)])
-            cur_mus[:,-d] = np.power(
+            cur_alphas = np.power(10, [log_centers for _ in range(s)])
+            cur_alphas[:, -d] = np.power(
                 10, np.linspace(lb, ub, s, dtype=np.float64))
-            # TODO since the estimator.fit does not take hyperparameters as
-            #  input this needs to be accounted for in here by updating the
-            #  corresponding mu/alpha hyperparameter here before calling
-            #  calc_cv
 
-            cur_cvs = [calc_cv_score(estimator, feature_matrix, target_vector,
-                                     *args, sample_weight=sample_weight,
-                                     mu=mu, **kwargs) for mu in cur_mus]
+            cur_cvs = []
+            for alpha in cur_alphas:
+                estimator.alpha = alpha
+                cur_cvs.append(
+                    calc_cv_score(estimator, feature_matrix, target_vector,
+                                  sample_weight=sample_weight, **kwargs))
+
             i_max = np.nanargmax(cur_cvs)
             #cvs_opt = cur_cvs[i_max]
             #Update search conditions
-            log_centers[-d] = np.linspace(lb,ub,s)[i_max]
+            log_centers[-d] = np.linspace(lb, ub, s)[i_max]
             #For each iteration, shrink window by 4
             log_widths[-d] = log_widths[-d]/4
 
