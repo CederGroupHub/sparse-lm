@@ -175,7 +175,7 @@ class GroupLasso(Lasso):
 
     Regularized model:
         || X * Beta - y ||^2_2 + alpha * \sum_{G} w_G * ||Beta_G||_2
-    Where G represents groups of features/coeficients
+    Where G represents groups of features/coefficients
     """
 
     # TODO set groups by list of indices to allow overlap
@@ -228,10 +228,9 @@ class GroupLasso(Lasso):
                 raise ValueError(
                     'group_weights must be the same length as the number of '
                     f'groups:  {len(group_weights)} != {len(self.group_masks)}')
-            self.group_weights = np.array(group_weights)
-        else:
-            self.group_weights = np.sqrt(
-                [sum(mask) for mask in self.group_masks])
+        self.group_weights = group_weights if group_weights is not None else \
+            np.sqrt([sum(mask) for mask in self.group_masks])
+
         super().__init__(alpha=alpha, fit_intercept=fit_intercept,
                          normalize=normalize, copy_X=copy_X,
                          warm_start=warm_start, solver=solver, **kwargs)
@@ -384,7 +383,7 @@ class AdaptiveGroupLasso(AdaptiveLasso, GroupLasso):
             update_function (Callable): optional
                 A function with signature f(group_norms, eps) used to update the
                 weights at each iteration. Where group_norms are the norms of
-                the coeficients Beta for each group.
+                the coefficients Beta for each group.
                 Default is 1/(group_norms + eps)
             fit_intercept (bool):
                 Whether the intercept should be estimated or not.
@@ -477,7 +476,7 @@ class AdaptiveSparseGroupLasso(AdaptiveLasso, SparseGroupLasso):
             update_function (Callable): optional
                 A function with signature f(group_norms, eps) used to update the
                 weights at each iteration. Where group_norms are the norms of
-                the coeficients Beta for each group.
+                the coefficients Beta for each group.
                 Default is 1/(group_norms + eps)
             fit_intercept (bool):
                 Whether the intercept should be estimated or not.
