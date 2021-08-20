@@ -84,10 +84,9 @@ class AdaptiveLasso(Lasso):
     Where w represents a vector of weights that is iteratively updated.
     """
 
-    # TODO allow different weight updates
     def __init__(self, alpha=1.0, max_iter=5, eps=1E-6, tol=1E-10,
-                 fit_intercept=False, normalize=False, copy_X=True,
-                 warm_start=False, solver=None, **kwargs):
+                 update_function=None, fit_intercept=False, normalize=False,
+                 copy_X=True, warm_start=False, solver=None, **kwargs):
         """Initialize estimator.
 
         Args:
@@ -100,6 +99,9 @@ class AdaptiveLasso(Lasso):
             tol (float):
                 Absolute convergence tolerance for difference between weights
                 at successive steps.
+            update_function (Callable): optional
+                A function with signature f(beta, eps) used to update the
+                weights at each iteration. Default is 1/(|beta| + eps)
             fit_intercept (bool):
                 Whether the intercept should be estimated or not.
                 If False, the data is assumed to be already centered.
@@ -131,6 +133,11 @@ class AdaptiveLasso(Lasso):
         self.eps = eps
         self._weights, self._previous_weights = None, None
 
+        if update_function is None:
+            self.update_function = lambda beta, eps: 1.0 / (abs(beta) + eps)
+        else:
+            self.update_function = update_function
+
     def _gen_objective(self, X, y):
         self._weights = cp.Parameter(shape=X.shape[1], nonneg=True,
                                      value=self.alpha * np.ones(X.shape[1]))
@@ -143,7 +150,8 @@ class AdaptiveLasso(Lasso):
             raise RuntimeError(
                 f"{self._problem} is infeasible.")
         self._previous_weights = self._weights.value
-        self._weights.value = self.alpha / (abs(beta) + self.eps)
+        self._weights.value = self.alpha * self.update_function(abs(beta),
+                                                                self.eps)
 
     def _weights_converged(self):
         return np.linalg.norm(
@@ -179,7 +187,7 @@ class GroupLasso(Lasso):
         Args:
             groups (list or ndarray):
                 array-like of integers specifying groups. Length should be the
-                same as model, where each integer entry specefies the group
+                same as model, where each integer entry specifies the group
                 each parameter corresponds to.
             alpha (float):
                 Regularization hyper-parameter.
@@ -243,7 +251,7 @@ class SparseGroupLasso(GroupLasso):
         || X * Beta - y ||^2_2
             + alpha * l1_ratio * ||Beta||_1
             + alpha * (1 - l1_ratio) * \sum_{G}||Beta_G||_2
-    Where G represents groups of features/coeficients
+    Where G represents groups of features / coefficients
     """
 
     def __init__(self, groups, l1_ratio=0.5, alpha=1.0, group_weights=None,
@@ -254,7 +262,7 @@ class SparseGroupLasso(GroupLasso):
         Args:
             groups (list or ndarray):
                 array-like of integers specifying groups. Length should be the
-                same as model, where each integer entry specefies the group
+                same as model, where each integer entry specifies the group
                 each parameter corresponds to.
             l1_ratio (float):
                 Mixing parameter between l1 and group lasso regularization.
@@ -348,14 +356,15 @@ class AdaptiveGroupLasso(AdaptiveLasso, GroupLasso):
     Where w represents a vector of weights that is iteratively updated.
     """
     def __init__(self, groups, alpha=1.0, group_weights=None, max_iter=5,
-                 eps=1E-6, tol=1E-10, fit_intercept=False, normalize=False,
-                 copy_X=True, warm_start=False, solver=None, **kwargs):
+                 eps=1E-6, tol=1E-10, update_function=None,
+                 fit_intercept=False, normalize=False, copy_X=True,
+                 warm_start=False, solver=None, **kwargs):
         """Initialize estimator.
 
         Args:
             groups (list or ndarray):
                 array-like of integers specifying groups. Length should be the
-                same as model, where each integer entry specefies the group
+                same as model, where each integer entry specifies the group
                 each parameter corresponds to.
             alpha (float):
                 Regularization hyper-parameter.
@@ -372,6 +381,11 @@ class AdaptiveGroupLasso(AdaptiveLasso, GroupLasso):
             tol (float):
                 Absolute convergence tolerance for difference between weights
                 at successive steps.
+            update_function (Callable): optional
+                A function with signature f(group_norms, eps) used to update the
+                weights at each iteration. Where group_norms are the norms of
+                the coeficients Beta for each group.
+                Default is 1/(group_norms + eps)
             fit_intercept (bool):
                 Whether the intercept should be estimated or not.
                 If False, the data is assumed to be already centered.
@@ -398,7 +412,8 @@ class AdaptiveGroupLasso(AdaptiveLasso, GroupLasso):
         # call with keywords to avoid MRO issues
         super().__init__(groups=groups, alpha=alpha,
                          group_weights=group_weights, max_iter=max_iter,
-                         eps=eps, tol=tol, fit_intercept=fit_intercept,
+                         eps=eps, tol=tol, update_function=update_function,
+                         fit_intercept=fit_intercept,
                          normalize=normalize, copy_X=copy_X,
                          warm_start=warm_start, solver=solver, **kwargs)
 
@@ -415,7 +430,8 @@ class AdaptiveGroupLasso(AdaptiveLasso, GroupLasso):
         self._previous_weights = self._weights.value
         group_norms = np.array(
             [np.linalg.norm(beta[mask]) for mask in self.group_masks])
-        self._weights.value = (self.alpha * self.group_weights) / (group_norms + self.eps)
+        self._weights.value = (self.alpha * self.group_weights) * \
+            self.update_function(group_norms, self.eps)
 
 
 # TODO allow adaptive weights on lasso/group/both
@@ -431,15 +447,15 @@ class AdaptiveSparseGroupLasso(AdaptiveLasso, SparseGroupLasso):
     """
 
     def __init__(self, groups,  l1_ratio=0.5, alpha=1.0, group_weights=None,
-                 max_iter=5, eps=1E-6, tol=1E-10, fit_intercept=False,
-                 normalize=False, copy_X=True, warm_start=False, solver=None,
-                 **kwargs):
+                 max_iter=5, eps=1E-6, tol=1E-10, update_function=None,
+                 fit_intercept=False, normalize=False, copy_X=True,
+                 warm_start=False, solver=None, **kwargs):
         """Initialize estimator.
 
         Args:
             groups (list or ndarray):
                 array-like of integers specifying groups. Length should be the
-                same as model, where each integer entry specefies the group
+                same as model, where each integer entry specifies the group
                 each parameter corresponds to.
             l1_ratio (float):
                 Mixing parameter between l1 and group lasso regularization.
@@ -458,6 +474,11 @@ class AdaptiveSparseGroupLasso(AdaptiveLasso, SparseGroupLasso):
             tol (float):
                 Absolute convergence tolerance for difference between weights
                 at successive steps.
+            update_function (Callable): optional
+                A function with signature f(group_norms, eps) used to update the
+                weights at each iteration. Where group_norms are the norms of
+                the coeficients Beta for each group.
+                Default is 1/(group_norms + eps)
             fit_intercept (bool):
                 Whether the intercept should be estimated or not.
                 If False, the data is assumed to be already centered.
@@ -485,6 +506,7 @@ class AdaptiveSparseGroupLasso(AdaptiveLasso, SparseGroupLasso):
         super().__init__(groups=groups, l1_ratio=l1_ratio, alpha=alpha,
                          group_weights=group_weights,
                          max_iter=max_iter, eps=eps, tol=tol,
+                         update_function=update_function,
                          fit_intercept=fit_intercept, normalize=normalize,
                          copy_X=copy_X, warm_start=warm_start, solver=solver,
                          **kwargs)
@@ -509,7 +531,8 @@ class AdaptiveSparseGroupLasso(AdaptiveLasso, SparseGroupLasso):
         self._weights[0].value = self._lambda1.value / (abs(beta) + self.eps)
         group_norms = np.array(
             [np.linalg.norm(beta[mask]) for mask in self.group_masks])
-        self._weights[1].value = (self._lambda2.value * self.group_weights) / (group_norms + self.eps)
+        self._weights[1].value = (self._lambda2.value * self.group_weights) * \
+            self.update_function(group_norms, self.eps)
 
     def _weights_converged(self):
         l1_converged = np.linalg.norm(
