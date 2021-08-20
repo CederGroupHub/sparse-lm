@@ -166,14 +166,14 @@ class GroupLasso(Lasso):
     """Group Lasso implementation.
 
     Regularized model:
-        || X * Beta - y ||^2_2 + alpha * \sum_{G}||Beta_G||_2
+        || X * Beta - y ||^2_2 + alpha * \sum_{G} w_G * ||Beta_G||_2
     Where G represents groups of features/coeficients
     """
 
-    # TODO set weights by sizes, inverse sizes etc here
     # TODO set groups by list of indices to allow overlap
-    def __init__(self, groups, alpha=1.0, fit_intercept=False, normalize=False,
-                 copy_X=True, warm_start=False, solver=None, **kwargs):
+    def __init__(self, groups, alpha=1.0, group_weights=None,
+                 fit_intercept=False, normalize=False, copy_X=True,
+                 warm_start=False, solver=None, **kwargs):
         """Initialize estimator.
 
         Args:
@@ -186,6 +186,12 @@ class GroupLasso(Lasso):
             fit_intercept (bool):
                 Whether the intercept should be estimated or not.
                 If False, the data is assumed to be already centered.
+            group_weights (ndarray): optional
+                Weights for each group to use in the regularization term.
+                The default is to use the sqrt of the group sizes, however any
+                weight can be specified. The array must be the
+                same length as the groups given. If you need all groups
+                weighted equally just pass an array of ones.
             normalize (bool):
                 This parameter is ignored when fit_intercept is set to False.
                 If True, the regressors X will be normalized before regression
@@ -208,7 +214,16 @@ class GroupLasso(Lasso):
         """
         self.groups = np.asarray(groups)
         self.group_masks = [self.groups == i for i in np.unique(groups)]
-        self.sizes = np.sqrt([sum(mask) for mask in self.group_masks])
+
+        if group_weights is not None:
+            if len(group_weights) != len(self.group_masks):
+                raise ValueError(
+                    'group_weights must be the same length as the number of '
+                    f'groups:  {len(group_weights)} != {len(self.group_masks)}')
+            self.group_weights = np.array(group_weights)
+        else:
+            self.group_weights = np.sqrt(
+                [sum(mask) for mask in self.group_masks])
         super().__init__(alpha=alpha, fit_intercept=fit_intercept,
                          normalize=normalize, copy_X=copy_X,
                          warm_start=warm_start, solver=solver, **kwargs)
@@ -217,7 +232,7 @@ class GroupLasso(Lasso):
         grp_reg = cp.hstack(
             [cp.norm2(self._beta[mask]) for mask in self.group_masks])
         objective = 1 / (2 * X.shape[0]) * cp.sum_squares(X @ self._beta - y) \
-            + self._alpha * (self.sizes @ grp_reg)
+            + self._alpha * (self.group_weights @ grp_reg)
         return objective
 
 
@@ -231,9 +246,9 @@ class SparseGroupLasso(GroupLasso):
     Where G represents groups of features/coeficients
     """
 
-    def __init__(self, groups, l1_ratio=0.5, alpha=1.0, fit_intercept=False,
-                 normalize=False, copy_X=True, warm_start=False, solver=None,
-                 **kwargs):
+    def __init__(self, groups, l1_ratio=0.5, alpha=1.0, group_weights=None,
+                 fit_intercept=False, normalize=False, copy_X=True,
+                 warm_start=False, solver=None, **kwargs):
         """Initialize estimator.
 
         Args:
@@ -245,6 +260,12 @@ class SparseGroupLasso(GroupLasso):
                 Mixing parameter between l1 and group lasso regularization.
             alpha (float):
                 Regularization hyper-parameter.
+            group_weights (ndarray): optional
+                Weights for each group to use in the regularization term.
+                The default is to use the sqrt of the group sizes, however any
+                weight can be specified. The array must be the
+                same length as the groups given. If you need all groups
+                weighted equally just pass an array of ones.
             fit_intercept (bool):
                 Whether the intercept should be estimated or not.
                 If False, the data is assumed to be already centered.
@@ -269,6 +290,7 @@ class SparseGroupLasso(GroupLasso):
                 See docs linked in CVXEstimator base class for more info.
         """
         super().__init__(groups=groups, alpha=alpha,
+                         group_weights=group_weights,
                          fit_intercept=fit_intercept,
                          normalize=normalize, copy_X=copy_X,
                          warm_start=warm_start, solver=solver, **kwargs)
@@ -312,7 +334,8 @@ class SparseGroupLasso(GroupLasso):
         grp_reg = cp.hstack(
             [cp.norm2(self._beta[mask]) for mask in self.group_masks])
         objective = 1 / (2 * X.shape[0]) * cp.sum_squares(X @ self._beta - y) \
-            + self._lambda1 * l1_reg + self._lambda2 * (self.sizes @ grp_reg)
+            + self._lambda1 * l1_reg \
+            + self._lambda2 * (self.group_weights @ grp_reg)
         return objective
 
 
@@ -324,9 +347,9 @@ class AdaptiveGroupLasso(AdaptiveLasso, GroupLasso):
 
     Where w represents a vector of weights that is iteratively updated.
     """
-    def __init__(self, groups, alpha=1.0, max_iter=5, eps=1E-6, tol=1E-10,
-                 fit_intercept=False, normalize=False, copy_X=True,
-                 warm_start=False, solver=None, **kwargs):
+    def __init__(self, groups, alpha=1.0, group_weights=None, max_iter=5,
+                 eps=1E-6, tol=1E-10, fit_intercept=False, normalize=False,
+                 copy_X=True, warm_start=False, solver=None, **kwargs):
         """Initialize estimator.
 
         Args:
@@ -336,7 +359,13 @@ class AdaptiveGroupLasso(AdaptiveLasso, GroupLasso):
                 each parameter corresponds to.
             alpha (float):
                 Regularization hyper-parameter.
-             max_iter (int):
+            group_weights (ndarray): optional
+                Weights for each group to use in the regularization term.
+                The default is to use the sqrt of the group sizes, however any
+                weight can be specified. The array must be the
+                same length as the groups given. If you need all groups
+                weighted equally just pass an array of ones.
+            max_iter (int):
                 Maximum number of re-weighting iteration steps.
             eps (float):
                 Value to add to denominatar of weights.
@@ -367,14 +396,15 @@ class AdaptiveGroupLasso(AdaptiveLasso, GroupLasso):
                 See docs linked in CVXEstimator base class for more info.
         """
         # call with keywords to avoid MRO issues
-        super().__init__(groups=groups, alpha=alpha, max_iter=max_iter,
+        super().__init__(groups=groups, alpha=alpha,
+                         group_weights=group_weights, max_iter=max_iter,
                          eps=eps, tol=tol, fit_intercept=fit_intercept,
                          normalize=normalize, copy_X=copy_X,
                          warm_start=warm_start, solver=solver, **kwargs)
 
     def _gen_objective(self, X, y):
         self._weights = cp.Parameter(shape=len(self.group_masks), nonneg=True,
-                                     value=self.alpha * self.sizes)
+                                     value=self.alpha * self.group_weights)
         grp_reg = self._weights @ cp.hstack(
             [cp.norm2(self._beta[mask]) for mask in self.group_masks])
         objective = 1 / (2 * X.shape[0]) * cp.sum_squares(X @ self._beta - y) \
@@ -385,7 +415,7 @@ class AdaptiveGroupLasso(AdaptiveLasso, GroupLasso):
         self._previous_weights = self._weights.value
         group_norms = np.array(
             [np.linalg.norm(beta[mask]) for mask in self.group_masks])
-        self._weights.value = (self.alpha * self.sizes) / (group_norms + self.eps)
+        self._weights.value = (self.alpha * self.group_weights) / (group_norms + self.eps)
 
 
 # TODO allow adaptive weights on lasso/group/both
@@ -400,9 +430,10 @@ class AdaptiveSparseGroupLasso(AdaptiveLasso, SparseGroupLasso):
     Where w1, w2 represent vectors of weights that is iteratively updated.
     """
 
-    def __init__(self, groups,  l1_ratio=0.5, alpha=1.0, max_iter=5, eps=1E-6,
-                 tol=1E-10, fit_intercept=False, normalize=False, copy_X=True,
-                 warm_start=False, solver=None, **kwargs):
+    def __init__(self, groups,  l1_ratio=0.5, alpha=1.0, group_weights=None,
+                 max_iter=5, eps=1E-6, tol=1E-10, fit_intercept=False,
+                 normalize=False, copy_X=True, warm_start=False, solver=None,
+                 **kwargs):
         """Initialize estimator.
 
         Args:
@@ -414,7 +445,13 @@ class AdaptiveSparseGroupLasso(AdaptiveLasso, SparseGroupLasso):
                 Mixing parameter between l1 and group lasso regularization.
             alpha (float):
                 Regularization hyper-parameter.
-             max_iter (int):
+            group_weights (ndarray): optional
+                Weights for each group to use in the regularization term.
+                The default is to use the sqrt of the group sizes, however any
+                weight can be specified. The array must be the
+                same length as the groups given. If you need all groups
+                weighted equally just pass an array of ones.
+            max_iter (int):
                 Maximum number of re-weighting iteration steps.
             eps (float):
                 Value to add to denominatar of weights.
@@ -446,6 +483,7 @@ class AdaptiveSparseGroupLasso(AdaptiveLasso, SparseGroupLasso):
         """
         # call with keywords to avoid MRO issues
         super().__init__(groups=groups, l1_ratio=l1_ratio, alpha=alpha,
+                         group_weights=group_weights,
                          max_iter=max_iter, eps=eps, tol=tol,
                          fit_intercept=fit_intercept, normalize=normalize,
                          copy_X=copy_X, warm_start=warm_start, solver=solver,
@@ -456,7 +494,7 @@ class AdaptiveSparseGroupLasso(AdaptiveLasso, SparseGroupLasso):
             cp.Parameter(shape=X.shape[1], nonneg=True,
                          value=self._lambda1.value * np.ones(X.shape[1])),
             cp.Parameter(shape=len(self.group_masks), nonneg=True,
-                         value=self._lambda2.value * self.sizes),
+                         value=self._lambda2.value * self.group_weights),
             )
         l1_reg = cp.norm1(cp.multiply(self._weights[0], self._beta))
         grp_reg = self._weights[1] @ cp.hstack(
@@ -471,7 +509,7 @@ class AdaptiveSparseGroupLasso(AdaptiveLasso, SparseGroupLasso):
         self._weights[0].value = self._lambda1.value / (abs(beta) + self.eps)
         group_norms = np.array(
             [np.linalg.norm(beta[mask]) for mask in self.group_masks])
-        self._weights[1].value = (self._lambda2.value * self.sizes) / (group_norms + self.eps)
+        self._weights[1].value = (self._lambda2.value * self.group_weights) / (group_norms + self.eps)
 
     def _weights_converged(self):
         l1_converged = np.linalg.norm(
