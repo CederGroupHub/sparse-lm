@@ -252,13 +252,13 @@ class OverlapGroupLasso(GroupLasso):
     are acceptable. Meaning a coefficients can be in more than one group.
     """
 
-    def __init__(self, groups, alpha=1.0, group_weights=None,
+    def __init__(self, group_list, alpha=1.0, group_weights=None,
                  fit_intercept=False, normalize=False, copy_X=True,
                  warm_start=False, solver=None, **kwargs):
         """Initialize estimator.
 
         Args:
-            groups (list of lists):
+            group_list (list of lists):
                 list of lists of integers specifying groups. The length of the
                 list holding lists should be the same as model. Each inner list
                 has integers specifying the groups the coefficient for that
@@ -298,10 +298,10 @@ class OverlapGroupLasso(GroupLasso):
                 Kewyard arguments passed to cvxpy solve.
                 See docs linked in CVXEstimator base class for more info.
         """
-        self.overlap_groups = groups
-        self.group_ids = np.unique([gid for grp in groups for gid in grp])
+        self.group_list = group_list
+        self.group_ids = np.unique([gid for grp in group_list for gid in grp])
         self.group_ids.sort()
-        beta_indices = [[i for i, grp in enumerate(groups) if grp_id in grp]
+        beta_indices = [[i for i, grp in enumerate(group_list) if grp_id in grp]
                         for grp_id in self.group_ids]
         extended_groups = np.concatenate(
             [len(g) * [i, ] for i, g in enumerate(beta_indices)])
