@@ -1,8 +1,9 @@
 __author__ = "Peichen Zhong"
 
 
-import numpy
+import numpy as np
 from gurobipy import *
+
 
 def l0l1_diretct_optimize(A, f, mu0, mu1, M=1000.0, cutoff=300):
     """

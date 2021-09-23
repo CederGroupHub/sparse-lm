@@ -71,7 +71,7 @@ class mixedL0(CVXEstimator, metaclass=ABCMeta):
             raise ValueError('l0_ratio must be between 0 and 1.')
         elif l0_ratio == 0.0:
             warnings.warn(
-                'It is more efficient to use Lasso instead of l0_ratio=1',
+                "It's more efficient to use Ridge/Lasso instead of l0_ratio=0",
                 UserWarning)
 
         self.hierarchy = hierarchy
@@ -144,11 +144,9 @@ class L1L0(mixedL0):
 
     def _gen_constraints(self, X, y):
         """Generate the constraints used to solve l1l0 regularization"""
-        self._z0 = cp.Variable(X.shape[1], integer=True)
+        self._z0 = cp.Variable(X.shape[1], boolean=True)
         self._z1 = cp.Variable(X.shape[1], pos=True)
-        constraints = [0 <= self._z0,
-                       self._z0 <= 1,
-                       self._big_M * self._z0 >= self._beta,
+        constraints = [self._big_M * self._z0 >= self._beta,
                        self._big_M * self._z0 >= -self._beta,
                        self._z1 >= self._beta,
                        self._z1 >= -self._beta]
@@ -182,10 +180,8 @@ class L2L0(mixedL0):
     def _gen_constraints(self, X, y):
         """Generate the constraints used to solve l1l2 regularization"""
 
-        self._z0 = cp.Variable(X.shape[1], integer=True)
-        constraints = [0 <= self._z0,
-                       self._z0 <= 1,
-                       self._big_M * self._z0 >= self._beta,
+        self._z0 = cp.Variable(X.shape[1], boolean=True)
+        constraints = [self._big_M * self._z0 >= self._beta,
                        self._big_M * self._z0 >= -self._beta]
 
         # Hierarchy constraints.
