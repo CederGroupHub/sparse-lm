@@ -1,14 +1,16 @@
-""" L1L0 regularization least square solver. """
+"""MIQP based solvers for sparse solutions with hierarchical constraints
 
-__author__ = "Fengyu Xie, Luis Barroso-Luque"
+Mixed L1L0 and L2L0 solvers.
+L1L0 proposed by Wenxuan Huang: https://arxiv.org/abs/1807.10753
+L2L0 proposed by Peichen Zhong
+
+Hierarchical constraints are optional.
+"""
+
+__author__ = "Luis Barroso-Luque, Fengyu Xie"
 
 # TODO s
-#  Should be check the solver that is chosen and raise a warning?
-#  Is it better to normalize by problem size here 1/(2*X.shape[0])?
-#  I changed user input to use hyperparameters alpha and l0_ratio to better match
-#    other estimator signatures...
-#  I removed the timeouts, are those necessary? or just add to docstrings so users know
-#  Are these actually correctly implemented!?!?
+#  L1L0 is weird, results seem to be independent of the hyperparameter values
 
 
 import warnings
@@ -18,11 +20,11 @@ from .base import CVXEstimator
 
 
 class mixedL0(CVXEstimator, metaclass=ABCMeta):
-    """Abstract base class for mixed L0 regularization models: L1L0
+    """Abstract base class for mixed L0 regularization models: L1L0 and L2L0
     
     Only defines the shared variables...
     """
-    def __init__(self, alpha=1.0, l0_ratio=0.5, big_M=100, hierarchy=None,
+    def __init__(self, alpha=1.0, l0_ratio=0.5, big_M=1000, hierarchy=None,
                  fit_intercept=False, normalize=False,
                  copy_X=True, warm_start=False, solver=None, **kwargs):
         """
@@ -134,14 +136,15 @@ class L1L0(mixedL0):
     automatically pulled up by cvxpy, and has to be explicitly called
     passed in the constructor with solver='ECOS_BB'.
 
-    Installation of Gurobi is no longer a must, but highly recommended,
-    since ECOS_BB can be very slow. You may also choose CPLEX, etc.
+    Installation of Gurobi is no longer a must, but highly recommended.
+    You can get a free academic gurobi license...
+    ECOS_BB also works but can be very slow.
 
     Regularized model is:
         ||X * Beta - y||^2 + alpha * (1 - l0_ratio) * ||Beta||_0
                            + alpha * l0_ratio * ||Beta||_1
     """
-    def __init__(self, alpha=1.0, l0_ratio=0.5, big_M=100, hierarchy=None,
+    def __init__(self, alpha=1.0, l0_ratio=0.5, big_M=1000, hierarchy=None,
                  fit_intercept=False, normalize=False,
                  copy_X=True, warm_start=False, solver=None, **kwargs):
         """
@@ -195,9 +198,9 @@ class L1L0(mixedL0):
         self._z0 = cp.Variable(X.shape[1], boolean=True)
         self._z1 = cp.Variable(X.shape[1], pos=True)
         constraints = [self._big_M * self._z0 >= self._beta,
-                       self._big_M * self._z0 >= -self._beta,
+                       self._big_M * self._z0 >= -1.0 * self._beta,
                        self._z1 >= self._beta,
-                       self._z1 >= -self._beta]
+                       self._z1 >= -1.0 * self._beta]
         # Hierarchy constraints.
         if self.hierarchy is not None:
             constraints += self._gen_hierarchy_constraints()
@@ -234,7 +237,7 @@ class L2L0(mixedL0):
         return constraints
 
     def _gen_objective(self, X, y):
-        """Generate the objective function used in l1l0 regression model"""
+        """Generate the objective function used in l2l0 regression model"""
         
         objective = 1 / (2 * X.shape[0]) * cp.sum_squares(X @ self._beta - y) \
             + self._lambda0 * cp.sum(self._z0) \
