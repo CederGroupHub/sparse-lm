@@ -3,31 +3,33 @@
 The classes make use of and follow the scikit-learn API.
 """
 
+__author__ = "Luis Barroso-Luque, Fengyu Xie"
+
 from abc import ABCMeta, abstractmethod
 import numpy as np
+import cvxpy as cp
 from sklearn.base import RegressorMixin
 from sklearn.linear_model._base import LinearModel
 from sklearn.linear_model._base import  _rescale_data, _check_sample_weight
-
-__author__ = "Luis Barroso-Luque"
 
 
 class Estimator(LinearModel, RegressorMixin, metaclass=ABCMeta):
     """
     Simple abstract estimator class based on sklearn linear model api to use
     different 'in-house'  solvers to fit a linear model. This should be used to
-    create specific estimator classes by inheriting. New classes simple need to
+    create specific estimator classes by inheriting. New classes simply need to
     implement the _solve method to solve for the regression model coefficients.
 
     Keyword arguments are the same as those found in sklearn linear models.
     """
 
-    def __init__(self, fit_intercept=False, normalize=False, copy_X=True):
+    def __init__(self, fit_intercept: bool = False, normalize: bool = False,
+                 copy_X: bool = True):
         """
         fit_intercept : bool, default=True
 
         If you wish to standardize, please use
-        :class:`~sklearn.preprocessing.StandardScaler` before calling ``fit``
+        :class:`sklearn.preprocessing.StandardScaler` before calling ``fit``
         on an estimator with ``normalize=False``.
         Args:
             fit_intercept (bool):
@@ -105,9 +107,9 @@ class CVXEstimator(Estimator, metaclass=ABCMeta):
     See documentation for more:
     https://ajfriendcvxpy.readthedocs.io/en/latest/tutorial/advanced/index.html#solve-method-options
     """
-    
-    def __init__(self, fit_intercept=False, normalize=False, copy_X=True,
-                 warm_start=False, solver=None, **kwargs):
+
+    def __init__(self, fit_intercept=False, normalize=False,
+                 copy_X=True, warm_start=False, solver=None, **kwargs):
         """
         Args:
             fit_intercept (bool):
@@ -140,20 +142,63 @@ class CVXEstimator(Estimator, metaclass=ABCMeta):
         super().__init__(fit_intercept, normalize, copy_X)
 
     @abstractmethod
-    def _initialize_problem(self, X, y, *args, **kwargs):
-        return
+    def _gen_objective(self, X, y):
+        """Define the cvxpy objective function represeting regression model.
 
-    def _get_problem(self, X, y, *args, **kwargs):
+        The objective must be stated for a minimization problem.
+
+        Args:
+            X (ndarray):
+                Covariate/Feature matrix
+            y (ndarray):
+                Target vector
+
+        Returns:
+            cvpx Expression
+        """
+        return None
+
+    def _gen_constraints(self, X, y):
+        """Generate constraints for optimization problem.
+
+        Args:
+            X (ndarray):
+                Covariate/Feature matrix
+            y (ndarray):
+                Target vector
+
+        Returns:
+            list of cvpx constraints
+        """
+        return None
+
+    def _initialize_problem(self, X, y):
+        """Initialize cvxpy problem from the generated objective function
+
+        Args:
+            X (ndarray):
+                Covariate/Feature matrix
+            y (ndarray):
+                Target vector
+        """
+        self._beta = cp.Variable(X.shape[1])
+        self._X = X
+        self._y = y
+        objective = self._gen_objective(X, y)
+        constraints = self._gen_constraints(X, y)
+        self._problem = cp.Problem(cp.Minimize(objective), constraints)
+
+    def _get_problem(self, X, y):
         """Define and create cvxpy optimization problem"""
         if self._problem is None:
-            self._initialize_problem(X, y, *args, **kwargs)
+            self._initialize_problem(X, y)
         elif not np.array_equal(X, self._X) or not np.array_equal(y, self._y):
-            self._initialize_problem(X, y, *args, **kwargs)
+            self._initialize_problem(X, y)
         return self._problem
-    
+
     def _solve(self, X, y, *args, **kwargs):
         """Solve the cvxpy problem."""
-        problem = self._get_problem(X, y, *args, **kwargs)
+        problem = self._get_problem(X, y)
         problem.solve(solver=self.solver, warm_start=self.warm_start,
                       **self.solver_opts)
         return self._beta.value
