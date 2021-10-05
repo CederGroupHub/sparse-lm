@@ -223,7 +223,8 @@ class OverlapGroupLasso(GroupLasso):
                       **self.solver_opts)
         beta = np.array(
             [sum(self._beta.value[self.beta_indices == i])
-             for i in range(X.shape[1])])
+             for i in range(X.shape[1])]
+        )
         return beta
 
 
