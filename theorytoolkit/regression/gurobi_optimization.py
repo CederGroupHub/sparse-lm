@@ -106,11 +106,13 @@ def l0l2_hierarchy_optimize_quicksum(A, f, correlateID, A_ub = None, f_ub = None
 
     # Add correlated ID related L0 group type regularization
 
-    for ii in range(len(correlateID)):
-        higherList = correlateID[ii]
 
-        for highIdx in higherList:
-            l0l2.addConstr(z0[ii] >= z0[highIdx])
+    if not (correlateID == None):
+        for ii in range(len(correlateID)):
+            higherList = correlateID[ii]
+
+            for highIdx in higherList:
+                l0l2.addConstr(z0[ii] >= z0[highIdx])
 
 
 
