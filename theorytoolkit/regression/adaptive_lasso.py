@@ -52,6 +52,10 @@ class AdaptiveLasso(Lasso):
             update_function (Callable): optional
                 A function with signature f(beta, eps) used to update the
                 weights at each iteration. Default is 1/(|beta| + eps)
+            standardize (bool): optional
+                Whether to standardize the group regularization penalty using
+                the feature matrix. See the following for reference:
+                http://faculty.washington.edu/nrsimon/standGL.pdf
             fit_intercept (bool):
                 Whether the intercept should be estimated or not.
                 If False, the data is assumed to be already centered.
@@ -88,12 +92,10 @@ class AdaptiveLasso(Lasso):
         else:
             self.update_function = update_function
 
-    def _gen_objective(self, X, y):
+    def _gen_regularization(self, X):
         self._weights = cp.Parameter(shape=X.shape[1], nonneg=True,
                                      value=self.alpha * np.ones(X.shape[1]))
-        objective = 1 / (2 * X.shape[0]) * cp.sum_squares(X @ self._beta - y) \
-            + cp.norm1(cp.multiply(self._weights, self._beta))
-        return objective
+        return cp.norm1(cp.multiply(self._weights, self._beta))
 
     def _update_weights(self, beta):
         if beta is None and self._problem.value == -np.inf:
@@ -128,10 +130,10 @@ class AdaptiveGroupLasso(AdaptiveLasso, GroupLasso):
 
     Where w represents a vector of weights that is iteratively updated.
     """
-    def __init__(self, groups, alpha=1.0, group_weights=None, max_iter=5,
-                 eps=1E-6, tol=1E-10, update_function=None,
-                 fit_intercept=False, normalize=False, copy_X=True,
-                 warm_start=False, solver=None, **kwargs):
+    def __init__(self, groups, alpha=1.0, group_weights=None,
+                 max_iter=5, eps=1E-6, tol=1E-10, update_function=None,
+                 standardize=False, fit_intercept=False, normalize=False,
+                 copy_X=True, warm_start=False, solver=None, **kwargs):
         """Initialize estimator.
 
         Args:
@@ -159,6 +161,10 @@ class AdaptiveGroupLasso(AdaptiveLasso, GroupLasso):
                 weights at each iteration. Where group_norms are the norms of
                 the coefficients Beta for each group.
                 Default is 1/(group_norms + eps)
+            standardize (bool): optional
+                Whether to standardize the group regularization penalty using
+                the feature matrix. See the following for reference:
+                http://faculty.washington.edu/nrsimon/standGL.pdf
             fit_intercept (bool):
                 Whether the intercept should be estimated or not.
                 If False, the data is assumed to be already centered.
@@ -184,27 +190,24 @@ class AdaptiveGroupLasso(AdaptiveLasso, GroupLasso):
         """
         # call with keywords to avoid MRO issues
         super().__init__(groups=groups, alpha=alpha,
-                         group_weights=group_weights, max_iter=max_iter,
-                         eps=eps, tol=tol, update_function=update_function,
+                         group_weights=group_weights,
+                         max_iter=max_iter, eps=eps, tol=tol,
+                         update_function=update_function,
+                         standardize=standardize,
                          fit_intercept=fit_intercept,
                          normalize=normalize, copy_X=copy_X,
                          warm_start=warm_start, solver=solver, **kwargs)
 
-    def _gen_objective(self, X, y):
+    def _gen_regularization(self, X):
+        grp_norms = self._gen_group_norms(X)
         self._weights = cp.Parameter(shape=len(self.group_masks), nonneg=True,
                                      value=self.alpha * self.group_weights)
-        grp_reg = self._weights @ cp.hstack(
-            [cp.norm2(self._beta[mask]) for mask in self.group_masks])
-        objective = 1 / (2 * X.shape[0]) * cp.sum_squares(X @ self._beta - y) \
-            + grp_reg
-        return objective
+        return self._weights @ grp_norms
 
     def _update_weights(self, beta):
         self._previous_weights = self._weights.value
-        group_norms = np.array(
-            [np.linalg.norm(beta[mask]) for mask in self.group_masks])
         self._weights.value = (self.alpha * self.group_weights) * \
-            self.update_function(group_norms, self.eps)
+            self.update_function(self._group_norms.value, self.eps)
 
 
 class AdaptiveOverlapGroupLasso(OverlapGroupLasso, AdaptiveGroupLasso):
@@ -217,8 +220,8 @@ class AdaptiveOverlapGroupLasso(OverlapGroupLasso, AdaptiveGroupLasso):
     """
     def __init__(self, group_list, alpha=1.0, group_weights=None,
                  max_iter=5, eps=1E-6, tol=1E-10, update_function=None,
-                 fit_intercept=False, normalize=False, copy_X=True,
-                 warm_start=False, solver=None, **kwargs):
+                 standardize=False, fit_intercept=False, normalize=False,
+                 copy_X=True, warm_start=False, solver=None, **kwargs):
         """Initialize estimator.
 
         Args:
@@ -251,6 +254,10 @@ class AdaptiveOverlapGroupLasso(OverlapGroupLasso, AdaptiveGroupLasso):
                 weights at each iteration. Where group_norms are the norms of
                 the coefficients Beta for each group.
                 Default is 1/(group_norms + eps)
+            standardize (bool): optional
+                Whether to standardize the group regularization penalty using
+                the feature matrix. See the following for reference:
+                http://faculty.washington.edu/nrsimon/standGL.pdf
             fit_intercept (bool):
                 Whether the intercept should be estimated or not.
                 If False, the data is assumed to be already centered.
@@ -278,6 +285,7 @@ class AdaptiveOverlapGroupLasso(OverlapGroupLasso, AdaptiveGroupLasso):
         super().__init__(group_list=group_list, alpha=alpha,
                          group_weights=group_weights, max_iter=max_iter,
                          eps=eps, tol=tol, update_function=update_function,
+                         standardize=standardize,
                          fit_intercept=fit_intercept,
                          normalize=normalize, copy_X=copy_X,
                          warm_start=warm_start, solver=solver, **kwargs)
@@ -307,8 +315,8 @@ class AdaptiveSparseGroupLasso(AdaptiveLasso, SparseGroupLasso):
 
     def __init__(self, groups,  l1_ratio=0.5, alpha=1.0, group_weights=None,
                  max_iter=5, eps=1E-6, tol=1E-10, update_function=None,
-                 fit_intercept=False, normalize=False, copy_X=True,
-                 warm_start=False, solver=None, **kwargs):
+                 standardize=False, fit_intercept=False, normalize=False,
+                 copy_X=True, warm_start=False, solver=None, **kwargs):
         """Initialize estimator.
 
         Args:
@@ -338,6 +346,10 @@ class AdaptiveSparseGroupLasso(AdaptiveLasso, SparseGroupLasso):
                 weights at each iteration. Where group_norms are the norms of
                 the coefficients Beta for each group.
                 Default is 1/(group_norms + eps)
+            standardize (bool): optional
+                Whether to standardize the group regularization penalty using
+                the feature matrix. See the following for reference:
+                http://faculty.washington.edu/nrsimon/standGL.pdf
             fit_intercept (bool):
                 Whether the intercept should be estimated or not.
                 If False, the data is assumed to be already centered.
@@ -366,32 +378,29 @@ class AdaptiveSparseGroupLasso(AdaptiveLasso, SparseGroupLasso):
                          group_weights=group_weights,
                          max_iter=max_iter, eps=eps, tol=tol,
                          update_function=update_function,
+                         standardize=standardize,
                          fit_intercept=fit_intercept, normalize=normalize,
                          copy_X=copy_X, warm_start=warm_start, solver=solver,
                          **kwargs)
 
-    def _gen_objective(self, X, y):
+    def _gen_regularization(self, X):
+        grp_norms = self._gen_group_norms(X)
         self._weights = (
             cp.Parameter(shape=X.shape[1], nonneg=True,
                          value=self._lambda1.value * np.ones(X.shape[1])),
             cp.Parameter(shape=len(self.group_masks), nonneg=True,
                          value=self._lambda2.value * self.group_weights),
-            )
+        )
         l1_reg = cp.norm1(cp.multiply(self._weights[0], self._beta))
-        grp_reg = self._weights[1] @ cp.hstack(
-            [cp.norm2(self._beta[mask]) for mask in self.group_masks])
-        objective = 1 / (2 * X.shape[0]) * cp.sum_squares(X @ self._beta - y) \
-            + l1_reg + grp_reg
-        return objective
+        grp_reg = self._weights[1] @ grp_norms
+        return l1_reg + grp_reg
 
     def _update_weights(self, beta):
         self._previous_weights = [self._weights[0].value,
                                   self._weights[1].value]
         self._weights[0].value = self._lambda1.value / (abs(beta) + self.eps)
-        group_norms = np.array(
-            [np.linalg.norm(beta[mask]) for mask in self.group_masks])
         self._weights[1].value = (self._lambda2.value * self.group_weights) * \
-            self.update_function(group_norms, self.eps)
+            self.update_function(self._group_norms.value, self.eps)
 
     def _weights_converged(self):
         l1_converged = np.linalg.norm(

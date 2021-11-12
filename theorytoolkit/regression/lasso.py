@@ -68,10 +68,14 @@ class Lasso(CVXEstimator):
     def alpha(self, val):
         self._alpha.value = val
 
+    def _gen_regularization(self, X):
+        return self._alpha * cp.norm1(self._beta)
+
     def _gen_objective(self, X, y):
         # can also use cp.norm2(X @ self._beta - y)**2 not sure whats better
+        reg = self._gen_regularization(X)
         objective = 1 / (2 * X.shape[0]) * cp.sum_squares(X @ self._beta - y) \
-                    + self._alpha * cp.norm1(self._beta)
+            + reg
         return objective
 
 
@@ -84,8 +88,8 @@ class GroupLasso(Lasso):
     """
 
     def __init__(self, groups, alpha=1.0, group_weights=None,
-                 fit_intercept=False, normalize=False, copy_X=True,
-                 warm_start=False, solver=None, **kwargs):
+                 standardize=False, fit_intercept=False, normalize=False,
+                 copy_X=True, warm_start=False, solver=None, **kwargs):
         """Initialize estimator.
 
         Args:
@@ -104,7 +108,11 @@ class GroupLasso(Lasso):
                 weight can be specified. The array must be the
                 same length as the groups given. If you need all groups
                 weighted equally just pass an array of ones.
-            normalize (bool):
+            standardize (bool): optional
+                Whether to standardize the group regularization penalty using
+                the feature matrix. See the following for reference:
+                http://faculty.washington.edu/nrsimon/standGL.pdf
+            normalize (bool): optional
                 This parameter is ignored when fit_intercept is set to False.
                 If True, the regressors X will be normalized before regression
                 by subtracting the mean and dividing by the l2-norm.
@@ -126,6 +134,8 @@ class GroupLasso(Lasso):
         """
         self.groups = np.asarray(groups)
         self.group_masks = [self.groups == i for i in np.unique(groups)]
+        self.standardize = standardize
+        self._group_norms = None
 
         if group_weights is not None:
             if len(group_weights) != len(self.group_masks):
@@ -139,12 +149,20 @@ class GroupLasso(Lasso):
                          normalize=normalize, copy_X=copy_X,
                          warm_start=warm_start, solver=solver, **kwargs)
 
-    def _gen_objective(self, X, y):
-        grp_reg = cp.hstack(
-            [cp.norm2(self._beta[mask]) for mask in self.group_masks])
-        objective = 1 / (2 * X.shape[0]) * cp.sum_squares(X @ self._beta - y) \
-            + self._alpha * (self.group_weights @ grp_reg)
-        return objective
+    def _gen_group_norms(self, X):
+        if self.standardize:
+            grp_norms = cp.hstack(
+                [cp.norm2(X[:, mask] @ self._beta[mask])
+                 for mask in self.group_masks]
+            )
+        else:
+            grp_norms = cp.hstack(
+                [cp.norm2(self._beta[mask]) for mask in self.group_masks])
+        self._group_norms = grp_norms
+        return grp_norms
+
+    def _gen_regularization(self, X):
+        return self._alpha * (self.group_weights @ self._gen_group_norms(X))
 
 
 class OverlapGroupLasso(GroupLasso):
@@ -157,8 +175,8 @@ class OverlapGroupLasso(GroupLasso):
     """
 
     def __init__(self, group_list, alpha=1.0, group_weights=None,
-                 fit_intercept=False, normalize=False, copy_X=True,
-                 warm_start=False, solver=None, **kwargs):
+                 standardize=False, fit_intercept=False, normalize=False,
+                 copy_X=True, warm_start=False, solver=None, **kwargs):
         """Initialize estimator.
 
         Args:
@@ -172,9 +190,6 @@ class OverlapGroupLasso(GroupLasso):
                 be: (0, 2), (0, 1, 2), (1, 2)
             alpha (float):
                 Regularization hyper-parameter.
-            fit_intercept (bool):
-                Whether the intercept should be estimated or not.
-                If False, the data is assumed to be already centered.
             group_weights (ndarray): optional
                 Weights for each group to use in the regularization term.
                 The default is to use the sqrt of the group sizes, however any
@@ -182,6 +197,13 @@ class OverlapGroupLasso(GroupLasso):
                 same length as the number of different groups given.
                 If you need all groups weighted equally just pass an array of
                 ones.
+            standardize (bool): optional
+                Whether to standardize the group regularization penalty using
+                the feature matrix. See the following for reference:
+                http://faculty.washington.edu/nrsimon/standGL.pdf
+            fit_intercept (bool):
+                Whether the intercept should be estimated or not.
+                If False, the data is assumed to be already centered.
             normalize (bool):
                 This parameter is ignored when fit_intercept is set to False.
                 If True, the regressors X will be normalized before regression
@@ -209,12 +231,13 @@ class OverlapGroupLasso(GroupLasso):
                         for grp_id in self.group_ids]
         extended_groups = np.concatenate(
             [len(g) * [i, ] for i, g in enumerate(beta_indices)])
-
         self.beta_indices = np.concatenate(beta_indices)
+
         super().__init__(
             extended_groups, alpha=alpha, group_weights=group_weights,
-            fit_intercept=fit_intercept, normalize=normalize, copy_X=copy_X,
-            warm_start=warm_start, solver=solver, **kwargs)
+            standardize=standardize, fit_intercept=fit_intercept,
+            normalize=normalize, copy_X=copy_X, warm_start=warm_start,
+            solver=solver, **kwargs)
 
     def _solve(self, X, y, *args, **kwargs):
         """Solve the cvxpy problem."""
@@ -239,8 +262,8 @@ class SparseGroupLasso(GroupLasso):
     """
 
     def __init__(self, groups, l1_ratio=0.5, alpha=1.0, group_weights=None,
-                 fit_intercept=False, normalize=False, copy_X=True,
-                 warm_start=False, solver=None, **kwargs):
+                 standardize=False, fit_intercept=False, normalize=False,
+                 copy_X=True, warm_start=False, solver=None, **kwargs):
         """Initialize estimator.
 
         Args:
@@ -283,6 +306,7 @@ class SparseGroupLasso(GroupLasso):
         """
         super().__init__(groups=groups, alpha=alpha,
                          group_weights=group_weights,
+                         standardize=standardize,
                          fit_intercept=fit_intercept,
                          normalize=normalize, copy_X=copy_X,
                          warm_start=warm_start, solver=solver, **kwargs)
@@ -321,11 +345,9 @@ class SparseGroupLasso(GroupLasso):
         self._lambda1.value = val * self.alpha
         self._lambda2.value = (1 - val) * self.alpha
 
-    def _gen_objective(self, X, y):
+    def _gen_regularization(self, X):
+        grp_norms = super()._gen_group_norms(X)
         l1_reg = cp.norm1(self._beta)
-        grp_reg = cp.hstack(
-            [cp.norm2(self._beta[mask]) for mask in self.group_masks])
-        objective = 1 / (2 * X.shape[0]) * cp.sum_squares(X @ self._beta - y) \
-            + self._lambda1 * l1_reg \
-            + self._lambda2 * (self.group_weights @ grp_reg)
-        return objective
+        reg = self._lambda1 * l1_reg + \
+            self._lambda2 * (self.group_weights @ grp_norms)
+        return reg

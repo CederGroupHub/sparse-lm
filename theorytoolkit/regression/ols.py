@@ -12,4 +12,4 @@ class OrdinaryLeastSquares(CVXEstimator):
     """
 
     def _gen_objective(self, X, y):
-        return cp.sum_squares(X @ self._beta - y)
+        return 1 / (2 * X.shape[0]) * cp.sum_squares(X @ self._beta - y)
