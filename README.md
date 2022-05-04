@@ -24,6 +24,12 @@ Available regression models
 - Adaptive versions of Lasso, Group Lasso, Overlap Group Lasso & Sparse Group Lasso
 - Best subset selection, L1L0 & L2L0 (we recommend using `gurobi` for performance)
 
+Installation
+------------
+From pypi:
+
+    pip install sparse-lm
+
 Usage
 -----
 If you already use **scikit-learn**, using **sparse-lm** will be very easy
