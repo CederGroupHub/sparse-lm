@@ -3,11 +3,10 @@ requires = ["setuptools", "setuptools-scm[toml]"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "sparsipy"
+name = "sparse-lm"
 description = "Sparse linear regression models"
 authors = [
-    {name = "Luis Barroso-Luque", email = "lbluque@berkeley.edu"},
-    {name = "Fengyu Xie", email = "fengyu_xie@berkeley.edu"}
+    {name = "Luis Barroso-Luque", email = "lbluque@berkeley.edu"}
 ]
 readme = "README.md"
 license = {text = "BSD 3-Clause License"}
@@ -28,4 +27,4 @@ classifiers = [
 ]
 
 [tool.setuptools.dynamic]
-version = {attr = "sparsipy.__version__"}
+version = {attr = "sparselm.__version__"}

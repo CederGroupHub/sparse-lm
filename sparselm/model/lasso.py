@@ -14,7 +14,7 @@ import warnings
 import cvxpy as cp
 import numpy as np
 
-from sparsipy.model.base import CVXEstimator
+from sparselm.model.base import CVXEstimator
 
 
 class Lasso(CVXEstimator):
