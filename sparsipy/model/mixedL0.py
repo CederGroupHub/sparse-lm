@@ -15,7 +15,7 @@ import warnings
 from abc import ABCMeta
 import cvxpy as cp
 from cvxpy.atoms.affine.wraps import psd_wrap
-from .base import CVXEstimator
+from sparsipy.model.base import CVXEstimator
 
 
 class mixedL0(CVXEstimator, metaclass=ABCMeta):

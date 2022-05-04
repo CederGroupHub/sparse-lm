@@ -21,7 +21,7 @@ __author__ = "Luis Barroso-Luque"
 import cvxpy as cp
 import numpy as np
 
-from theorytoolkit.regression import Lasso, GroupLasso, OverlapGroupLasso,\
+from sparsipy.model import Lasso, GroupLasso, OverlapGroupLasso,\
     SparseGroupLasso
 
 

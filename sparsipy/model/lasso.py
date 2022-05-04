@@ -14,7 +14,7 @@ import warnings
 import cvxpy as cp
 import numpy as np
 
-from theorytoolkit.regression.base import CVXEstimator
+from sparsipy.model.base import CVXEstimator
 
 
 class Lasso(CVXEstimator):

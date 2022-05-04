@@ -1,0 +1,31 @@
+[build-system]
+requires = ["setuptools", "setuptools-scm[toml]"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "sparsipy"
+description = "Sparse linear regression models"
+authors = [
+    {name = "Luis Barroso-Luque", email = "lbluque@berkeley.edu"},
+    {name = "Fengyu Xie", email = "fengyu_xie@berkeley.edu"}
+]
+readme = "README.md"
+license = {text = "BSD 3-Clause License"}
+dynamic = ["version"]
+dependencies = ["numpy", "cvxpy", "scikit-learn"]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Programming Language :: Python :: 3 :: Only",
+    "Programming Language :: Python :: 3.8",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Intended Audience :: Science/Research",
+    "License :: OSI Approved :: BSD License",
+    "Operating System :: OS Independent",
+    "Topic :: Scientific/Engineering :: Information Analysis",
+    "Topic :: Scientific/Engineering :: Mathematics",
+    "Topic :: Software Development :: Libraries :: Python Modules"
+]
+
+[tool.setuptools.dynamic]
+version = {attr = "sparsipy.__version__"}
