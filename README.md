@@ -14,6 +14,7 @@ module. The estimators in **sparsipy** are designed to fit right into
 `LinearModel`. But the underlying optimization problem is expressed and solved by
 leveraging [cvxpy](https://www.cvxpy.org/). 
 
+---------------------------------------------------------------------------------------
 
 Available regression models
 ---------------------------
