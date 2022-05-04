@@ -30,7 +30,7 @@ If you already use **scikit-learn**, using **sparsipy** will be very easy
 import numpy as np
 from sklearn.datasets import make_regression
 from sklearn.model_selection import GridSearchCV
-from sparsipy import AdaptiveLasso
+from sparsipy.model import AdaptiveLasso
 
 X, y = make_regression(n_samples=200, n_features=5000, random_state=0)
 alasso = AdaptiveLasso(fit_intercept=False)
