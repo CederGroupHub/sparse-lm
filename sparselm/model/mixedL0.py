@@ -18,7 +18,7 @@ from cvxpy.atoms.affine.wraps import psd_wrap
 from sparselm.model.base import CVXEstimator
 
 
-class mixedL0(CVXEstimator, metaclass=ABCMeta):
+class MixedL0(CVXEstimator, metaclass=ABCMeta):
     """Abstract base class for mixed L0 regularization models: L1L0 and L2L0.
     """
     def __init__(self, alpha=1.0, l0_ratio=0.5, big_M=1000, hierarchy=None,
@@ -148,7 +148,7 @@ class mixedL0(CVXEstimator, metaclass=ABCMeta):
                 for sub_id in sub_ids]
 
 
-class L1L0(mixedL0):
+class L1L0(MixedL0):
     """
     Estimator with L1L0 regularization solved with mixed integer programming
     as discussed in:
@@ -241,7 +241,7 @@ class L1L0(mixedL0):
         return objective
 
 
-class L2L0(mixedL0):
+class L2L0(MixedL0):
     """
     Estimator with L1L0 regularization solved with mixed integer programming
     proposed by Peichen Zhong.
