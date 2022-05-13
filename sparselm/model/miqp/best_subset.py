@@ -8,9 +8,10 @@ __author__ = "Luis Barroso-Luque"
 
 import cvxpy as cp
 from cvxpy.atoms.affine.wraps import psd_wrap
-from .base import CVXEstimator
+from sparselm.model.base import CVXEstimator
 
 
+# TODO implement with l1 and l2 regularization grouped with less slack vars and equality constraints
 class BestSubsetSelection(CVXEstimator):
     """MIQP Best Subset Selection estimator
 
