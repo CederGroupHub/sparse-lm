@@ -1,4 +1,4 @@
-<img src="docs/_static/logo.png" width="600px" alt=" ">
+<img src="docs/_static/logo.png" width="500px" alt=" ">
 
 Sparse Linear Regression Models
 ===============================
