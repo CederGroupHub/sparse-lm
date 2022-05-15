@@ -1,8 +1,7 @@
+<img src="docs/_static/logo.png" width="600px" alt=" ">
 
-sparse-lm
-=========
-
-### *Sparse Linear Regression Models*
+Sparse Linear Regression Models
+===============================
 
 > :warning: this package is currently largely lacking in unit-tests.
 > Use at your own risk!
