@@ -307,7 +307,7 @@ class L1L0(MixedL0):
 
 class L2L0(MixedL0):
     """
-    Estimator with L1L0 regularization solved with mixed integer programming
+    Estimator with L2L0 regularization solved with mixed integer programming
     proposed by Peichen Zhong.
 
     Regularized model is:
@@ -324,9 +324,9 @@ class L2L0(MixedL0):
         return objective
 
 
-class GroupedL0(MixedL0, metaclass=ABCMeta):
+class GroupedL0(RegularizedL0, metaclass=ABCMeta):
     """Grouped L0 norm"""
-    def __init__(self, groups, alpha=1.0, l0_ratio=0.5, big_M=1000, hierarchy=None,
+    def __init__(self, groups, alpha=1.0, big_M=1000, hierarchy=None,
                  ignore_psd_check=True, fit_intercept=False, normalize=False,
                  copy_X=True, warm_start=False, solver=None, **kwargs):
         """
@@ -337,8 +337,6 @@ class GroupedL0(MixedL0, metaclass=ABCMeta):
                 each parameter corresponds to.
             alpha (float):
                 Regularization hyper-parameter.
-            l0_ratio (float):
-                Mixing parameter between l1 and l0 regularization.
             big_M (float):
                 Upper bound on the norm of coefficients associated with each
                 cluster (groups of coefficients) ||Beta_c||_2
@@ -377,11 +375,12 @@ class GroupedL0(MixedL0, metaclass=ABCMeta):
                 Kewyard arguments passed to cvxpy solve.
                 See docs linked above for more information.
         """
-        super().__init__(alpha=alpha, l0_ratio=l0_ratio, big_M=big_M,
-                         hierarchy=hierarchy, ignore_psd_check=ignore_psd_check,
-                         fit_intercept=fit_intercept,
-                         normalize=normalize, copy_X=copy_X,
-                         warm_start=warm_start, solver=solver, **kwargs)
+        super().__init__(
+            alpha=alpha, big_M=big_M, hierarchy=hierarchy,
+            ignore_psd_check=ignore_psd_check, fit_intercept=fit_intercept,
+            normalize=normalize, copy_X=copy_X, warm_start=warm_start, solver=solver,
+            **kwargs)
+
         self.groups = np.asarray(groups)
         self._group_masks = [self.groups == i for i in np.unique(groups)]
         self._z0 = cp.Variable(len(self._group_masks), boolean=True)
@@ -406,15 +405,20 @@ class GroupedL0(MixedL0, metaclass=ABCMeta):
         return constraints
 
 
-class GroupedL2L0(GroupedL0):
+class GroupedL2L0(MixedL0, GroupedL0):
     """
-    Estimator with L1L0 regularization solved with mixed integer programming
-    proposed by Peichen Zhong.
+    Estimator with grouped L2L0 regularization solved with mixed integer programming
+    """
 
-    Regularized model is:
-        ||X * Beta - y||^2 + alpha * l0_ratio * ||Beta||_0
-                           + alpha * (1 - l0_ratio) * ||Beta||^2_2
-    """
+    def __init__(self, groups, alpha=1.0, l0_ratio=0.5, big_M=1000, hierarchy=None,
+                 ignore_psd_check=True, fit_intercept=False, normalize=False,
+                 copy_X=True, warm_start=False, solver=None, **kwargs):
+        # need to call super for sklearn clone function
+        super().__init__(groups=groups, alpha=alpha, l0_ratio=l0_ratio, big_M=big_M,
+                         hierarchy=hierarchy, ignore_psd_check=ignore_psd_check,
+                         fit_intercept=fit_intercept,
+                         normalize=normalize, copy_X=copy_X,
+                         warm_start=warm_start, solver=solver, **kwargs)
 
     def _gen_objective(self, X, y):
         """Generate the objective function used in l2l0 regression model"""
