@@ -193,7 +193,7 @@ class RidgedBestSubsetSelection(BestSubsetSelection):
         return objective
 
 
-class BestGroupedSubsetSelection(BestSubsetSelection):
+class BestGroupSelection(BestSubsetSelection):
 
     def __init__(self, groups, sparse_bound, big_M=1000, hierarchy=None,
                  ignore_psd_check=True, fit_intercept=False, normalize=False,
@@ -266,3 +266,23 @@ class BestGroupedSubsetSelection(BestSubsetSelection):
         if self.hierarchy is not None:
             constraints += self._gen_hierarchy_constraints()
         return constraints
+
+
+class RidgedBestGroupSelection(RidgedBestSubsetSelection, BestGroupSelection):
+
+    def __init__(self, groups, sparse_bound, alpha=1.0, big_M=1000, hierarchy=None,
+                 ignore_psd_check=True, fit_intercept=False, normalize=False,
+                 copy_X=True, warm_start=False, solver=None, **kwargs):
+        # need to call super for sklearn clone function
+        super().__init__(
+            groups=groups, sparse_bound=sparse_bound,  alpha=alpha, big_M=big_M,
+            hierarchy=hierarchy, ignore_psd_check=ignore_psd_check,
+            fit_intercept=fit_intercept, normalize=normalize, copy_X=copy_X,
+            warm_start=warm_start, solver=solver, **kwargs
+        )
+
+    def _gen_objective(self, X, y):
+        RidgedBestSubsetSelection._gen_objective(self, X, y)
+
+    def _gen_constraints(self, X, y):
+        BestGroupSelection._gen_constraints(self, X, y)
