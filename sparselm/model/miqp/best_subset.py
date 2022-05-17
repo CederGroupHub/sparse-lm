@@ -121,6 +121,78 @@ class BestSubsetSelection(CVXEstimator):
                 for sub_id in sub_ids]
 
 
+class RidgedBestSubsetSelection(BestSubsetSelection):
+
+    def __init__(self, sparse_bound, alpha=1.0, big_M=1000, hierarchy=None,
+                 ignore_psd_check=True, fit_intercept=False, normalize=False,
+                 copy_X=True, warm_start=False, solver=None, **kwargs):
+        """
+        Args:
+            sparse_bound (int):
+                Upper bound on sparsity. The upper bound on total number of
+                nonzero coefficients.
+            big_M (float):
+                Upper bound on the norm of coefficients associated with each
+                cluster (groups of coefficients) ||Beta_c||_2
+            hierarchy (list):
+                A list of lists of integers storing hierarchy relations between
+                coefficients.
+                Each sublist contains indices of other coefficients
+                on which the coefficient associated with each element of
+                the list depends. i.e. hierarchy = [[1, 2], [0], []] mean that
+                coefficient 0 depends on 1, and 2; 1 depends on 0, and 2 has no
+                dependence.
+            ignore_psd_check (bool):
+                Wether to ignore cvxpy's PSD checks  of matrix used in quadratic
+                form. Default is True to avoid raising errors for poorly
+                conditioned matrices. But if you want to be strict set to False.
+            fit_intercept (bool):
+                Whether the intercept should be estimated or not.
+                If False, the data is assumed to be already centered.
+            normalize (bool):
+                This parameter is ignored when fit_intercept is set to False.
+                If True, the regressors X will be normalized before regression
+                by subtracting the mean and dividing by the l2-norm.
+                If you wish to standardize, please use StandardScaler before
+                calling fit on an estimator with normalize=False
+            copy_X (bool):
+                If True, X will be copied; else, it may be overwritten.
+            warm_start (bool):
+                When set to True, reuse the solution of the previous call to
+                fit as initialization, otherwise, just erase the previous
+                solution.
+            solver (str):
+                cvxpy backend solver to use. Supported solvers are:
+                ECOS, ECOS_BB, CVXOPT, SCS, GUROBI, Elemental.
+                GLPK and GLPK_MI (via CVXOPT GLPK interface)
+            **kwargs:
+                Kewyard arguments passed to cvxpy solve.
+                See docs linked above for more information.
+        """
+        super().__init__(
+            sparse_bound=sparse_bound, big_M=big_M, hierarchy=hierarchy,
+            ignore_psd_check=ignore_psd_check, fit_intercept=fit_intercept,
+            normalize=normalize, copy_X=copy_X, warm_start=warm_start, solver=solver,
+            **kwargs
+        )
+        self._alpha = cp.Parameter(nonneg=True, value=alpha)
+
+    @property
+    def alpha(self):
+        return self._alpha.value
+
+    @alpha.setter
+    def alpha(self, val):
+        self._alpha.value = val
+
+    def _gen_objective(self, X, y):
+        """Generate the objective function used in l2l0 regression model"""
+        c0 = 2 * X.shape[0]  # keeps hyperparameter scale independent
+        objective = super()._gen_objective(X, y) \
+            + c0 * self._alpha * cp.sum_squares(self._beta)
+        return objective
+
+
 class BestGroupedSubsetSelection(BestSubsetSelection):
 
     def __init__(self, groups, sparse_bound, big_M=1000, hierarchy=None,
