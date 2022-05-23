@@ -20,7 +20,7 @@ from sparselm.model.base import CVXEstimator
 
 
 class RegularizedL0(CVXEstimator):
-    """Implementation of l0 regularized estimator."""
+    """Implementation of MIQP l0 regularized estimator."""
 
     def __init__(self, alpha=1.0, big_M=1000, hierarchy=None, ignore_psd_check=True,
                  fit_intercept=False, normalize=False, copy_X=True, warm_start=False,
@@ -314,6 +314,8 @@ class L2L0(MixedL0):
     """
     Estimator with L2L0 regularization solved with mixed integer programming
     proposed by Peichen Zhong.
+
+    https://arxiv.org/abs/2204.13789
 
     Regularized model is:
         ||X * Beta - y||^2 + alpha * l0_ratio * ||Beta||_0

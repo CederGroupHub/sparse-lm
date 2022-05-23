@@ -122,7 +122,7 @@ class BestSubsetSelection(CVXEstimator):
 
 
 class RidgedBestSubsetSelection(BestSubsetSelection):
-    """Best subset selection estimaor with ridge regularization."""
+    """MIQP  Best subset selection estimator with ridge regularization."""
 
     def __init__(self, sparse_bound, alpha=1.0, big_M=1000, hierarchy=None,
                  ignore_psd_check=True, fit_intercept=False, normalize=False,
@@ -144,7 +144,7 @@ class RidgedBestSubsetSelection(BestSubsetSelection):
                 coefficient 0 depends on 1, and 2; 1 depends on 0, and 2 has no
                 dependence.
             ignore_psd_check (bool):
-                Wether to ignore cvxpy's PSD checks  of matrix used in quadratic
+                Whether to ignore cvxpy's PSD checks  of matrix used in quadratic
                 form. Default is True to avoid raising errors for poorly
                 conditioned matrices. But if you want to be strict set to False.
             fit_intercept (bool):
@@ -195,7 +195,7 @@ class RidgedBestSubsetSelection(BestSubsetSelection):
 
 
 class BestGroupSelection(BestSubsetSelection):
-    """Best group selection estimator."""
+    """MIQP Best group selection estimator."""
 
     def __init__(self, groups, sparse_bound, big_M=1000, hierarchy=None,
                  ignore_psd_check=True, fit_intercept=False, normalize=False,
