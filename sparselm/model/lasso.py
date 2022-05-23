@@ -416,13 +416,13 @@ class RidgedGroupLasso(GroupLasso):
                          normalize=normalize, copy_X=copy_X,
                          warm_start=warm_start, solver=solver, **kwargs)
 
-        self._delta = cp.Parameter(shape=(len(groups),), nonneg=True)
+        self._delta = cp.Parameter(shape=(len(self.group_masks),), nonneg=True)
         if delta is not None:
             if not all(delta >= 0):
                 raise ValueError("'delta' parameter must be nonnegative.")
             self._delta.value = delta
         else:
-            self._delta.value = np.ones(len(groups))
+            self._delta.value = np.ones(len(self.group_masks))
 
     @property
     def delta(self):
@@ -453,6 +453,9 @@ class RidgedGroupLasso(GroupLasso):
 
     def _gen_regularization(self, X):
         grp_norms = self._gen_group_norms(X)
-        reg = self._alpha * self.group_weights @ grp_norms.T + \
-            0.5 * cp.sum_squares(cp.multiply(self._delta, self._beta))
+        ridge = cp.hstack(
+            [cp.sum_squares(self._beta[mask]) for mask in self.group_masks]
+        )
+        reg = self._alpha * self.group_weights @ grp_norms.T + 0.5 * self._delta @ ridge
+
         return reg
