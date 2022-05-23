@@ -21,7 +21,10 @@ Available regression models
 - Lasso (`sklearn` may be a better option)
 - Group Lasso, Overlap Group Lasso & Sparse Group Lasso
 - Adaptive versions of Lasso, Group Lasso, Overlap Group Lasso & Sparse Group Lasso
-- Best subset selection, L1L0 & L2L0 (we recommend using `gurobi` for performance)
+- Best subset selection, ridged best subset, L0, L1L0 & L2L0
+  (`gurobi` recommended for performance)
+- Best group selection, ridged best group selection,  grouped L0, grouped L2L0
+  (`gurobi` recommended for performance)
 
 Installation
 ------------
