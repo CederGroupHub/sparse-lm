@@ -1,5 +1,5 @@
 [build-system]
-requires = ["setuptools", "setuptools-scm[toml]"]
+requires = ["setuptools>=45", "setuptools-scm[toml]>=6.2"]
 build-backend = "setuptools.build_meta"
 
 [project]
@@ -26,5 +26,5 @@ classifiers = [
     "Topic :: Software Development :: Libraries :: Python Modules"
 ]
 
-[tool.setuptools.dynamic]
-version = {attr = "sparselm.__version__"}
+# pyproject.toml
+[tool.setuptools_scm]
