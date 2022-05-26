@@ -12,6 +12,10 @@ Use this section to keep track of changes in the works.
 ### Removed
 ### Deprecated
 
+# [v1.0.0]
+### Added
+* Group l0 and best group estimators by @lbluque in #2
+
 # [v0.0.0]
 ### Added
 * Moved initial files from previous repository. (lbluque)
