@@ -366,7 +366,7 @@ class RidgedGroupLasso(GroupLasso):
     http://faculty.washington.edu/nrsimon/standGL.pdf
     """
 
-    def __init__(self, groups, alpha=1.0, delta=None, group_weights=None,
+    def __init__(self, groups, alpha=1.0, delta=1.0, group_weights=None,
                  standardize=False, fit_intercept=False, normalize=False,
                  copy_X=True, warm_start=False, solver=None, **kwargs):
         """Initialize estimator.
@@ -417,12 +417,14 @@ class RidgedGroupLasso(GroupLasso):
                          warm_start=warm_start, solver=solver, **kwargs)
 
         self._delta = cp.Parameter(shape=(len(self.group_masks),), nonneg=True)
-        if delta is not None:
-            if not all(delta >= 0):
+        if isinstance(delta, float) or isinstance(delta, int):
+            if delta < 0:
                 raise ValueError("'delta' parameter must be nonnegative.")
-            self._delta.value = delta
+            self.delta = delta * np.ones(len(self.group_masks))
         else:
-            self._delta.value = np.ones(len(self.group_masks))
+            if any(delta < 0):
+                raise ValueError("'delta' parameter must be nonnegative.")
+            self.delta = delta
 
     @property
     def delta(self):
@@ -439,7 +441,10 @@ class RidgedGroupLasso(GroupLasso):
             grp_norms = cp.hstack(
                 [
                     cp.norm2(
-                        sqrtm(X[:, mask].T @ X[:, mask] + self._delta.value[i] ** 0.5 * np.eye(sum(mask))) @ self._beta[mask]
+                        sqrtm(
+                            X[:, mask].T @ X[:, mask] +
+                            self._delta.value[i] ** 0.5 * np.eye(sum(mask))
+                        ) @ self._beta[mask]
                     )
                     for i, mask in enumerate(self.group_masks)
                 ]
