@@ -3,6 +3,7 @@
 * Group Lasso
 * Overlap Group Lasso
 * Sparse Group Lasso
+* Ridged Group Lasso
 
 Estimators follow scikit-learn interface, but use cvxpy to set up and solve
 optimization problem.
@@ -282,6 +283,10 @@ class SparseGroupLasso(GroupLasso):
                 weight can be specified. The array must be the
                 same length as the groups given. If you need all groups
                 weighted equally just pass an array of ones.
+            standardize (bool): optional
+                Whether to standardize the group regularization penalty using
+                the feature matrix. See the following for reference:
+                http://faculty.washington.edu/nrsimon/standGL.pdf
             fit_intercept (bool):
                 Whether the intercept should be estimated or not.
                 If False, the data is assumed to be already centered.
@@ -362,7 +367,7 @@ class RidgedGroupLasso(GroupLasso):
                                + \sum_{G} delta_l * ||Beta_G||^2_2
     Where G represents groups of features/coefficients
 
-    For details on propert standardization refer to:
+    For details on proper standardization refer to:
     http://faculty.washington.edu/nrsimon/standGL.pdf
     """
 
@@ -386,6 +391,10 @@ class RidgedGroupLasso(GroupLasso):
                 weight can be specified. The array must be the
                 same length as the groups given. If you need all groups
                 weighted equally just pass an array of ones.
+            standardize (bool): optional
+                Whether to standardize the group regularization penalty using
+                the feature matrix. See the following for reference:
+                http://faculty.washington.edu/nrsimon/standGL.pdf
             fit_intercept (bool):
                 Whether the intercept should be estimated or not.
                 If False, the data is assumed to be already centered.
@@ -417,14 +426,7 @@ class RidgedGroupLasso(GroupLasso):
                          warm_start=warm_start, solver=solver, **kwargs)
 
         self._delta = cp.Parameter(shape=(len(self.group_masks),), nonneg=True)
-        if isinstance(delta, float) or isinstance(delta, int):
-            if delta < 0:
-                raise ValueError("'delta' parameter must be nonnegative.")
-            self.delta = delta * np.ones(len(self.group_masks))
-        else:
-            if any(delta < 0):
-                raise ValueError("'delta' parameter must be nonnegative.")
-            self.delta = delta
+        self.delta = delta
 
     @property
     def delta(self):
@@ -434,7 +436,10 @@ class RidgedGroupLasso(GroupLasso):
     @delta.setter
     def delta(self, val):
         """Set ridge regularization vector."""
-        self._delta.value = val
+        if isinstance(val, float):
+            self._delta.value = val * np.ones(len(self.group_masks))
+        else:
+            self._delta.value = val
 
     def _gen_group_norms(self, X):
         if self.standardize:
@@ -453,7 +458,7 @@ class RidgedGroupLasso(GroupLasso):
             grp_norms = cp.hstack(
                 [cp.norm2(self._beta[mask]) for mask in self.group_masks])
 
-        self._group_norms = grp_norms
+        self._group_norms = grp_norms.T
         return grp_norms
 
     def _gen_regularization(self, X):
@@ -461,6 +466,6 @@ class RidgedGroupLasso(GroupLasso):
         ridge = cp.hstack(
             [cp.sum_squares(self._beta[mask]) for mask in self.group_masks]
         )
-        reg = self._alpha * self.group_weights @ grp_norms.T + 0.5 * self._delta @ ridge
+        reg = self._alpha * self.group_weights @ grp_norms + 0.5 * self._delta @ ridge
 
         return reg
