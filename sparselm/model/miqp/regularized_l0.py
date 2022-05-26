@@ -214,7 +214,7 @@ class MixedL0(RegularizedL0, metaclass=ABCMeta):
     @abstractmethod
     def _gen_objective(self, X, y):
         """Generate optimization objective."""
-        return
+        return super()._gen_objective(X, y)
 
 
 class L1L0(MixedL0):
