@@ -3,6 +3,7 @@
 * Group Lasso
 * Overlap Group Lasso
 * Sparse Group Lasso
+* Ridged Group Lasso
 
 Estimators follow scikit-learn interface, but use cvxpy to set up and solve
 optimization problem.
@@ -11,6 +12,7 @@ optimization problem.
 __author__ = "Luis Barroso-Luque, Fengyu Xie"
 
 import warnings
+from scipy.linalg import sqrtm
 import cvxpy as cp
 import numpy as np
 
@@ -281,6 +283,10 @@ class SparseGroupLasso(GroupLasso):
                 weight can be specified. The array must be the
                 same length as the groups given. If you need all groups
                 weighted equally just pass an array of ones.
+            standardize (bool): optional
+                Whether to standardize the group regularization penalty using
+                the feature matrix. See the following for reference:
+                http://faculty.washington.edu/nrsimon/standGL.pdf
             fit_intercept (bool):
                 Whether the intercept should be estimated or not.
                 If False, the data is assumed to be already centered.
@@ -350,4 +356,116 @@ class SparseGroupLasso(GroupLasso):
         l1_reg = cp.norm1(self._beta)
         reg = self._lambda1 * l1_reg + \
             self._lambda2 * (self.group_weights @ grp_norms)
+        return reg
+
+
+class RidgedGroupLasso(GroupLasso):
+    """Ridged Group Lasso implementation.
+
+    Regularized model:
+        || X * Beta - y ||^2_2 + alpha * \sum_{G} w_G * ||Beta_G||_2
+                               + \sum_{G} delta_l * ||Beta_G||^2_2
+    Where G represents groups of features/coefficients
+
+    For details on proper standardization refer to:
+    http://faculty.washington.edu/nrsimon/standGL.pdf
+    """
+
+    def __init__(self, groups, alpha=1.0, delta=1.0, group_weights=None,
+                 standardize=False, fit_intercept=False, normalize=False,
+                 copy_X=True, warm_start=False, solver=None, **kwargs):
+        """Initialize estimator.
+
+        Args:
+            groups (list or ndarray):
+                array-like of integers specifying groups. Length should be the
+                same as model, where each integer entry specifies the group
+                each parameter corresponds to.
+            alpha (float):
+                Regularization hyper-parameter.
+            delta (ndarray): optional
+                Positive 1D array. Regularization vector for ridge penalty.
+            group_weights (ndarray): optional
+                Weights for each group to use in the regularization term.
+                The default is to use the sqrt of the group sizes, however any
+                weight can be specified. The array must be the
+                same length as the groups given. If you need all groups
+                weighted equally just pass an array of ones.
+            standardize (bool): optional
+                Whether to standardize the group regularization penalty using
+                the feature matrix. See the following for reference:
+                http://faculty.washington.edu/nrsimon/standGL.pdf
+            fit_intercept (bool):
+                Whether the intercept should be estimated or not.
+                If False, the data is assumed to be already centered.
+            normalize (bool):
+                This parameter is ignored when fit_intercept is set to False.
+                If True, the regressors X will be normalized before regression
+                by subtracting the mean and dividing by the l2-norm.
+                If you wish to standardize, please use StandardScaler before
+                calling fit on an estimator with normalize=False
+            copy_X (bool):
+                If True, X will be copied; else, it may be overwritten.
+            warm_start (bool):
+                When set to True, reuse the solution of the previous call to
+                fit as initialization, otherwise, just erase the previous
+                solution.
+            solver (str):
+                cvxpy backend solver to use. Supported solvers are:
+                ECOS, ECOS_BB, CVXOPT, SCS, GUROBI, Elemental.
+                GLPK and GLPK_MI (via CVXOPT GLPK interface)
+            **kwargs:
+                Kewyard arguments passed to cvxpy solve.
+                See docs linked in CVXEstimator base class for more info.
+        """
+        super().__init__(groups=groups, alpha=alpha,
+                         group_weights=group_weights,
+                         standardize=standardize,
+                         fit_intercept=fit_intercept,
+                         normalize=normalize, copy_X=copy_X,
+                         warm_start=warm_start, solver=solver, **kwargs)
+
+        self._delta = cp.Parameter(shape=(len(self.group_masks),), nonneg=True)
+        self.delta = delta
+
+    @property
+    def delta(self):
+        """Get ridge regularization vector."""
+        return self._delta.value
+
+    @delta.setter
+    def delta(self, val):
+        """Set ridge regularization vector."""
+        if isinstance(val, float):
+            self._delta.value = val * np.ones(len(self.group_masks))
+        else:
+            self._delta.value = val
+
+    def _gen_group_norms(self, X):
+        if self.standardize:
+            grp_norms = cp.hstack(
+                [
+                    cp.norm2(
+                        sqrtm(
+                            X[:, mask].T @ X[:, mask] +
+                            self._delta.value[i] ** 0.5 * np.eye(sum(mask))
+                        ) @ self._beta[mask]
+                    )
+                    for i, mask in enumerate(self.group_masks)
+                ]
+            )
+        else:
+            grp_norms = cp.hstack(
+                [cp.norm2(self._beta[mask]) for mask in self.group_masks])
+
+        self._group_norms = grp_norms.T
+        return grp_norms
+
+    def _gen_regularization(self, X):
+        grp_norms = self._gen_group_norms(X)
+        ridge = cp.hstack(
+            [cp.sum_squares(self._beta[mask]) for mask in self.group_masks]
+        )
+        reg = self._alpha * self.group_weights @ grp_norms + 0.5 * self._delta @ ridge
+
         return reg
