@@ -10,7 +10,8 @@ import numpy as np
 import cvxpy as cp
 from sklearn.base import RegressorMixin
 from sklearn.linear_model._base import LinearModel
-from sklearn.linear_model._base import  _rescale_data, _check_sample_weight
+from sklearn.linear_model._base import _rescale_data, _check_sample_weight,\
+    _preprocess_data, _deprecate_normalize
 
 
 class Estimator(LinearModel, RegressorMixin, metaclass=ABCMeta):
@@ -75,10 +76,9 @@ class Estimator(LinearModel, RegressorMixin, metaclass=ABCMeta):
             sample_weight = _check_sample_weight(sample_weight, X,
                                                  dtype=X.dtype)
 
+
         X, y, X_offset, y_offset, X_scale = self._preprocess_data(
-            X, y, fit_intercept=self.fit_intercept, normalize=self.normalize,
-            copy=self.copy_X, sample_weight=sample_weight,
-            return_mean=True)
+            X, y, copy=self.copy_X, sample_weight=sample_weight)
 
         if sample_weight is not None:
             X, y = _rescale_data(X, y, sample_weight)
@@ -88,6 +88,20 @@ class Estimator(LinearModel, RegressorMixin, metaclass=ABCMeta):
 
         # return self for chaining fit and predict calls
         return self
+
+    def _preprocess_data(self, X, y, copy=True, sample_weight=None):
+        """Pre-process data.
+
+        In the future, may add additional functionalities beyond sklearn
+        basics.
+        """
+        _normalize = _deprecate_normalize(
+            self.normalize, default=False, estimator_name=self.__class__.__name__
+        )
+        return _preprocess_data(X, y, copy=copy,
+                                fit_intercept=self.fit_intercept,
+                                normalize=_normalize,
+                                sample_weight=sample_weight)
 
     @abstractmethod
     def _solve(self, X, y, *args, **kwargs):

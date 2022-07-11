@@ -1,4 +1,6 @@
 """Classes implementing parameters selection beyond GridsearchCV."""
+__author__ = "Fengyu Xie"
+
 import re
 import numpy as np
 import warnings
@@ -196,7 +198,12 @@ class GridSearch(GridSearchCV):
                     if np.all(p > -1E-9):
                         params.append(p)
             params_sum = np.sum(params, axis=0)
-            return np.argmax(params_sum - (metrics - m + sig) ** 2)
+            one_std_dists = np.abs(metrics - m + sig)
+            candidates = np.arange(len(metrics))[one_std_dists
+                                                 < (np.min(one_std_dists)
+                                                    + 0.1 * sig)]
+            best_index = candidates[np.argmax(params_sum[candidates])]
+            return best_index
 
     # Overwrite original fit method to allow multiple optimal methods.
     def fit(self, X, y=None, *, groups=None, **fit_params):
@@ -402,7 +409,7 @@ class LineSearch(BaseSearchCV):
             estimator,
             param_grid,
             *,
-            opt_selection_methods=None,
+            opt_selection_method=None,
             n_iter=None,
             scoring=None,
             n_jobs=None,
@@ -425,12 +432,15 @@ class LineSearch(BaseSearchCV):
                 and lists of parameter settings to try as the second element.
                 In LineSearch, the hyper-params given first will be searched first
                 in a cycle. Multiple grids search is NOT supported!
-            opt_selection_methods(list(str) or str, default=None):
+            opt_selection_method(list(str) or str, default=None):
                 The method to select optimal hyper params. Default to "max_r2", which
                 means to maximize r2 score. Can also choose "one_std_r2", which means
-                to apply one standard error rule on r2 scores. If given as a list of str,
-                it allows different selection method for corresponding hyper-params in
-                the param_grid argument.
+                to apply one standard error rule on r2 scores.
+                In line search, this argument can also be given as a list of str. This
+                will allow different selection methods for corresponding hyper-params in
+                the param_grid. For example, a good practice when using L2L0 estimator
+                shall be opt_selection_method = ["one_std_r2", "max_r2"] for "alpha"
+                and "l0_ratio", respectively.
             n_iter(int, default=None):
                 Number of iterations to perform. One iteration means a 1D search on
                 one hyper-param, and we scan one hyper-param at a time in the order of
@@ -540,19 +550,20 @@ class LineSearch(BaseSearchCV):
         else:
             raise ValueError("Parameters grid not given in the correct format!")
 
-        if opt_selection_methods is None:
+        if opt_selection_method is None:
             self.opt_selection_methods = ["max_r2" for _ in range(self.n_params)]
-        elif isinstance(opt_selection_methods, str):
-            self.opt_selection_methods = [opt_selection_methods
+        elif isinstance(opt_selection_method, str):
+            self.opt_selection_methods = [opt_selection_method
                                           for _ in range(self.n_params)]
-        elif isinstance(opt_selection_methods, (list, tuple)) \
-                and isinstance(opt_selection_methods, str) \
-                and len(opt_selection_methods) == self.n_params:
-            self.opt_selection_methods = opt_selection_methods
+        elif isinstance(opt_selection_method, (list, tuple)) \
+                and all(isinstance(m, str) for m in opt_selection_method) \
+                and len(opt_selection_method) == self.n_params:
+            self.opt_selection_methods = opt_selection_method
         else:
             raise ValueError("Optimal hyperparams selection method"
                              " not given in the correct format!")
 
+        # Set a proper value for this, not too large or too small.
         self.n_iter = n_iter if (n_iter is not None and n_iter > 0)\
             else 2 * self.n_params
 
@@ -584,7 +595,7 @@ class LineSearch(BaseSearchCV):
                     Instance of fitted estimator.
         """
         if len(self._history) > 0:
-            warnings.warn("Overwriting existing fit history!")
+            warnings.warn("Overwrite existing fit history!")
             self._history = []
 
         best_line_params_ = None
