@@ -47,7 +47,6 @@ class Estimator(LinearModel, RegressorMixin, metaclass=ABCMeta):
         self.fit_intercept = fit_intercept
         self.normalize = normalize
         self.copy_X = copy_X
-        self.coef_, self.intercept_ = None, None
 
     def fit(self, X, y, sample_weight=None, *args, **kwargs):
         """Prepare fit input with sklearn help then call fit method.
