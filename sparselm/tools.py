@@ -79,3 +79,31 @@ def constrain_coefficients(indices, high=None, low=None):
             return coefs
         return wrapped
     return decorate_fit_method
+
+
+def r2_score_to_cv_error(score, y, y_pred, weights=None):
+    """Convert r2 score to cross-validation error.
+
+    Args:
+        score(float):
+            An r2 score obtained from cross validation.
+        y(1d arrayLike):
+            The target vector.
+        y_pred(1d arrayLike):
+            The fitted vector.
+        weights(1d arrayLike):
+            The weights of each sample. Default to 1.
+    Returns:
+        float:
+            The CV error.
+    """
+    if weights is None:
+        weights = np.ones(len(y))
+    weights = np.array(weights)
+    if len(weights) != len(y):
+        raise ValueError("Weights given but not the same length as sample.")
+    if np.any(weights < 0) or np.allclose(weights, 0):
+        raise ValueError("Weights can not be negative or all zero.")
+
+    denominator = (weights * (y - y_pred) ** 2).sum() / weights.sum()
+    return (1 - score) * denominator
