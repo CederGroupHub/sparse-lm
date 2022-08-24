@@ -11,7 +11,7 @@ Sparse Linear Regression Models
 module. The estimators in **sparse-lm** are designed to fit right into
 [scikit-lean](https://scikit-learn.org/stable/index.html) by inheriting from their base
 `LinearModel`. But the underlying optimization problem is expressed and solved by
-leveraging [cvxpy](https://www.cvxpy.org/). 
+leveraging [cvxpy](https://www.cvxpy.org/).
 
 ---------------------------------------------------------------------------------------
 
