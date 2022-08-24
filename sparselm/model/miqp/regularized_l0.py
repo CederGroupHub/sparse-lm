@@ -395,7 +395,6 @@ class GroupedL0(RegularizedL0):
 
     def _gen_objective(self, X, y):
         """Generate the quadratic form portion of objective"""
-        print("called GL0!")
         c0 = 2 * X.shape[0] # keeps hyperparameter scale independent
         XTX = psd_wrap(X.T @ X) if self.ignore_psd_check else X.T @ X
         objective = cp.quad_form(self._beta, XTX) - 2 * y.T @ X @ self._beta \
