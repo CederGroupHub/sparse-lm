@@ -37,7 +37,8 @@ class AdaptiveLasso(Lasso):
 
     def __init__(self, alpha=1.0, max_iter=5, eps=1E-6, tol=1E-10,
                  update_function=None, fit_intercept=False, normalize=False,
-                 copy_X=True, warm_start=False, solver=None, **kwargs):
+                 copy_X=True, warm_start=False, solver=None,
+                 solver_options=None):
         """Initialize estimator.
 
         Args:
@@ -46,17 +47,13 @@ class AdaptiveLasso(Lasso):
             max_iter (int):
                 Maximum number of re-weighting iteration steps.
             eps (float):
-                Value to add to denominatar of weights.
+                Value to add to denominator of weights.
             tol (float):
                 Absolute convergence tolerance for difference between weights
                 at successive steps.
             update_function (Callable): optional
                 A function with signature f(beta, eps) used to update the
                 weights at each iteration. Default is 1/(|beta| + eps)
-            standardize (bool): optional
-                Whether to standardize the group regularization penalty using
-                the feature matrix. See the following for reference:
-                http://faculty.washington.edu/nrsimon/standGL.pdf
             fit_intercept (bool):
                 Whether the intercept should be estimated or not.
                 If False, the data is assumed to be already centered.
@@ -76,13 +73,13 @@ class AdaptiveLasso(Lasso):
                 cvxpy backend solver to use. Supported solvers are:
                 ECOS, ECOS_BB, CVXOPT, SCS, GUROBI, Elemental.
                 GLPK and GLPK_MI (via CVXOPT GLPK interface)
-            **kwargs:
-                Kewyard arguments passed to cvxpy solve.
-                See docs linked in CVXEstimator base class for more info.
+            solver_options:
+                dictionary of keyword arguments passed to cvxpy solve.
+                See docs in CVXEstimator for more information.
         """
         super().__init__(alpha=alpha, fit_intercept=fit_intercept,
                          normalize=normalize, copy_X=copy_X,
-                         warm_start=warm_start, solver=solver, **kwargs)
+                         warm_start=warm_start, solver=solver, solver_options=solver_options)
         self.tol = tol
         self.max_iter = max_iter
         self.eps = eps
@@ -103,13 +100,13 @@ class AdaptiveLasso(Lasso):
             raise RuntimeError(
                 f"{self._problem} is infeasible.")
         self._previous_weights = self._weights.value
-        self._weights.value = self.alpha * self.update_function(abs(beta),self.eps)
+        self._weights.value = self.alpha * self.update_function(abs(beta), self.eps)
 
     def _weights_converged(self):
         return np.linalg.norm(
             self._weights.value - self._previous_weights) <= self.tol
 
-    def _solve(self, X, y):
+    def _solve(self, X, y, *args, **kwargs):
         problem = self._get_problem(X, y)
         problem.solve(solver=self.solver, warm_start=self.warm_start,
                       **self.solver_opts)
@@ -133,7 +130,7 @@ class AdaptiveGroupLasso(AdaptiveLasso, GroupLasso):
     def __init__(self, groups, alpha=1.0, group_weights=None,
                  max_iter=5, eps=1E-6, tol=1E-10, update_function=None,
                  standardize=False, fit_intercept=False, normalize=False,
-                 copy_X=True, warm_start=False, solver=None, **kwargs):
+                 copy_X=True, warm_start=False, solver=None, solver_options=None):
         """Initialize estimator.
 
         Args:
@@ -152,7 +149,7 @@ class AdaptiveGroupLasso(AdaptiveLasso, GroupLasso):
             max_iter (int):
                 Maximum number of re-weighting iteration steps.
             eps (float):
-                Value to add to denominatar of weights.
+                Value to add to denominator of weights.
             tol (float):
                 Absolute convergence tolerance for difference between weights
                 at successive steps.
@@ -184,9 +181,9 @@ class AdaptiveGroupLasso(AdaptiveLasso, GroupLasso):
                 cvxpy backend solver to use. Supported solvers are:
                 ECOS, ECOS_BB, CVXOPT, SCS, GUROBI, Elemental.
                 GLPK and GLPK_MI (via CVXOPT GLPK interface)
-            **kwargs:
-                Kewyard arguments passed to cvxpy solve.
-                See docs linked in CVXEstimator base class for more info.
+            solver_options:
+                dictionary of keyword arguments passed to cvxpy solve.
+                See docs in CVXEstimator for more information.
         """
         # call with keywords to avoid MRO issues
         super().__init__(groups=groups, alpha=alpha,
@@ -196,7 +193,8 @@ class AdaptiveGroupLasso(AdaptiveLasso, GroupLasso):
                          standardize=standardize,
                          fit_intercept=fit_intercept,
                          normalize=normalize, copy_X=copy_X,
-                         warm_start=warm_start, solver=solver, **kwargs)
+                         warm_start=warm_start, solver=solver,
+                         solver_options=solver_options)
 
     def _gen_regularization(self, X):
         grp_norms = self._gen_group_norms(X)
@@ -221,7 +219,7 @@ class AdaptiveOverlapGroupLasso(OverlapGroupLasso, AdaptiveGroupLasso):
     def __init__(self, group_list, alpha=1.0, group_weights=None,
                  max_iter=5, eps=1E-6, tol=1E-10, update_function=None,
                  standardize=False, fit_intercept=False, normalize=False,
-                 copy_X=True, warm_start=False, solver=None, **kwargs):
+                 copy_X=True, warm_start=False, solver=None, solver_options=None):
         """Initialize estimator.
 
         Args:
@@ -245,7 +243,7 @@ class AdaptiveOverlapGroupLasso(OverlapGroupLasso, AdaptiveGroupLasso):
             max_iter (int):
                 Maximum number of re-weighting iteration steps.
             eps (float):
-                Value to add to denominatar of weights.
+                Value to add to denominator of weights.
             tol (float):
                 Absolute convergence tolerance for difference between weights
                 at successive steps.
@@ -277,9 +275,9 @@ class AdaptiveOverlapGroupLasso(OverlapGroupLasso, AdaptiveGroupLasso):
                 cvxpy backend solver to use. Supported solvers are:
                 ECOS, ECOS_BB, CVXOPT, SCS, GUROBI, Elemental.
                 GLPK and GLPK_MI (via CVXOPT GLPK interface)
-            **kwargs:
-                Kewyard arguments passed to cvxpy solve.
-                See docs linked in CVXEstimator base class for more info.
+            solver_options:
+                dictionary of keyword arguments passed to cvxpy solve.
+                See docs in CVXEstimator for more information.
         """
         # call with keywords to avoid MRO issues
         super().__init__(group_list=group_list, alpha=alpha,
@@ -288,7 +286,8 @@ class AdaptiveOverlapGroupLasso(OverlapGroupLasso, AdaptiveGroupLasso):
                          standardize=standardize,
                          fit_intercept=fit_intercept,
                          normalize=normalize, copy_X=copy_X,
-                         warm_start=warm_start, solver=solver, **kwargs)
+                         warm_start=warm_start, solver=solver,
+                         solver_options=solver_options)
 
     def _gen_objective(self, X, y):
         return AdaptiveGroupLasso._gen_objective(self, X, y)
@@ -316,7 +315,7 @@ class AdaptiveSparseGroupLasso(AdaptiveLasso, SparseGroupLasso):
     def __init__(self, groups,  l1_ratio=0.5, alpha=1.0, group_weights=None,
                  max_iter=5, eps=1E-6, tol=1E-10, update_function=None,
                  standardize=False, fit_intercept=False, normalize=False,
-                 copy_X=True, warm_start=False, solver=None, **kwargs):
+                 copy_X=True, warm_start=False, solver=None, solver_options=None):
         """Initialize estimator.
 
         Args:
@@ -337,7 +336,7 @@ class AdaptiveSparseGroupLasso(AdaptiveLasso, SparseGroupLasso):
             max_iter (int):
                 Maximum number of re-weighting iteration steps.
             eps (float):
-                Value to add to denominatar of weights.
+                Value to add to denominator of weights.
             tol (float):
                 Absolute convergence tolerance for difference between weights
                 at successive steps.
@@ -369,9 +368,9 @@ class AdaptiveSparseGroupLasso(AdaptiveLasso, SparseGroupLasso):
                 cvxpy backend solver to use. Supported solvers are:
                 ECOS, ECOS_BB, CVXOPT, SCS, GUROBI, Elemental.
                 GLPK and GLPK_MI (via CVXOPT GLPK interface)
-            **kwargs:
-                Kewyard arguments passed to cvxpy solve.
-                See docs linked in CVXEstimator base class for more info.
+            solver_options:
+                dictionary of keyword arguments passed to cvxpy solve.
+                See docs in CVXEstimator for more information.
         """
         # call with keywords to avoid MRO issues
         super().__init__(groups=groups, l1_ratio=l1_ratio, alpha=alpha,
@@ -381,7 +380,7 @@ class AdaptiveSparseGroupLasso(AdaptiveLasso, SparseGroupLasso):
                          standardize=standardize,
                          fit_intercept=fit_intercept, normalize=normalize,
                          copy_X=copy_X, warm_start=warm_start, solver=solver,
-                         **kwargs)
+                         solver_options=solver_options)
 
     def _gen_regularization(self, X):
         grp_norms = self._gen_group_norms(X)
@@ -429,7 +428,7 @@ class AdaptiveRidgedGroupLasso(AdaptiveGroupLasso, RidgedGroupLasso):
     def __init__(self, groups, alpha=1.0, delta=1.0, group_weights=None,
                  max_iter=5, eps=1E-6, tol=1E-10, update_function=None,
                  standardize=False, fit_intercept=False, normalize=False,
-                 copy_X=True, warm_start=False, solver=None, **kwargs):
+                 copy_X=True, warm_start=False, solver=None, solver_options=None):
         """Initialize estimator.
 
         Args:
@@ -453,7 +452,7 @@ class AdaptiveRidgedGroupLasso(AdaptiveGroupLasso, RidgedGroupLasso):
             max_iter (int):
                 Maximum number of re-weighting iteration steps.
             eps (float):
-                Value to add to denominatar of weights.
+                Value to add to denominator of weights.
             tol (float):
                 Absolute convergence tolerance for difference between weights
                 at successive steps.
@@ -478,9 +477,9 @@ class AdaptiveRidgedGroupLasso(AdaptiveGroupLasso, RidgedGroupLasso):
                 cvxpy backend solver to use. Supported solvers are:
                 ECOS, ECOS_BB, CVXOPT, SCS, GUROBI, Elemental.
                 GLPK and GLPK_MI (via CVXOPT GLPK interface)
-            **kwargs:
-                Kewyard arguments passed to cvxpy solve.
-                See docs linked in CVXEstimator base class for more info.
+            solver_options:
+                dictionary of keyword arguments passed to cvxpy solve.
+                See docs in CVXEstimator for more information.
         """
         super().__init__(groups=groups, alpha=alpha,
                          delta=delta, max_iter=max_iter, eps=eps, tol=tol,
@@ -489,7 +488,8 @@ class AdaptiveRidgedGroupLasso(AdaptiveGroupLasso, RidgedGroupLasso):
                          standardize=standardize,
                          fit_intercept=fit_intercept,
                          normalize=normalize, copy_X=copy_X,
-                         warm_start=warm_start, solver=solver, **kwargs)
+                         warm_start=warm_start, solver=solver,
+                         solver_options=solver_options)
 
     def _gen_group_norms(self, X):
         return RidgedGroupLasso._gen_group_norms(self, X)

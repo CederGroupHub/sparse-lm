@@ -20,7 +20,7 @@ class BestSubsetSelection(CVXEstimator):
 
     def __init__(self, sparse_bound, big_M=1000, hierarchy=None,
                  ignore_psd_check=True, fit_intercept=False, normalize=False,
-                 copy_X=True, warm_start=False, solver=None, **kwargs):
+                 copy_X=True, warm_start=False, solver=None, solver_options=None):
         """
 
         Args:
@@ -61,13 +61,13 @@ class BestSubsetSelection(CVXEstimator):
                 cvxpy backend solver to use. Supported solvers are:
                 ECOS, ECOS_BB, CVXOPT, SCS, GUROBI, Elemental.
                 GLPK and GLPK_MI (via CVXOPT GLPK interface)
-            **kwargs:
-                Kewyard arguments passed to cvxpy solve.
-                See docs linked above for more information.
+            solver_options:
+                dictionary of keyword arguments passed to cvxpy solve.
+                See docs in CVXEstimator for more information.
         """
         super().__init__(fit_intercept=fit_intercept, normalize=normalize,
                          copy_X=copy_X, warm_start=warm_start, solver=solver,
-                         **kwargs)
+                         solver_options=solver_options)
 
         self._bound = cp.Parameter(nonneg=True, value=sparse_bound)
         self.hierarchy = hierarchy
@@ -126,7 +126,7 @@ class RidgedBestSubsetSelection(BestSubsetSelection):
 
     def __init__(self, sparse_bound, alpha=1.0, big_M=1000, hierarchy=None,
                  ignore_psd_check=True, fit_intercept=False, normalize=False,
-                 copy_X=True, warm_start=False, solver=None, **kwargs):
+                 copy_X=True, warm_start=False, solver=None, solver_options=None):
         """
         Args:
             sparse_bound (int):
@@ -166,15 +166,15 @@ class RidgedBestSubsetSelection(BestSubsetSelection):
                 cvxpy backend solver to use. Supported solvers are:
                 ECOS, ECOS_BB, CVXOPT, SCS, GUROBI, Elemental.
                 GLPK and GLPK_MI (via CVXOPT GLPK interface)
-            **kwargs:
-                Kewyard arguments passed to cvxpy solve.
-                See docs linked above for more information.
+            solver_options:
+                dictionary of keyword arguments passed to cvxpy solve.
+                See docs in CVXEstimator for more information.
         """
         super().__init__(
             sparse_bound=sparse_bound, big_M=big_M, hierarchy=hierarchy,
             ignore_psd_check=ignore_psd_check, fit_intercept=fit_intercept,
             normalize=normalize, copy_X=copy_X, warm_start=warm_start, solver=solver,
-            **kwargs
+            solver_options=solver_options
         )
         self._alpha = cp.Parameter(nonneg=True, value=alpha)
 
@@ -199,7 +199,7 @@ class BestGroupSelection(BestSubsetSelection):
 
     def __init__(self, groups, sparse_bound, big_M=1000, hierarchy=None,
                  ignore_psd_check=True, fit_intercept=False, normalize=False,
-                 copy_X=True, warm_start=False, solver=None, **kwargs):
+                 copy_X=True, warm_start=False, solver=None, solver_options=None):
         """
         Args:
             groups (list or ndarray):
@@ -243,15 +243,15 @@ class BestGroupSelection(BestSubsetSelection):
                 cvxpy backend solver to use. Supported solvers are:
                 ECOS, ECOS_BB, CVXOPT, SCS, GUROBI, Elemental.
                 GLPK and GLPK_MI (via CVXOPT GLPK interface)
-            **kwargs:
-                Kewyard arguments passed to cvxpy solve.
-                See docs linked above for more information.
+            solver_options:
+                dictionary of keyword arguments passed to cvxpy solve.
+                See docs in CVXEstimator for more information.
         """
         super().__init__(
             sparse_bound=sparse_bound, big_M=big_M, hierarchy=hierarchy,
             ignore_psd_check=ignore_psd_check, fit_intercept=fit_intercept,
             normalize=normalize, copy_X=copy_X, warm_start=warm_start, solver=solver,
-            **kwargs
+            solver_options=solver_options
         )
         self.groups = np.asarray(groups)
         self._group_masks = [self.groups == i for i in np.unique(groups)]
@@ -274,7 +274,7 @@ class RidgedBestGroupSelection(RidgedBestSubsetSelection, BestGroupSelection):
 
     def __init__(self, groups, sparse_bound, alpha=1.0, big_M=1000, hierarchy=None,
                  ignore_psd_check=True, fit_intercept=False, normalize=False,
-                 copy_X=True, warm_start=False, solver=None, **kwargs):
+                 copy_X=True, warm_start=False, solver=None, solver_options=None):
         """
         Args:
             groups (list or ndarray):
@@ -320,16 +320,16 @@ class RidgedBestGroupSelection(RidgedBestSubsetSelection, BestGroupSelection):
                 cvxpy backend solver to use. Supported solvers are:
                 ECOS, ECOS_BB, CVXOPT, SCS, GUROBI, Elemental.
                 GLPK and GLPK_MI (via CVXOPT GLPK interface)
-            **kwargs:
-                Kewyard arguments passed to cvxpy solve.
-                See docs linked above for more information.
+            solver_options:
+                dictionary of keyword arguments passed to cvxpy solve.
+                See docs in CVXEstimator for more information.
         """
         # need to call super for sklearn clone function
         super().__init__(
             groups=groups, sparse_bound=sparse_bound,  alpha=alpha, big_M=big_M,
             hierarchy=hierarchy, ignore_psd_check=ignore_psd_check,
             fit_intercept=fit_intercept, normalize=normalize, copy_X=copy_X,
-            warm_start=warm_start, solver=solver, **kwargs
+            warm_start=warm_start, solver=solver, solver_options=solver_options
         )
 
     def _gen_objective(self, X, y):

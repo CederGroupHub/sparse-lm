@@ -1,8 +1,10 @@
 """MIQP based solvers for sparse solutions with hierarchical constraints
 
 Mixed L1L0 and L2L0 solvers.
-L1L0 proposed by Wenxuan Huang: https://arxiv.org/abs/1807.10753
-L2L0 proposed by Peichen Zhong
+L1L0 proposed by Wenxuan Huang:
+    https://arxiv.org/abs/1807.10753
+L2L0 proposed by Peichen Zhong:
+    https://journals.aps.org/prb/abstract/10.1103/PhysRevB.106.024203
 
 Estimators allow optional inclusion of hierarchical at the single feature
 single coefficient level.
@@ -24,7 +26,7 @@ class RegularizedL0(CVXEstimator):
 
     def __init__(self, alpha=1.0, big_M=1000, hierarchy=None, ignore_psd_check=True,
                  fit_intercept=False, normalize=False, copy_X=True, warm_start=False,
-                 solver=None, **kwargs):
+                 solver=None, solver_options=None):
         """
         Args:
             alpha (float):
@@ -63,13 +65,13 @@ class RegularizedL0(CVXEstimator):
                 cvxpy backend solver to use. Supported solvers are:
                 ECOS, ECOS_BB, CVXOPT, SCS, GUROBI, Elemental.
                 GLPK and GLPK_MI (via CVXOPT GLPK interface)
-            **kwargs:
-                Kewyard arguments passed to cvxpy solve.
-                See docs linked above for more information.
+            solver_options:
+                dictionary of keyword arguments passed to cvxpy solve.
+                See docs in CVXEstimator for more information.
         """
         super().__init__(fit_intercept=fit_intercept, normalize=normalize,
                          copy_X=copy_X, warm_start=warm_start, solver=solver,
-                         **kwargs)
+                         solver_options=solver_options)
 
         self.hierarchy = hierarchy
         self._alpha = alpha
@@ -129,7 +131,7 @@ class MixedL0(RegularizedL0, metaclass=ABCMeta):
 
     def __init__(self, alpha=1.0, l0_ratio=0.5, big_M=1000, hierarchy=None,
                  ignore_psd_check=True, fit_intercept=False, normalize=False,
-                 copy_X=True, warm_start=False, solver=None, **kwargs):
+                 copy_X=True, warm_start=False, solver=None, solver_options=None):
         """
         Args:
             alpha (float):
@@ -170,15 +172,15 @@ class MixedL0(RegularizedL0, metaclass=ABCMeta):
                 cvxpy backend solver to use. Supported solvers are:
                 ECOS, ECOS_BB, CVXOPT, SCS, GUROBI, Elemental.
                 GLPK and GLPK_MI (via CVXOPT GLPK interface)
-            **kwargs:
-                Kewyard arguments passed to cvxpy solve.
-                See docs linked above for more information.
+            solver_options:
+                dictionary of keyword arguments passed to cvxpy solve.
+                See docs in CVXEstimator for more information.
         """
         super().__init__(
             alpha=alpha, big_M=big_M, hierarchy=hierarchy,
             ignore_psd_check=ignore_psd_check, fit_intercept=fit_intercept,
             normalize=normalize, copy_X=copy_X, warm_start=warm_start, solver=solver,
-            **kwargs
+            solver_options=solver_options
         )
 
         if not 0 <= l0_ratio <= 1:
@@ -239,7 +241,7 @@ class L1L0(MixedL0):
     """
     def __init__(self, alpha=1.0, l0_ratio=0.5, big_M=1000, hierarchy=None,
                  ignore_psd_check=True, fit_intercept=False, normalize=False,
-                 copy_X=True, warm_start=False, solver=None, **kwargs):
+                 copy_X=True, warm_start=False, solver=None, solver_options=None):
         """
         Args:
             alpha (float):
@@ -280,15 +282,16 @@ class L1L0(MixedL0):
                 cvxpy backend solver to use. Supported solvers are:
                 ECOS, ECOS_BB, CVXOPT, SCS, GUROBI, Elemental.
                 GLPK and GLPK_MI (via CVXOPT GLPK interface)
-            **kwargs:
-                Kewyard arguments passed to cvxpy solve.
-                See docs linked above for more information.
+            solver_options:
+                dictionary of keyword arguments passed to cvxpy solve.
+                See docs in CVXEstimator for more information.
         """
         super().__init__(alpha=alpha, l0_ratio=l0_ratio, big_M=big_M,
                          hierarchy=hierarchy, ignore_psd_check=ignore_psd_check,
                          fit_intercept=fit_intercept,
                          normalize=normalize, copy_X=copy_X,
-                         warm_start=warm_start, solver=solver, **kwargs)
+                         warm_start=warm_start, solver=solver,
+                         solver_options=solver_options)
         self._z1 = None
 
     def _gen_constraints(self, X, y):
@@ -336,7 +339,7 @@ class GroupedL0(RegularizedL0):
 
     def __init__(self, groups, alpha=1.0, big_M=1000, hierarchy=None,
                  ignore_psd_check=True, fit_intercept=False, normalize=False,
-                 copy_X=True, warm_start=False, solver=None, **kwargs):
+                 copy_X=True, warm_start=False, solver=None, solver_options=None):
         """
         Args:
             groups (list or ndarray):
@@ -379,15 +382,15 @@ class GroupedL0(RegularizedL0):
                 cvxpy backend solver to use. Supported solvers are:
                 ECOS, ECOS_BB, CVXOPT, SCS, GUROBI, Elemental.
                 GLPK and GLPK_MI (via CVXOPT GLPK interface)
-            **kwargs:
-                Kewyard arguments passed to cvxpy solve.
-                See docs linked above for more information.
+            solver_options:
+                dictionary of keyword arguments passed to cvxpy solve.
+                See docs in CVXEstimator for more information.
         """
         super().__init__(
             alpha=alpha, big_M=big_M, hierarchy=hierarchy,
             ignore_psd_check=ignore_psd_check, fit_intercept=fit_intercept,
             normalize=normalize, copy_X=copy_X, warm_start=warm_start, solver=solver,
-            **kwargs)
+            solver_options=solver_options)
 
         self.groups = np.asarray(groups)
         self._group_masks = [self.groups == i for i in np.unique(groups)]
@@ -420,7 +423,7 @@ class GroupedL2L0(GroupedL0, MixedL0):
 
     def __init__(self, groups, alpha=1.0, l0_ratio=0.5, big_M=1000, hierarchy=None,
                  ignore_psd_check=True, fit_intercept=False, normalize=False,
-                 copy_X=True, warm_start=False, solver=None, **kwargs):
+                 copy_X=True, warm_start=False, solver=None, solver_options=None):
         """
         Args:
             groups (list or ndarray):
@@ -465,16 +468,17 @@ class GroupedL2L0(GroupedL0, MixedL0):
                 cvxpy backend solver to use. Supported solvers are:
                 ECOS, ECOS_BB, CVXOPT, SCS, GUROBI, Elemental.
                 GLPK and GLPK_MI (via CVXOPT GLPK interface)
-            **kwargs:
-                Kewyard arguments passed to cvxpy solve.
-                See docs linked above for more information.
+            solver_options:
+                dictionary of keyword arguments passed to cvxpy solve.
+                See docs in CVXEstimator for more information.
         """
         # need to call super for sklearn clone function
         super().__init__(groups=groups, alpha=alpha, l0_ratio=l0_ratio, big_M=big_M,
                          hierarchy=hierarchy, ignore_psd_check=ignore_psd_check,
                          fit_intercept=fit_intercept,
                          normalize=normalize, copy_X=copy_X,
-                         warm_start=warm_start, solver=solver, **kwargs)
+                         warm_start=warm_start, solver=solver,
+                         solver_options=solver_options)
 
     def _gen_objective(self, X, y):
         """Generate the objective function used in l2l0 regression model"""

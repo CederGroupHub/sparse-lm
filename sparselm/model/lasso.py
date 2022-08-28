@@ -29,7 +29,7 @@ class Lasso(CVXEstimator):
     """
 
     def __init__(self, alpha=1.0, fit_intercept=False, normalize=False,
-                 copy_X=True, warm_start=False, solver=None, **kwargs):
+                 copy_X=True, warm_start=False, solver=None, solver_options=None):
         """
         Args:
             alpha (float):
@@ -53,14 +53,14 @@ class Lasso(CVXEstimator):
                 cvxpy backend solver to use. Supported solvers are:
                 ECOS, ECOS_BB, CVXOPT, SCS, GUROBI, Elemental.
                 GLPK and GLPK_MI (via CVXOPT GLPK interface)
-            **kwargs:
-                Kewyard arguments passed to cvxpy solve.
-                See docs linked above for more information.
+            solver_options:
+                dictionary of keyword arguments passed to cvxpy solve.
+                See docs in CVXEstimator for more information.
         """
         self._alpha = cp.Parameter(value=alpha, nonneg=True)
         super().__init__(fit_intercept=fit_intercept, normalize=normalize,
                          copy_X=copy_X, warm_start=warm_start, solver=solver,
-                         **kwargs)
+                         solver_options=solver_options)
 
     @property
     def alpha(self):
@@ -91,7 +91,7 @@ class GroupLasso(Lasso):
 
     def __init__(self, groups, alpha=1.0, group_weights=None,
                  standardize=False, fit_intercept=False, normalize=False,
-                 copy_X=True, warm_start=False, solver=None, **kwargs):
+                 copy_X=True, warm_start=False, solver=None, solver_options=None):
         """Initialize estimator.
 
         Args:
@@ -130,9 +130,9 @@ class GroupLasso(Lasso):
                 cvxpy backend solver to use. Supported solvers are:
                 ECOS, ECOS_BB, CVXOPT, SCS, GUROBI, Elemental.
                 GLPK and GLPK_MI (via CVXOPT GLPK interface)
-            **kwargs:
-                Kewyard arguments passed to cvxpy solve.
-                See docs linked in CVXEstimator base class for more info.
+            solver_options:
+                dictionary of keyword arguments passed to cvxpy solve.
+                See docs in CVXEstimator for more information.
         """
         self.groups = np.asarray(groups)
         self.group_masks = [self.groups == i for i in np.unique(groups)]
@@ -149,7 +149,7 @@ class GroupLasso(Lasso):
 
         super().__init__(alpha=alpha, fit_intercept=fit_intercept,
                          normalize=normalize, copy_X=copy_X,
-                         warm_start=warm_start, solver=solver, **kwargs)
+                         warm_start=warm_start, solver=solver, solver_options=solver_options)
 
     def _gen_group_norms(self, X):
         if self.standardize:
@@ -178,7 +178,7 @@ class OverlapGroupLasso(GroupLasso):
 
     def __init__(self, group_list, alpha=1.0, group_weights=None,
                  standardize=False, fit_intercept=False, normalize=False,
-                 copy_X=True, warm_start=False, solver=None, **kwargs):
+                 copy_X=True, warm_start=False, solver=None, solver_options=None):
         """Initialize estimator.
 
         Args:
@@ -222,9 +222,9 @@ class OverlapGroupLasso(GroupLasso):
                 cvxpy backend solver to use. Supported solvers are:
                 ECOS, ECOS_BB, CVXOPT, SCS, GUROBI, Elemental.
                 GLPK and GLPK_MI (via CVXOPT GLPK interface)
-            **kwargs:
-                Kewyard arguments passed to cvxpy solve.
-                See docs linked in CVXEstimator base class for more info.
+            solver_options:
+                dictionary of keyword arguments passed to cvxpy solve.
+                See docs in CVXEstimator for more information.
         """
         self.group_list = group_list
         self.group_ids = np.unique([gid for grp in group_list for gid in grp])
@@ -239,7 +239,7 @@ class OverlapGroupLasso(GroupLasso):
             extended_groups, alpha=alpha, group_weights=group_weights,
             standardize=standardize, fit_intercept=fit_intercept,
             normalize=normalize, copy_X=copy_X, warm_start=warm_start,
-            solver=solver, **kwargs)
+            solver=solver, solver_options=solver_options)
 
     def _solve(self, X, y, *args, **kwargs):
         """Solve the cvxpy problem."""
@@ -265,7 +265,7 @@ class SparseGroupLasso(GroupLasso):
 
     def __init__(self, groups, l1_ratio=0.5, alpha=1.0, group_weights=None,
                  standardize=False, fit_intercept=False, normalize=False,
-                 copy_X=True, warm_start=False, solver=None, **kwargs):
+                 copy_X=True, warm_start=False, solver=None, solver_options=None):
         """Initialize estimator.
 
         Args:
@@ -306,16 +306,17 @@ class SparseGroupLasso(GroupLasso):
                 cvxpy backend solver to use. Supported solvers are:
                 ECOS, ECOS_BB, CVXOPT, SCS, GUROBI, Elemental.
                 GLPK and GLPK_MI (via CVXOPT GLPK interface)
-            **kwargs:
-                Kewyard arguments passed to cvxpy solve.
-                See docs linked in CVXEstimator base class for more info.
+            solver_options:
+                dictionary of keyword arguments passed to cvxpy solve.
+                See docs in CVXEstimator for more information.
         """
         super().__init__(groups=groups, alpha=alpha,
                          group_weights=group_weights,
                          standardize=standardize,
                          fit_intercept=fit_intercept,
                          normalize=normalize, copy_X=copy_X,
-                         warm_start=warm_start, solver=solver, **kwargs)
+                         warm_start=warm_start, solver=solver,
+                         solver_options=solver_options)
 
         if not 0 <= l1_ratio <= 1:
             raise ValueError('l1_ratio must be between 0 and 1.')
@@ -373,7 +374,7 @@ class RidgedGroupLasso(GroupLasso):
 
     def __init__(self, groups, alpha=1.0, delta=1.0, group_weights=None,
                  standardize=False, fit_intercept=False, normalize=False,
-                 copy_X=True, warm_start=False, solver=None, **kwargs):
+                 copy_X=True, warm_start=False, solver=None, solver_options=None):
         """Initialize estimator.
 
         Args:
@@ -414,16 +415,17 @@ class RidgedGroupLasso(GroupLasso):
                 cvxpy backend solver to use. Supported solvers are:
                 ECOS, ECOS_BB, CVXOPT, SCS, GUROBI, Elemental.
                 GLPK and GLPK_MI (via CVXOPT GLPK interface)
-            **kwargs:
-                Kewyard arguments passed to cvxpy solve.
-                See docs linked in CVXEstimator base class for more info.
+            solver_options:
+                dictionary of keyword arguments passed to cvxpy solve.
+                See docs in CVXEstimator for more information.
         """
         super().__init__(groups=groups, alpha=alpha,
                          group_weights=group_weights,
                          standardize=standardize,
                          fit_intercept=fit_intercept,
                          normalize=normalize, copy_X=copy_X,
-                         warm_start=warm_start, solver=solver, **kwargs)
+                         warm_start=warm_start, solver=solver,
+                         solver_options=solver_options)
 
         self._delta = cp.Parameter(shape=(len(self.group_masks),), nonneg=True)
         self.delta = delta

@@ -114,15 +114,17 @@ class CVXEstimator(Estimator, metaclass=ABCMeta):
     Base class for estimators using cvxpy with a sklearn interface.
 
     Note cvxpy can use one of many 3rd party solvers, default is most often
-    CVXOPT. The solver can be specified by providing arguments to the cvxpy
-    problem.solve function. And can be set by passing those arguments to the
-    constructur of this class
-    See documentation for more:
-    https://ajfriendcvxpy.readthedocs.io/en/latest/tutorial/advanced/index.html#solve-method-options
+    CVXOPT. The solver can be specified by setting the solver keyword argument.
+    And can solver specific settings can be set by passing a dictionary of
+    solver_options.
+
+    See "Setting solver options" in documentation for details of available options:
+    https://www.cvxpy.org/tutorial/advanced/index.html#advanced
     """
 
     def __init__(self, fit_intercept=False, normalize=False,
-                 copy_X=True, warm_start=False, solver=None, **kwargs):
+                 copy_X=True, warm_start=False, solver=None,
+                 solver_options=None):
         """
         Args:
             fit_intercept (bool):
@@ -144,13 +146,13 @@ class CVXEstimator(Estimator, metaclass=ABCMeta):
                 cvxpy backend solver to use. Supported solvers are:
                 ECOS, ECOS_BB, CVXOPT, SCS, GUROBI, Elemental.
                 GLPK and GLPK_MI (via CVXOPT GLPK interface)
-            **kwargs:
-                Kewyard arguments passed to cvxpy solve.
+            solver_options:
+                dictionary of keyword arguments passed to cvxpy solve.
                 See docs linked above for more information.
         """
         self.warm_start = warm_start
         self.solver = solver
-        self.solver_opts = kwargs
+        self.solver_opts = solver_options if solver_options is None else {}
         self._problem, self._beta, self._X, self._y = None, None, None, None
         super().__init__(fit_intercept, normalize, copy_X)
 
