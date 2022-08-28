@@ -102,11 +102,11 @@ class AdaptiveLasso(Lasso):
     def _solve(self, X, y, *args, **kwargs):
         problem = self._get_problem(X, y)
         problem.solve(solver=self.solver, warm_start=self.warm_start,
-                      **self.solver_opts)
+                      **self.solver_options)
         for _ in range(self.max_iter - 1):
             self._update_weights(self._beta.value)
             problem.solve(solver=self.solver, warm_start=True,
-                          **self.solver_opts)
+                          **self.solver_options)
             if self._weights_converged():
                 break
         return self._beta.value

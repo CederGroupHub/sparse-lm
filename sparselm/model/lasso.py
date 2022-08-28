@@ -28,8 +28,8 @@ class Lasso(CVXEstimator):
     Where w represents a vector of weights that is iteratively updated.
     """
 
-    def __init__(self, alpha=1.0, fit_intercept=False,
-                 copy_X=True, warm_start=False, solver=None, solver_options=None):
+    def __init__(self, alpha=1.0, fit_intercept=False, copy_X=True, warm_start=False,
+                 solver=None, solver_options=None):
         """
         Args:
             alpha (float):
@@ -226,7 +226,7 @@ class OverlapGroupLasso(GroupLasso):
         """Solve the cvxpy problem."""
         problem = self._get_problem(X[:, self.beta_indices], y)
         problem.solve(solver=self.solver, warm_start=self.warm_start,
-                      **self.solver_opts)
+                      **self.solver_options)
         beta = np.array(
             [sum(self._beta.value[self.beta_indices == i])
              for i in range(X.shape[1])]

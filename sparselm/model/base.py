@@ -14,7 +14,7 @@ from sklearn.linear_model._base import _rescale_data, _check_sample_weight,\
     _preprocess_data
 
 
-class Estimator(LinearModel, RegressorMixin, metaclass=ABCMeta):
+class Estimator(RegressorMixin, LinearModel, metaclass=ABCMeta):
     """
     Simple abstract estimator class based on sklearn linear model api to use
     different 'in-house'  solvers to fit a linear model. This should be used to
@@ -128,7 +128,7 @@ class CVXEstimator(Estimator, metaclass=ABCMeta):
         """
         self.warm_start = warm_start
         self.solver = solver
-        self.solver_opts = solver_options if solver_options is None else {}
+        self.solver_options = solver_options if solver_options is None else {}
         self._problem, self._beta, self._X, self._y = None, None, None, None
         super().__init__(fit_intercept, copy_X)
 
@@ -191,5 +191,5 @@ class CVXEstimator(Estimator, metaclass=ABCMeta):
         """Solve the cvxpy problem."""
         problem = self._get_problem(X, y)
         problem.solve(solver=self.solver, warm_start=self.warm_start,
-                      **self.solver_opts)
+                      **self.solver_options)
         return self._beta.value
