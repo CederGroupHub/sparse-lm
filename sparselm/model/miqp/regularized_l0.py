@@ -125,7 +125,8 @@ class MixedL0(RegularizedL0, metaclass=ABCMeta):
 
     def __init__(self, alpha=1.0, l0_ratio=0.5, big_M=1000, hierarchy=None,
                  ignore_psd_check=True, fit_intercept=False,
-                 copy_X=True, warm_start=False, solver=None, solver_options=None):
+                 copy_X=True, warm_start=False, solver=None, solver_options=None,
+                 **kwargs):
         """
         Args:
             alpha (float):
@@ -144,7 +145,7 @@ class MixedL0(RegularizedL0, metaclass=ABCMeta):
                 coefficient 0 depends on 1, and 2; 1 depends on 0, and 2 has no
                 dependence.
             ignore_psd_check (bool):
-                Wether to ignore cvxpy's PSD checks  of matrix used in quadratic
+                Whether to ignore cvxpy's PSD checks  of matrix used in quadratic
                 form. Default is True to avoid raising errors for poorly
                 conditioned matrices. But if you want to be strict set to False.
             fit_intercept (bool):

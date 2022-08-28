@@ -85,7 +85,8 @@ class GroupLasso(Lasso):
 
     def __init__(self, groups, alpha=1.0, group_weights=None,
                  standardize=False, fit_intercept=False,
-                 copy_X=True, warm_start=False, solver=None, solver_options=None):
+                 copy_X=True, warm_start=False, solver=None, solver_options=None,
+                 **kwargs):
         """Initialize estimator.
 
         Args:
@@ -136,7 +137,8 @@ class GroupLasso(Lasso):
             np.sqrt([sum(mask) for mask in self.group_masks])
 
         super().__init__(alpha=alpha, fit_intercept=fit_intercept, copy_X=copy_X,
-                         warm_start=warm_start, solver=solver, solver_options=solver_options)
+                         warm_start=warm_start, solver=solver,
+                         solver_options=solver_options, **kwargs)
 
     def _gen_group_norms(self, X):
         if self.standardize:
@@ -165,7 +167,7 @@ class OverlapGroupLasso(GroupLasso):
 
     def __init__(self, group_list, alpha=1.0, group_weights=None,
                  standardize=False, fit_intercept=False, copy_X=True, warm_start=False,
-                 solver=None, solver_options=None):
+                 solver=None, solver_options=None, **kwargs):
         """Initialize estimator.
 
         Args:
@@ -220,7 +222,7 @@ class OverlapGroupLasso(GroupLasso):
             extended_groups, alpha=alpha, group_weights=group_weights,
             standardize=standardize, fit_intercept=fit_intercept,
             copy_X=copy_X, warm_start=warm_start,
-            solver=solver, solver_options=solver_options)
+            solver=solver, solver_options=solver_options, **kwargs)
 
     def _solve(self, X, y, *args, **kwargs):
         """Solve the cvxpy problem."""
@@ -246,7 +248,8 @@ class SparseGroupLasso(GroupLasso):
 
     def __init__(self, groups, l1_ratio=0.5, alpha=1.0, group_weights=None,
                  standardize=False, fit_intercept=False,
-                 copy_X=True, warm_start=False, solver=None, solver_options=None):
+                 copy_X=True, warm_start=False, solver=None, solver_options=None,
+                 **kwargs):
         """Initialize estimator.
 
         Args:
@@ -291,7 +294,7 @@ class SparseGroupLasso(GroupLasso):
                          fit_intercept=fit_intercept,
                          copy_X=copy_X,
                          warm_start=warm_start, solver=solver,
-                         solver_options=solver_options)
+                         solver_options=solver_options, **kwargs)
 
         if not 0 <= l1_ratio <= 1:
             raise ValueError('l1_ratio must be between 0 and 1.')
@@ -349,7 +352,8 @@ class RidgedGroupLasso(GroupLasso):
 
     def __init__(self, groups, alpha=1.0, delta=1.0, group_weights=None,
                  standardize=False, fit_intercept=False,
-                 copy_X=True, warm_start=False, solver=None, solver_options=None):
+                 copy_X=True, warm_start=False, solver=None, solver_options=None,
+                 **kwargs):
         """Initialize estimator.
 
         Args:
@@ -394,7 +398,7 @@ class RidgedGroupLasso(GroupLasso):
                          fit_intercept=fit_intercept,
                          copy_X=copy_X,
                          warm_start=warm_start, solver=solver,
-                         solver_options=solver_options)
+                         solver_options=solver_options, **kwargs)
 
         self._delta = cp.Parameter(shape=(len(self.group_masks),), nonneg=True)
         self.delta = delta

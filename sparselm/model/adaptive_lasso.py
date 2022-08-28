@@ -38,7 +38,7 @@ class AdaptiveLasso(Lasso):
     def __init__(self, alpha=1.0, max_iter=5, eps=1E-6, tol=1E-10,
                  update_function=None, fit_intercept=False,
                  copy_X=True, warm_start=False, solver=None,
-                 solver_options=None):
+                 solver_options=None, **kwargs):
         """Initialize estimator.
 
         Args:
@@ -72,7 +72,8 @@ class AdaptiveLasso(Lasso):
                 See docs in CVXEstimator for more information.
         """
         super().__init__(alpha=alpha, fit_intercept=fit_intercept, copy_X=copy_X,
-                         warm_start=warm_start, solver=solver, solver_options=solver_options)
+                         warm_start=warm_start, solver=solver,
+                         solver_options=solver_options, **kwargs)
         self.tol = tol
         self.max_iter = max_iter
         self.eps = eps
@@ -123,7 +124,8 @@ class AdaptiveGroupLasso(AdaptiveLasso, GroupLasso):
     def __init__(self, groups, alpha=1.0, group_weights=None,
                  max_iter=5, eps=1E-6, tol=1E-10, update_function=None,
                  standardize=False, fit_intercept=False,
-                 copy_X=True, warm_start=False, solver=None, solver_options=None):
+                 copy_X=True, warm_start=False, solver=None, solver_options=None,
+                 **kwargs):
         """Initialize estimator.
 
         Args:
@@ -181,7 +183,7 @@ class AdaptiveGroupLasso(AdaptiveLasso, GroupLasso):
                          fit_intercept=fit_intercept,
                          copy_X=copy_X,
                          warm_start=warm_start, solver=solver,
-                         solver_options=solver_options)
+                         solver_options=solver_options, **kwargs)
 
     def _gen_regularization(self, X):
         grp_norms = self._gen_group_norms(X)
@@ -362,7 +364,7 @@ class AdaptiveSparseGroupLasso(AdaptiveLasso, SparseGroupLasso):
         self._weights = (
             cp.Parameter(shape=X.shape[1], nonneg=True,
                          value=self._lambda1.value * np.ones(X.shape[1])),
-            cp.Parameter(shape=len(self.group_masks), nonneg=True,
+            cp.Parameter(shape=(len(self.group_masks),), nonneg=True,
                          value=self._lambda2.value * self.group_weights),
         )
         l1_reg = cp.norm1(cp.multiply(self._weights[0], self._beta))

@@ -20,7 +20,8 @@ class BestSubsetSelection(CVXEstimator):
 
     def __init__(self, sparse_bound, big_M=1000, hierarchy=None,
                  ignore_psd_check=True, fit_intercept=False,
-                 copy_X=True, warm_start=False, solver=None, solver_options=None):
+                 copy_X=True, warm_start=False, solver=None, solver_options=None,
+                 **kwargs):
         """
 
         Args:
@@ -39,7 +40,7 @@ class BestSubsetSelection(CVXEstimator):
                 coefficient 0 depends on 1, and 2; 1 depends on 0, and 2 has no
                 dependence.
             ignore_psd_check (bool):
-                Wether to ignore cvxpy's PSD checks  of matrix used in quadratic
+                Whether to ignore cvxpy's PSD checks  of matrix used in quadratic
                 form. Default is True to avoid raising errors for poorly
                 conditioned matrices. But if you want to be strict set to False.
             fit_intercept (bool):
@@ -120,7 +121,8 @@ class RidgedBestSubsetSelection(BestSubsetSelection):
 
     def __init__(self, sparse_bound, alpha=1.0, big_M=1000, hierarchy=None,
                  ignore_psd_check=True, fit_intercept=False,
-                 copy_X=True, warm_start=False, solver=None, solver_options=None):
+                 copy_X=True, warm_start=False, solver=None, solver_options=None,
+                 **kwargs):
         """
         Args:
             sparse_bound (int):
@@ -162,7 +164,7 @@ class RidgedBestSubsetSelection(BestSubsetSelection):
             sparse_bound=sparse_bound, big_M=big_M, hierarchy=hierarchy,
             ignore_psd_check=ignore_psd_check, fit_intercept=fit_intercept,
             copy_X=copy_X, warm_start=warm_start, solver=solver,
-            solver_options=solver_options
+            solver_options=solver_options, **kwargs
         )
         self._alpha = cp.Parameter(nonneg=True, value=alpha)
 
@@ -187,7 +189,8 @@ class BestGroupSelection(BestSubsetSelection):
 
     def __init__(self, groups, sparse_bound, big_M=1000, hierarchy=None,
                  ignore_psd_check=True, fit_intercept=False,
-                 copy_X=True, warm_start=False, solver=None, solver_options=None):
+                 copy_X=True, warm_start=False, solver=None, solver_options=None,
+                 **kwargs):
         """
         Args:
             groups (list or ndarray):
@@ -209,7 +212,7 @@ class BestGroupSelection(BestSubsetSelection):
                 coefficient 0 depends on 1, and 2; 1 depends on 0, and 2 has no
                 dependence.
             ignore_psd_check (bool):
-                Wether to ignore cvxpy's PSD checks  of matrix used in quadratic
+                Whether to ignore cvxpy's PSD checks  of matrix used in quadratic
                 form. Default is True to avoid raising errors for poorly
                 conditioned matrices. But if you want to be strict set to False.
             fit_intercept (bool):
@@ -233,7 +236,7 @@ class BestGroupSelection(BestSubsetSelection):
             sparse_bound=sparse_bound, big_M=big_M, hierarchy=hierarchy,
             ignore_psd_check=ignore_psd_check, fit_intercept=fit_intercept,
             copy_X=copy_X, warm_start=warm_start, solver=solver,
-            solver_options=solver_options
+            solver_options=solver_options, **kwargs
         )
         self.groups = np.asarray(groups)
         self._group_masks = [self.groups == i for i in np.unique(groups)]
@@ -280,7 +283,7 @@ class RidgedBestGroupSelection(RidgedBestSubsetSelection, BestGroupSelection):
                 coefficient 0 depends on 1, and 2; 1 depends on 0, and 2 has no
                 dependence.
             ignore_psd_check (bool):
-                Wether to ignore cvxpy's PSD checks  of matrix used in quadratic
+                Whether to ignore cvxpy's PSD checks  of matrix used in quadratic
                 form. Default is True to avoid raising errors for poorly
                 conditioned matrices. But if you want to be strict set to False.
             fit_intercept (bool):
