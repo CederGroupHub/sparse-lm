@@ -128,7 +128,12 @@ class CVXEstimator(Estimator, metaclass=ABCMeta):
         """
         self.warm_start = warm_start
         self.solver = solver
-        self.solver_options = solver_options if solver_options is None else {}
+
+        if solver_options is None:
+            self.solver_options = {}
+        else:
+            self.solver_options = solver_options
+
         self._problem, self._beta, self._X, self._y = None, None, None, None
         super().__init__(fit_intercept, copy_X)
 
