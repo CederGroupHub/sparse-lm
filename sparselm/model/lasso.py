@@ -28,7 +28,7 @@ class Lasso(CVXEstimator):
     Where w represents a vector of weights that is iteratively updated.
     """
 
-    def __init__(self, alpha=1.0, fit_intercept=False, normalize=False,
+    def __init__(self, alpha=1.0, fit_intercept=False,
                  copy_X=True, warm_start=False, solver=None, solver_options=None):
         """
         Args:
@@ -37,12 +37,6 @@ class Lasso(CVXEstimator):
             fit_intercept (bool):
                 Whether the intercept should be estimated or not.
                 If False, the data is assumed to be already centered.
-            normalize (bool):
-                This parameter is ignored when fit_intercept is set to False.
-                If True, the regressors X will be normalized before regression
-                by subtracting the mean and dividing by the l2-norm.
-                If you wish to standardize, please use StandardScaler before
-                calling fit on an estimator with normalize=False
             copy_X (bool):
                 If True, X will be copied; else, it may be overwritten.
             warm_start (bool):
@@ -58,7 +52,7 @@ class Lasso(CVXEstimator):
                 See docs in CVXEstimator for more information.
         """
         self._alpha = cp.Parameter(value=alpha, nonneg=True)
-        super().__init__(fit_intercept=fit_intercept, normalize=normalize,
+        super().__init__(fit_intercept=fit_intercept,
                          copy_X=copy_X, warm_start=warm_start, solver=solver,
                          solver_options=solver_options)
 
@@ -90,7 +84,7 @@ class GroupLasso(Lasso):
     """
 
     def __init__(self, groups, alpha=1.0, group_weights=None,
-                 standardize=False, fit_intercept=False, normalize=False,
+                 standardize=False, fit_intercept=False,
                  copy_X=True, warm_start=False, solver=None, solver_options=None):
         """Initialize estimator.
 
@@ -114,12 +108,6 @@ class GroupLasso(Lasso):
                 Whether to standardize the group regularization penalty using
                 the feature matrix. See the following for reference:
                 http://faculty.washington.edu/nrsimon/standGL.pdf
-            normalize (bool): optional
-                This parameter is ignored when fit_intercept is set to False.
-                If True, the regressors X will be normalized before regression
-                by subtracting the mean and dividing by the l2-norm.
-                If you wish to standardize, please use StandardScaler before
-                calling fit on an estimator with normalize=False
             copy_X (bool):
                 If True, X will be copied; else, it may be overwritten.
             warm_start (bool):
@@ -147,8 +135,7 @@ class GroupLasso(Lasso):
         self.group_weights = group_weights if group_weights is not None else \
             np.sqrt([sum(mask) for mask in self.group_masks])
 
-        super().__init__(alpha=alpha, fit_intercept=fit_intercept,
-                         normalize=normalize, copy_X=copy_X,
+        super().__init__(alpha=alpha, fit_intercept=fit_intercept, copy_X=copy_X,
                          warm_start=warm_start, solver=solver, solver_options=solver_options)
 
     def _gen_group_norms(self, X):
@@ -177,8 +164,8 @@ class OverlapGroupLasso(GroupLasso):
     """
 
     def __init__(self, group_list, alpha=1.0, group_weights=None,
-                 standardize=False, fit_intercept=False, normalize=False,
-                 copy_X=True, warm_start=False, solver=None, solver_options=None):
+                 standardize=False, fit_intercept=False, copy_X=True, warm_start=False,
+                 solver=None, solver_options=None):
         """Initialize estimator.
 
         Args:
@@ -206,12 +193,6 @@ class OverlapGroupLasso(GroupLasso):
             fit_intercept (bool):
                 Whether the intercept should be estimated or not.
                 If False, the data is assumed to be already centered.
-            normalize (bool):
-                This parameter is ignored when fit_intercept is set to False.
-                If True, the regressors X will be normalized before regression
-                by subtracting the mean and dividing by the l2-norm.
-                If you wish to standardize, please use StandardScaler before
-                calling fit on an estimator with normalize=False
             copy_X (bool):
                 If True, X will be copied; else, it may be overwritten.
             warm_start (bool):
@@ -238,7 +219,7 @@ class OverlapGroupLasso(GroupLasso):
         super().__init__(
             extended_groups, alpha=alpha, group_weights=group_weights,
             standardize=standardize, fit_intercept=fit_intercept,
-            normalize=normalize, copy_X=copy_X, warm_start=warm_start,
+            copy_X=copy_X, warm_start=warm_start,
             solver=solver, solver_options=solver_options)
 
     def _solve(self, X, y, *args, **kwargs):
@@ -264,7 +245,7 @@ class SparseGroupLasso(GroupLasso):
     """
 
     def __init__(self, groups, l1_ratio=0.5, alpha=1.0, group_weights=None,
-                 standardize=False, fit_intercept=False, normalize=False,
+                 standardize=False, fit_intercept=False,
                  copy_X=True, warm_start=False, solver=None, solver_options=None):
         """Initialize estimator.
 
@@ -290,12 +271,6 @@ class SparseGroupLasso(GroupLasso):
             fit_intercept (bool):
                 Whether the intercept should be estimated or not.
                 If False, the data is assumed to be already centered.
-            normalize (bool):
-                This parameter is ignored when fit_intercept is set to False.
-                If True, the regressors X will be normalized before regression
-                by subtracting the mean and dividing by the l2-norm.
-                If you wish to standardize, please use StandardScaler before
-                calling fit on an estimator with normalize=False
             copy_X (bool):
                 If True, X will be copied; else, it may be overwritten.
             warm_start (bool):
@@ -314,7 +289,7 @@ class SparseGroupLasso(GroupLasso):
                          group_weights=group_weights,
                          standardize=standardize,
                          fit_intercept=fit_intercept,
-                         normalize=normalize, copy_X=copy_X,
+                         copy_X=copy_X,
                          warm_start=warm_start, solver=solver,
                          solver_options=solver_options)
 
@@ -373,7 +348,7 @@ class RidgedGroupLasso(GroupLasso):
     """
 
     def __init__(self, groups, alpha=1.0, delta=1.0, group_weights=None,
-                 standardize=False, fit_intercept=False, normalize=False,
+                 standardize=False, fit_intercept=False,
                  copy_X=True, warm_start=False, solver=None, solver_options=None):
         """Initialize estimator.
 
@@ -399,12 +374,6 @@ class RidgedGroupLasso(GroupLasso):
             fit_intercept (bool):
                 Whether the intercept should be estimated or not.
                 If False, the data is assumed to be already centered.
-            normalize (bool):
-                This parameter is ignored when fit_intercept is set to False.
-                If True, the regressors X will be normalized before regression
-                by subtracting the mean and dividing by the l2-norm.
-                If you wish to standardize, please use StandardScaler before
-                calling fit on an estimator with normalize=False
             copy_X (bool):
                 If True, X will be copied; else, it may be overwritten.
             warm_start (bool):
@@ -423,7 +392,7 @@ class RidgedGroupLasso(GroupLasso):
                          group_weights=group_weights,
                          standardize=standardize,
                          fit_intercept=fit_intercept,
-                         normalize=normalize, copy_X=copy_X,
+                         copy_X=copy_X,
                          warm_start=warm_start, solver=solver,
                          solver_options=solver_options)
 

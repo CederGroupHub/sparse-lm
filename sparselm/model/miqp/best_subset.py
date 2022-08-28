@@ -19,7 +19,7 @@ class BestSubsetSelection(CVXEstimator):
     """
 
     def __init__(self, sparse_bound, big_M=1000, hierarchy=None,
-                 ignore_psd_check=True, fit_intercept=False, normalize=False,
+                 ignore_psd_check=True, fit_intercept=False,
                  copy_X=True, warm_start=False, solver=None, solver_options=None):
         """
 
@@ -45,12 +45,6 @@ class BestSubsetSelection(CVXEstimator):
             fit_intercept (bool):
                 Whether the intercept should be estimated or not.
                 If False, the data is assumed to be already centered.
-            normalize (bool):
-                This parameter is ignored when fit_intercept is set to False.
-                If True, the regressors X will be normalized before regression
-                by subtracting the mean and dividing by the l2-norm.
-                If you wish to standardize, please use StandardScaler before
-                calling fit on an estimator with normalize=False
             copy_X (bool):
                 If True, X will be copied; else, it may be overwritten.
             warm_start (bool):
@@ -65,7 +59,7 @@ class BestSubsetSelection(CVXEstimator):
                 dictionary of keyword arguments passed to cvxpy solve.
                 See docs in CVXEstimator for more information.
         """
-        super().__init__(fit_intercept=fit_intercept, normalize=normalize,
+        super().__init__(fit_intercept=fit_intercept,
                          copy_X=copy_X, warm_start=warm_start, solver=solver,
                          solver_options=solver_options)
 
@@ -125,7 +119,7 @@ class RidgedBestSubsetSelection(BestSubsetSelection):
     """MIQP  Best subset selection estimator with ridge regularization."""
 
     def __init__(self, sparse_bound, alpha=1.0, big_M=1000, hierarchy=None,
-                 ignore_psd_check=True, fit_intercept=False, normalize=False,
+                 ignore_psd_check=True, fit_intercept=False,
                  copy_X=True, warm_start=False, solver=None, solver_options=None):
         """
         Args:
@@ -150,12 +144,6 @@ class RidgedBestSubsetSelection(BestSubsetSelection):
             fit_intercept (bool):
                 Whether the intercept should be estimated or not.
                 If False, the data is assumed to be already centered.
-            normalize (bool):
-                This parameter is ignored when fit_intercept is set to False.
-                If True, the regressors X will be normalized before regression
-                by subtracting the mean and dividing by the l2-norm.
-                If you wish to standardize, please use StandardScaler before
-                calling fit on an estimator with normalize=False
             copy_X (bool):
                 If True, X will be copied; else, it may be overwritten.
             warm_start (bool):
@@ -173,7 +161,7 @@ class RidgedBestSubsetSelection(BestSubsetSelection):
         super().__init__(
             sparse_bound=sparse_bound, big_M=big_M, hierarchy=hierarchy,
             ignore_psd_check=ignore_psd_check, fit_intercept=fit_intercept,
-            normalize=normalize, copy_X=copy_X, warm_start=warm_start, solver=solver,
+            copy_X=copy_X, warm_start=warm_start, solver=solver,
             solver_options=solver_options
         )
         self._alpha = cp.Parameter(nonneg=True, value=alpha)
@@ -198,7 +186,7 @@ class BestGroupSelection(BestSubsetSelection):
     """MIQP Best group selection estimator."""
 
     def __init__(self, groups, sparse_bound, big_M=1000, hierarchy=None,
-                 ignore_psd_check=True, fit_intercept=False, normalize=False,
+                 ignore_psd_check=True, fit_intercept=False,
                  copy_X=True, warm_start=False, solver=None, solver_options=None):
         """
         Args:
@@ -227,12 +215,6 @@ class BestGroupSelection(BestSubsetSelection):
             fit_intercept (bool):
                 Whether the intercept should be estimated or not.
                 If False, the data is assumed to be already centered.
-            normalize (bool):
-                This parameter is ignored when fit_intercept is set to False.
-                If True, the regressors X will be normalized before regression
-                by subtracting the mean and dividing by the l2-norm.
-                If you wish to standardize, please use StandardScaler before
-                calling fit on an estimator with normalize=False
             copy_X (bool):
                 If True, X will be copied; else, it may be overwritten.
             warm_start (bool):
@@ -250,7 +232,7 @@ class BestGroupSelection(BestSubsetSelection):
         super().__init__(
             sparse_bound=sparse_bound, big_M=big_M, hierarchy=hierarchy,
             ignore_psd_check=ignore_psd_check, fit_intercept=fit_intercept,
-            normalize=normalize, copy_X=copy_X, warm_start=warm_start, solver=solver,
+            copy_X=copy_X, warm_start=warm_start, solver=solver,
             solver_options=solver_options
         )
         self.groups = np.asarray(groups)
@@ -273,7 +255,7 @@ class RidgedBestGroupSelection(RidgedBestSubsetSelection, BestGroupSelection):
     """Best group selection estimator with ridge regularization."""
 
     def __init__(self, groups, sparse_bound, alpha=1.0, big_M=1000, hierarchy=None,
-                 ignore_psd_check=True, fit_intercept=False, normalize=False,
+                 ignore_psd_check=True, fit_intercept=False,
                  copy_X=True, warm_start=False, solver=None, solver_options=None):
         """
         Args:
@@ -304,12 +286,6 @@ class RidgedBestGroupSelection(RidgedBestSubsetSelection, BestGroupSelection):
             fit_intercept (bool):
                 Whether the intercept should be estimated or not.
                 If False, the data is assumed to be already centered.
-            normalize (bool):
-                This parameter is ignored when fit_intercept is set to False.
-                If True, the regressors X will be normalized before regression
-                by subtracting the mean and dividing by the l2-norm.
-                If you wish to standardize, please use StandardScaler before
-                calling fit on an estimator with normalize=False
             copy_X (bool):
                 If True, X will be copied; else, it may be overwritten.
             warm_start (bool):
@@ -328,7 +304,7 @@ class RidgedBestGroupSelection(RidgedBestSubsetSelection, BestGroupSelection):
         super().__init__(
             groups=groups, sparse_bound=sparse_bound,  alpha=alpha, big_M=big_M,
             hierarchy=hierarchy, ignore_psd_check=ignore_psd_check,
-            fit_intercept=fit_intercept, normalize=normalize, copy_X=copy_X,
+            fit_intercept=fit_intercept, copy_X=copy_X,
             warm_start=warm_start, solver=solver, solver_options=solver_options
         )
 

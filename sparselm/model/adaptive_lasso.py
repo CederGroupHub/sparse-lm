@@ -36,7 +36,7 @@ class AdaptiveLasso(Lasso):
     """
 
     def __init__(self, alpha=1.0, max_iter=5, eps=1E-6, tol=1E-10,
-                 update_function=None, fit_intercept=False, normalize=False,
+                 update_function=None, fit_intercept=False,
                  copy_X=True, warm_start=False, solver=None,
                  solver_options=None):
         """Initialize estimator.
@@ -57,12 +57,6 @@ class AdaptiveLasso(Lasso):
             fit_intercept (bool):
                 Whether the intercept should be estimated or not.
                 If False, the data is assumed to be already centered.
-            normalize (bool):
-                This parameter is ignored when fit_intercept is set to False.
-                If True, the regressors X will be normalized before regression
-                by subtracting the mean and dividing by the l2-norm.
-                If you wish to standardize, please use StandardScaler before
-                calling fit on an estimator with normalize=False
             copy_X (bool):
                 If True, X will be copied; else, it may be overwritten.
             warm_start (bool):
@@ -77,8 +71,7 @@ class AdaptiveLasso(Lasso):
                 dictionary of keyword arguments passed to cvxpy solve.
                 See docs in CVXEstimator for more information.
         """
-        super().__init__(alpha=alpha, fit_intercept=fit_intercept,
-                         normalize=normalize, copy_X=copy_X,
+        super().__init__(alpha=alpha, fit_intercept=fit_intercept, copy_X=copy_X,
                          warm_start=warm_start, solver=solver, solver_options=solver_options)
         self.tol = tol
         self.max_iter = max_iter
@@ -129,7 +122,7 @@ class AdaptiveGroupLasso(AdaptiveLasso, GroupLasso):
     """
     def __init__(self, groups, alpha=1.0, group_weights=None,
                  max_iter=5, eps=1E-6, tol=1E-10, update_function=None,
-                 standardize=False, fit_intercept=False, normalize=False,
+                 standardize=False, fit_intercept=False,
                  copy_X=True, warm_start=False, solver=None, solver_options=None):
         """Initialize estimator.
 
@@ -165,12 +158,6 @@ class AdaptiveGroupLasso(AdaptiveLasso, GroupLasso):
             fit_intercept (bool):
                 Whether the intercept should be estimated or not.
                 If False, the data is assumed to be already centered.
-            normalize (bool):
-                This parameter is ignored when fit_intercept is set to False.
-                If True, the regressors X will be normalized before regression
-                by subtracting the mean and dividing by the l2-norm.
-                If you wish to standardize, please use StandardScaler before
-                calling fit on an estimator with normalize=False
             copy_X (bool):
                 If True, X will be copied; else, it may be overwritten.
             warm_start (bool):
@@ -192,7 +179,7 @@ class AdaptiveGroupLasso(AdaptiveLasso, GroupLasso):
                          update_function=update_function,
                          standardize=standardize,
                          fit_intercept=fit_intercept,
-                         normalize=normalize, copy_X=copy_X,
+                         copy_X=copy_X,
                          warm_start=warm_start, solver=solver,
                          solver_options=solver_options)
 
@@ -218,7 +205,7 @@ class AdaptiveOverlapGroupLasso(OverlapGroupLasso, AdaptiveGroupLasso):
     """
     def __init__(self, group_list, alpha=1.0, group_weights=None,
                  max_iter=5, eps=1E-6, tol=1E-10, update_function=None,
-                 standardize=False, fit_intercept=False, normalize=False,
+                 standardize=False, fit_intercept=False,
                  copy_X=True, warm_start=False, solver=None, solver_options=None):
         """Initialize estimator.
 
@@ -259,12 +246,6 @@ class AdaptiveOverlapGroupLasso(OverlapGroupLasso, AdaptiveGroupLasso):
             fit_intercept (bool):
                 Whether the intercept should be estimated or not.
                 If False, the data is assumed to be already centered.
-            normalize (bool):
-                This parameter is ignored when fit_intercept is set to False.
-                If True, the regressors X will be normalized before regression
-                by subtracting the mean and dividing by the l2-norm.
-                If you wish to standardize, please use StandardScaler before
-                calling fit on an estimator with normalize=False
             copy_X (bool):
                 If True, X will be copied; else, it may be overwritten.
             warm_start (bool):
@@ -285,7 +266,7 @@ class AdaptiveOverlapGroupLasso(OverlapGroupLasso, AdaptiveGroupLasso):
                          eps=eps, tol=tol, update_function=update_function,
                          standardize=standardize,
                          fit_intercept=fit_intercept,
-                         normalize=normalize, copy_X=copy_X,
+                         copy_X=copy_X,
                          warm_start=warm_start, solver=solver,
                          solver_options=solver_options)
 
@@ -314,7 +295,7 @@ class AdaptiveSparseGroupLasso(AdaptiveLasso, SparseGroupLasso):
 
     def __init__(self, groups,  l1_ratio=0.5, alpha=1.0, group_weights=None,
                  max_iter=5, eps=1E-6, tol=1E-10, update_function=None,
-                 standardize=False, fit_intercept=False, normalize=False,
+                 standardize=False, fit_intercept=False,
                  copy_X=True, warm_start=False, solver=None, solver_options=None):
         """Initialize estimator.
 
@@ -352,12 +333,6 @@ class AdaptiveSparseGroupLasso(AdaptiveLasso, SparseGroupLasso):
             fit_intercept (bool):
                 Whether the intercept should be estimated or not.
                 If False, the data is assumed to be already centered.
-            normalize (bool):
-                This parameter is ignored when fit_intercept is set to False.
-                If True, the regressors X will be normalized before regression
-                by subtracting the mean and dividing by the l2-norm.
-                If you wish to standardize, please use StandardScaler before
-                calling fit on an estimator with normalize=False
             copy_X (bool):
                 If True, X will be copied; else, it may be overwritten.
             warm_start (bool):
@@ -378,7 +353,7 @@ class AdaptiveSparseGroupLasso(AdaptiveLasso, SparseGroupLasso):
                          max_iter=max_iter, eps=eps, tol=tol,
                          update_function=update_function,
                          standardize=standardize,
-                         fit_intercept=fit_intercept, normalize=normalize,
+                         fit_intercept=fit_intercept,
                          copy_X=copy_X, warm_start=warm_start, solver=solver,
                          solver_options=solver_options)
 
@@ -427,7 +402,7 @@ class AdaptiveRidgedGroupLasso(AdaptiveGroupLasso, RidgedGroupLasso):
 
     def __init__(self, groups, alpha=1.0, delta=1.0, group_weights=None,
                  max_iter=5, eps=1E-6, tol=1E-10, update_function=None,
-                 standardize=False, fit_intercept=False, normalize=False,
+                 standardize=False, fit_intercept=False,
                  copy_X=True, warm_start=False, solver=None, solver_options=None):
         """Initialize estimator.
 
@@ -461,12 +436,6 @@ class AdaptiveRidgedGroupLasso(AdaptiveGroupLasso, RidgedGroupLasso):
                 weights at each iteration. Where group_norms are the norms of
                 the coefficients Beta for each group.
                 Default is 1/(group_norms + eps)
-            normalize (bool):
-                This parameter is ignored when fit_intercept is set to False.
-                If True, the regressors X will be normalized before regression
-                by subtracting the mean and dividing by the l2-norm.
-                If you wish to standardize, please use StandardScaler before
-                calling fit on an estimator with normalize=False
             copy_X (bool):
                 If True, X will be copied; else, it may be overwritten.
             warm_start (bool):
@@ -487,7 +456,7 @@ class AdaptiveRidgedGroupLasso(AdaptiveGroupLasso, RidgedGroupLasso):
                          group_weights=group_weights,
                          standardize=standardize,
                          fit_intercept=fit_intercept,
-                         normalize=normalize, copy_X=copy_X,
+                         copy_X=copy_X,
                          warm_start=warm_start, solver=solver,
                          solver_options=solver_options)
 

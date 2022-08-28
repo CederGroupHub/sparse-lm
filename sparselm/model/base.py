@@ -11,7 +11,7 @@ import cvxpy as cp
 from sklearn.base import RegressorMixin
 from sklearn.linear_model._base import LinearModel
 from sklearn.linear_model._base import _rescale_data, _check_sample_weight,\
-    _preprocess_data, _deprecate_normalize
+    _preprocess_data
 
 
 class Estimator(LinearModel, RegressorMixin, metaclass=ABCMeta):
@@ -24,29 +24,16 @@ class Estimator(LinearModel, RegressorMixin, metaclass=ABCMeta):
     Keyword arguments are the same as those found in sklearn linear models.
     """
 
-    def __init__(self, fit_intercept: bool = False, normalize: bool = False,
-                 copy_X: bool = True):
+    def __init__(self, fit_intercept: bool = False, copy_X: bool = True):
         """
-        fit_intercept : bool, default=True
-
-        If you wish to standardize, please use
-        :class:`sklearn.preprocessing.StandardScaler` before calling ``fit``
-        on an estimator with ``normalize=False``.
         Args:
             fit_intercept (bool):
                 Whether the intercept should be estimated or not. If ``False``,
-                the data is assumed to be already centered. normalize : bool
-                default=False.
-            normalize (bool):
-                This parameter is ignored when ``fit_intercept`` is set to
-                False.
-                If True, the regressors X will be normalized before regression
-                by subtracting the mean and dividing by the l2-norm.
+                the data is assumed to be already centered.
             copy_X (bool):
                 If ``True``, X will be copied; else, it may be overwritten.
         """
         self.fit_intercept = fit_intercept
-        self.normalize = normalize
         self.copy_X = copy_X
 
     def fit(self, X, y, sample_weight=None, *args, **kwargs):
@@ -95,12 +82,8 @@ class Estimator(LinearModel, RegressorMixin, metaclass=ABCMeta):
         In the future, may add additional functionalities beyond sklearn
         basics.
         """
-        _normalize = _deprecate_normalize(
-            self.normalize, default=False, estimator_name=self.__class__.__name__
-        )
         return _preprocess_data(X, y, copy=copy,
                                 fit_intercept=self.fit_intercept,
-                                normalize=_normalize,
                                 sample_weight=sample_weight)
 
     @abstractmethod
@@ -122,20 +105,13 @@ class CVXEstimator(Estimator, metaclass=ABCMeta):
     https://www.cvxpy.org/tutorial/advanced/index.html#advanced
     """
 
-    def __init__(self, fit_intercept=False, normalize=False,
-                 copy_X=True, warm_start=False, solver=None,
+    def __init__(self, fit_intercept=False, copy_X=True, warm_start=False, solver=None,
                  solver_options=None):
         """
         Args:
             fit_intercept (bool):
                 Whether the intercept should be estimated or not.
                 If False, the data is assumed to be already centered.
-            normalize (bool):
-                This parameter is ignored when fit_intercept is set to False.
-                If True, the regressors X will be normalized before regression
-                by subtracting the mean and dividing by the l2-norm.
-                If you wish to standardize, please use StandardScaler before
-                calling fit on an estimator with normalize=False
             copy_X (bool):
                 If True, X will be copied; else, it may be overwritten.
             warm_start (bool):
@@ -154,7 +130,7 @@ class CVXEstimator(Estimator, metaclass=ABCMeta):
         self.solver = solver
         self.solver_opts = solver_options if solver_options is None else {}
         self._problem, self._beta, self._X, self._y = None, None, None, None
-        super().__init__(fit_intercept, normalize, copy_X)
+        super().__init__(fit_intercept, copy_X)
 
     @abstractmethod
     def _gen_objective(self, X, y):

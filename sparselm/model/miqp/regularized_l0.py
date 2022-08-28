@@ -25,7 +25,7 @@ class RegularizedL0(CVXEstimator):
     """Implementation of MIQP l0 regularized estimator."""
 
     def __init__(self, alpha=1.0, big_M=1000, hierarchy=None, ignore_psd_check=True,
-                 fit_intercept=False, normalize=False, copy_X=True, warm_start=False,
+                 fit_intercept=False, copy_X=True, warm_start=False,
                  solver=None, solver_options=None):
         """
         Args:
@@ -49,12 +49,6 @@ class RegularizedL0(CVXEstimator):
             fit_intercept (bool):
                 Whether the intercept should be estimated or not.
                 If False, the data is assumed to be already centered.
-            normalize (bool):
-                This parameter is ignored when fit_intercept is set to False.
-                If True, the regressors X will be normalized before regression
-                by subtracting the mean and dividing by the l2-norm.
-                If you wish to standardize, please use StandardScaler before
-                calling fit on an estimator with normalize=False
             copy_X (bool):
                 If True, X will be copied; else, it may be overwritten.
             warm_start (bool):
@@ -69,7 +63,7 @@ class RegularizedL0(CVXEstimator):
                 dictionary of keyword arguments passed to cvxpy solve.
                 See docs in CVXEstimator for more information.
         """
-        super().__init__(fit_intercept=fit_intercept, normalize=normalize,
+        super().__init__(fit_intercept=fit_intercept,
                          copy_X=copy_X, warm_start=warm_start, solver=solver,
                          solver_options=solver_options)
 
@@ -130,7 +124,7 @@ class MixedL0(RegularizedL0, metaclass=ABCMeta):
     """Abstract base class for mixed L0 regularization models: L1L0 and L2L0."""
 
     def __init__(self, alpha=1.0, l0_ratio=0.5, big_M=1000, hierarchy=None,
-                 ignore_psd_check=True, fit_intercept=False, normalize=False,
+                 ignore_psd_check=True, fit_intercept=False,
                  copy_X=True, warm_start=False, solver=None, solver_options=None):
         """
         Args:
@@ -156,12 +150,6 @@ class MixedL0(RegularizedL0, metaclass=ABCMeta):
             fit_intercept (bool):
                 Whether the intercept should be estimated or not.
                 If False, the data is assumed to be already centered.
-            normalize (bool):
-                This parameter is ignored when fit_intercept is set to False.
-                If True, the regressors X will be normalized before regression
-                by subtracting the mean and dividing by the l2-norm.
-                If you wish to standardize, please use StandardScaler before
-                calling fit on an estimator with normalize=False
             copy_X (bool):
                 If True, X will be copied; else, it may be overwritten.
             warm_start (bool):
@@ -179,7 +167,7 @@ class MixedL0(RegularizedL0, metaclass=ABCMeta):
         super().__init__(
             alpha=alpha, big_M=big_M, hierarchy=hierarchy,
             ignore_psd_check=ignore_psd_check, fit_intercept=fit_intercept,
-            normalize=normalize, copy_X=copy_X, warm_start=warm_start, solver=solver,
+            copy_X=copy_X, warm_start=warm_start, solver=solver,
             solver_options=solver_options
         )
 
@@ -240,7 +228,7 @@ class L1L0(MixedL0):
                            + alpha * (1 - l0_ratio) * ||Beta||_1
     """
     def __init__(self, alpha=1.0, l0_ratio=0.5, big_M=1000, hierarchy=None,
-                 ignore_psd_check=True, fit_intercept=False, normalize=False,
+                 ignore_psd_check=True, fit_intercept=False,
                  copy_X=True, warm_start=False, solver=None, solver_options=None):
         """
         Args:
@@ -266,12 +254,6 @@ class L1L0(MixedL0):
             fit_intercept (bool):
                 Whether the intercept should be estimated or not.
                 If False, the data is assumed to be already centered.
-            normalize (bool):
-                This parameter is ignored when fit_intercept is set to False.
-                If True, the regressors X will be normalized before regression
-                by subtracting the mean and dividing by the l2-norm.
-                If you wish to standardize, please use StandardScaler before
-                calling fit on an estimator with normalize=False
             copy_X (bool):
                 If True, X will be copied; else, it may be overwritten.
             warm_start (bool):
@@ -289,7 +271,7 @@ class L1L0(MixedL0):
         super().__init__(alpha=alpha, l0_ratio=l0_ratio, big_M=big_M,
                          hierarchy=hierarchy, ignore_psd_check=ignore_psd_check,
                          fit_intercept=fit_intercept,
-                         normalize=normalize, copy_X=copy_X,
+                         copy_X=copy_X,
                          warm_start=warm_start, solver=solver,
                          solver_options=solver_options)
         self._z1 = None
@@ -338,7 +320,7 @@ class GroupedL0(RegularizedL0):
     """Esimator with grouped L0 psuedo-norm regularization."""
 
     def __init__(self, groups, alpha=1.0, big_M=1000, hierarchy=None,
-                 ignore_psd_check=True, fit_intercept=False, normalize=False,
+                 ignore_psd_check=True, fit_intercept=False,
                  copy_X=True, warm_start=False, solver=None, solver_options=None):
         """
         Args:
@@ -366,12 +348,6 @@ class GroupedL0(RegularizedL0):
             fit_intercept (bool):
                 Whether the intercept should be estimated or not.
                 If False, the data is assumed to be already centered.
-            normalize (bool):
-                This parameter is ignored when fit_intercept is set to False.
-                If True, the regressors X will be normalized before regression
-                by subtracting the mean and dividing by the l2-norm.
-                If you wish to standardize, please use StandardScaler before
-                calling fit on an estimator with normalize=False
             copy_X (bool):
                 If True, X will be copied; else, it may be overwritten.
             warm_start (bool):
@@ -389,7 +365,7 @@ class GroupedL0(RegularizedL0):
         super().__init__(
             alpha=alpha, big_M=big_M, hierarchy=hierarchy,
             ignore_psd_check=ignore_psd_check, fit_intercept=fit_intercept,
-            normalize=normalize, copy_X=copy_X, warm_start=warm_start, solver=solver,
+            copy_X=copy_X, warm_start=warm_start, solver=solver,
             solver_options=solver_options)
 
         self.groups = np.asarray(groups)
@@ -422,7 +398,7 @@ class GroupedL2L0(GroupedL0, MixedL0):
     """
 
     def __init__(self, groups, alpha=1.0, l0_ratio=0.5, big_M=1000, hierarchy=None,
-                 ignore_psd_check=True, fit_intercept=False, normalize=False,
+                 ignore_psd_check=True, fit_intercept=False,
                  copy_X=True, warm_start=False, solver=None, solver_options=None):
         """
         Args:
@@ -452,12 +428,6 @@ class GroupedL2L0(GroupedL0, MixedL0):
             fit_intercept (bool):
                 Whether the intercept should be estimated or not.
                 If False, the data is assumed to be already centered.
-            normalize (bool):
-                This parameter is ignored when fit_intercept is set to False.
-                If True, the regressors X will be normalized before regression
-                by subtracting the mean and dividing by the l2-norm.
-                If you wish to standardize, please use StandardScaler before
-                calling fit on an estimator with normalize=False
             copy_X (bool):
                 If True, X will be copied; else, it may be overwritten.
             warm_start (bool):
@@ -476,7 +446,7 @@ class GroupedL2L0(GroupedL0, MixedL0):
         super().__init__(groups=groups, alpha=alpha, l0_ratio=l0_ratio, big_M=big_M,
                          hierarchy=hierarchy, ignore_psd_check=ignore_psd_check,
                          fit_intercept=fit_intercept,
-                         normalize=normalize, copy_X=copy_X,
+                         copy_X=copy_X,
                          warm_start=warm_start, solver=solver,
                          solver_options=solver_options)
 
