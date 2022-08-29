@@ -169,7 +169,7 @@ class MixedL0(RegularizedL0, metaclass=ABCMeta):
             alpha=alpha, big_M=big_M, hierarchy=hierarchy,
             ignore_psd_check=ignore_psd_check, fit_intercept=fit_intercept,
             copy_X=copy_X, warm_start=warm_start, solver=solver,
-            solver_options=solver_options
+            solver_options=solver_options, **kwargs
         )
 
         if not 0 <= l0_ratio <= 1:
@@ -322,7 +322,8 @@ class GroupedL0(RegularizedL0):
 
     def __init__(self, groups, alpha=1.0, big_M=1000, hierarchy=None,
                  ignore_psd_check=True, fit_intercept=False,
-                 copy_X=True, warm_start=False, solver=None, solver_options=None):
+                 copy_X=True, warm_start=False, solver=None, solver_options=None,
+                 **kwargs):
         """
         Args:
             groups (list or ndarray):
@@ -367,7 +368,7 @@ class GroupedL0(RegularizedL0):
             alpha=alpha, big_M=big_M, hierarchy=hierarchy,
             ignore_psd_check=ignore_psd_check, fit_intercept=fit_intercept,
             copy_X=copy_X, warm_start=warm_start, solver=solver,
-            solver_options=solver_options)
+            solver_options=solver_options, **kwargs)
 
         self.groups = np.asarray(groups)
         self._group_masks = [self.groups == i for i in np.unique(groups)]
