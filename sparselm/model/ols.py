@@ -3,6 +3,7 @@
 __author__ = "Fengyu Xie, Luis Barroso-Luque"
 
 import cvxpy as cp
+
 from .base import CVXEstimator
 
 
