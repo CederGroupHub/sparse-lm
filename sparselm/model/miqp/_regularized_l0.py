@@ -20,7 +20,7 @@ import cvxpy as cp
 import numpy as np
 from cvxpy.atoms.affine.wraps import psd_wrap
 
-from sparselm.model.base import CVXEstimator
+from sparselm.model._base import CVXEstimator
 
 
 class RegularizedL0(CVXEstimator):

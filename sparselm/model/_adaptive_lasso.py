@@ -22,7 +22,7 @@ __author__ = "Luis Barroso-Luque"
 import cvxpy as cp
 import numpy as np
 
-from sparselm.model.lasso import (
+from sparselm.model._lasso import (
     GroupLasso,
     Lasso,
     OverlapGroupLasso,

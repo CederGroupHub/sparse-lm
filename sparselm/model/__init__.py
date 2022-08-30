@@ -1,33 +1,33 @@
 """Classes implementing generalized linear regression estimators."""
 
-from sparselm.model.adaptive_lasso import (
+from sparselm.model._adaptive_lasso import (
     AdaptiveGroupLasso,
     AdaptiveLasso,
     AdaptiveOverlapGroupLasso,
     AdaptiveRidgedGroupLasso,
     AdaptiveSparseGroupLasso,
 )
-from sparselm.model.lasso import (
+from sparselm.model._lasso import (
     GroupLasso,
     Lasso,
     OverlapGroupLasso,
     RidgedGroupLasso,
     SparseGroupLasso,
 )
-from sparselm.model.miqp.best_subset import (
+
+from sparselm.model.miqp import (
     BestGroupSelection,
     BestSubsetSelection,
     RidgedBestGroupSelection,
     RidgedBestSubsetSelection,
-)
-from sparselm.model.miqp.regularized_l0 import (
     L1L0,
     L2L0,
     GroupedL0,
     GroupedL2L0,
     RegularizedL0,
 )
-from sparselm.model.ols import OrdinaryLeastSquares
+
+from sparselm.model._ols import OrdinaryLeastSquares
 
 __all__ = [
     "OrdinaryLeastSquares",
