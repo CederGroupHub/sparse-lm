@@ -1,5 +1,5 @@
-import pytest
 import numpy as np
+import pytest
 
 # Set to small values bc gurobi non-commercial can not solver large model.
 n_features = 30
@@ -19,6 +19,5 @@ def random_model():
         while np.isclose(eci, 0):
             eci = (np.random.random() - 0.5) * 2 * mag
         ecis[idx] = eci
-    energies = femat @ ecis + np.random.normal(size=n_samples) * 2E-3
+    energies = femat @ ecis + np.random.normal(size=n_samples) * 2e-3
     return femat, energies, ecis
-

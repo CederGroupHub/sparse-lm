@@ -6,12 +6,17 @@ The classes make use of and follow the scikit-learn API.
 __author__ = "Luis Barroso-Luque, Fengyu Xie"
 
 from abc import ABCMeta, abstractmethod
-import numpy as np
+
 import cvxpy as cp
+import numpy as np
 from sklearn.base import RegressorMixin
-from sklearn.linear_model._base import LinearModel
-from sklearn.linear_model._base import _rescale_data, _check_sample_weight,\
-    _preprocess_data, _deprecate_normalize
+from sklearn.linear_model._base import (
+    LinearModel,
+    _check_sample_weight,
+    _deprecate_normalize,
+    _preprocess_data,
+    _rescale_data,
+)
 
 
 class Estimator(LinearModel, RegressorMixin, metaclass=ABCMeta):
@@ -24,8 +29,9 @@ class Estimator(LinearModel, RegressorMixin, metaclass=ABCMeta):
     Keyword arguments are the same as those found in sklearn linear models.
     """
 
-    def __init__(self, fit_intercept: bool = False, normalize: bool = False,
-                 copy_X: bool = True):
+    def __init__(
+        self, fit_intercept: bool = False, normalize: bool = False, copy_X: bool = True
+    ):
         """
         fit_intercept : bool, default=True
 
@@ -69,16 +75,16 @@ class Estimator(LinearModel, RegressorMixin, metaclass=ABCMeta):
         Returns:
             instance of self
         """
-        X, y = self._validate_data(X, y, accept_sparse=False,
-                                   y_numeric=True, multi_output=True)
+        X, y = self._validate_data(
+            X, y, accept_sparse=False, y_numeric=True, multi_output=True
+        )
 
         if sample_weight is not None:
-            sample_weight = _check_sample_weight(sample_weight, X,
-                                                 dtype=X.dtype)
-
+            sample_weight = _check_sample_weight(sample_weight, X, dtype=X.dtype)
 
         X, y, X_offset, y_offset, X_scale = self._preprocess_data(
-            X, y, copy=self.copy_X, sample_weight=sample_weight)
+            X, y, copy=self.copy_X, sample_weight=sample_weight
+        )
 
         if sample_weight is not None:
             X, y = _rescale_data(X, y, sample_weight)
@@ -98,10 +104,14 @@ class Estimator(LinearModel, RegressorMixin, metaclass=ABCMeta):
         _normalize = _deprecate_normalize(
             self.normalize, default=False, estimator_name=self.__class__.__name__
         )
-        return _preprocess_data(X, y, copy=copy,
-                                fit_intercept=self.fit_intercept,
-                                normalize=_normalize,
-                                sample_weight=sample_weight)
+        return _preprocess_data(
+            X,
+            y,
+            copy=copy,
+            fit_intercept=self.fit_intercept,
+            normalize=_normalize,
+            sample_weight=sample_weight,
+        )
 
     @abstractmethod
     def _solve(self, X, y, *args, **kwargs):
@@ -121,8 +131,15 @@ class CVXEstimator(Estimator, metaclass=ABCMeta):
     https://ajfriendcvxpy.readthedocs.io/en/latest/tutorial/advanced/index.html#solve-method-options
     """
 
-    def __init__(self, fit_intercept=False, normalize=False,
-                 copy_X=True, warm_start=False, solver=None, **kwargs):
+    def __init__(
+        self,
+        fit_intercept=False,
+        normalize=False,
+        copy_X=True,
+        warm_start=False,
+        solver=None,
+        **kwargs
+    ):
         """
         Args:
             fit_intercept (bool):
@@ -212,6 +229,7 @@ class CVXEstimator(Estimator, metaclass=ABCMeta):
     def _solve(self, X, y, *args, **kwargs):
         """Solve the cvxpy problem."""
         problem = self._get_problem(X, y)
-        problem.solve(solver=self.solver, warm_start=self.warm_start,
-                      **self.solver_opts)
+        problem.solve(
+            solver=self.solver, warm_start=self.warm_start, **self.solver_opts
+        )
         return self._beta.value
