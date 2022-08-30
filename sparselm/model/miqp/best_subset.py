@@ -5,9 +5,10 @@ Allows hierarchy constraints similar to mixed L0 solvers.
 
 __author__ = "Luis Barroso-Luque"
 
-import numpy as np
 import cvxpy as cp
+import numpy as np
 from cvxpy.atoms.affine.wraps import psd_wrap
+
 from sparselm.model.base import CVXEstimator
 
 
@@ -18,10 +19,19 @@ class BestSubsetSelection(CVXEstimator):
     converge for large problems and underdetermined problems.
     """
 
-    def __init__(self, sparse_bound, big_M=1000, hierarchy=None,
-                 ignore_psd_check=True, fit_intercept=False,
-                 copy_X=True, warm_start=False, solver=None, solver_options=None,
-                 **kwargs):
+    def __init__(
+        self,
+        sparse_bound,
+        big_M=1000,
+        hierarchy=None,
+        ignore_psd_check=True,
+        fit_intercept=False,
+        copy_X=True,
+        warm_start=False,
+        solver=None,
+        solver_options=None,
+        **kwargs,
+    ):
         """
 
         Args:
@@ -60,9 +70,13 @@ class BestSubsetSelection(CVXEstimator):
                 dictionary of keyword arguments passed to cvxpy solve.
                 See docs in CVXEstimator for more information.
         """
-        super().__init__(fit_intercept=fit_intercept,
-                         copy_X=copy_X, warm_start=warm_start, solver=solver,
-                         solver_options=solver_options)
+        super().__init__(
+            fit_intercept=fit_intercept,
+            copy_X=copy_X,
+            warm_start=warm_start,
+            solver=solver,
+            solver_options=solver_options,
+        )
 
         self._bound = cp.Parameter(nonneg=True, value=sparse_bound)
         self.hierarchy = hierarchy
@@ -101,9 +115,11 @@ class BestSubsetSelection(CVXEstimator):
     def _gen_constraints(self, X, y):
         """Generate the constraints used to solve l0 regularization"""
         self._z0 = cp.Variable(X.shape[1], boolean=True)
-        constraints = [self._big_M * self._z0 >= self._beta,
-                       self._big_M * self._z0 >= -self._beta,
-                       cp.sum(self._z0) <= self._bound]
+        constraints = [
+            self._big_M * self._z0 >= self._beta,
+            self._big_M * self._z0 >= -self._beta,
+            cp.sum(self._z0) <= self._bound,
+        ]
 
         if self.hierarchy is not None:
             constraints += self._gen_hierarchy_constraints()
@@ -111,18 +127,30 @@ class BestSubsetSelection(CVXEstimator):
 
     def _gen_hierarchy_constraints(self):
         """Generate single feature hierarchy constraints"""
-        return [self._z0[high_id] <= self._z0[sub_id]
-                for high_id, sub_ids in enumerate(self.hierarchy)
-                for sub_id in sub_ids]
+        return [
+            self._z0[high_id] <= self._z0[sub_id]
+            for high_id, sub_ids in enumerate(self.hierarchy)
+            for sub_id in sub_ids
+        ]
 
 
 class RidgedBestSubsetSelection(BestSubsetSelection):
     """MIQP  Best subset selection estimator with ridge regularization."""
 
-    def __init__(self, sparse_bound, alpha=1.0, big_M=1000, hierarchy=None,
-                 ignore_psd_check=True, fit_intercept=False,
-                 copy_X=True, warm_start=False, solver=None, solver_options=None,
-                 **kwargs):
+    def __init__(
+        self,
+        sparse_bound,
+        alpha=1.0,
+        big_M=1000,
+        hierarchy=None,
+        ignore_psd_check=True,
+        fit_intercept=False,
+        copy_X=True,
+        warm_start=False,
+        solver=None,
+        solver_options=None,
+        **kwargs,
+    ):
         """
         Args:
             sparse_bound (int):
@@ -161,10 +189,16 @@ class RidgedBestSubsetSelection(BestSubsetSelection):
                 See docs in CVXEstimator for more information.
         """
         super().__init__(
-            sparse_bound=sparse_bound, big_M=big_M, hierarchy=hierarchy,
-            ignore_psd_check=ignore_psd_check, fit_intercept=fit_intercept,
-            copy_X=copy_X, warm_start=warm_start, solver=solver,
-            solver_options=solver_options, **kwargs
+            sparse_bound=sparse_bound,
+            big_M=big_M,
+            hierarchy=hierarchy,
+            ignore_psd_check=ignore_psd_check,
+            fit_intercept=fit_intercept,
+            copy_X=copy_X,
+            warm_start=warm_start,
+            solver=solver,
+            solver_options=solver_options,
+            **kwargs,
         )
         self._alpha = cp.Parameter(nonneg=True, value=alpha)
 
@@ -179,18 +213,29 @@ class RidgedBestSubsetSelection(BestSubsetSelection):
     def _gen_objective(self, X, y):
         """Generate the objective function used in l2l0 regression model"""
         c0 = 2 * X.shape[0]  # keeps hyperparameter scale independent
-        objective = super()._gen_objective(X, y) \
-            + c0 * self._alpha * cp.sum_squares(self._beta)
+        objective = super()._gen_objective(X, y) + c0 * self._alpha * cp.sum_squares(
+            self._beta
+        )
         return objective
 
 
 class BestGroupSelection(BestSubsetSelection):
     """MIQP Best group selection estimator."""
 
-    def __init__(self, groups, sparse_bound, big_M=1000, hierarchy=None,
-                 ignore_psd_check=True, fit_intercept=False,
-                 copy_X=True, warm_start=False, solver=None, solver_options=None,
-                 **kwargs):
+    def __init__(
+        self,
+        groups,
+        sparse_bound,
+        big_M=1000,
+        hierarchy=None,
+        ignore_psd_check=True,
+        fit_intercept=False,
+        copy_X=True,
+        warm_start=False,
+        solver=None,
+        solver_options=None,
+        **kwargs,
+    ):
         """
         Args:
             groups (list or ndarray):
@@ -233,10 +278,16 @@ class BestGroupSelection(BestSubsetSelection):
                 See docs in CVXEstimator for more information.
         """
         super().__init__(
-            sparse_bound=sparse_bound, big_M=big_M, hierarchy=hierarchy,
-            ignore_psd_check=ignore_psd_check, fit_intercept=fit_intercept,
-            copy_X=copy_X, warm_start=warm_start, solver=solver,
-            solver_options=solver_options, **kwargs
+            sparse_bound=sparse_bound,
+            big_M=big_M,
+            hierarchy=hierarchy,
+            ignore_psd_check=ignore_psd_check,
+            fit_intercept=fit_intercept,
+            copy_X=copy_X,
+            warm_start=warm_start,
+            solver=solver,
+            solver_options=solver_options,
+            **kwargs,
         )
         self.groups = np.asarray(groups)
         self._group_masks = [self.groups == i for i in np.unique(groups)]
@@ -246,8 +297,10 @@ class BestGroupSelection(BestSubsetSelection):
         """Generate the constraints used to solve l0 regularization"""
         constraints = []
         for i, mask in enumerate(self._group_masks):
-            constraints += [self._big_M * self._z0[i] >= self._beta[mask],
-                            self._big_M * self._z0[i] >= -self._beta[mask]]
+            constraints += [
+                self._big_M * self._z0[i] >= self._beta[mask],
+                self._big_M * self._z0[i] >= -self._beta[mask],
+            ]
 
         if self.hierarchy is not None:
             constraints += self._gen_hierarchy_constraints()
@@ -257,9 +310,20 @@ class BestGroupSelection(BestSubsetSelection):
 class RidgedBestGroupSelection(RidgedBestSubsetSelection, BestGroupSelection):
     """Best group selection estimator with ridge regularization."""
 
-    def __init__(self, groups, sparse_bound, alpha=1.0, big_M=1000, hierarchy=None,
-                 ignore_psd_check=True, fit_intercept=False,
-                 copy_X=True, warm_start=False, solver=None, solver_options=None):
+    def __init__(
+        self,
+        groups,
+        sparse_bound,
+        alpha=1.0,
+        big_M=1000,
+        hierarchy=None,
+        ignore_psd_check=True,
+        fit_intercept=False,
+        copy_X=True,
+        warm_start=False,
+        solver=None,
+        solver_options=None,
+    ):
         """
         Args:
             groups (list or ndarray):
@@ -305,10 +369,17 @@ class RidgedBestGroupSelection(RidgedBestSubsetSelection, BestGroupSelection):
         """
         # need to call super for sklearn clone function
         super().__init__(
-            groups=groups, sparse_bound=sparse_bound,  alpha=alpha, big_M=big_M,
-            hierarchy=hierarchy, ignore_psd_check=ignore_psd_check,
-            fit_intercept=fit_intercept, copy_X=copy_X,
-            warm_start=warm_start, solver=solver, solver_options=solver_options
+            groups=groups,
+            sparse_bound=sparse_bound,
+            alpha=alpha,
+            big_M=big_M,
+            hierarchy=hierarchy,
+            ignore_psd_check=ignore_psd_check,
+            fit_intercept=fit_intercept,
+            copy_X=copy_X,
+            warm_start=warm_start,
+            solver=solver,
+            solver_options=solver_options,
         )
 
     def _gen_objective(self, X, y):

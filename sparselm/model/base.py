@@ -6,12 +6,16 @@ The classes make use of and follow the scikit-learn API.
 __author__ = "Luis Barroso-Luque, Fengyu Xie"
 
 from abc import ABCMeta, abstractmethod
-import numpy as np
+
 import cvxpy as cp
+import numpy as np
 from sklearn.base import RegressorMixin
-from sklearn.linear_model._base import LinearModel
-from sklearn.linear_model._base import _rescale_data, _check_sample_weight,\
-    _preprocess_data
+from sklearn.linear_model._base import (
+    LinearModel,
+    _check_sample_weight,
+    _preprocess_data,
+    _rescale_data,
+)
 
 
 class Estimator(RegressorMixin, LinearModel, metaclass=ABCMeta):
@@ -56,16 +60,16 @@ class Estimator(RegressorMixin, LinearModel, metaclass=ABCMeta):
         Returns:
             instance of self
         """
-        X, y = self._validate_data(X, y, accept_sparse=False,
-                                   y_numeric=True, multi_output=True)
+        X, y = self._validate_data(
+            X, y, accept_sparse=False, y_numeric=True, multi_output=True
+        )
 
         if sample_weight is not None:
-            sample_weight = _check_sample_weight(sample_weight, X,
-                                                 dtype=X.dtype)
-
+            sample_weight = _check_sample_weight(sample_weight, X, dtype=X.dtype)
 
         X, y, X_offset, y_offset, X_scale = self._preprocess_data(
-            X, y, copy=self.copy_X, sample_weight=sample_weight)
+            X, y, copy=self.copy_X, sample_weight=sample_weight
+        )
 
         if sample_weight is not None:
             X, y = _rescale_data(X, y, sample_weight)
@@ -82,9 +86,13 @@ class Estimator(RegressorMixin, LinearModel, metaclass=ABCMeta):
         In the future, may add additional functionalities beyond sklearn
         basics.
         """
-        return _preprocess_data(X, y, copy=copy,
-                                fit_intercept=self.fit_intercept,
-                                sample_weight=sample_weight)
+        return _preprocess_data(
+            X,
+            y,
+            copy=copy,
+            fit_intercept=self.fit_intercept,
+            sample_weight=sample_weight,
+        )
 
     @abstractmethod
     def _solve(self, X, y, *args, **kwargs):
@@ -105,8 +113,14 @@ class CVXEstimator(Estimator, metaclass=ABCMeta):
     https://www.cvxpy.org/tutorial/advanced/index.html#advanced
     """
 
-    def __init__(self, fit_intercept=False, copy_X=True, warm_start=False, solver=None,
-                 solver_options=None):
+    def __init__(
+        self,
+        fit_intercept=False,
+        copy_X=True,
+        warm_start=False,
+        solver=None,
+        solver_options=None,
+    ):
         """
         Args:
             fit_intercept (bool):
@@ -195,6 +209,7 @@ class CVXEstimator(Estimator, metaclass=ABCMeta):
     def _solve(self, X, y, *args, **kwargs):
         """Solve the cvxpy problem."""
         problem = self._get_problem(X, y)
-        problem.solve(solver=self.solver, warm_start=self.warm_start,
-                      **self.solver_options)
+        problem.solve(
+            solver=self.solver, warm_start=self.warm_start, **self.solver_options
+        )
         return self._beta.value

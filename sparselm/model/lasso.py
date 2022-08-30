@@ -12,9 +12,10 @@ optimization problem.
 __author__ = "Luis Barroso-Luque, Fengyu Xie"
 
 import warnings
-from scipy.linalg import sqrtm
+
 import cvxpy as cp
 import numpy as np
+from scipy.linalg import sqrtm
 
 from sparselm.model.base import CVXEstimator
 
@@ -28,8 +29,15 @@ class Lasso(CVXEstimator):
     Where w represents a vector of weights that is iteratively updated.
     """
 
-    def __init__(self, alpha=1.0, fit_intercept=False, copy_X=True, warm_start=False,
-                 solver=None, solver_options=None):
+    def __init__(
+        self,
+        alpha=1.0,
+        fit_intercept=False,
+        copy_X=True,
+        warm_start=False,
+        solver=None,
+        solver_options=None,
+    ):
         """
         Args:
             alpha (float):
@@ -52,9 +60,13 @@ class Lasso(CVXEstimator):
                 See docs in CVXEstimator for more information.
         """
         self._alpha = cp.Parameter(value=alpha, nonneg=True)
-        super().__init__(fit_intercept=fit_intercept,
-                         copy_X=copy_X, warm_start=warm_start, solver=solver,
-                         solver_options=solver_options)
+        super().__init__(
+            fit_intercept=fit_intercept,
+            copy_X=copy_X,
+            warm_start=warm_start,
+            solver=solver,
+            solver_options=solver_options,
+        )
 
     @property
     def alpha(self):
@@ -70,23 +82,31 @@ class Lasso(CVXEstimator):
     def _gen_objective(self, X, y):
         # can also use cp.norm2(X @ self._beta - y)**2 not sure whats better
         reg = self._gen_regularization(X)
-        objective = 1 / (2 * X.shape[0]) * cp.sum_squares(X @ self._beta - y) \
-            + reg
+        objective = 1 / (2 * X.shape[0]) * cp.sum_squares(X @ self._beta - y) + reg
         return objective
 
 
 class GroupLasso(Lasso):
-    """Group Lasso implementation.
+    r"""Group Lasso implementation.
 
     Regularized model:
         || X * Beta - y ||^2_2 + alpha * \sum_{G} w_G * ||Beta_G||_2
     Where G represents groups of features/coefficients
     """
 
-    def __init__(self, groups, alpha=1.0, group_weights=None,
-                 standardize=False, fit_intercept=False,
-                 copy_X=True, warm_start=False, solver=None, solver_options=None,
-                 **kwargs):
+    def __init__(
+        self,
+        groups,
+        alpha=1.0,
+        group_weights=None,
+        standardize=False,
+        fit_intercept=False,
+        copy_X=True,
+        warm_start=False,
+        solver=None,
+        solver_options=None,
+        **kwargs,
+    ):
         """Initialize estimator.
 
         Args:
@@ -131,24 +151,34 @@ class GroupLasso(Lasso):
         if group_weights is not None:
             if len(group_weights) != len(self.group_masks):
                 raise ValueError(
-                    'group_weights must be the same length as the number of '
-                    f'groups:  {len(group_weights)} != {len(self.group_masks)}')
-        self.group_weights = group_weights if group_weights is not None else \
-            np.sqrt([sum(mask) for mask in self.group_masks])
+                    "group_weights must be the same length as the number of "
+                    f"groups:  {len(group_weights)} != {len(self.group_masks)}"
+                )
+        self.group_weights = (
+            group_weights
+            if group_weights is not None
+            else np.sqrt([sum(mask) for mask in self.group_masks])
+        )
 
-        super().__init__(alpha=alpha, fit_intercept=fit_intercept, copy_X=copy_X,
-                         warm_start=warm_start, solver=solver,
-                         solver_options=solver_options, **kwargs)
+        super().__init__(
+            alpha=alpha,
+            fit_intercept=fit_intercept,
+            copy_X=copy_X,
+            warm_start=warm_start,
+            solver=solver,
+            solver_options=solver_options,
+            **kwargs,
+        )
 
     def _gen_group_norms(self, X):
         if self.standardize:
             grp_norms = cp.hstack(
-                [cp.norm2(X[:, mask] @ self._beta[mask])
-                 for mask in self.group_masks]
+                [cp.norm2(X[:, mask] @ self._beta[mask]) for mask in self.group_masks]
             )
         else:
             grp_norms = cp.hstack(
-                [cp.norm2(self._beta[mask]) for mask in self.group_masks])
+                [cp.norm2(self._beta[mask]) for mask in self.group_masks]
+            )
         self._group_norms = grp_norms
         return grp_norms
 
@@ -157,7 +187,7 @@ class GroupLasso(Lasso):
 
 
 class OverlapGroupLasso(GroupLasso):
-    """Overlap Group Lasso implementation.
+    r"""Overlap Group Lasso implementation.
 
     Regularized model:
         || X * Beta - y ||^2_2 + alpha * \sum_{G} w_G * ||Beta_G||_2
@@ -165,9 +195,19 @@ class OverlapGroupLasso(GroupLasso):
     are acceptable. Meaning a coefficients can be in more than one group.
     """
 
-    def __init__(self, group_list, alpha=1.0, group_weights=None,
-                 standardize=False, fit_intercept=False, copy_X=True, warm_start=False,
-                 solver=None, solver_options=None, **kwargs):
+    def __init__(
+        self,
+        group_list,
+        alpha=1.0,
+        group_weights=None,
+        standardize=False,
+        fit_intercept=False,
+        copy_X=True,
+        warm_start=False,
+        solver=None,
+        solver_options=None,
+        **kwargs,
+    ):
         """Initialize estimator.
 
         Args:
@@ -212,32 +252,48 @@ class OverlapGroupLasso(GroupLasso):
         self.group_list = group_list
         self.group_ids = np.unique([gid for grp in group_list for gid in grp])
         self.group_ids.sort()
-        beta_indices = [[i for i, grp in enumerate(group_list) if grp_id in grp]
-                        for grp_id in self.group_ids]
+        beta_indices = [
+            [i for i, grp in enumerate(group_list) if grp_id in grp]
+            for grp_id in self.group_ids
+        ]
         extended_groups = np.concatenate(
-            [len(g) * [i, ] for i, g in enumerate(beta_indices)])
+            [
+                len(g)
+                * [
+                    i,
+                ]
+                for i, g in enumerate(beta_indices)
+            ]
+        )
         self.beta_indices = np.concatenate(beta_indices)
 
         super().__init__(
-            extended_groups, alpha=alpha, group_weights=group_weights,
-            standardize=standardize, fit_intercept=fit_intercept,
-            copy_X=copy_X, warm_start=warm_start,
-            solver=solver, solver_options=solver_options, **kwargs)
+            extended_groups,
+            alpha=alpha,
+            group_weights=group_weights,
+            standardize=standardize,
+            fit_intercept=fit_intercept,
+            copy_X=copy_X,
+            warm_start=warm_start,
+            solver=solver,
+            solver_options=solver_options,
+            **kwargs,
+        )
 
     def _solve(self, X, y, *args, **kwargs):
         """Solve the cvxpy problem."""
         problem = self._get_problem(X[:, self.beta_indices], y)
-        problem.solve(solver=self.solver, warm_start=self.warm_start,
-                      **self.solver_options)
+        problem.solve(
+            solver=self.solver, warm_start=self.warm_start, **self.solver_options
+        )
         beta = np.array(
-            [sum(self._beta.value[self.beta_indices == i])
-             for i in range(X.shape[1])]
+            [sum(self._beta.value[self.beta_indices == i]) for i in range(X.shape[1])]
         )
         return beta
 
 
 class SparseGroupLasso(GroupLasso):
-    """Sparse Group Lasso.
+    r"""Sparse Group Lasso.
 
     Regularized model:
         || X * Beta - y ||^2_2
@@ -246,10 +302,20 @@ class SparseGroupLasso(GroupLasso):
     Where G represents groups of features / coefficients
     """
 
-    def __init__(self, groups, l1_ratio=0.5, alpha=1.0, group_weights=None,
-                 standardize=False, fit_intercept=False,
-                 copy_X=True, warm_start=False, solver=None, solver_options=None,
-                 **kwargs):
+    def __init__(
+        self,
+        groups,
+        l1_ratio=0.5,
+        alpha=1.0,
+        group_weights=None,
+        standardize=False,
+        fit_intercept=False,
+        copy_X=True,
+        warm_start=False,
+        solver=None,
+        solver_options=None,
+        **kwargs,
+    ):
         """Initialize estimator.
 
         Args:
@@ -288,24 +354,33 @@ class SparseGroupLasso(GroupLasso):
                 dictionary of keyword arguments passed to cvxpy solve.
                 See docs in CVXEstimator for more information.
         """
-        super().__init__(groups=groups, alpha=alpha,
-                         group_weights=group_weights,
-                         standardize=standardize,
-                         fit_intercept=fit_intercept,
-                         copy_X=copy_X,
-                         warm_start=warm_start, solver=solver,
-                         solver_options=solver_options, **kwargs)
+        super().__init__(
+            groups=groups,
+            alpha=alpha,
+            group_weights=group_weights,
+            standardize=standardize,
+            fit_intercept=fit_intercept,
+            copy_X=copy_X,
+            warm_start=warm_start,
+            solver=solver,
+            solver_options=solver_options,
+            **kwargs,
+        )
 
         if not 0 <= l1_ratio <= 1:
-            raise ValueError('l1_ratio must be between 0 and 1.')
+            raise ValueError("l1_ratio must be between 0 and 1.")
         elif l1_ratio == 0.0:
             warnings.warn(
-                'It is more efficient to use GroupLasso directly than '
-                'SparseGroupLasso with l1_ratio=0', UserWarning)
+                "It is more efficient to use GroupLasso directly than "
+                "SparseGroupLasso with l1_ratio=0",
+                UserWarning,
+            )
         elif l1_ratio == 1.0:
             warnings.warn(
-                'It is more efficient to use Lasso directly than '
-                'SparseGroupLasso with l1_ratio=1', UserWarning)
+                "It is more efficient to use Lasso directly than "
+                "SparseGroupLasso with l1_ratio=1",
+                UserWarning,
+            )
 
         self._lambda1 = cp.Parameter(nonneg=True, value=l1_ratio * alpha)
         self._lambda2 = cp.Parameter(nonneg=True, value=(1 - l1_ratio) * alpha)
@@ -325,7 +400,7 @@ class SparseGroupLasso(GroupLasso):
     @l1_ratio.setter
     def l1_ratio(self, val):
         if not 0 <= val <= 1:
-            raise ValueError('l1_ratio must be between 0 and 1.')
+            raise ValueError("l1_ratio must be between 0 and 1.")
         self._l1_ratio = val
         self._lambda1.value = val * self.alpha
         self._lambda2.value = (1 - val) * self.alpha
@@ -333,13 +408,12 @@ class SparseGroupLasso(GroupLasso):
     def _gen_regularization(self, X):
         grp_norms = super()._gen_group_norms(X)
         l1_reg = cp.norm1(self._beta)
-        reg = self._lambda1 * l1_reg + \
-            self._lambda2 * (self.group_weights @ grp_norms)
+        reg = self._lambda1 * l1_reg + self._lambda2 * (self.group_weights @ grp_norms)
         return reg
 
 
 class RidgedGroupLasso(GroupLasso):
-    """Ridged Group Lasso implementation.
+    r"""Ridged Group Lasso implementation.
 
     Regularized model:
         || X * Beta - y ||^2_2 + alpha * \sum_{G} w_G * ||Beta_G||_2
@@ -350,10 +424,20 @@ class RidgedGroupLasso(GroupLasso):
     http://faculty.washington.edu/nrsimon/standGL.pdf
     """
 
-    def __init__(self, groups, alpha=1.0, delta=1.0, group_weights=None,
-                 standardize=False, fit_intercept=False,
-                 copy_X=True, warm_start=False, solver=None, solver_options=None,
-                 **kwargs):
+    def __init__(
+        self,
+        groups,
+        alpha=1.0,
+        delta=1.0,
+        group_weights=None,
+        standardize=False,
+        fit_intercept=False,
+        copy_X=True,
+        warm_start=False,
+        solver=None,
+        solver_options=None,
+        **kwargs,
+    ):
         """Initialize estimator.
 
         Args:
@@ -392,13 +476,18 @@ class RidgedGroupLasso(GroupLasso):
                 dictionary of keyword arguments passed to cvxpy solve.
                 See docs in CVXEstimator for more information.
         """
-        super().__init__(groups=groups, alpha=alpha,
-                         group_weights=group_weights,
-                         standardize=standardize,
-                         fit_intercept=fit_intercept,
-                         copy_X=copy_X,
-                         warm_start=warm_start, solver=solver,
-                         solver_options=solver_options, **kwargs)
+        super().__init__(
+            groups=groups,
+            alpha=alpha,
+            group_weights=group_weights,
+            standardize=standardize,
+            fit_intercept=fit_intercept,
+            copy_X=copy_X,
+            warm_start=warm_start,
+            solver=solver,
+            solver_options=solver_options,
+            **kwargs,
+        )
 
         self._delta = cp.Parameter(shape=(len(self.group_masks),), nonneg=True)
         self.delta = delta
@@ -422,16 +511,18 @@ class RidgedGroupLasso(GroupLasso):
                 [
                     cp.norm2(
                         sqrtm(
-                            X[:, mask].T @ X[:, mask] +
-                            self._delta.value[i] ** 0.5 * np.eye(sum(mask))
-                        ) @ self._beta[mask]
+                            X[:, mask].T @ X[:, mask]
+                            + self._delta.value[i] ** 0.5 * np.eye(sum(mask))
+                        )
+                        @ self._beta[mask]
                     )
                     for i, mask in enumerate(self.group_masks)
                 ]
             )
         else:
             grp_norms = cp.hstack(
-                [cp.norm2(self._beta[mask]) for mask in self.group_masks])
+                [cp.norm2(self._beta[mask]) for mask in self.group_masks]
+            )
 
         self._group_norms = grp_norms.T
         return grp_norms
