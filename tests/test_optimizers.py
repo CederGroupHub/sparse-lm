@@ -13,7 +13,7 @@ from sparselm.model.miqp.regularized_l0 import L2L0, L1L0
 ALL_CRITERION = ["max_r2", "one_std_r2"]
 # Currently we will only test on mixedL0
 ALL_ESTIMATORS = [L2L0, L1L0]
-
+ONLY_L2L0 = [L2L0]
 
 @pytest.fixture(scope="module")
 def param_grid():
@@ -54,6 +54,27 @@ def test_single_estimator(random_model, estimator):
     estimator.fit(X=femat, y=energies)
     energies_pred = estimator.predict(femat)
     assert energies_pred is not None
+
+
+@pytest.fixture(scope="module", params=ONLY_L2L0)
+def mixed_l2l0_est(request):
+    if "GUROBI" in cp.installed_solvers():
+        return request.param(solver="GUROBI")
+    else:
+        return request.param(solver="ECOS_BB")
+    # return request.param(solver="ECOS_BB")
+
+
+def test_mixed_l0_wts(random_model, mixed_l2l0_est, random_weights):
+    femat, energies, ecis = random_model
+    mixed_l2l0_est.alpha = 1e-5
+    mixed_l2l0_est.fit(X=femat, y=energies)
+    energies_pred = mixed_l2l0_est.predict(femat)
+    assert energies_pred is not None
+    mixed_l2l0_est.tikhonov_w = random_weights
+    mixed_l2l0_est.fit(X=femat, y=energies)
+    energies_pred_wtd = mixed_l2l0_est.predict(femat)
+    assert energies_pred_wtd is not None
 
 
 @pytest.fixture(scope="module", params=ALL_CRITERION)
