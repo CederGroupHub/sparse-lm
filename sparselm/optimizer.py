@@ -16,8 +16,11 @@ from sklearn.model_selection._search import BaseSearchCV
 
 from sklearn.base import is_classifier, clone
 from sklearn.model_selection._split import check_cv
-from sklearn.model_selection._validation import _fit_and_score,\
-    _insert_error_scores, _warn_or_raise_about_fit_failures
+from sklearn.model_selection._validation import (
+    _fit_and_score,
+    _insert_error_scores,
+    _warn_or_raise_about_fit_failures,
+)
 
 from sklearn.utils.validation import indexable, _check_fit_params
 from sklearn.utils.fixes import delayed
@@ -39,6 +42,7 @@ class GridSearch(GridSearchCV):
     also supports "one_std_r2", which is to apply one-standard-error
     rule the r2 score.
     """
+
     def __init__(
         self,
         estimator,
@@ -195,13 +199,13 @@ class GridSearch(GridSearchCV):
             for name in param_names:
                 if all(isinstance(val, numbers.Number) for val in results[name]):
                     p = np.array(results[name], dtype=float)
-                    if np.all(p > -1E-9):
+                    if np.all(p > -1e-9):
                         params.append(p)
             params_sum = np.sum(params, axis=0)
             one_std_dists = np.abs(metrics - m + sig)
-            candidates = np.arange(len(metrics))[one_std_dists
-                                                 < (np.min(one_std_dists)
-                                                    + 0.1 * sig)]
+            candidates = np.arange(len(metrics))[
+                one_std_dists < (np.min(one_std_dists) + 0.1 * sig)
+            ]
             best_index = candidates[np.argmax(params_sum[candidates])]
             return best_index
 
@@ -360,8 +364,9 @@ class GridSearch(GridSearchCV):
                     self.refit, refit_metric, results
                 )
             else:
-                raise NotImplementedError(f"Method {self.opt_selection_method}"
-                                          f" not implemented!")
+                raise NotImplementedError(
+                    f"Method {self.opt_selection_method}" f" not implemented!"
+                )
             if not callable(self.refit):
                 # With a non-custom callable, we can select the best score
                 # based on the best index
@@ -405,20 +410,20 @@ class LineSearch(BaseSearchCV):
     """
 
     def __init__(
-            self,
-            estimator,
-            param_grid,
-            *,
-            opt_selection_method=None,
-            n_iter=None,
-            scoring=None,
-            n_jobs=None,
-            refit=True,
-            cv=None,
-            verbose=0,
-            pre_dispatch="2*n_jobs",
-            error_score=np.nan,
-            return_train_score=False,
+        self,
+        estimator,
+        param_grid,
+        *,
+        opt_selection_method=None,
+        n_iter=None,
+        scoring=None,
+        n_jobs=None,
+        refit=True,
+        cv=None,
+        verbose=0,
+        pre_dispatch="2*n_jobs",
+        error_score=np.nan,
+        return_train_score=False,
     ):
         """
         Args:
@@ -544,8 +549,9 @@ class LineSearch(BaseSearchCV):
         self.return_train_score = return_train_score
 
         self.param_grid = param_grid
-        if isinstance(param_grid[0][0], str) \
-                and isinstance(param_grid[0], (tuple, list)):
+        if isinstance(param_grid[0][0], str) and isinstance(
+            param_grid[0], (tuple, list)
+        ):
             self.n_params = len(param_grid)
         else:
             raise ValueError("Parameters grid not given in the correct format!")
@@ -553,19 +559,25 @@ class LineSearch(BaseSearchCV):
         if opt_selection_method is None:
             self.opt_selection_methods = ["max_r2" for _ in range(self.n_params)]
         elif isinstance(opt_selection_method, str):
-            self.opt_selection_methods = [opt_selection_method
-                                          for _ in range(self.n_params)]
-        elif isinstance(opt_selection_method, (list, tuple)) \
-                and all(isinstance(m, str) for m in opt_selection_method) \
-                and len(opt_selection_method) == self.n_params:
+            self.opt_selection_methods = [
+                opt_selection_method for _ in range(self.n_params)
+            ]
+        elif (
+            isinstance(opt_selection_method, (list, tuple))
+            and all(isinstance(m, str) for m in opt_selection_method)
+            and len(opt_selection_method) == self.n_params
+        ):
             self.opt_selection_methods = opt_selection_method
         else:
-            raise ValueError("Optimal hyperparams selection method"
-                             " not given in the correct format!")
+            raise ValueError(
+                "Optimal hyperparams selection method"
+                " not given in the correct format!"
+            )
 
         # Set a proper value for this, not too large or too small.
-        self.n_iter = n_iter if (n_iter is not None and n_iter > 0)\
-            else 2 * self.n_params
+        self.n_iter = (
+            n_iter if (n_iter is not None and n_iter > 0) else 2 * self.n_params
+        )
 
         # Stores GridSearch object at each iteration
         self._history = []
@@ -604,32 +616,39 @@ class LineSearch(BaseSearchCV):
             if best_line_params_ is None:
                 last_params = [values[0] for name, values in self.param_grid]
             else:
-                last_params = [best_line_params_[name]
-                               for name, values in self.param_grid]
+                last_params = [
+                    best_line_params_[name] for name, values in self.param_grid
+                ]
 
             param_line = {}
-            for pid, ((name, values), last_value)\
-                    in enumerate(zip(self.param_grid, last_params)):
+            for pid, ((name, values), last_value) in enumerate(
+                zip(self.param_grid, last_params)
+            ):
                 param_line[name] = [last_value] if pid != param_id else values
 
-            grid_search = GridSearch(estimator=self.estimator,
-                                     param_grid=param_line,
-                                     opt_selection_method=self.opt_selection_methods[param_id],
-                                     scoring=self.scoring,
-                                     n_jobs=self.n_jobs,
-                                     refit=self.refit,
-                                     cv=self.cv,
-                                     verbose=self.verbose,
-                                     pre_dispatch=self.pre_dispatch,
-                                     error_score=self.error_score,
-                                     return_train_score=self.return_train_score)
+            grid_search = GridSearch(
+                estimator=self.estimator,
+                param_grid=param_line,
+                opt_selection_method=self.opt_selection_methods[param_id],
+                scoring=self.scoring,
+                n_jobs=self.n_jobs,
+                refit=self.refit,
+                cv=self.cv,
+                verbose=self.verbose,
+                pre_dispatch=self.pre_dispatch,
+                error_score=self.error_score,
+                return_train_score=self.return_train_score,
+            )
             grid_search.fit(X=X, y=y, groups=groups, **fit_params)
             best_line_params_ = deepcopy(grid_search.best_params_)
             self._history.append(grid_search)
 
         # Buffer fitted attributes into LineSearch object.
-        attrs = [v for v in vars(self._history[-1])
-                 if v.endswith("_") and not v.startswith("__")]
+        attrs = [
+            v
+            for v in vars(self._history[-1])
+            if v.endswith("_") and not v.startswith("__")
+        ]
         for attr in attrs:
             setattr(self, attr, getattr(self._history[-1], attr))
         return self

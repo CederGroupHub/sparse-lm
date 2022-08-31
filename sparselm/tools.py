@@ -31,7 +31,9 @@ def constrain_coefficients(indices, high=None, low=None):
 
     indices = np.array(indices)
     if high is not None:
-        high = high * np.ones(len(indices)) if isinstance(high, float) else np.array(high)
+        high = (
+            high * np.ones(len(indices)) if isinstance(high, float) else np.array(high)
+        )
     else:
         high = np.inf * np.ones(len(indices))
     if low is not None:
@@ -48,6 +50,7 @@ def constrain_coefficients(indices, high=None, low=None):
                 Must take the feature matrix X and target vector y as first
                 arguments. (i.e. fit_method(X, y, *args, **kwargs)
         """
+
         @wraps(fit_method)
         def wrapped(X, y, *args, **kwargs):
             coefs = fit_method(X, y, *args, **kwargs)
@@ -73,11 +76,13 @@ def constrain_coefficients(indices, high=None, low=None):
                     "Running the constrained fit has resulted in new out of range "
                     "coefficients that were not so in the unconstrained fit.\n"
                     "Double check the sensibility of the bounds you provided!",
-                    RuntimeWarning
+                    RuntimeWarning,
                 )
 
             return coefs
+
         return wrapped
+
     return decorate_fit_method
 
 

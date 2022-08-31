@@ -22,8 +22,13 @@ __author__ = "Luis Barroso-Luque"
 import cvxpy as cp
 import numpy as np
 
-from sparselm.model.lasso import Lasso, GroupLasso, OverlapGroupLasso,\
-    SparseGroupLasso, RidgedGroupLasso
+from sparselm.model.lasso import (
+    Lasso,
+    GroupLasso,
+    OverlapGroupLasso,
+    SparseGroupLasso,
+    RidgedGroupLasso,
+)
 
 
 class AdaptiveLasso(Lasso):
@@ -35,9 +40,20 @@ class AdaptiveLasso(Lasso):
     Where w represents a vector of weights that is iteratively updated.
     """
 
-    def __init__(self, alpha=1.0, max_iter=5, eps=1E-6, tol=1E-10,
-                 update_function=None, fit_intercept=False, normalize=False,
-                 copy_X=True, warm_start=False, solver=None, **kwargs):
+    def __init__(
+        self,
+        alpha=1.0,
+        max_iter=5,
+        eps=1e-6,
+        tol=1e-10,
+        update_function=None,
+        fit_intercept=False,
+        normalize=False,
+        copy_X=True,
+        warm_start=False,
+        solver=None,
+        **kwargs,
+    ):
         """Initialize estimator.
 
         Args:
@@ -80,9 +96,15 @@ class AdaptiveLasso(Lasso):
                 Kewyard arguments passed to cvxpy solve.
                 See docs linked in CVXEstimator base class for more info.
         """
-        super().__init__(alpha=alpha, fit_intercept=fit_intercept,
-                         normalize=normalize, copy_X=copy_X,
-                         warm_start=warm_start, solver=solver, **kwargs)
+        super().__init__(
+            alpha=alpha,
+            fit_intercept=fit_intercept,
+            normalize=normalize,
+            copy_X=copy_X,
+            warm_start=warm_start,
+            solver=solver,
+            **kwargs,
+        )
         self.tol = tol
         self.max_iter = max_iter
         self.eps = eps
@@ -94,29 +116,28 @@ class AdaptiveLasso(Lasso):
             self.update_function = update_function
 
     def _gen_regularization(self, X):
-        self._weights = cp.Parameter(shape=X.shape[1], nonneg=True,
-                                     value=self.alpha * np.ones(X.shape[1]))
+        self._weights = cp.Parameter(
+            shape=X.shape[1], nonneg=True, value=self.alpha * np.ones(X.shape[1])
+        )
         return cp.norm1(cp.multiply(self._weights, self._beta))
 
     def _update_weights(self, beta):
         if beta is None and self._problem.value == -np.inf:
-            raise RuntimeError(
-                f"{self._problem} is infeasible.")
+            raise RuntimeError(f"{self._problem} is infeasible.")
         self._previous_weights = self._weights.value
-        self._weights.value = self.alpha * self.update_function(abs(beta),self.eps)
+        self._weights.value = self.alpha * self.update_function(abs(beta), self.eps)
 
     def _weights_converged(self):
-        return np.linalg.norm(
-            self._weights.value - self._previous_weights) <= self.tol
+        return np.linalg.norm(self._weights.value - self._previous_weights) <= self.tol
 
     def _solve(self, X, y):
         problem = self._get_problem(X, y)
-        problem.solve(solver=self.solver, warm_start=self.warm_start,
-                      **self.solver_opts)
+        problem.solve(
+            solver=self.solver, warm_start=self.warm_start, **self.solver_opts
+        )
         for _ in range(self.max_iter - 1):
             self._update_weights(self._beta.value)
-            problem.solve(solver=self.solver, warm_start=True,
-                          **self.solver_opts)
+            problem.solve(solver=self.solver, warm_start=True, **self.solver_opts)
             if self._weights_converged():
                 break
         return self._beta.value
@@ -130,10 +151,24 @@ class AdaptiveGroupLasso(AdaptiveLasso, GroupLasso):
 
     Where w represents a vector of weights that is iteratively updated.
     """
-    def __init__(self, groups, alpha=1.0, group_weights=None,
-                 max_iter=5, eps=1E-6, tol=1E-10, update_function=None,
-                 standardize=False, fit_intercept=False, normalize=False,
-                 copy_X=True, warm_start=False, solver=None, **kwargs):
+
+    def __init__(
+        self,
+        groups,
+        alpha=1.0,
+        group_weights=None,
+        max_iter=5,
+        eps=1e-6,
+        tol=1e-10,
+        update_function=None,
+        standardize=False,
+        fit_intercept=False,
+        normalize=False,
+        copy_X=True,
+        warm_start=False,
+        solver=None,
+        **kwargs,
+    ):
         """Initialize estimator.
 
         Args:
@@ -189,25 +224,37 @@ class AdaptiveGroupLasso(AdaptiveLasso, GroupLasso):
                 See docs linked in CVXEstimator base class for more info.
         """
         # call with keywords to avoid MRO issues
-        super().__init__(groups=groups, alpha=alpha,
-                         group_weights=group_weights,
-                         max_iter=max_iter, eps=eps, tol=tol,
-                         update_function=update_function,
-                         standardize=standardize,
-                         fit_intercept=fit_intercept,
-                         normalize=normalize, copy_X=copy_X,
-                         warm_start=warm_start, solver=solver, **kwargs)
+        super().__init__(
+            groups=groups,
+            alpha=alpha,
+            group_weights=group_weights,
+            max_iter=max_iter,
+            eps=eps,
+            tol=tol,
+            update_function=update_function,
+            standardize=standardize,
+            fit_intercept=fit_intercept,
+            normalize=normalize,
+            copy_X=copy_X,
+            warm_start=warm_start,
+            solver=solver,
+            **kwargs,
+        )
 
     def _gen_regularization(self, X):
         grp_norms = self._gen_group_norms(X)
-        self._weights = cp.Parameter(shape=len(self.group_masks), nonneg=True,
-                                     value=self.alpha * self.group_weights)
+        self._weights = cp.Parameter(
+            shape=len(self.group_masks),
+            nonneg=True,
+            value=self.alpha * self.group_weights,
+        )
         return self._weights @ grp_norms
 
     def _update_weights(self, beta):
         self._previous_weights = self._weights.value
-        self._weights.value = (self.alpha * self.group_weights) * \
-            self.update_function(self._group_norms.value, self.eps)
+        self._weights.value = (self.alpha * self.group_weights) * self.update_function(
+            self._group_norms.value, self.eps
+        )
 
 
 class AdaptiveOverlapGroupLasso(OverlapGroupLasso, AdaptiveGroupLasso):
@@ -218,10 +265,24 @@ class AdaptiveOverlapGroupLasso(OverlapGroupLasso, AdaptiveGroupLasso):
     Where G represents groups of features/coefficients, and overlaping groups
     are acceptable. Meaning a coefficients can be in more than one group.
     """
-    def __init__(self, group_list, alpha=1.0, group_weights=None,
-                 max_iter=5, eps=1E-6, tol=1E-10, update_function=None,
-                 standardize=False, fit_intercept=False, normalize=False,
-                 copy_X=True, warm_start=False, solver=None, **kwargs):
+
+    def __init__(
+        self,
+        group_list,
+        alpha=1.0,
+        group_weights=None,
+        max_iter=5,
+        eps=1e-6,
+        tol=1e-10,
+        update_function=None,
+        standardize=False,
+        fit_intercept=False,
+        normalize=False,
+        copy_X=True,
+        warm_start=False,
+        solver=None,
+        **kwargs,
+    ):
         """Initialize estimator.
 
         Args:
@@ -282,23 +343,31 @@ class AdaptiveOverlapGroupLasso(OverlapGroupLasso, AdaptiveGroupLasso):
                 See docs linked in CVXEstimator base class for more info.
         """
         # call with keywords to avoid MRO issues
-        super().__init__(group_list=group_list, alpha=alpha,
-                         group_weights=group_weights, max_iter=max_iter,
-                         eps=eps, tol=tol, update_function=update_function,
-                         standardize=standardize,
-                         fit_intercept=fit_intercept,
-                         normalize=normalize, copy_X=copy_X,
-                         warm_start=warm_start, solver=solver, **kwargs)
+        super().__init__(
+            group_list=group_list,
+            alpha=alpha,
+            group_weights=group_weights,
+            max_iter=max_iter,
+            eps=eps,
+            tol=tol,
+            update_function=update_function,
+            standardize=standardize,
+            fit_intercept=fit_intercept,
+            normalize=normalize,
+            copy_X=copy_X,
+            warm_start=warm_start,
+            solver=solver,
+            **kwargs,
+        )
 
     def _gen_objective(self, X, y):
         return AdaptiveGroupLasso._gen_objective(self, X, y)
 
     def _solve(self, X, y, *args, **kwargs):
         beta = AdaptiveGroupLasso._solve(
-            self, X[:, self.beta_indices], y, *args, **kwargs)
-        beta = np.array(
-            [sum(beta[self.beta_indices == i]) for i in range(X.shape[1])]
+            self, X[:, self.beta_indices], y, *args, **kwargs
         )
+        beta = np.array([sum(beta[self.beta_indices == i]) for i in range(X.shape[1])])
         return beta
 
 
@@ -313,10 +382,24 @@ class AdaptiveSparseGroupLasso(AdaptiveLasso, SparseGroupLasso):
     Where w1, w2 represent vectors of weights that is iteratively updated.
     """
 
-    def __init__(self, groups,  l1_ratio=0.5, alpha=1.0, group_weights=None,
-                 max_iter=5, eps=1E-6, tol=1E-10, update_function=None,
-                 standardize=False, fit_intercept=False, normalize=False,
-                 copy_X=True, warm_start=False, solver=None, **kwargs):
+    def __init__(
+        self,
+        groups,
+        l1_ratio=0.5,
+        alpha=1.0,
+        group_weights=None,
+        max_iter=5,
+        eps=1e-6,
+        tol=1e-10,
+        update_function=None,
+        standardize=False,
+        fit_intercept=False,
+        normalize=False,
+        copy_X=True,
+        warm_start=False,
+        solver=None,
+        **kwargs,
+    ):
         """Initialize estimator.
 
         Args:
@@ -374,39 +457,58 @@ class AdaptiveSparseGroupLasso(AdaptiveLasso, SparseGroupLasso):
                 See docs linked in CVXEstimator base class for more info.
         """
         # call with keywords to avoid MRO issues
-        super().__init__(groups=groups, l1_ratio=l1_ratio, alpha=alpha,
-                         group_weights=group_weights,
-                         max_iter=max_iter, eps=eps, tol=tol,
-                         update_function=update_function,
-                         standardize=standardize,
-                         fit_intercept=fit_intercept, normalize=normalize,
-                         copy_X=copy_X, warm_start=warm_start, solver=solver,
-                         **kwargs)
+        super().__init__(
+            groups=groups,
+            l1_ratio=l1_ratio,
+            alpha=alpha,
+            group_weights=group_weights,
+            max_iter=max_iter,
+            eps=eps,
+            tol=tol,
+            update_function=update_function,
+            standardize=standardize,
+            fit_intercept=fit_intercept,
+            normalize=normalize,
+            copy_X=copy_X,
+            warm_start=warm_start,
+            solver=solver,
+            **kwargs,
+        )
 
     def _gen_regularization(self, X):
         grp_norms = self._gen_group_norms(X)
         self._weights = (
-            cp.Parameter(shape=X.shape[1], nonneg=True,
-                         value=self._lambda1.value * np.ones(X.shape[1])),
-            cp.Parameter(shape=len(self.group_masks), nonneg=True,
-                         value=self._lambda2.value * self.group_weights),
+            cp.Parameter(
+                shape=X.shape[1],
+                nonneg=True,
+                value=self._lambda1.value * np.ones(X.shape[1]),
+            ),
+            cp.Parameter(
+                shape=len(self.group_masks),
+                nonneg=True,
+                value=self._lambda2.value * self.group_weights,
+            ),
         )
         l1_reg = cp.norm1(cp.multiply(self._weights[0], self._beta))
         grp_reg = self._weights[1] @ grp_norms
         return l1_reg + grp_reg
 
     def _update_weights(self, beta):
-        self._previous_weights = [self._weights[0].value,
-                                  self._weights[1].value]
+        self._previous_weights = [self._weights[0].value, self._weights[1].value]
         self._weights[0].value = self._lambda1.value / (abs(beta) + self.eps)
-        self._weights[1].value = (self._lambda2.value * self.group_weights) * \
-            self.update_function(self._group_norms.value, self.eps)
+        self._weights[1].value = (
+            self._lambda2.value * self.group_weights
+        ) * self.update_function(self._group_norms.value, self.eps)
 
     def _weights_converged(self):
-        l1_converged = np.linalg.norm(
-            self._weights[0].value - self._previous_weights[0]) <= self.tol
-        group_converged = np.linalg.norm(
-            self._weights[1].value - self._previous_weights[1]) <= self.tol
+        l1_converged = (
+            np.linalg.norm(self._weights[0].value - self._previous_weights[0])
+            <= self.tol
+        )
+        group_converged = (
+            np.linalg.norm(self._weights[1].value - self._previous_weights[1])
+            <= self.tol
+        )
         return l1_converged and group_converged
 
 
@@ -426,10 +528,24 @@ class AdaptiveRidgedGroupLasso(AdaptiveGroupLasso, RidgedGroupLasso):
     portion.
     """
 
-    def __init__(self, groups, alpha=1.0, delta=1.0, group_weights=None,
-                 max_iter=5, eps=1E-6, tol=1E-10, update_function=None,
-                 standardize=False, fit_intercept=False, normalize=False,
-                 copy_X=True, warm_start=False, solver=None, **kwargs):
+    def __init__(
+        self,
+        groups,
+        alpha=1.0,
+        delta=1.0,
+        group_weights=None,
+        max_iter=5,
+        eps=1e-6,
+        tol=1e-10,
+        update_function=None,
+        standardize=False,
+        fit_intercept=False,
+        normalize=False,
+        copy_X=True,
+        warm_start=False,
+        solver=None,
+        **kwargs,
+    ):
         """Initialize estimator.
 
         Args:
@@ -482,14 +598,23 @@ class AdaptiveRidgedGroupLasso(AdaptiveGroupLasso, RidgedGroupLasso):
                 Kewyard arguments passed to cvxpy solve.
                 See docs linked in CVXEstimator base class for more info.
         """
-        super().__init__(groups=groups, alpha=alpha,
-                         delta=delta, max_iter=max_iter, eps=eps, tol=tol,
-                         update_function=update_function,
-                         group_weights=group_weights,
-                         standardize=standardize,
-                         fit_intercept=fit_intercept,
-                         normalize=normalize, copy_X=copy_X,
-                         warm_start=warm_start, solver=solver, **kwargs)
+        super().__init__(
+            groups=groups,
+            alpha=alpha,
+            delta=delta,
+            max_iter=max_iter,
+            eps=eps,
+            tol=tol,
+            update_function=update_function,
+            group_weights=group_weights,
+            standardize=standardize,
+            fit_intercept=fit_intercept,
+            normalize=normalize,
+            copy_X=copy_X,
+            warm_start=warm_start,
+            solver=solver,
+            **kwargs,
+        )
 
     def _gen_group_norms(self, X):
         return RidgedGroupLasso._gen_group_norms(self, X)

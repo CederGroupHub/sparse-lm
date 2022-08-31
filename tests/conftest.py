@@ -19,7 +19,7 @@ def random_model():
         while np.isclose(eci, 0):
             eci = (np.random.random() - 0.5) * 2 * mag
         ecis[idx] = eci
-    energies = femat @ ecis + np.random.normal(size=n_samples) * 2E-3
+    energies = femat @ ecis + np.random.normal(size=n_samples) * 2e-3
     return femat, energies, ecis
 
 

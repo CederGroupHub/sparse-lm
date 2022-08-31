@@ -22,9 +22,19 @@ from sparselm.model.base import CVXEstimator
 class RegularizedL0(CVXEstimator):
     """Implementation of MIQP l0 regularized estimator."""
 
-    def __init__(self, alpha=1.0, big_M=1000, hierarchy=None, ignore_psd_check=True,
-                 fit_intercept=False, normalize=False, copy_X=True, warm_start=False,
-                 solver=None, **kwargs):
+    def __init__(
+        self,
+        alpha=1.0,
+        big_M=1000,
+        hierarchy=None,
+        ignore_psd_check=True,
+        fit_intercept=False,
+        normalize=False,
+        copy_X=True,
+        warm_start=False,
+        solver=None,
+        **kwargs
+    ):
         """
         Args:
             alpha (float):
@@ -67,9 +77,14 @@ class RegularizedL0(CVXEstimator):
                 Kewyard arguments passed to cvxpy solve.
                 See docs linked above for more information.
         """
-        super().__init__(fit_intercept=fit_intercept, normalize=normalize,
-                         copy_X=copy_X, warm_start=warm_start, solver=solver,
-                         **kwargs)
+        super().__init__(
+            fit_intercept=fit_intercept,
+            normalize=normalize,
+            copy_X=copy_X,
+            warm_start=warm_start,
+            solver=solver,
+            **kwargs
+        )
 
         self.hierarchy = hierarchy
         self._alpha = alpha
@@ -101,17 +116,22 @@ class RegularizedL0(CVXEstimator):
         # likely be raised since correlation matrices are usually very
         # poorly conditioned
         self._z0 = cp.Variable(X.shape[1], boolean=True)
-        c0 = 2 * X.shape[0] # keeps hyperparameter scale independent
+        c0 = 2 * X.shape[0]  # keeps hyperparameter scale independent
         XTX = psd_wrap(X.T @ X) if self.ignore_psd_check else X.T @ X
 
-        objective = cp.quad_form(self._beta, XTX) - 2 * y.T @ X @ self._beta \
+        objective = (
+            cp.quad_form(self._beta, XTX)
+            - 2 * y.T @ X @ self._beta
             + c0 * self._lambda0 * cp.sum(self._z0)
+        )
         return objective
 
     def _gen_constraints(self, X, y):
         """Generate the constraints used to solve l0 regularization"""
-        constraints = [self._big_M * self._z0 >= self._beta,
-                       self._big_M * self._z0 >= -self._beta]
+        constraints = [
+            self._big_M * self._z0 >= self._beta,
+            self._big_M * self._z0 >= -self._beta,
+        ]
 
         if self.hierarchy is not None:
             constraints += self._gen_hierarchy_constraints()
@@ -119,17 +139,30 @@ class RegularizedL0(CVXEstimator):
 
     def _gen_hierarchy_constraints(self):
         """Generate single feature hierarchy constraints"""
-        return [self._z0[high_id] <= self._z0[sub_id]
-                for high_id, sub_ids in enumerate(self.hierarchy)
-                for sub_id in sub_ids]
+        return [
+            self._z0[high_id] <= self._z0[sub_id]
+            for high_id, sub_ids in enumerate(self.hierarchy)
+            for sub_id in sub_ids
+        ]
 
 
 class MixedL0(RegularizedL0, metaclass=ABCMeta):
     """Abstract base class for mixed L0 regularization models: L1L0 and L2L0."""
 
-    def __init__(self, alpha=1.0, l0_ratio=0.5, big_M=1000, hierarchy=None,
-                 ignore_psd_check=True, fit_intercept=False, normalize=False,
-                 copy_X=True, warm_start=False, solver=None, **kwargs):
+    def __init__(
+        self,
+        alpha=1.0,
+        l0_ratio=0.5,
+        big_M=1000,
+        hierarchy=None,
+        ignore_psd_check=True,
+        fit_intercept=False,
+        normalize=False,
+        copy_X=True,
+        warm_start=False,
+        solver=None,
+        **kwargs
+    ):
         """
         Args:
             alpha (float):
@@ -175,18 +208,25 @@ class MixedL0(RegularizedL0, metaclass=ABCMeta):
                 See docs linked above for more information.
         """
         super().__init__(
-            alpha=alpha, big_M=big_M, hierarchy=hierarchy,
-            ignore_psd_check=ignore_psd_check, fit_intercept=fit_intercept,
-            normalize=normalize, copy_X=copy_X, warm_start=warm_start, solver=solver,
+            alpha=alpha,
+            big_M=big_M,
+            hierarchy=hierarchy,
+            ignore_psd_check=ignore_psd_check,
+            fit_intercept=fit_intercept,
+            normalize=normalize,
+            copy_X=copy_X,
+            warm_start=warm_start,
+            solver=solver,
             **kwargs
         )
 
         if not 0 <= l0_ratio <= 1:
-            raise ValueError('l0_ratio must be between 0 and 1.')
+            raise ValueError("l0_ratio must be between 0 and 1.")
         elif l0_ratio == 0.0:
             warnings.warn(
                 "It's more efficient to use Ridge/Lasso instead of l0_ratio=0",
-                UserWarning)
+                UserWarning,
+            )
 
         self._lambda0.value = l0_ratio * alpha
         self._lambda1 = cp.Parameter(nonneg=True, value=(1 - l0_ratio) * alpha)
@@ -206,7 +246,7 @@ class MixedL0(RegularizedL0, metaclass=ABCMeta):
     @l0_ratio.setter
     def l0_ratio(self, val):
         if not 0 <= val <= 1:
-            raise ValueError('l0_ratio must be between 0 and 1.')
+            raise ValueError("l0_ratio must be between 0 and 1.")
         self._l0_ratio = val
         self._lambda0.value = val * self.alpha
         self._lambda1.value = (1 - val) * self.alpha
@@ -237,9 +277,21 @@ class L1L0(MixedL0):
         ||X * Beta - y||^2 + alpha * l0_ratio * ||Beta||_0
                            + alpha * (1 - l0_ratio) * ||Beta||_1
     """
-    def __init__(self, alpha=1.0, l0_ratio=0.5, big_M=1000, hierarchy=None,
-                 ignore_psd_check=True, fit_intercept=False, normalize=False,
-                 copy_X=True, warm_start=False, solver=None, **kwargs):
+
+    def __init__(
+        self,
+        alpha=1.0,
+        l0_ratio=0.5,
+        big_M=1000,
+        hierarchy=None,
+        ignore_psd_check=True,
+        fit_intercept=False,
+        normalize=False,
+        copy_X=True,
+        warm_start=False,
+        solver=None,
+        **kwargs
+    ):
         """
         Args:
             alpha (float):
@@ -284,28 +336,34 @@ class L1L0(MixedL0):
                 Kewyard arguments passed to cvxpy solve.
                 See docs linked above for more information.
         """
-        super().__init__(alpha=alpha, l0_ratio=l0_ratio, big_M=big_M,
-                         hierarchy=hierarchy, ignore_psd_check=ignore_psd_check,
-                         fit_intercept=fit_intercept,
-                         normalize=normalize, copy_X=copy_X,
-                         warm_start=warm_start, solver=solver, **kwargs)
+        super().__init__(
+            alpha=alpha,
+            l0_ratio=l0_ratio,
+            big_M=big_M,
+            hierarchy=hierarchy,
+            ignore_psd_check=ignore_psd_check,
+            fit_intercept=fit_intercept,
+            normalize=normalize,
+            copy_X=copy_X,
+            warm_start=warm_start,
+            solver=solver,
+            **kwargs
+        )
         self._z1 = None
 
     def _gen_constraints(self, X, y):
         """Generate the constraints used to solve l1l0 regularization"""
         constraints = super()._gen_constraints(X, y)
         # L1 constraints (why not do an l1 norm in the objective instead?)
-        constraints += [self._z1 >= self._beta,
-                        self._z1 >= -1.0 * self._beta]
+        constraints += [self._z1 >= self._beta, self._z1 >= -1.0 * self._beta]
 
         return constraints
 
     def _gen_objective(self, X, y):
         """Generate the objective function used in l1l0 regression model"""
         self._z1 = cp.Variable(X.shape[1])
-        c0 = 2 * X.shape[0] # keeps hyperparameter scale independent
-        objective = super()._gen_objective(X, y) \
-            + c0 * self._lambda1 * cp.sum(self._z1)
+        c0 = 2 * X.shape[0]  # keeps hyperparameter scale independent
+        objective = super()._gen_objective(X, y) + c0 * self._lambda1 * cp.sum(self._z1)
 
         return objective
 
@@ -322,9 +380,21 @@ class L2L0(MixedL0):
                            + alpha * (1 - l0_ratio) * ||Beta||^2_2
     """
 
-    def __init__(self, alpha=1.0, l0_ratio=0.5, big_M=1000, hierarchy=None,
-                 ignore_psd_check=True, fit_intercept=False, normalize=False,
-                 copy_X=True, warm_start=False, solver=None, tikhonov_w=None, **kwargs):
+    def __init__(
+        self,
+        alpha=1.0,
+        l0_ratio=0.5,
+        big_M=1000,
+        hierarchy=None,
+        ignore_psd_check=True,
+        fit_intercept=False,
+        normalize=False,
+        copy_X=True,
+        warm_start=False,
+        solver=None,
+        tikhonov_w=None,
+        **kwargs
+    ):
         """
         Args:
             alpha (float):
@@ -371,11 +441,19 @@ class L2L0(MixedL0):
                 Keyword arguments passed to cvxpy solve.
                 See docs linked above for more information.
         """
-        super().__init__(alpha=alpha, l0_ratio=l0_ratio, big_M=big_M,
-                         hierarchy=hierarchy, ignore_psd_check=ignore_psd_check,
-                         fit_intercept=fit_intercept,
-                         normalize=normalize, copy_X=copy_X,
-                         warm_start=warm_start, solver=solver, **kwargs)
+        super().__init__(
+            alpha=alpha,
+            l0_ratio=l0_ratio,
+            big_M=big_M,
+            hierarchy=hierarchy,
+            ignore_psd_check=ignore_psd_check,
+            fit_intercept=fit_intercept,
+            normalize=normalize,
+            copy_X=copy_X,
+            warm_start=warm_start,
+            solver=solver,
+            **kwargs
+        )
         self.tikhonov_w = tikhonov_w
 
     def _gen_objective(self, X, y):
@@ -383,8 +461,9 @@ class L2L0(MixedL0):
         c0 = 2 * X.shape[0]  # keeps hyperparameter scale independent
         tikhonov_w = np.eye(X.shape[1]) if self.tikhonov_w is None else self.tikhonov_w
 
-        objective = super()._gen_objective(X, y) \
-            + c0 * self._lambda1 * cp.sum_squares(tikhonov_w @ self._beta)
+        objective = super()._gen_objective(X, y) + c0 * self._lambda1 * cp.sum_squares(
+            tikhonov_w @ self._beta
+        )
 
         return objective
 
@@ -392,9 +471,20 @@ class L2L0(MixedL0):
 class GroupedL0(RegularizedL0):
     """Esimator with grouped L0 psuedo-norm regularization."""
 
-    def __init__(self, groups, alpha=1.0, big_M=1000, hierarchy=None,
-                 ignore_psd_check=True, fit_intercept=False, normalize=False,
-                 copy_X=True, warm_start=False, solver=None, **kwargs):
+    def __init__(
+        self,
+        groups,
+        alpha=1.0,
+        big_M=1000,
+        hierarchy=None,
+        ignore_psd_check=True,
+        fit_intercept=False,
+        normalize=False,
+        copy_X=True,
+        warm_start=False,
+        solver=None,
+        **kwargs
+    ):
         """
         Args:
             groups (list or ndarray):
@@ -442,10 +532,17 @@ class GroupedL0(RegularizedL0):
                 See docs linked above for more information.
         """
         super().__init__(
-            alpha=alpha, big_M=big_M, hierarchy=hierarchy,
-            ignore_psd_check=ignore_psd_check, fit_intercept=fit_intercept,
-            normalize=normalize, copy_X=copy_X, warm_start=warm_start, solver=solver,
-            **kwargs)
+            alpha=alpha,
+            big_M=big_M,
+            hierarchy=hierarchy,
+            ignore_psd_check=ignore_psd_check,
+            fit_intercept=fit_intercept,
+            normalize=normalize,
+            copy_X=copy_X,
+            warm_start=warm_start,
+            solver=solver,
+            **kwargs
+        )
 
         self.groups = np.asarray(groups)
         self._group_masks = [self.groups == i for i in np.unique(groups)]
@@ -454,18 +551,23 @@ class GroupedL0(RegularizedL0):
     def _gen_objective(self, X, y):
         """Generate the quadratic form portion of objective"""
         print("called GL0!")
-        c0 = 2 * X.shape[0] # keeps hyperparameter scale independent
+        c0 = 2 * X.shape[0]  # keeps hyperparameter scale independent
         XTX = psd_wrap(X.T @ X) if self.ignore_psd_check else X.T @ X
-        objective = cp.quad_form(self._beta, XTX) - 2 * y.T @ X @ self._beta \
+        objective = (
+            cp.quad_form(self._beta, XTX)
+            - 2 * y.T @ X @ self._beta
             + c0 * self._lambda0 * cp.sum(self._z0)
+        )
         return objective
 
     def _gen_constraints(self, X, y):
         """Generate the constraints used to solve l0 regularization"""
         constraints = []
         for i, mask in enumerate(self._group_masks):
-            constraints += [self._big_M * self._z0[i] >= self._beta[mask],
-                            self._big_M * self._z0[i] >= -self._beta[mask]]
+            constraints += [
+                self._big_M * self._z0[i] >= self._beta[mask],
+                self._big_M * self._z0[i] >= -self._beta[mask],
+            ]
 
         if self.hierarchy is not None:
             constraints += self._gen_hierarchy_constraints()
@@ -477,10 +579,22 @@ class GroupedL2L0(GroupedL0, MixedL0):
     Estimator with grouped L2L0 regularization solved with mixed integer programming
     """
 
-    def __init__(self, groups, alpha=1.0, l0_ratio=0.5, big_M=1000, hierarchy=None,
-                 ignore_psd_check=True, fit_intercept=False, normalize=False,
-                 copy_X=True, warm_start=False, solver=None, tikhonov_w=None,
-                 **kwargs):
+    def __init__(
+        self,
+        groups,
+        alpha=1.0,
+        l0_ratio=0.5,
+        big_M=1000,
+        hierarchy=None,
+        ignore_psd_check=True,
+        fit_intercept=False,
+        normalize=False,
+        copy_X=True,
+        warm_start=False,
+        solver=None,
+        tikhonov_w=None,
+        **kwargs
+    ):
         """
         Args:
             groups (list or ndarray):
@@ -532,18 +646,28 @@ class GroupedL2L0(GroupedL0, MixedL0):
                 See docs linked above for more information.
         """
         # need to call super for sklearn clone function
-        super().__init__(groups=groups, alpha=alpha, l0_ratio=l0_ratio, big_M=big_M,
-                         hierarchy=hierarchy, ignore_psd_check=ignore_psd_check,
-                         fit_intercept=fit_intercept,
-                         normalize=normalize, copy_X=copy_X,
-                         warm_start=warm_start, solver=solver, **kwargs)
+        super().__init__(
+            groups=groups,
+            alpha=alpha,
+            l0_ratio=l0_ratio,
+            big_M=big_M,
+            hierarchy=hierarchy,
+            ignore_psd_check=ignore_psd_check,
+            fit_intercept=fit_intercept,
+            normalize=normalize,
+            copy_X=copy_X,
+            warm_start=warm_start,
+            solver=solver,
+            **kwargs
+        )
         self.tikhonov_w = tikhonov_w
 
     def _gen_objective(self, X, y):
         """Generate the objective function used in l2l0 regression model"""
         c0 = 2 * X.shape[0]  # keeps hyperparameter scale independent
         tikhonov_w = np.eye(X.shape[1]) if self.tikhonov_w is None else self.tikhonov_w
-        objective = super()._gen_objective(X, y) \
-            + c0 * self._lambda1 * cp.sum_squares(tikhonov_w @ self._beta)
+        objective = super()._gen_objective(X, y) + c0 * self._lambda1 * cp.sum_squares(
+            tikhonov_w @ self._beta
+        )
 
         return objective
