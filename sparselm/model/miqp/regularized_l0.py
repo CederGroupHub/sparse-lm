@@ -381,7 +381,7 @@ class L2L0(MixedL0):
     def _gen_objective(self, X, y):
         """Generate the objective function used in l2l0 regression model"""
         c0 = 2 * X.shape[0]  # keeps hyperparameter scale independent
-        tikhonov_w = np.eye(len(y)) if self.tikhonov_w is None else self.tikhonov_w
+        tikhonov_w = np.eye(X.shape[1]) if self.tikhonov_w is None else self.tikhonov_w
 
         objective = super()._gen_objective(X, y) \
             + c0 * self._lambda1 * cp.sum_squares(tikhonov_w @ self._beta)
@@ -542,7 +542,7 @@ class GroupedL2L0(GroupedL0, MixedL0):
     def _gen_objective(self, X, y):
         """Generate the objective function used in l2l0 regression model"""
         c0 = 2 * X.shape[0]  # keeps hyperparameter scale independent
-        tikhonov_w = np.eye(len(y)) if self.tikhonov_w is None else self.tikhonov_w
+        tikhonov_w = np.eye(X.shape[1]) if self.tikhonov_w is None else self.tikhonov_w
         objective = super()._gen_objective(X, y) \
             + c0 * self._lambda1 * cp.sum_squares(tikhonov_w @ self._beta)
 
