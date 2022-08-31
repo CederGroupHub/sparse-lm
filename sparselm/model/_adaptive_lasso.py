@@ -1,4 +1,5 @@
 """A set of generalized adaptive lasso estimators.
+
 * Adaptive Lasso
 * Adaptive Group Lasso
 * Adaptive Overlap Group Lasso

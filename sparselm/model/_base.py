@@ -19,7 +19,8 @@ from sklearn.linear_model._base import (
 
 
 class Estimator(RegressorMixin, LinearModel, metaclass=ABCMeta):
-    """
+    """Abstract estimator base class.
+
     Simple abstract estimator class based on sklearn linear model api to use
     different 'in-house'  solvers to fit a linear model. This should be used to
     create specific estimator classes by inheriting. New classes simply need to
@@ -29,7 +30,8 @@ class Estimator(RegressorMixin, LinearModel, metaclass=ABCMeta):
     """
 
     def __init__(self, fit_intercept: bool = False, copy_X: bool = True):
-        """
+        """Initialize estimator.
+
         Args:
             fit_intercept (bool):
                 Whether the intercept should be estimated or not. If ``False``,
@@ -121,7 +123,8 @@ class CVXEstimator(Estimator, metaclass=ABCMeta):
         solver=None,
         solver_options=None,
     ):
-        """
+        """Initialize estimator.
+
         Args:
             fit_intercept (bool):
                 Whether the intercept should be estimated or not.
@@ -183,7 +186,7 @@ class CVXEstimator(Estimator, metaclass=ABCMeta):
         return None
 
     def _initialize_problem(self, X, y):
-        """Initialize cvxpy problem from the generated objective function
+        """Initialize cvxpy problem from the generated objective function.
 
         Args:
             X (ndarray):
@@ -199,7 +202,7 @@ class CVXEstimator(Estimator, metaclass=ABCMeta):
         self._problem = cp.Problem(cp.Minimize(objective), constraints)
 
     def _get_problem(self, X, y):
-        """Define and create cvxpy optimization problem"""
+        """Define and create cvxpy optimization problem."""
         if self._problem is None:
             self._initialize_problem(X, y)
         elif not np.array_equal(X, self._X) or not np.array_equal(y, self._y):

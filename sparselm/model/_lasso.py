@@ -1,4 +1,5 @@
 """A set of generalized lasso estimators.
+
 * Lasso
 * Group Lasso
 * Overlap Group Lasso
@@ -38,7 +39,8 @@ class Lasso(CVXEstimator):
         solver=None,
         solver_options=None,
     ):
-        """
+        """Initialize a Lasso estimator.
+
         Args:
             alpha (float):
                 Regularization hyper-parameter.
@@ -70,10 +72,12 @@ class Lasso(CVXEstimator):
 
     @property
     def alpha(self):
+        """Get alpha hyperparameter value."""
         return self._alpha.value
 
     @alpha.setter
     def alpha(self, val):
+        """Set alpha hyperparameter value."""
         self._alpha.value = val
 
     def _gen_regularization(self, X):
@@ -389,16 +393,19 @@ class SparseGroupLasso(GroupLasso):
 
     @Lasso.alpha.setter
     def alpha(self, val):
+        """Set hyperparameter values."""
         self._alpha.value = val
         self._lambda1.value = self.l1_ratio * val
         self._lambda2.value = (1 - self.l1_ratio) * val
 
     @property
     def l1_ratio(self):
+        """Get l1 ratio."""
         return self._l1_ratio
 
     @l1_ratio.setter
     def l1_ratio(self, val):
+        """Set hyper-parameter values."""
         if not 0 <= val <= 1:
             raise ValueError("l1_ratio must be between 0 and 1.")
         self._l1_ratio = val

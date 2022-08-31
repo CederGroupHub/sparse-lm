@@ -6,7 +6,7 @@ labels: enhancement
 ---
 
 <!--
-Thank you for contributing ideas to smol!
+Thank you for contributing ideas to sparse-lm!
 
 Please fill in as much of the template below as you're able.
 -->

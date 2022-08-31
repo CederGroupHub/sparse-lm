@@ -56,7 +56,8 @@ class GridSearch(GridSearchCV):
         error_score=np.nan,
         return_train_score=False,
     ):
-        """
+        """Initialize CVSearch tool.
+
         Args:
             estimator(Estimator):
                 A object of that type is instantiated for each grid point.
@@ -423,7 +424,8 @@ class LineSearch(BaseSearchCV):
         error_score=np.nan,
         return_train_score=False,
     ):
-        """
+        """Initialize a LineSearch.
+
         Args:
             estimator(Estimator):
                 A object of that type is instantiated for each grid point.

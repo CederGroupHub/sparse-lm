@@ -3,6 +3,9 @@
 Sparse Linear Regression Models
 ===============================
 
+[![pre-commit.ci status](https://results.pre-commit.ci/badge/github/CederGroupHub/sparse-lm/main.svg)](https://results.pre-commit.ci/latest/github/CederGroupHub/sparse-lm/main)
+[![pypi version](https://img.shields.io/pypi/v/sparse-lm?color=blue)](https://pypi.org/project/sparse-lm)
+
 > :warning: this package is currently largely lacking in unit-tests.
 > Use at your own risk!
 

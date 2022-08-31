@@ -24,5 +24,5 @@ __all__ = [
     "L1L0",
     "L2L0",
     "GroupedL0",
-    "GroupedL2L0"
+    "GroupedL2L0",
 ]

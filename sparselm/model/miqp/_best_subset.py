@@ -13,10 +13,10 @@ from sparselm.model._base import CVXEstimator
 
 
 class BestSubsetSelection(CVXEstimator):
-    """MIQP Best Subset Selection estimator
+    """MIQP Best Subset Selection estimator.
 
     WARNING: Even with gurobi solver, this can take a very long time to
-    converge for large problems and underdetermined problems.
+    converge for large problems and under-determined problems.
     """
 
     def __init__(
@@ -32,7 +32,7 @@ class BestSubsetSelection(CVXEstimator):
         solver_options=None,
         **kwargs,
     ):
-        """
+        """Initialize estimator.
 
         Args:
             sparse_bound (int):
@@ -86,24 +86,28 @@ class BestSubsetSelection(CVXEstimator):
 
     @property
     def sparse_bound(self):
+        """Get sparse bound value."""
         return self._bound.value
 
     @sparse_bound.setter
     def sparse_bound(self, val):
+        """Set sparse bound value."""
         if val <= 0:
             raise ValueError(f"sparse_bound must be > 0")
         self._bound.value = val
 
     @property
     def big_M(self):
+        """Get MIQP big M value."""
         return self._big_M.value
 
     @big_M.setter
     def big_M(self, val):
+        """Set MIQP big M value."""
         self._big_M.value = val
 
     def _gen_objective(self, X, y):
-        """Generate the quadratic form portion of objective"""
+        """Generate the quadratic form portion of objective."""
         # psd_wrap will ignore cvxpy PSD checks, without it errors will
         # likely be raised since correlation matrices are usually very
         # poorly conditioned
@@ -113,7 +117,7 @@ class BestSubsetSelection(CVXEstimator):
         return objective
 
     def _gen_constraints(self, X, y):
-        """Generate the constraints used to solve l0 regularization"""
+        """Generate the constraints used to solve l0 regularization."""
         self._z0 = cp.Variable(X.shape[1], boolean=True)
         constraints = [
             self._big_M * self._z0 >= self._beta,
@@ -126,7 +130,7 @@ class BestSubsetSelection(CVXEstimator):
         return constraints
 
     def _gen_hierarchy_constraints(self):
-        """Generate single feature hierarchy constraints"""
+        """Generate single feature hierarchy constraints."""
         return [
             self._z0[high_id] <= self._z0[sub_id]
             for high_id, sub_ids in enumerate(self.hierarchy)
@@ -151,7 +155,8 @@ class RidgedBestSubsetSelection(BestSubsetSelection):
         solver_options=None,
         **kwargs,
     ):
-        """
+        """Initialize estimator.
+
         Args:
             sparse_bound (int):
                 Upper bound on sparsity. The upper bound on total number of
@@ -204,14 +209,16 @@ class RidgedBestSubsetSelection(BestSubsetSelection):
 
     @property
     def alpha(self):
+        """Get alpha hyper-parameter value."""
         return self._alpha.value
 
     @alpha.setter
     def alpha(self, val):
+        """Set alpha hyper-parameter value."""
         self._alpha.value = val
 
     def _gen_objective(self, X, y):
-        """Generate the objective function used in l2l0 regression model"""
+        """Generate the objective function used in l2l0 regression model."""
         c0 = 2 * X.shape[0]  # keeps hyperparameter scale independent
         objective = super()._gen_objective(X, y) + c0 * self._alpha * cp.sum_squares(
             self._beta
@@ -236,7 +243,8 @@ class BestGroupSelection(BestSubsetSelection):
         solver_options=None,
         **kwargs,
     ):
-        """
+        """Initialize a Lasso estimator.
+
         Args:
             groups (list or ndarray):
                 array-like of integers specifying groups. Length should be the
@@ -294,7 +302,7 @@ class BestGroupSelection(BestSubsetSelection):
         self._z0 = cp.Variable(len(self._group_masks), boolean=True)
 
     def _gen_constraints(self, X, y):
-        """Generate the constraints used to solve l0 regularization"""
+        """Generate the constraints used to solve l0 regularization."""
         constraints = []
         for i, mask in enumerate(self._group_masks):
             constraints += [
@@ -324,7 +332,8 @@ class RidgedBestGroupSelection(RidgedBestSubsetSelection, BestGroupSelection):
         solver=None,
         solver_options=None,
     ):
-        """
+        """Initialize estimator.
+
         Args:
             groups (list or ndarray):
                 array-like of integers specifying groups. Length should be the

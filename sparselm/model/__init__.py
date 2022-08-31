@@ -14,20 +14,18 @@ from sparselm.model._lasso import (
     RidgedGroupLasso,
     SparseGroupLasso,
 )
-
+from sparselm.model._ols import OrdinaryLeastSquares
 from sparselm.model.miqp import (
-    BestGroupSelection,
-    BestSubsetSelection,
-    RidgedBestGroupSelection,
-    RidgedBestSubsetSelection,
     L1L0,
     L2L0,
+    BestGroupSelection,
+    BestSubsetSelection,
     GroupedL0,
     GroupedL2L0,
     RegularizedL0,
+    RidgedBestGroupSelection,
+    RidgedBestSubsetSelection,
 )
-
-from sparselm.model._ols import OrdinaryLeastSquares
 
 __all__ = [
     "OrdinaryLeastSquares",
