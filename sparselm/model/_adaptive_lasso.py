@@ -1,57 +1,78 @@
-"""A set of generalized lasso estimators.
-* Lasso
-* Group Lasso
-* Overlap Group Lasso
-* Sparse Group Lasso
-* Ridged Group Lasso
+"""A set of generalized adaptive lasso estimators.
+
+* Adaptive Lasso
+* Adaptive Group Lasso
+* Adaptive Overlap Group Lasso
+* Adaptive Sparse Group Lasso
+* Adaptive Ridged Group Lasso
 
 Estimators follow scikit-learn interface, but use cvxpy to set up and solve
 optimization problem.
+
+NOTE: In certain cases these can yield infeasible problems. This can cause
+processes to die and as a result make a calculation hang indefinitely when
+using a them in a multiprocess model selection tool such as sklearn
+GridSearchCV with n_jobs > 1.
+
+In that case either tweak settings/solvers around so that that does not happen
+or run with n_jobs=1 (but that may take a while to solve_
 """
 
-__author__ = "Luis Barroso-Luque, Fengyu Xie"
-
-import warnings
+__author__ = "Luis Barroso-Luque"
 
 import cvxpy as cp
 import numpy as np
-from scipy.linalg import sqrtm
 
-from sparselm.model.base import CVXEstimator
+from sparselm.model._lasso import (
+    GroupLasso,
+    Lasso,
+    OverlapGroupLasso,
+    RidgedGroupLasso,
+    SparseGroupLasso,
+)
 
 
-class Lasso(CVXEstimator):
-    """
-    Lasso Estimator implemented with cvxpy.
+class AdaptiveLasso(Lasso):
+    """Adaptive Lasso implementation.
 
+    Also known as iteratively re-weighted Lasso.
     Regularized model:
-        || X * Beta - y ||^2_2 + alpha * ||Beta||_1
+        || X * Beta - y ||^2_2 + alpha * ||w^T Beta||_1
     Where w represents a vector of weights that is iteratively updated.
     """
 
     def __init__(
         self,
         alpha=1.0,
+        max_iter=5,
+        eps=1e-6,
+        tol=1e-10,
+        update_function=None,
         fit_intercept=False,
-        normalize=False,
         copy_X=True,
         warm_start=False,
         solver=None,
+        solver_options=None,
         **kwargs,
     ):
-        """
+        """Initialize estimator.
+
         Args:
             alpha (float):
                 Regularization hyper-parameter.
+            max_iter (int):
+                Maximum number of re-weighting iteration steps.
+            eps (float):
+                Value to add to denominator of weights.
+            tol (float):
+                Absolute convergence tolerance for difference between weights
+                at successive steps.
+            update_function (Callable): optional
+                A function with signature f(beta, eps) used to update the
+                weights at each iteration. Default is 1/(|beta| + eps)
             fit_intercept (bool):
                 Whether the intercept should be estimated or not.
                 If False, the data is assumed to be already centered.
-            normalize (bool):
-                This parameter is ignored when fit_intercept is set to False.
-                If True, the regressors X will be normalized before regression
-                by subtracting the mean and dividing by the l2-norm.
-                If you wish to standardize, please use StandardScaler before
-                calling fit on an estimator with normalize=False
             copy_X (bool):
                 If True, X will be copied; else, it may be overwritten.
             warm_start (bool):
@@ -62,44 +83,64 @@ class Lasso(CVXEstimator):
                 cvxpy backend solver to use. Supported solvers are:
                 ECOS, ECOS_BB, CVXOPT, SCS, GUROBI, Elemental.
                 GLPK and GLPK_MI (via CVXOPT GLPK interface)
-            **kwargs:
-                Kewyard arguments passed to cvxpy solve.
-                See docs linked above for more information.
+            solver_options:
+                dictionary of keyword arguments passed to cvxpy solve.
+                See docs in CVXEstimator for more information.
         """
-        self._alpha = cp.Parameter(value=alpha, nonneg=True)
         super().__init__(
+            alpha=alpha,
             fit_intercept=fit_intercept,
-            normalize=normalize,
             copy_X=copy_X,
             warm_start=warm_start,
             solver=solver,
+            solver_options=solver_options,
             **kwargs,
         )
+        self.tol = tol
+        self.max_iter = max_iter
+        self.eps = eps
+        self._weights, self._previous_weights = None, None
 
-    @property
-    def alpha(self):
-        return self._alpha.value
-
-    @alpha.setter
-    def alpha(self, val):
-        self._alpha.value = val
+        if update_function is None:
+            self.update_function = lambda beta, eps: 1.0 / (abs(beta) + eps)
+        else:
+            self.update_function = update_function
 
     def _gen_regularization(self, X):
-        return self._alpha * cp.norm1(self._beta)
+        self._weights = cp.Parameter(
+            shape=X.shape[1], nonneg=True, value=self.alpha * np.ones(X.shape[1])
+        )
+        return cp.norm1(cp.multiply(self._weights, self._beta))
 
-    def _gen_objective(self, X, y):
-        # can also use cp.norm2(X @ self._beta - y)**2 not sure whats better
-        reg = self._gen_regularization(X)
-        objective = 1 / (2 * X.shape[0]) * cp.sum_squares(X @ self._beta - y) + reg
-        return objective
+    def _update_weights(self, beta):
+        if beta is None and self._problem.value == -np.inf:
+            raise RuntimeError(f"{self._problem} is infeasible.")
+        self._previous_weights = self._weights.value
+        self._weights.value = self.alpha * self.update_function(abs(beta), self.eps)
+
+    def _weights_converged(self):
+        return np.linalg.norm(self._weights.value - self._previous_weights) <= self.tol
+
+    def _solve(self, X, y, *args, **kwargs):
+        problem = self._get_problem(X, y)
+        problem.solve(
+            solver=self.solver, warm_start=self.warm_start, **self.solver_options
+        )
+        for _ in range(self.max_iter - 1):
+            self._update_weights(self._beta.value)
+            problem.solve(solver=self.solver, warm_start=True, **self.solver_options)
+            if self._weights_converged():
+                break
+        return self._beta.value
 
 
-class GroupLasso(Lasso):
-    r"""Group Lasso implementation.
+class AdaptiveGroupLasso(AdaptiveLasso, GroupLasso):
+    r"""Adaptive Group Lasso, iteratively re-weighted group lasso.
 
     Regularized model:
         || X * Beta - y ||^2_2 + alpha * \sum_{G} w_G * ||Beta_G||_2
-    Where G represents groups of features/coefficients
+
+    Where w represents a vector of weights that is iteratively updated.
     """
 
     def __init__(
@@ -107,12 +148,16 @@ class GroupLasso(Lasso):
         groups,
         alpha=1.0,
         group_weights=None,
+        max_iter=5,
+        eps=1e-6,
+        tol=1e-10,
+        update_function=None,
         standardize=False,
         fit_intercept=False,
-        normalize=False,
         copy_X=True,
         warm_start=False,
         solver=None,
+        solver_options=None,
         **kwargs,
     ):
         """Initialize estimator.
@@ -124,25 +169,31 @@ class GroupLasso(Lasso):
                 each parameter corresponds to.
             alpha (float):
                 Regularization hyper-parameter.
-            fit_intercept (bool):
-                Whether the intercept should be estimated or not.
-                If False, the data is assumed to be already centered.
             group_weights (ndarray): optional
                 Weights for each group to use in the regularization term.
                 The default is to use the sqrt of the group sizes, however any
                 weight can be specified. The array must be the
                 same length as the groups given. If you need all groups
                 weighted equally just pass an array of ones.
+            max_iter (int):
+                Maximum number of re-weighting iteration steps.
+            eps (float):
+                Value to add to denominator of weights.
+            tol (float):
+                Absolute convergence tolerance for difference between weights
+                at successive steps.
+            update_function (Callable): optional
+                A function with signature f(group_norms, eps) used to update the
+                weights at each iteration. Where group_norms are the norms of
+                the coefficients Beta for each group.
+                Default is 1/(group_norms + eps)
             standardize (bool): optional
                 Whether to standardize the group regularization penalty using
                 the feature matrix. See the following for reference:
                 http://faculty.washington.edu/nrsimon/standGL.pdf
-            normalize (bool): optional
-                This parameter is ignored when fit_intercept is set to False.
-                If True, the regressors X will be normalized before regression
-                by subtracting the mean and dividing by the l2-norm.
-                If you wish to standardize, please use StandardScaler before
-                calling fit on an estimator with normalize=False
+            fit_intercept (bool):
+                Whether the intercept should be estimated or not.
+                If False, the data is assumed to be already centered.
             copy_X (bool):
                 If True, X will be copied; else, it may be overwritten.
             warm_start (bool):
@@ -153,55 +204,46 @@ class GroupLasso(Lasso):
                 cvxpy backend solver to use. Supported solvers are:
                 ECOS, ECOS_BB, CVXOPT, SCS, GUROBI, Elemental.
                 GLPK and GLPK_MI (via CVXOPT GLPK interface)
-            **kwargs:
-                Kewyard arguments passed to cvxpy solve.
-                See docs linked in CVXEstimator base class for more info.
+            solver_options:
+                dictionary of keyword arguments passed to cvxpy solve.
+                See docs in CVXEstimator for more information.
         """
-        self.groups = np.asarray(groups)
-        self.group_masks = [self.groups == i for i in np.unique(groups)]
-        self.standardize = standardize
-        self._group_norms = None
-
-        if group_weights is not None:
-            if len(group_weights) != len(self.group_masks):
-                raise ValueError(
-                    "group_weights must be the same length as the number of "
-                    f"groups:  {len(group_weights)} != {len(self.group_masks)}"
-                )
-        self.group_weights = (
-            group_weights
-            if group_weights is not None
-            else np.sqrt([sum(mask) for mask in self.group_masks])
-        )
-
+        # call with keywords to avoid MRO issues
         super().__init__(
+            groups=groups,
             alpha=alpha,
+            group_weights=group_weights,
+            max_iter=max_iter,
+            eps=eps,
+            tol=tol,
+            update_function=update_function,
+            standardize=standardize,
             fit_intercept=fit_intercept,
-            normalize=normalize,
             copy_X=copy_X,
             warm_start=warm_start,
             solver=solver,
+            solver_options=solver_options,
             **kwargs,
         )
 
-    def _gen_group_norms(self, X):
-        if self.standardize:
-            grp_norms = cp.hstack(
-                [cp.norm2(X[:, mask] @ self._beta[mask]) for mask in self.group_masks]
-            )
-        else:
-            grp_norms = cp.hstack(
-                [cp.norm2(self._beta[mask]) for mask in self.group_masks]
-            )
-        self._group_norms = grp_norms
-        return grp_norms
-
     def _gen_regularization(self, X):
-        return self._alpha * (self.group_weights @ self._gen_group_norms(X))
+        grp_norms = self._gen_group_norms(X)
+        self._weights = cp.Parameter(
+            shape=len(self.group_masks),
+            nonneg=True,
+            value=self.alpha * self.group_weights,
+        )
+        return self._weights @ grp_norms
+
+    def _update_weights(self, beta):
+        self._previous_weights = self._weights.value
+        self._weights.value = (self.alpha * self.group_weights) * self.update_function(
+            self._group_norms.value, self.eps
+        )
 
 
-class OverlapGroupLasso(GroupLasso):
-    r"""Overlap Group Lasso implementation.
+class AdaptiveOverlapGroupLasso(OverlapGroupLasso, AdaptiveGroupLasso):
+    r"""Adaptive Overlap Group Lasso implementation.
 
     Regularized model:
         || X * Beta - y ||^2_2 + alpha * \sum_{G} w_G * ||Beta_G||_2
@@ -214,13 +256,16 @@ class OverlapGroupLasso(GroupLasso):
         group_list,
         alpha=1.0,
         group_weights=None,
+        max_iter=5,
+        eps=1e-6,
+        tol=1e-10,
+        update_function=None,
         standardize=False,
         fit_intercept=False,
-        normalize=False,
         copy_X=True,
         warm_start=False,
         solver=None,
-        **kwargs,
+        solver_options=None,
     ):
         """Initialize estimator.
 
@@ -242,6 +287,18 @@ class OverlapGroupLasso(GroupLasso):
                 same length as the number of different groups given.
                 If you need all groups weighted equally just pass an array of
                 ones.
+            max_iter (int):
+                Maximum number of re-weighting iteration steps.
+            eps (float):
+                Value to add to denominator of weights.
+            tol (float):
+                Absolute convergence tolerance for difference between weights
+                at successive steps.
+            update_function (Callable): optional
+                A function with signature f(group_norms, eps) used to update the
+                weights at each iteration. Where group_norms are the norms of
+                the coefficients Beta for each group.
+                Default is 1/(group_norms + eps)
             standardize (bool): optional
                 Whether to standardize the group regularization penalty using
                 the feature matrix. See the following for reference:
@@ -249,12 +306,6 @@ class OverlapGroupLasso(GroupLasso):
             fit_intercept (bool):
                 Whether the intercept should be estimated or not.
                 If False, the data is assumed to be already centered.
-            normalize (bool):
-                This parameter is ignored when fit_intercept is set to False.
-                If True, the regressors X will be normalized before regression
-                by subtracting the mean and dividing by the l2-norm.
-                If you wish to standardize, please use StandardScaler before
-                calling fit on an estimator with normalize=False
             copy_X (bool):
                 If True, X will be copied; else, it may be overwritten.
             warm_start (bool):
@@ -265,61 +316,47 @@ class OverlapGroupLasso(GroupLasso):
                 cvxpy backend solver to use. Supported solvers are:
                 ECOS, ECOS_BB, CVXOPT, SCS, GUROBI, Elemental.
                 GLPK and GLPK_MI (via CVXOPT GLPK interface)
-            **kwargs:
-                Kewyard arguments passed to cvxpy solve.
-                See docs linked in CVXEstimator base class for more info.
+            solver_options:
+                dictionary of keyword arguments passed to cvxpy solve.
+                See docs in CVXEstimator for more information.
         """
-        self.group_list = group_list
-        self.group_ids = np.unique([gid for grp in group_list for gid in grp])
-        self.group_ids.sort()
-        beta_indices = [
-            [i for i, grp in enumerate(group_list) if grp_id in grp]
-            for grp_id in self.group_ids
-        ]
-        extended_groups = np.concatenate(
-            [
-                len(g)
-                * [
-                    i,
-                ]
-                for i, g in enumerate(beta_indices)
-            ]
-        )
-        self.beta_indices = np.concatenate(beta_indices)
-
+        # call with keywords to avoid MRO issues
         super().__init__(
-            extended_groups,
+            group_list=group_list,
             alpha=alpha,
             group_weights=group_weights,
+            max_iter=max_iter,
+            eps=eps,
+            tol=tol,
+            update_function=update_function,
             standardize=standardize,
             fit_intercept=fit_intercept,
-            normalize=normalize,
             copy_X=copy_X,
             warm_start=warm_start,
             solver=solver,
-            **kwargs,
+            solver_options=solver_options,
         )
 
+    def _gen_objective(self, X, y):
+        return AdaptiveGroupLasso._gen_objective(self, X, y)
+
     def _solve(self, X, y, *args, **kwargs):
-        """Solve the cvxpy problem."""
-        problem = self._get_problem(X[:, self.beta_indices], y)
-        problem.solve(
-            solver=self.solver, warm_start=self.warm_start, **self.solver_opts
+        beta = AdaptiveGroupLasso._solve(
+            self, X[:, self.beta_indices], y, *args, **kwargs
         )
-        beta = np.array(
-            [sum(self._beta.value[self.beta_indices == i]) for i in range(X.shape[1])]
-        )
+        beta = np.array([sum(beta[self.beta_indices == i]) for i in range(X.shape[1])])
         return beta
 
 
-class SparseGroupLasso(GroupLasso):
-    r"""Sparse Group Lasso.
+class AdaptiveSparseGroupLasso(AdaptiveLasso, SparseGroupLasso):
+    r"""Adaptive Sparse Group Lasso, iteratively re-weighted sparse group lasso.
 
     Regularized model:
         || X * Beta - y ||^2_2
-            + alpha * l1_ratio * ||Beta||_1
-            + alpha * (1 - l1_ratio) * \sum_{G}||Beta_G||_2
-    Where G represents groups of features / coefficients
+            + alpha * l1_ratio * ||w1^T Beta||_1
+            + alpha * (1 - l1_ratio) * \sum_{G} w2_G * ||Beta_G||_2
+
+    Where w1, w2 represent vectors of weights that is iteratively updated.
     """
 
     def __init__(
@@ -328,13 +365,16 @@ class SparseGroupLasso(GroupLasso):
         l1_ratio=0.5,
         alpha=1.0,
         group_weights=None,
+        max_iter=5,
+        eps=1e-6,
+        tol=1e-10,
+        update_function=None,
         standardize=False,
         fit_intercept=False,
-        normalize=False,
         copy_X=True,
         warm_start=False,
         solver=None,
-        **kwargs,
+        solver_options=None,
     ):
         """Initialize estimator.
 
@@ -353,6 +393,18 @@ class SparseGroupLasso(GroupLasso):
                 weight can be specified. The array must be the
                 same length as the groups given. If you need all groups
                 weighted equally just pass an array of ones.
+            max_iter (int):
+                Maximum number of re-weighting iteration steps.
+            eps (float):
+                Value to add to denominator of weights.
+            tol (float):
+                Absolute convergence tolerance for difference between weights
+                at successive steps.
+            update_function (Callable): optional
+                A function with signature f(group_norms, eps) used to update the
+                weights at each iteration. Where group_norms are the norms of
+                the coefficients Beta for each group.
+                Default is 1/(group_norms + eps)
             standardize (bool): optional
                 Whether to standardize the group regularization penalty using
                 the feature matrix. See the following for reference:
@@ -360,12 +412,6 @@ class SparseGroupLasso(GroupLasso):
             fit_intercept (bool):
                 Whether the intercept should be estimated or not.
                 If False, the data is assumed to be already centered.
-            normalize (bool):
-                This parameter is ignored when fit_intercept is set to False.
-                If True, the regressors X will be normalized before regression
-                by subtracting the mean and dividing by the l2-norm.
-                If you wish to standardize, please use StandardScaler before
-                calling fit on an estimator with normalize=False
             copy_X (bool):
                 If True, X will be copied; else, it may be overwritten.
             warm_start (bool):
@@ -376,78 +422,79 @@ class SparseGroupLasso(GroupLasso):
                 cvxpy backend solver to use. Supported solvers are:
                 ECOS, ECOS_BB, CVXOPT, SCS, GUROBI, Elemental.
                 GLPK and GLPK_MI (via CVXOPT GLPK interface)
-            **kwargs:
-                Kewyard arguments passed to cvxpy solve.
-                See docs linked in CVXEstimator base class for more info.
+            solver_options:
+                dictionary of keyword arguments passed to cvxpy solve.
+                See docs in CVXEstimator for more information.
         """
+        # call with keywords to avoid MRO issues
         super().__init__(
             groups=groups,
+            l1_ratio=l1_ratio,
             alpha=alpha,
             group_weights=group_weights,
+            max_iter=max_iter,
+            eps=eps,
+            tol=tol,
+            update_function=update_function,
             standardize=standardize,
             fit_intercept=fit_intercept,
-            normalize=normalize,
             copy_X=copy_X,
             warm_start=warm_start,
             solver=solver,
-            **kwargs,
+            solver_options=solver_options,
         )
 
-        if not 0 <= l1_ratio <= 1:
-            raise ValueError("l1_ratio must be between 0 and 1.")
-        elif l1_ratio == 0.0:
-            warnings.warn(
-                "It is more efficient to use GroupLasso directly than "
-                "SparseGroupLasso with l1_ratio=0",
-                UserWarning,
-            )
-        elif l1_ratio == 1.0:
-            warnings.warn(
-                "It is more efficient to use Lasso directly than "
-                "SparseGroupLasso with l1_ratio=1",
-                UserWarning,
-            )
-
-        self._lambda1 = cp.Parameter(nonneg=True, value=l1_ratio * alpha)
-        self._lambda2 = cp.Parameter(nonneg=True, value=(1 - l1_ratio) * alpha)
-        # save exact value so sklearn clone is happy dappy
-        self._l1_ratio = l1_ratio
-
-    @Lasso.alpha.setter
-    def alpha(self, val):
-        self._alpha.value = val
-        self._lambda1.value = self.l1_ratio * val
-        self._lambda2.value = (1 - self.l1_ratio) * val
-
-    @property
-    def l1_ratio(self):
-        return self._l1_ratio
-
-    @l1_ratio.setter
-    def l1_ratio(self, val):
-        if not 0 <= val <= 1:
-            raise ValueError("l1_ratio must be between 0 and 1.")
-        self._l1_ratio = val
-        self._lambda1.value = val * self.alpha
-        self._lambda2.value = (1 - val) * self.alpha
-
     def _gen_regularization(self, X):
-        grp_norms = super()._gen_group_norms(X)
-        l1_reg = cp.norm1(self._beta)
-        reg = self._lambda1 * l1_reg + self._lambda2 * (self.group_weights @ grp_norms)
-        return reg
+        grp_norms = self._gen_group_norms(X)
+        self._weights = (
+            cp.Parameter(
+                shape=X.shape[1],
+                nonneg=True,
+                value=self._lambda1.value * np.ones(X.shape[1]),
+            ),
+            cp.Parameter(
+                shape=(len(self.group_masks),),
+                nonneg=True,
+                value=self._lambda2.value * self.group_weights,
+            ),
+        )
+        l1_reg = cp.norm1(cp.multiply(self._weights[0], self._beta))
+        grp_reg = self._weights[1] @ grp_norms
+        return l1_reg + grp_reg
+
+    def _update_weights(self, beta):
+        self._previous_weights = [self._weights[0].value, self._weights[1].value]
+        self._weights[0].value = self._lambda1.value / (abs(beta) + self.eps)
+        self._weights[1].value = (
+            self._lambda2.value * self.group_weights
+        ) * self.update_function(self._group_norms.value, self.eps)
+
+    def _weights_converged(self):
+        l1_converged = (
+            np.linalg.norm(self._weights[0].value - self._previous_weights[0])
+            <= self.tol
+        )
+        group_converged = (
+            np.linalg.norm(self._weights[1].value - self._previous_weights[1])
+            <= self.tol
+        )
+        return l1_converged and group_converged
 
 
-class RidgedGroupLasso(GroupLasso):
-    r"""Ridged Group Lasso implementation.
+class AdaptiveRidgedGroupLasso(AdaptiveGroupLasso, RidgedGroupLasso):
+    r"""Adaptive Ridged Group Lasso implementation.
 
     Regularized model:
         || X * Beta - y ||^2_2 + alpha * \sum_{G} w_G * ||Beta_G||_2
-                               + \sum_{G} delta_l * ||Beta_G||^2_2
-    Where G represents groups of features/coefficients
+                               + \sum_{G} w_l * ||Beta_G||^2_2
+    Where G represents groups of features/coefficients, and w_l represents a
+    vector of weights that are updated iteratively.
 
     For details on proper standardization refer to:
     http://faculty.washington.edu/nrsimon/standGL.pdf
+
+    * Adaptive iterative weights are only done on the group norm and not the ridge
+    portion.
     """
 
     def __init__(
@@ -456,13 +503,16 @@ class RidgedGroupLasso(GroupLasso):
         alpha=1.0,
         delta=1.0,
         group_weights=None,
+        max_iter=5,
+        eps=1e-6,
+        tol=1e-10,
+        update_function=None,
         standardize=False,
         fit_intercept=False,
-        normalize=False,
         copy_X=True,
         warm_start=False,
         solver=None,
-        **kwargs,
+        solver_options=None,
     ):
         """Initialize estimator.
 
@@ -481,19 +531,21 @@ class RidgedGroupLasso(GroupLasso):
                 weight can be specified. The array must be the
                 same length as the groups given. If you need all groups
                 weighted equally just pass an array of ones.
-            standardize (bool): optional
-                Whether to standardize the group regularization penalty using
-                the feature matrix. See the following for reference:
-                http://faculty.washington.edu/nrsimon/standGL.pdf
             fit_intercept (bool):
                 Whether the intercept should be estimated or not.
                 If False, the data is assumed to be already centered.
-            normalize (bool):
-                This parameter is ignored when fit_intercept is set to False.
-                If True, the regressors X will be normalized before regression
-                by subtracting the mean and dividing by the l2-norm.
-                If you wish to standardize, please use StandardScaler before
-                calling fit on an estimator with normalize=False
+            max_iter (int):
+                Maximum number of re-weighting iteration steps.
+            eps (float):
+                Value to add to denominator of weights.
+            tol (float):
+                Absolute convergence tolerance for difference between weights
+                at successive steps.
+            update_function (Callable): optional
+                A function with signature f(group_norms, eps) used to update the
+                weights at each iteration. Where group_norms are the norms of
+                the coefficients Beta for each group.
+                Default is 1/(group_norms + eps)
             copy_X (bool):
                 If True, X will be copied; else, it may be overwritten.
             warm_start (bool):
@@ -504,66 +556,33 @@ class RidgedGroupLasso(GroupLasso):
                 cvxpy backend solver to use. Supported solvers are:
                 ECOS, ECOS_BB, CVXOPT, SCS, GUROBI, Elemental.
                 GLPK and GLPK_MI (via CVXOPT GLPK interface)
-            **kwargs:
-                Kewyard arguments passed to cvxpy solve.
-                See docs linked in CVXEstimator base class for more info.
+            solver_options:
+                dictionary of keyword arguments passed to cvxpy solve.
+                See docs in CVXEstimator for more information.
         """
         super().__init__(
             groups=groups,
             alpha=alpha,
+            delta=delta,
+            max_iter=max_iter,
+            eps=eps,
+            tol=tol,
+            update_function=update_function,
             group_weights=group_weights,
             standardize=standardize,
             fit_intercept=fit_intercept,
-            normalize=normalize,
             copy_X=copy_X,
             warm_start=warm_start,
             solver=solver,
-            **kwargs,
+            solver_options=solver_options,
         )
 
-        self._delta = cp.Parameter(shape=(len(self.group_masks),), nonneg=True)
-        self.delta = delta
-
-    @property
-    def delta(self):
-        """Get ridge regularization vector."""
-        return self._delta.value
-
-    @delta.setter
-    def delta(self, val):
-        """Set ridge regularization vector."""
-        if isinstance(val, float):
-            self._delta.value = val * np.ones(len(self.group_masks))
-        else:
-            self._delta.value = val
-
     def _gen_group_norms(self, X):
-        if self.standardize:
-            grp_norms = cp.hstack(
-                [
-                    cp.norm2(
-                        sqrtm(
-                            X[:, mask].T @ X[:, mask]
-                            + self._delta.value[i] ** 0.5 * np.eye(sum(mask))
-                        )
-                        @ self._beta[mask]
-                    )
-                    for i, mask in enumerate(self.group_masks)
-                ]
-            )
-        else:
-            grp_norms = cp.hstack(
-                [cp.norm2(self._beta[mask]) for mask in self.group_masks]
-            )
-
-        self._group_norms = grp_norms.T
-        return grp_norms
+        return RidgedGroupLasso._gen_group_norms(self, X)
 
     def _gen_regularization(self, X):
-        grp_norms = self._gen_group_norms(X)
+        reg = AdaptiveGroupLasso._gen_regularization(self, X)
         ridge = cp.hstack(
             [cp.sum_squares(self._beta[mask]) for mask in self.group_masks]
         )
-        reg = self._alpha * self.group_weights @ grp_norms + 0.5 * self._delta @ ridge
-
-        return reg
+        return reg + 0.5 * self._delta @ ridge

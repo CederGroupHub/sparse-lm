@@ -1,8 +1,8 @@
 # See https://pre-commit.com for more information
 # See https://pre-commit.com/hooks.html for more hooks
 
-# ci:  when open add this
-#  autoupdate_schedule: monthly
+ci:
+  autoupdate_schedule: monthly
 
 repos:
 - repo: https://github.com/pre-commit/pre-commit-hooks
@@ -54,23 +54,24 @@ repos:
         - --expand-star-imports
         - --ignore-init-module-imports
 
-- repo: https://github.com/PyCQA/flake8
-  rev: 5.0.4
-  hooks:
-  - id: flake8
-    files: ^smol/
-    language_version: python3
-    additional_dependencies:
-    - flake8-typing-imports==1.10.1
+# flake8 can not be configured in pytoml, so line lengths will cause many failures
+#- repo: https://github.com/PyCQA/flake8
+#  rev: 5.0.4
+#  hooks:
+#  - id: flake8
+#    files: ^sparselm/
+#    language_version: python3
+#    additional_dependencies:
+#    - flake8-typing-imports==1.10.1
     # - flake8-docstrings==1.6.0  # fix these
-    # - flake8-rst-docstrings==0.2.3
-    - flake8-rst==0.8.0
+#    - flake8-rst-docstrings==0.2.3
+#    - flake8-rst==0.8.0
 
 - repo: https://github.com/pycqa/pydocstyle
   rev: 6.1.1  # pick a git hash / tag to point to
   hooks:
   - id: pydocstyle
-    files: ^smol/
+    files: ^sparselm/
 
 - repo: https://github.com/pre-commit/pygrep-hooks
   rev: v1.9.0

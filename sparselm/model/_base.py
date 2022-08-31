@@ -13,14 +13,14 @@ from sklearn.base import RegressorMixin
 from sklearn.linear_model._base import (
     LinearModel,
     _check_sample_weight,
-    _deprecate_normalize,
     _preprocess_data,
     _rescale_data,
 )
 
 
-class Estimator(LinearModel, RegressorMixin, metaclass=ABCMeta):
-    """
+class Estimator(RegressorMixin, LinearModel, metaclass=ABCMeta):
+    """Abstract estimator base class.
+
     Simple abstract estimator class based on sklearn linear model api to use
     different 'in-house'  solvers to fit a linear model. This should be used to
     create specific estimator classes by inheriting. New classes simply need to
@@ -29,30 +29,17 @@ class Estimator(LinearModel, RegressorMixin, metaclass=ABCMeta):
     Keyword arguments are the same as those found in sklearn linear models.
     """
 
-    def __init__(
-        self, fit_intercept: bool = False, normalize: bool = False, copy_X: bool = True
-    ):
-        """
-        fit_intercept : bool, default=True
+    def __init__(self, fit_intercept: bool = False, copy_X: bool = True):
+        """Initialize estimator.
 
-        If you wish to standardize, please use
-        :class:`sklearn.preprocessing.StandardScaler` before calling ``fit``
-        on an estimator with ``normalize=False``.
         Args:
             fit_intercept (bool):
                 Whether the intercept should be estimated or not. If ``False``,
-                the data is assumed to be already centered. normalize : bool
-                default=False.
-            normalize (bool):
-                This parameter is ignored when ``fit_intercept`` is set to
-                False.
-                If True, the regressors X will be normalized before regression
-                by subtracting the mean and dividing by the l2-norm.
+                the data is assumed to be already centered.
             copy_X (bool):
                 If ``True``, X will be copied; else, it may be overwritten.
         """
         self.fit_intercept = fit_intercept
-        self.normalize = normalize
         self.copy_X = copy_X
 
     def fit(self, X, y, sample_weight=None, *args, **kwargs):
@@ -101,15 +88,11 @@ class Estimator(LinearModel, RegressorMixin, metaclass=ABCMeta):
         In the future, may add additional functionalities beyond sklearn
         basics.
         """
-        _normalize = _deprecate_normalize(
-            self.normalize, default=False, estimator_name=self.__class__.__name__
-        )
         return _preprocess_data(
             X,
             y,
             copy=copy,
             fit_intercept=self.fit_intercept,
-            normalize=_normalize,
             sample_weight=sample_weight,
         )
 
@@ -124,33 +107,28 @@ class CVXEstimator(Estimator, metaclass=ABCMeta):
     Base class for estimators using cvxpy with a sklearn interface.
 
     Note cvxpy can use one of many 3rd party solvers, default is most often
-    CVXOPT. The solver can be specified by providing arguments to the cvxpy
-    problem.solve function. And can be set by passing those arguments to the
-    constructur of this class
-    See documentation for more:
-    https://ajfriendcvxpy.readthedocs.io/en/latest/tutorial/advanced/index.html#solve-method-options
+    CVXOPT. The solver can be specified by setting the solver keyword argument.
+    And can solver specific settings can be set by passing a dictionary of
+    solver_options.
+
+    See "Setting solver options" in documentation for details of available options:
+    https://www.cvxpy.org/tutorial/advanced/index.html#advanced
     """
 
     def __init__(
         self,
         fit_intercept=False,
-        normalize=False,
         copy_X=True,
         warm_start=False,
         solver=None,
-        **kwargs
+        solver_options=None,
     ):
-        """
+        """Initialize estimator.
+
         Args:
             fit_intercept (bool):
                 Whether the intercept should be estimated or not.
                 If False, the data is assumed to be already centered.
-            normalize (bool):
-                This parameter is ignored when fit_intercept is set to False.
-                If True, the regressors X will be normalized before regression
-                by subtracting the mean and dividing by the l2-norm.
-                If you wish to standardize, please use StandardScaler before
-                calling fit on an estimator with normalize=False
             copy_X (bool):
                 If True, X will be copied; else, it may be overwritten.
             warm_start (bool):
@@ -161,15 +139,20 @@ class CVXEstimator(Estimator, metaclass=ABCMeta):
                 cvxpy backend solver to use. Supported solvers are:
                 ECOS, ECOS_BB, CVXOPT, SCS, GUROBI, Elemental.
                 GLPK and GLPK_MI (via CVXOPT GLPK interface)
-            **kwargs:
-                Kewyard arguments passed to cvxpy solve.
+            solver_options:
+                dictionary of keyword arguments passed to cvxpy solve.
                 See docs linked above for more information.
         """
         self.warm_start = warm_start
         self.solver = solver
-        self.solver_opts = kwargs
+
+        if solver_options is None:
+            self.solver_options = {}
+        else:
+            self.solver_options = solver_options
+
         self._problem, self._beta, self._X, self._y = None, None, None, None
-        super().__init__(fit_intercept, normalize, copy_X)
+        super().__init__(fit_intercept, copy_X)
 
     @abstractmethod
     def _gen_objective(self, X, y):
@@ -203,7 +186,7 @@ class CVXEstimator(Estimator, metaclass=ABCMeta):
         return None
 
     def _initialize_problem(self, X, y):
-        """Initialize cvxpy problem from the generated objective function
+        """Initialize cvxpy problem from the generated objective function.
 
         Args:
             X (ndarray):
@@ -219,7 +202,7 @@ class CVXEstimator(Estimator, metaclass=ABCMeta):
         self._problem = cp.Problem(cp.Minimize(objective), constraints)
 
     def _get_problem(self, X, y):
-        """Define and create cvxpy optimization problem"""
+        """Define and create cvxpy optimization problem."""
         if self._problem is None:
             self._initialize_problem(X, y)
         elif not np.array_equal(X, self._X) or not np.array_equal(y, self._y):
@@ -230,6 +213,6 @@ class CVXEstimator(Estimator, metaclass=ABCMeta):
         """Solve the cvxpy problem."""
         problem = self._get_problem(X, y)
         problem.solve(
-            solver=self.solver, warm_start=self.warm_start, **self.solver_opts
+            solver=self.solver, warm_start=self.warm_start, **self.solver_options
         )
         return self._beta.value

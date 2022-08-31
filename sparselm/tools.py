@@ -29,7 +29,6 @@ def constrain_coefficients(indices, high=None, low=None):
         low (float or array):
             lower bounds for indices
     """
-
     indices = np.array(indices)
     if high is not None:
         high = (
