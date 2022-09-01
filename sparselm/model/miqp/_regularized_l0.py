@@ -374,11 +374,89 @@ class L2L0(MixedL0):
                            + alpha * (1 - l0_ratio) * ||Beta||^2_2
     """
 
+    def __init__(
+        self,
+        alpha=1.0,
+        l0_ratio=0.5,
+        big_M=1000,
+        hierarchy=None,
+        ignore_psd_check=True,
+        fit_intercept=False,
+        normalize=False,
+        copy_X=True,
+        warm_start=False,
+        solver=None,
+        tikhonov_w=None,
+        **kwargs
+    ):
+        """
+        Args:
+            alpha (float):
+                Regularization hyper-parameter.
+            l0_ratio (float):
+                Mixing parameter between l1 and l0 regularization.
+            big_M (float):
+                Upper bound on the norm of coefficients associated with each
+                cluster (groups of coefficients) ||Beta_c||_2
+            hierarchy (list):
+                A list of lists of integers storing hierarchy relations between
+                coefficients.
+                Each sublist contains indices of other coefficients
+                on which the coefficient associated with each element of
+                the list depends. i.e. hierarchy = [[1, 2], [0], []] mean that
+                coefficient 0 depends on 1, and 2; 1 depends on 0, and 2 has no
+                dependence.
+            ignore_psd_check (bool):
+                Wether to ignore cvxpy's PSD checks of matrix used in quadratic
+                form. Default is True to avoid raising errors for poorly
+                conditioned matrices. But if you want to be strict set to False.
+            fit_intercept (bool):
+                Whether the intercept should be estimated or not.
+                If False, the data is assumed to be already centered.
+            normalize (bool):
+                This parameter is ignored when fit_intercept is set to False.
+                If True, the regressors X will be normalized before regression
+                by subtracting the mean and dividing by the l2-norm.
+                If you wish to standardize, please use StandardScaler before
+                calling fit on an estimator with normalize=False
+            copy_X (bool):
+                If True, X will be copied; else, it may be overwritten.
+            warm_start (bool):
+                When set to True, reuse the solution of the previous call to
+                fit as initialization, otherwise, just erase the previous
+                solution.
+            solver (str):
+                cvxpy backend solver to use. Supported solvers are:
+                ECOS, ECOS_BB, CVXOPT, SCS, GUROBI, Elemental.
+                GLPK and GLPK_MI (via CVXOPT GLPK interface)
+            tikhonov_w (np.array):
+                Matrix to add weights to L2 regularization.
+            **kwargs:
+                Keyword arguments passed to cvxpy solve.
+                See docs linked above for more information.
+        """
+        super().__init__(
+            alpha=alpha,
+            l0_ratio=l0_ratio,
+            big_M=big_M,
+            hierarchy=hierarchy,
+            ignore_psd_check=ignore_psd_check,
+            fit_intercept=fit_intercept,
+            normalize=normalize,
+            copy_X=copy_X,
+            warm_start=warm_start,
+            solver=solver,
+            **kwargs
+        )
+        self.tikhonov_w = tikhonov_w
+
     def _gen_objective(self, X, y):
         """Generate the objective function used in l2l0 regression model."""
         c0 = 2 * X.shape[0]  # keeps hyperparameter scale independent
+        tikhonov_w = np.eye(X.shape[1]) if self.tikhonov_w is None else self.tikhonov_w
+
         objective = super()._gen_objective(X, y) + c0 * self._lambda1 * cp.sum_squares(
-            self._beta
+            tikhonov_w @ self._beta
         )
 
         return objective
@@ -499,6 +577,7 @@ class GroupedL2L0(GroupedL0, MixedL0):
         copy_X=True,
         warm_start=False,
         solver=None,
+        tikhonov_w=None,
         solver_options=None,
     ):
         """Initialize estimator.
@@ -540,6 +619,8 @@ class GroupedL2L0(GroupedL0, MixedL0):
                 cvxpy backend solver to use. Supported solvers are:
                 ECOS, ECOS_BB, CVXOPT, SCS, GUROBI, Elemental.
                 GLPK and GLPK_MI (via CVXOPT GLPK interface)
+            tikhonov_w (np.array):
+                Matrix to add weights to L2 regularization.
             solver_options:
                 dictionary of keyword arguments passed to cvxpy solve.
                 See docs in CVXEstimator for more information.
@@ -558,12 +639,14 @@ class GroupedL2L0(GroupedL0, MixedL0):
             solver=solver,
             solver_options=solver_options,
         )
+        self.tikhonov_w = tikhonov_w
 
     def _gen_objective(self, X, y):
         """Generate the objective function used in l2l0 regression model."""
         c0 = 2 * X.shape[0]  # keeps hyperparameter scale independent
+        tikhonov_w = np.eye(X.shape[1]) if self.tikhonov_w is None else self.tikhonov_w
         objective = super()._gen_objective(X, y) + c0 * self._lambda1 * cp.sum_squares(
-            self._beta
+            tikhonov_w @ self._beta
         )
 
         return objective
