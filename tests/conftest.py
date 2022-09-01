@@ -21,3 +21,9 @@ def random_model():
         ecis[idx] = eci
     energies = femat @ ecis + np.random.normal(size=n_samples) * 2e-3
     return femat, energies, ecis
+
+
+@pytest.fixture(scope="package")
+def random_weights():
+    weights = 1000 * np.random.rand(n_features)
+    return np.diag(weights)
