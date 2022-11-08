@@ -382,7 +382,6 @@ class L2L0(MixedL0):
         hierarchy=None,
         ignore_psd_check=True,
         fit_intercept=False,
-        normalize=False,
         copy_X=True,
         warm_start=False,
         solver=None,
@@ -413,12 +412,6 @@ class L2L0(MixedL0):
             fit_intercept (bool):
                 Whether the intercept should be estimated or not.
                 If False, the data is assumed to be already centered.
-            normalize (bool):
-                This parameter is ignored when fit_intercept is set to False.
-                If True, the regressors X will be normalized before regression
-                by subtracting the mean and dividing by the l2-norm.
-                If you wish to standardize, please use StandardScaler before
-                calling fit on an estimator with normalize=False
             copy_X (bool):
                 If True, X will be copied; else, it may be overwritten.
             warm_start (bool):
@@ -442,7 +435,6 @@ class L2L0(MixedL0):
             hierarchy=hierarchy,
             ignore_psd_check=ignore_psd_check,
             fit_intercept=fit_intercept,
-            normalize=normalize,
             copy_X=copy_X,
             warm_start=warm_start,
             solver=solver,
