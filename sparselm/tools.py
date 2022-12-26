@@ -100,7 +100,7 @@ def r2_score_to_cv_error(score, y, y_pred, weights=None):
             The weights of each sample. Default to 1.
     Returns:
         float:
-            The CV error.
+            The CV error, in eV per site.
     """
     if weights is None:
         weights = np.ones(len(y))
@@ -111,4 +111,4 @@ def r2_score_to_cv_error(score, y, y_pred, weights=None):
         raise ValueError("Weights can not be negative or all zero.")
 
     denominator = (weights * (y - y_pred) ** 2).sum() / weights.sum()
-    return (1 - score) * denominator
+    return np.sqrt((1 - score) * denominator)
