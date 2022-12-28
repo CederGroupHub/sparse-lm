@@ -372,6 +372,9 @@ class GridSearch(GridSearchCV):
                 self.best_score_ = results[f"mean_test_{refit_metric}"][
                     self.best_index_
                 ]
+                self.best_score_std_ = results[f"std_test_{refit_metric}"][
+                    self.best_index_
+                ]
             self.best_params_ = results["params"][self.best_index_]
 
         if self.refit:

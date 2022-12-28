@@ -388,7 +388,8 @@ class L2L0(MixedL0):
         tikhonov_w=None,
         **kwargs
     ):
-        """
+        """Initialize L2L0 estimator.
+
         Args:
             alpha (float):
                 Regularization hyper-parameter.
