@@ -1,5 +1,5 @@
 numpy==1.24.1
-scipy==1.9.3
+scipy==1.10.0
 scikit-learn==1.2.0
 joblib
 cvxopt
