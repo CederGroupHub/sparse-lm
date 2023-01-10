@@ -9,6 +9,7 @@ from abc import ABCMeta, abstractmethod
 
 import cvxpy as cp
 import numpy as np
+from numpy.typing import ArrayLike
 from sklearn.base import RegressorMixin
 from sklearn.linear_model._base import (
     LinearModel,
@@ -72,16 +73,23 @@ class CVXEstimator(RegressorMixin, LinearModel, metaclass=ABCMeta):
 
         self._problem, self._beta, self._X, self._y = None, None, None, None
 
-    def fit(self, X, y, sample_weight=None, *args, **kwargs):
+    def fit(
+        self,
+        X: ArrayLike,
+        y: ArrayLike,
+        sample_weight: ArrayLike = None,
+        *args,
+        **kwargs
+    ):
         """Prepare fit input with sklearn help then call fit method.
 
         Args:
-            X (array-like):
+            X (ArrayLike):
                 Training data of shape (n_samples, n_features).
-            y (array-like):
+            y (ArrayLike):
                 Target values. Will be cast to X's dtype if necessary
                 of shape (n_samples,) or (n_samples, n_targets)
-            sample_weight (array-like):
+            sample_weight (ArrayLike):
                 Individual weights for each sample of shape (n_samples,)
                 default=None
             *args:
@@ -112,7 +120,13 @@ class CVXEstimator(RegressorMixin, LinearModel, metaclass=ABCMeta):
         # return self for chaining fit and predict calls
         return self
 
-    def _preprocess_data(self, X, y, copy=True, sample_weight=None):
+    def _preprocess_data(
+        self,
+        X: ArrayLike,
+        y: ArrayLike,
+        copy: bool = True,
+        sample_weight: ArrayLike = None,
+    ):
         """Pre-process data.
 
         In the future, may add additional functionalities beyond sklearn
@@ -127,15 +141,15 @@ class CVXEstimator(RegressorMixin, LinearModel, metaclass=ABCMeta):
         )
 
     @abstractmethod
-    def _gen_objective(self, X, y):
+    def _gen_objective(self, X: ArrayLike, y: ArrayLike):
         """Define the cvxpy objective function represeting regression model.
 
         The objective must be stated for a minimization problem.
 
         Args:
-            X (ndarray):
+            X (ArrayLike):
                 Covariate/Feature matrix
-            y (ndarray):
+            y (ArrayLike):
                 Target vector
 
         Returns:
@@ -143,13 +157,13 @@ class CVXEstimator(RegressorMixin, LinearModel, metaclass=ABCMeta):
         """
         return None
 
-    def _gen_constraints(self, X, y):
+    def _gen_constraints(self, X: ArrayLike, y: ArrayLike):
         """Generate constraints for optimization problem.
 
         Args:
-            X (ndarray):
+            X (ArrayLike):
                 Covariate/Feature matrix
-            y (ndarray):
+            y (ArrayLike):
                 Target vector
 
         Returns:
@@ -157,13 +171,13 @@ class CVXEstimator(RegressorMixin, LinearModel, metaclass=ABCMeta):
         """
         return None
 
-    def _initialize_problem(self, X, y):
+    def _initialize_problem(self, X: ArrayLike, y: ArrayLike):
         """Initialize cvxpy problem from the generated objective function.
 
         Args:
-            X (ndarray):
+            X (ArrayLike):
                 Covariate/Feature matrix
-            y (ndarray):
+            y (ArrayLike):
                 Target vector
         """
         self._beta = cp.Variable(X.shape[1])
@@ -173,7 +187,7 @@ class CVXEstimator(RegressorMixin, LinearModel, metaclass=ABCMeta):
         constraints = self._gen_constraints(X, y)
         self._problem = cp.Problem(cp.Minimize(objective), constraints)
 
-    def _get_problem(self, X, y):
+    def _get_problem(self, X: ArrayLike, y: ArrayLike):
         """Define and create cvxpy optimization problem."""
         if self._problem is None:
             self._initialize_problem(X, y)
@@ -181,7 +195,7 @@ class CVXEstimator(RegressorMixin, LinearModel, metaclass=ABCMeta):
             self._initialize_problem(X, y)
         return self._problem
 
-    def _solve(self, X, y, *args, **kwargs):
+    def _solve(self, X: ArrayLike, y: ArrayLike, *args, **kwargs):
         """Solve the cvxpy problem."""
         problem = self._get_problem(X, y)
         problem.solve(
