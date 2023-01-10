@@ -3,3 +3,4 @@ coverage
 flake8
 black
 pydocstyle
+Flake8-pyproject

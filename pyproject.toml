@@ -28,3 +28,38 @@ classifiers = [
 
 # pyproject.toml
 [tool.setuptools_scm]
+
+# linting tools, etc
+[tool.pytest.ini_options]
+minversion = "6.0"
+addopts  =  "-x --durations = 30 --quiet -rxXs --color = yes"
+filterwarnings  = [
+    'ignore::UserWarning',
+    'ignore::FutureWarning',
+    'ignore::RuntimeWarning'
+    ]
+
+[tool.flake8]
+exclude  =  ['docs', 'tests']
+ignore  =  ['E203', 'E501', 'W503']
+max-line-length  =  88
+
+[tool.pylint.main]
+ignore = ["tests"]
+
+[tool.pylint.basic]
+argument-naming-style = "snake_case"
+attr-naming-style = "snake_case"
+method-naming-style = "snake_case"
+function-naming-style = "snake_case"
+class-naming-style = "PascalCase"
+good-names  =  ['id', 'kB', 'i', 'j', 'k', 'f']
+
+[too.pylint."messages control"]
+disable  =  ['W0511', 'R0904', 'R0903', 'R0913', 'R0902', 'R0914', 'C0415']
+
+[tool.codespell]
+skip = "*.c,./.*"
+count = ''
+quiet-level = 3
+ignore-words-list = ['nd', 'tread']

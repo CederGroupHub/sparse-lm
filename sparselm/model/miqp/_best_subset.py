@@ -104,7 +104,7 @@ class BestSubsetSelection(CVXEstimator):
     def sparse_bound(self, val):
         """Set sparse bound value."""
         if val <= 0:
-            raise ValueError(f"sparse_bound must be > 0")
+            raise ValueError("sparse_bound must be > 0")
         self._bound.value = val
 
     @property
