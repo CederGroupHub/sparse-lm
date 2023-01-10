@@ -15,7 +15,7 @@ jobs:
     strategy:
       max-parallel: 10
       matrix:
-        python_version: [3.8, 3.9, 3]
+        python_version: ["3.8", "3.9", "3.10"]  #  cvxopt install in python "3.11" fails
 
     steps:
       - uses: actions/checkout@v3
@@ -39,7 +39,7 @@ jobs:
           pip install -r requirements.txt
           pip install -r requirements-dev.txt
           pip install -r requirements-optional.txt
-          pip install -e .[tests]
+          pip install .
 
       - name: Test with pytest
         run: |

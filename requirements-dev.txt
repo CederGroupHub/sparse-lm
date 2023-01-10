@@ -1,1 +1,7 @@
 pytest
+coverage
+pytest-cov
+flake8
+black
+pydocstyle
+Flake8-pyproject
