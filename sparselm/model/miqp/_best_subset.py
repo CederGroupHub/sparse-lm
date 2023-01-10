@@ -258,11 +258,12 @@ class BestGroupSelection(BestSubsetSelection):
                 cluster (groups of coefficients) ||Beta_c||_2
             hierarchy (list):
                 A list of lists of integers storing hierarchy relations between
-                coefficients.
-                Each sublist contains indices of other coefficients
+                groups of coefficients as given by the supplied groups parameter.
+                Each sublist contains indices of other groups
                 on which the coefficient associated with each element of
                 the list depends. i.e. hierarchy = [[1, 2], [0], []] mean that
-                coefficient 0 depends on 1, and 2; 1 depends on 0, and 2 has no
+                group 0 depends on 1, and 2; 1 depends on 0, and 2 has no
+                dependence.
                 dependence.
             ignore_psd_check (bool):
                 Whether to ignore cvxpy's PSD checks  of matrix used in quadratic
@@ -349,11 +350,11 @@ class RidgedBestGroupSelection(RidgedBestSubsetSelection, BestGroupSelection):
                 cluster (groups of coefficients) ||Beta_c||_2
             hierarchy (list):
                 A list of lists of integers storing hierarchy relations between
-                coefficients.
-                Each sublist contains indices of other coefficients
+                groups of coefficients as given by the supplied groups parameter.
+                Each sublist contains indices of other groups
                 on which the coefficient associated with each element of
                 the list depends. i.e. hierarchy = [[1, 2], [0], []] mean that
-                coefficient 0 depends on 1, and 2; 1 depends on 0, and 2 has no
+                group 0 depends on 1, and 2; 1 depends on 0, and 2 has no
                 dependence.
             ignore_psd_check (bool):
                 Whether to ignore cvxpy's PSD checks  of matrix used in quadratic
