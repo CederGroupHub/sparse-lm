@@ -19,8 +19,6 @@ from sparselm.model.miqp import (
     L1L0,
     L2L0,
     BestSubsetSelection,
-    GroupedL0,
-    GroupedL2L0,
     RegularizedL0,
     RidgedBestSubsetSelection,
 )
@@ -33,8 +31,6 @@ __all__ = [
     "RegularizedL0",
     "L1L0",
     "L2L0",
-    "GroupedL0",
-    "GroupedL2L0",
     "GroupLasso",
     "OverlapGroupLasso",
     "SparseGroupLasso",
