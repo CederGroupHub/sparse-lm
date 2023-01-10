@@ -18,29 +18,59 @@ from sklearn.linear_model._base import (
 )
 
 
-class Estimator(RegressorMixin, LinearModel, metaclass=ABCMeta):
-    """Abstract estimator base class.
+class CVXEstimator(RegressorMixin, LinearModel, metaclass=ABCMeta):
+    """Abstract base class for estimators using cvxpy with a sklearn interface.
 
-    Simple abstract estimator class based on sklearn linear model api to use
-    different 'in-house'  solvers to fit a linear model. This should be used to
-    create specific estimator classes by inheriting. New classes simply need to
-    implement the _solve method to solve for the regression model coefficients.
+    Note cvxpy can use one of many 3rd party solvers, default is most often
+    CVXOPT. The solver can be specified by setting the solver keyword argument.
+    And can solver specific settings can be set by passing a dictionary of
+    solver_options.
+
+    See "Setting solver options" in documentation for details of available options:
+    https://www.cvxpy.org/tutorial/advanced/index.html#advanced
 
     Keyword arguments are the same as those found in sklearn linear models.
     """
 
-    def __init__(self, fit_intercept: bool = False, copy_X: bool = True):
+    def __init__(
+        self,
+        fit_intercept: bool = False,
+        copy_X: bool = True,
+        warm_start: bool = False,
+        solver: str = None,
+        solver_options: dict = None,
+    ):
         """Initialize estimator.
 
         Args:
             fit_intercept (bool):
-                Whether the intercept should be estimated or not. If ``False``,
-                the data is assumed to be already centered.
+                Whether the intercept should be estimated or not.
+                If False, the data is assumed to be already centered.
             copy_X (bool):
-                If ``True``, X will be copied; else, it may be overwritten.
+                If True, X will be copied; else, it may be overwritten.
+            warm_start (bool):
+                When set to True, reuse the solution of the previous call to
+                fit as initialization, otherwise, just erase the previous
+                solution.
+            solver (str):
+                cvxpy backend solver to use. Supported solvers are:
+                ECOS, ECOS_BB, CVXOPT, SCS, GUROBI, Elemental.
+                GLPK and GLPK_MI (via CVXOPT GLPK interface)
+            solver_options:
+                dictionary of keyword arguments passed to cvxpy solve.
+                See docs linked above for more information.
         """
         self.fit_intercept = fit_intercept
         self.copy_X = copy_X
+        self.warm_start = warm_start
+        self.solver = solver
+
+        if solver_options is None:
+            self.solver_options = {}
+        else:
+            self.solver_options = solver_options
+
+        self._problem, self._beta, self._X, self._y = None, None, None, None
 
     def fit(self, X, y, sample_weight=None, *args, **kwargs):
         """Prepare fit input with sklearn help then call fit method.
@@ -95,64 +125,6 @@ class Estimator(RegressorMixin, LinearModel, metaclass=ABCMeta):
             fit_intercept=self.fit_intercept,
             sample_weight=sample_weight,
         )
-
-    @abstractmethod
-    def _solve(self, X, y, *args, **kwargs):
-        """Solve for the model coefficients."""
-        return
-
-
-class CVXEstimator(Estimator, metaclass=ABCMeta):
-    """
-    Base class for estimators using cvxpy with a sklearn interface.
-
-    Note cvxpy can use one of many 3rd party solvers, default is most often
-    CVXOPT. The solver can be specified by setting the solver keyword argument.
-    And can solver specific settings can be set by passing a dictionary of
-    solver_options.
-
-    See "Setting solver options" in documentation for details of available options:
-    https://www.cvxpy.org/tutorial/advanced/index.html#advanced
-    """
-
-    def __init__(
-        self,
-        fit_intercept=False,
-        copy_X=True,
-        warm_start=False,
-        solver=None,
-        solver_options=None,
-    ):
-        """Initialize estimator.
-
-        Args:
-            fit_intercept (bool):
-                Whether the intercept should be estimated or not.
-                If False, the data is assumed to be already centered.
-            copy_X (bool):
-                If True, X will be copied; else, it may be overwritten.
-            warm_start (bool):
-                When set to True, reuse the solution of the previous call to
-                fit as initialization, otherwise, just erase the previous
-                solution.
-            solver (str):
-                cvxpy backend solver to use. Supported solvers are:
-                ECOS, ECOS_BB, CVXOPT, SCS, GUROBI, Elemental.
-                GLPK and GLPK_MI (via CVXOPT GLPK interface)
-            solver_options:
-                dictionary of keyword arguments passed to cvxpy solve.
-                See docs linked above for more information.
-        """
-        self.warm_start = warm_start
-        self.solver = solver
-
-        if solver_options is None:
-            self.solver_options = {}
-        else:
-            self.solver_options = solver_options
-
-        self._problem, self._beta, self._X, self._y = None, None, None, None
-        super().__init__(fit_intercept, copy_X)
 
     @abstractmethod
     def _gen_objective(self, X, y):
