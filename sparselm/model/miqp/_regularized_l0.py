@@ -23,11 +23,14 @@ from cvxpy.atoms.affine.wraps import psd_wrap
 from sparselm.model._base import CVXEstimator
 
 
+# RegularizedL0 now supports orbit-level hierarchy, but now requires groups as a
+# compulsory argument.
 class RegularizedL0(CVXEstimator):
     """Implementation of MIQP l0 regularized estimator."""
 
     def __init__(
         self,
+        groups,
         alpha=1.0,
         big_M=1000,
         hierarchy=None,
@@ -41,6 +44,18 @@ class RegularizedL0(CVXEstimator):
         """Initialize estimator.
 
         Args:
+            groups (list or ndarray):
+                array-like of integers specifying groups. Length should be the
+                same as model, where each integer entry specifies the group
+                each parameter corresponds to. One dimensional.
+                Note: in cluster expansion, a group can either be each correlation
+                function (function-level hierarchy) or be each cluster orbit
+                (orbit-level hierarchy). In the first case, each index should be its
+                own group, so use range(len(ecis)). In the second case, correlation
+                functions under the same orbit will be considered as the same group,
+                so use function_orbit_ids here.
+                Each external term in cluster subspace should be considered as its
+                own group.
             alpha (float):
                 Regularization hyper-parameter.
             big_M (float):
@@ -48,11 +63,11 @@ class RegularizedL0(CVXEstimator):
                 cluster (groups of coefficients) ||Beta_c||_2
             hierarchy (list):
                 A list of lists of integers storing hierarchy relations between
-                coefficients.
-                Each sublist contains indices of other coefficients
-                on which the coefficient associated with each element of
+                groups.
+                Each sublist contains indices of other groups
+                on which the group associated with each element of
                 the list depends. i.e. hierarchy = [[1, 2], [0], []] mean that
-                coefficient 0 depends on 1, and 2; 1 depends on 0, and 2 has no
+                group 0 depends on 1, and 2; 1 depends on 0, and 2 has no
                 dependence.
             ignore_psd_check (bool):
                 Whether to ignore cvxpy's PSD checks  of matrix used in quadratic
@@ -71,7 +86,7 @@ class RegularizedL0(CVXEstimator):
                 cvxpy backend solver to use. Supported solvers are:
                 ECOS, ECOS_BB, CVXOPT, SCS, GUROBI, Elemental.
                 GLPK and GLPK_MI (via CVXOPT GLPK interface)
-            solver_options:
+            solver_options (dict):
                 dictionary of keyword arguments passed to cvxpy solve.
                 See docs in CVXEstimator for more information.
         """
@@ -88,7 +103,10 @@ class RegularizedL0(CVXEstimator):
         self._lambda0 = cp.Parameter(nonneg=True, value=alpha)
         self._big_M = cp.Parameter(nonneg=True, value=big_M)
         self.ignore_psd_check = ignore_psd_check
-        self._z0 = None
+
+        self.groups = np.asarray(groups)
+        self._group_masks = [self.groups == i for i in np.unique(groups)]
+        self._z0 = cp.Variable(len(self._group_masks), boolean=True)
 
     @property
     def alpha(self):
@@ -113,13 +131,8 @@ class RegularizedL0(CVXEstimator):
 
     def _gen_objective(self, X, y):
         """Generate the quadratic form portion of objective."""
-        # psd_wrap will ignore cvxpy PSD checks, without it errors will
-        # likely be raised since correlation matrices are usually very
-        # poorly conditioned
-        self._z0 = cp.Variable(X.shape[1], boolean=True)
         c0 = 2 * X.shape[0]  # keeps hyperparameter scale independent
         XTX = psd_wrap(X.T @ X) if self.ignore_psd_check else X.T @ X
-
         objective = (
             cp.quad_form(self._beta, XTX)
             - 2 * y.T @ X @ self._beta
@@ -129,10 +142,12 @@ class RegularizedL0(CVXEstimator):
 
     def _gen_constraints(self, X, y):
         """Generate the constraints used to solve l0 regularization."""
-        constraints = [
-            self._big_M * self._z0 >= self._beta,
-            self._big_M * self._z0 >= -self._beta,
-        ]
+        constraints = []
+        for i, mask in enumerate(self._group_masks):
+            constraints += [
+                self._big_M * self._z0[i] >= self._beta[mask],
+                self._big_M * self._z0[i] >= -self._beta[mask],
+            ]
 
         if self.hierarchy is not None:
             constraints += self._gen_hierarchy_constraints()
@@ -152,6 +167,7 @@ class MixedL0(RegularizedL0, metaclass=ABCMeta):
 
     def __init__(
         self,
+        groups,
         alpha=1.0,
         l0_ratio=0.5,
         big_M=1000,
@@ -162,11 +178,22 @@ class MixedL0(RegularizedL0, metaclass=ABCMeta):
         warm_start=False,
         solver=None,
         solver_options=None,
-        **kwargs
     ):
         """Initialize estimator.
 
         Args:
+            groups (list or ndarray):
+                array-like of integers specifying groups. Length should be the
+                same as model, where each integer entry specifies the group
+                each parameter corresponds to. One dimensional.
+                Note: in cluster expansion, a group can either be each correlation
+                function (function-level hierarchy) or be each cluster orbit
+                (orbit-level hierarchy). In the first case, each index should be its
+                own group, so use range(len(ecis)). In the second case, correlation
+                functions under the same orbit will be considered as the same group,
+                so use function_orbit_ids here.
+                Each external term in cluster subspace should be considered as its
+                own group.
             alpha (float):
                 Regularization hyper-parameter.
             l0_ratio (float):
@@ -199,11 +226,12 @@ class MixedL0(RegularizedL0, metaclass=ABCMeta):
                 cvxpy backend solver to use. Supported solvers are:
                 ECOS, ECOS_BB, CVXOPT, SCS, GUROBI, Elemental.
                 GLPK and GLPK_MI (via CVXOPT GLPK interface)
-            solver_options:
+            solver_options (dict):
                 dictionary of keyword arguments passed to cvxpy solve.
                 See docs in CVXEstimator for more information.
         """
         super().__init__(
+            groups=groups,
             alpha=alpha,
             big_M=big_M,
             hierarchy=hierarchy,
@@ -213,7 +241,6 @@ class MixedL0(RegularizedL0, metaclass=ABCMeta):
             warm_start=warm_start,
             solver=solver,
             solver_options=solver_options,
-            **kwargs
         )
 
         if not 0 <= l0_ratio <= 1:
@@ -280,6 +307,7 @@ class L1L0(MixedL0):
 
     def __init__(
         self,
+        groups,
         alpha=1.0,
         l0_ratio=0.5,
         big_M=1000,
@@ -294,6 +322,18 @@ class L1L0(MixedL0):
         """Initialize estimator.
 
         Args:
+            groups (list or ndarray):
+                array-like of integers specifying groups. Length should be the
+                same as model, where each integer entry specifies the group
+                each parameter corresponds to. One dimensional.
+                Note: in cluster expansion, a group can either be each correlation
+                function (function-level hierarchy) or be each cluster orbit
+                (orbit-level hierarchy). In the first case, each index should be its
+                own group, so use range(len(ecis)). In the second case, correlation
+                functions under the same orbit will be considered as the same group,
+                so use function_orbit_ids here.
+                Each external term in cluster subspace should be considered as its
+                own group.
             alpha (float):
                 Regularization hyper-parameter.
             l0_ratio (float):
@@ -326,11 +366,12 @@ class L1L0(MixedL0):
                 cvxpy backend solver to use. Supported solvers are:
                 ECOS, ECOS_BB, CVXOPT, SCS, GUROBI, Elemental.
                 GLPK and GLPK_MI (via CVXOPT GLPK interface)
-            solver_options:
+            solver_options (dict):
                 dictionary of keyword arguments passed to cvxpy solve.
                 See docs in CVXEstimator for more information.
         """
         super().__init__(
+            groups=groups,
             alpha=alpha,
             l0_ratio=l0_ratio,
             big_M=big_M,
@@ -376,6 +417,7 @@ class L2L0(MixedL0):
 
     def __init__(
         self,
+        groups,
         alpha=1.0,
         l0_ratio=0.5,
         big_M=1000,
@@ -386,11 +428,23 @@ class L2L0(MixedL0):
         warm_start=False,
         solver=None,
         tikhonov_w=None,
-        **kwargs
+        solver_options=None,
     ):
         """Initialize L2L0 estimator.
 
         Args:
+            groups (list or ndarray):
+                array-like of integers specifying groups. Length should be the
+                same as model, where each integer entry specifies the group
+                each parameter corresponds to. One dimensional.
+                Note: in cluster expansion, a group can either be each correlation
+                function (function-level hierarchy) or be each cluster orbit
+                (orbit-level hierarchy). In the first case, each index should be its
+                own group, so use range(len(ecis)). In the second case, correlation
+                functions under the same orbit will be considered as the same group,
+                so use function_orbit_ids here.
+                Each external term in cluster subspace should be considered as its
+                own group.
             alpha (float):
                 Regularization hyper-parameter.
             l0_ratio (float):
@@ -425,200 +479,10 @@ class L2L0(MixedL0):
                 GLPK and GLPK_MI (via CVXOPT GLPK interface)
             tikhonov_w (np.array):
                 Matrix to add weights to L2 regularization.
-            **kwargs:
-                Keyword arguments passed to cvxpy solve.
-                See docs linked above for more information.
-        """
-        super().__init__(
-            alpha=alpha,
-            l0_ratio=l0_ratio,
-            big_M=big_M,
-            hierarchy=hierarchy,
-            ignore_psd_check=ignore_psd_check,
-            fit_intercept=fit_intercept,
-            copy_X=copy_X,
-            warm_start=warm_start,
-            solver=solver,
-            **kwargs
-        )
-        self.tikhonov_w = tikhonov_w
-
-    def _gen_objective(self, X, y):
-        """Generate the objective function used in l2l0 regression model."""
-        c0 = 2 * X.shape[0]  # keeps hyperparameter scale independent
-        tikhonov_w = np.eye(X.shape[1]) if self.tikhonov_w is None else self.tikhonov_w
-
-        objective = super()._gen_objective(X, y) + c0 * self._lambda1 * cp.sum_squares(
-            tikhonov_w @ self._beta
-        )
-
-        return objective
-
-
-class GroupedL0(RegularizedL0):
-    """Esimator with grouped L0 psuedo-norm regularization."""
-
-    def __init__(
-        self,
-        groups,
-        alpha=1.0,
-        big_M=1000,
-        hierarchy=None,
-        ignore_psd_check=True,
-        fit_intercept=False,
-        copy_X=True,
-        warm_start=False,
-        solver=None,
-        solver_options=None,
-        **kwargs
-    ):
-        """Initialize estimator.
-
-        Args:
-            groups (list or ndarray):
-                array-like of integers specifying groups. Length should be the
-                same as model, where each integer entry specifies the group
-                each parameter corresponds to.
-            alpha (float):
-                Regularization hyper-parameter.
-            big_M (float):
-                Upper bound on the norm of coefficients associated with each
-                cluster (groups of coefficients) ||Beta_c||_2
-            hierarchy (list):
-                A list of lists of integers storing hierarchy relations between
-                groups of coefficients as given by the supplied groups parameter.
-                Each sublist contains indices of other groups
-                on which the coefficient associated with each element of
-                the list depends. i.e. hierarchy = [[1, 2], [0], []] mean that
-                group 0 depends on 1, and 2; 1 depends on 0, and 2 has no
-                dependence.
-            ignore_psd_check (bool):
-                Whether to ignore cvxpy's PSD checks  of matrix used in quadratic
-                form. Default is True to avoid raising errors for poorly
-                conditioned matrices. But if you want to be strict set to False.
-            fit_intercept (bool):
-                Whether the intercept should be estimated or not.
-                If False, the data is assumed to be already centered.
-            copy_X (bool):
-                If True, X will be copied; else, it may be overwritten.
-            warm_start (bool):
-                When set to True, reuse the solution of the previous call to
-                fit as initialization, otherwise, just erase the previous
-                solution.
-            solver (str):
-                cvxpy backend solver to use. Supported solvers are:
-                ECOS, ECOS_BB, CVXOPT, SCS, GUROBI, Elemental.
-                GLPK and GLPK_MI (via CVXOPT GLPK interface)
-            solver_options:
+            solver_options (dict):
                 dictionary of keyword arguments passed to cvxpy solve.
                 See docs in CVXEstimator for more information.
         """
-        super().__init__(
-            alpha=alpha,
-            big_M=big_M,
-            hierarchy=hierarchy,
-            ignore_psd_check=ignore_psd_check,
-            fit_intercept=fit_intercept,
-            copy_X=copy_X,
-            warm_start=warm_start,
-            solver=solver,
-            solver_options=solver_options,
-            **kwargs
-        )
-
-        self.groups = np.asarray(groups)
-        self._group_masks = [self.groups == i for i in np.unique(groups)]
-        self._z0 = cp.Variable(len(self._group_masks), boolean=True)
-
-    def _gen_objective(self, X, y):
-        """Generate the quadratic form portion of objective."""
-        c0 = 2 * X.shape[0]  # keeps hyperparameter scale independent
-        XTX = psd_wrap(X.T @ X) if self.ignore_psd_check else X.T @ X
-        objective = (
-            cp.quad_form(self._beta, XTX)
-            - 2 * y.T @ X @ self._beta
-            + c0 * self._lambda0 * cp.sum(self._z0)
-        )
-        return objective
-
-    def _gen_constraints(self, X, y):
-        """Generate the constraints used to solve l0 regularization."""
-        constraints = []
-        for i, mask in enumerate(self._group_masks):
-            constraints += [
-                self._big_M * self._z0[i] >= self._beta[mask],
-                self._big_M * self._z0[i] >= -self._beta[mask],
-            ]
-
-        if self.hierarchy is not None:
-            constraints += self._gen_hierarchy_constraints()
-        return constraints
-
-
-class GroupedL2L0(GroupedL0, MixedL0):
-    """Estimator with grouped L2L0 regularization solved with MIQP."""
-
-    def __init__(
-        self,
-        groups,
-        alpha=1.0,
-        l0_ratio=0.5,
-        big_M=1000,
-        hierarchy=None,
-        ignore_psd_check=True,
-        fit_intercept=False,
-        copy_X=True,
-        warm_start=False,
-        solver=None,
-        tikhonov_w=None,
-        solver_options=None,
-    ):
-        """Initialize estimator.
-
-        Args:
-            groups (list or ndarray):
-                array-like of integers specifying groups. Length should be the
-                same as model, where each integer entry specifies the group
-                each parameter corresponds to.
-            alpha (float):
-                Regularization hyper-parameter.
-            l0_ratio (float):
-                Mixing parameter between l1 and l0 regularization.
-            big_M (float):
-                Upper bound on the norm of coefficients associated with each
-                cluster (groups of coefficients) ||Beta_c||_2
-            hierarchy (list):
-                A list of lists of integers storing hierarchy relations between
-                groups of coefficients as given by the supplied groups parameter.
-                Each sublist contains indices of other groups
-                on which the coefficient associated with each element of
-                the list depends. i.e. hierarchy = [[1, 2], [0], []] mean that
-                group 0 depends on 1, and 2; 1 depends on 0, and 2 has no
-                dependence.
-            ignore_psd_check (bool):
-                Whether to ignore cvxpy's PSD checks  of matrix used in quadratic
-                form. Default is True to avoid raising errors for poorly
-                conditioned matrices. But if you want to be strict set to False.
-            fit_intercept (bool):
-                Whether the intercept should be estimated or not.
-                If False, the data is assumed to be already centered.
-            copy_X (bool):
-                If True, X will be copied; else, it may be overwritten.
-            warm_start (bool):
-                When set to True, reuse the solution of the previous call to
-                fit as initialization, otherwise, just erase the previous
-                solution.
-            solver (str):
-                cvxpy backend solver to use. Supported solvers are:
-                ECOS, ECOS_BB, CVXOPT, SCS, GUROBI, Elemental.
-                GLPK and GLPK_MI (via CVXOPT GLPK interface)
-            tikhonov_w (np.array):
-                Matrix to add weights to L2 regularization.
-            solver_options:
-                dictionary of keyword arguments passed to cvxpy solve.
-                See docs in CVXEstimator for more information.
-        """
-        # need to call super for sklearn clone function
         super().__init__(
             groups=groups,
             alpha=alpha,
@@ -638,6 +502,7 @@ class GroupedL2L0(GroupedL0, MixedL0):
         """Generate the objective function used in l2l0 regression model."""
         c0 = 2 * X.shape[0]  # keeps hyperparameter scale independent
         tikhonov_w = np.eye(X.shape[1]) if self.tikhonov_w is None else self.tikhonov_w
+
         objective = super()._gen_objective(X, y) + c0 * self._lambda1 * cp.sum_squares(
             tikhonov_w @ self._beta
         )

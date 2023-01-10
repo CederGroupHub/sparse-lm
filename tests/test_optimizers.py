@@ -44,11 +44,14 @@ def test_solver():
 
 
 @pytest.fixture(scope="module", params=ALL_ESTIMATORS)
-def estimator(request):
+def estimator(random_model, request):
+    ecis = random_model[2]
+    # Each correlation function as its own group. Doing ordinary hierarchy.
+    groups = list(range(len(ecis)))
     if "GUROBI" in cp.installed_solvers():
-        return request.param(solver="GUROBI")
+        return request.param(groups=groups, solver="GUROBI")
     else:
-        return request.param(solver="ECOS_BB")
+        return request.param(groups=groups, solver="ECOS_BB")
     # return request.param(solver="ECOS_BB")
 
 
@@ -60,11 +63,14 @@ def test_single_estimator(random_model, estimator):
 
 
 @pytest.fixture(scope="module", params=ONLY_L2L0)
-def mixed_l2l0_est(request):
+def mixed_l2l0_est(random_model, request):
+    ecis = random_model[2]
+    # Each correlation function as its own group. Doing ordinary hierarchy.
+    groups = list(range(len(ecis)))
     if "GUROBI" in cp.installed_solvers():
-        return request.param(solver="GUROBI")
+        return request.param(groups=groups, solver="GUROBI")
     else:
-        return request.param(solver="ECOS_BB")
+        return request.param(groups=groups, solver="ECOS_BB")
     # return request.param(solver="ECOS_BB")
 
 
