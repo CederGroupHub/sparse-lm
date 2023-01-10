@@ -10,7 +10,7 @@ import pytest
 from sparselm.model.miqp._regularized_l0 import L1L0, L2L0
 from sparselm.optimizer import GridSearch, LineSearch
 
-ALL_CRITERION = ["max_r2", "one_std_r2"]
+ALL_CRITERION = ["max_score", "one_std_score"]
 # Currently we will only test on mixedL0
 ALL_ESTIMATORS = [L2L0, L1L0]
 ONLY_L2L0 = [L2L0]

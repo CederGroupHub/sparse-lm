@@ -36,9 +36,9 @@ class GridSearch(GridSearchCV):
 
     An additional class variable opt_selection named opt_selection
     is added to allow switching hyper params selection mode. Currently,
-    supports "max_r2" (default), which is to maximize the r2 score;
-    also supports "one_std_r2", which is to apply one-standard-error
-    rule the r2 score.
+    supports "max_score" (default), which is to maximize the score;
+    also supports "one_std_score", which is to apply one-standard-error
+    rule to the score.
     """
 
     def __init__(
@@ -46,8 +46,8 @@ class GridSearch(GridSearchCV):
         estimator,
         param_grid,
         *,
-        opt_selection_method="max_r2",
-        scoring=None,
+        opt_selection_method="max_score",
+        scoring="neg_root_mean_squared_error",
         n_jobs=None,
         refit=True,
         cv=None,
@@ -68,11 +68,11 @@ class GridSearch(GridSearchCV):
                 Dictionary representing grid of hyper-parameters with their names
                 as keys and possible values. If given as a list of multiple dicts,
                 will search on multiple grids in parallel.
-            opt_selection_method(str, default=None):
-                The method to select optimal hyper params. Default to "max_r2", which
-                means to maximize r2 score. Can also choose "one_std_r2", which means
-                to apply one standard error rule on r2 scores.
-            scoring(str, callable, list, tuple or dict, default=None):
+            opt_selection_method(str, default="max_score"):
+                The method to select optimal hyper params. Default to "max_score", which
+                means to maximize the score. Can also choose "one_std_score", which means
+                to apply one standard error rule on scores.
+            scoring(str, callable, list, tuple or dict, default="neg_root_mean_squared_error"):
                 Strategy to evaluate the performance of the cross-validated model on
                 the test set.
                 If `scoring` represents a single score, one can use:
@@ -84,6 +84,9 @@ class GridSearch(GridSearchCV):
                   names and the values are the metric scores;
                 - a dictionary with metric names as keys and callables a values.
                 See :ref:`multimetric_grid_search` for an example.
+                Note: In sparse-lm, using "neg_root_mean_squared_error" is default
+                because in cluster expansion it is more conventional to analyze and present
+                errors in the root-mean-square error format compared to the r2_score.
             n_jobs(int, default=None):
                 Number of jobs to run in parallel.
                 ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
@@ -354,11 +357,11 @@ class GridSearch(GridSearchCV):
         # In single metric evaluation, refit_metric is "score"
         if self.refit or not self.multimetric_:
             # Implement more if needed.
-            if self.opt_selection_method == "max_r2":
+            if self.opt_selection_method == "max_score":
                 self.best_index_ = self._select_best_index(
                     self.refit, refit_metric, results
                 )
-            elif self.opt_selection_method == "one_std_r2":
+            elif self.opt_selection_method == "one_std_score":
                 self.best_index_ = self._select_best_index_onestd(
                     self.refit, refit_metric, results
                 )
@@ -416,9 +419,9 @@ class LineSearch(BaseSearchCV):
         estimator,
         param_grid,
         *,
-        opt_selection_method=None,
+        opt_selection_method="max_score",
         n_iter=None,
-        scoring=None,
+        scoring="neg_root_mean_squared_error",
         n_jobs=None,
         refit=True,
         cv=None,
@@ -440,14 +443,14 @@ class LineSearch(BaseSearchCV):
                 and lists of parameter settings to try as the second element.
                 In LineSearch, the hyper-params given first will be searched first
                 in a cycle. Multiple grids search is NOT supported!
-            opt_selection_method(list(str) or str, default=None):
-                The method to select optimal hyper params. Default to "max_r2", which
-                means to maximize r2 score. Can also choose "one_std_r2", which means
-                to apply one standard error rule on r2 scores.
+            opt_selection_method(list(str) or str, default="max_score"):
+                The method to select optimal hyper params. Default to "max_score", which
+                means to maximize score score. Can also choose "one_std_score", which means
+                to apply one standard error rule on score scores.
                 In line search, this argument can also be given as a list of str. This
                 will allow different selection methods for corresponding hyper-params in
                 the param_grid. For example, a good practice when using L2L0 estimator
-                shall be opt_selection_method = ["one_std_r2", "max_r2"] for "alpha"
+                shall be opt_selection_method = ["one_std_score", "max_score"] for "alpha"
                 and "l0_ratio", respectively.
             n_iter(int, default=None):
                 Number of iterations to perform. One iteration means a 1D search on
@@ -455,7 +458,7 @@ class LineSearch(BaseSearchCV):
                 param_grid.
                 n_iter must be at least as large as the number of hyper-params. Default
                 is 2 * number of hyper-params.
-            scoring(str, callable, list, tuple or dict, default=None):
+            scoring(str, callable, list, tuple or dict, default="neg_root_mean_squared_error"):
                 Strategy to evaluate the performance of the cross-validated model on
                 the test set.
                 If `scoring` represents a single score, one can use:
@@ -467,6 +470,9 @@ class LineSearch(BaseSearchCV):
                   names and the values are the metric scores;
                 - a dictionary with metric names as keys and callables a values.
                 See :ref:`multimetric_grid_search` for an example.
+                Note: In sparse-lm, using "neg_root_mean_squared_error" is default
+                because in cluster expansion it is more conventional to analyze and present
+                errors in the root-mean-square error format compared to the r2_score.
             n_jobs(int, default=None):
                 Number of jobs to run in parallel.
                 ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
@@ -560,7 +566,7 @@ class LineSearch(BaseSearchCV):
             raise ValueError("Parameters grid not given in the correct format!")
 
         if opt_selection_method is None:
-            self.opt_selection_methods = ["max_r2" for _ in range(self.n_params)]
+            self.opt_selection_methods = ["max_score" for _ in range(self.n_params)]
         elif isinstance(opt_selection_method, str):
             self.opt_selection_methods = [
                 opt_selection_method for _ in range(self.n_params)
@@ -574,7 +580,8 @@ class LineSearch(BaseSearchCV):
         else:
             raise ValueError(
                 "Optimal hyperparams selection method"
-                " not given in the correct format!"
+                " should either not be given, or given as a single string,"
+                " or as a list or strings with the same length as parameters!"
             )
 
         # Set a proper value for this, not too large or too small.
