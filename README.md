@@ -2,7 +2,7 @@
 
 Sparse Linear Regression Models
 ===============================
-
+[![test](https://github.com/CederGroupHub/sparse-lm/actions/workflows/test.yml/badge.svg?branch=main)](https://github.com/CederGroupHub/sparse-lm/actions/workflows/test.yml)
 [![pre-commit.ci status](https://results.pre-commit.ci/badge/github/CederGroupHub/sparse-lm/main.svg)](https://results.pre-commit.ci/latest/github/CederGroupHub/sparse-lm/main)
 [![pypi version](https://img.shields.io/pypi/v/sparse-lm?color=blue)](https://pypi.org/project/sparse-lm)
 
