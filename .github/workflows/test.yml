@@ -39,6 +39,7 @@ jobs:
           pip install -r requirements.txt
           pip install -r requirements-dev.txt
           pip install -r requirements-optional.txt
+          pip install -e .
 
       - name: Test with pytest
         run: |
