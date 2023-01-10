@@ -26,7 +26,7 @@ from sklearn.utils.fixes import delayed
 from sklearn.utils.validation import _check_fit_params, indexable
 
 
-class GridSearch(GridSearchCV):
+class OneSEGridSearchCV(GridSearchCV):
     """Exhaustive search over specified parameter values for an estimator.
 
     Same as GridSearchCV but we allow one standard error rule on all
@@ -636,7 +636,7 @@ class LineSearch(BaseSearchCV):
             ):
                 param_line[name] = [last_value] if pid != param_id else values
 
-            grid_search = GridSearch(
+            grid_search = OneSEGridSearchCV(
                 estimator=self.estimator,
                 param_grid=param_line,
                 opt_selection_method=self.opt_selection_methods[param_id],
