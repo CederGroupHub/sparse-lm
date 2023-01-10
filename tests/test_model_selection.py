@@ -8,7 +8,7 @@ import numpy as np
 import pytest
 
 from sparselm.model.miqp._regularized_l0 import L1L0, L2L0
-from sparselm.model_selection import OneSEGridSearchCV, LineSearch
+from sparselm.model_selection import LineSearch, OneSEGridSearchCV
 
 ALL_CRITERION = ["max_score", "one_std_score"]
 # Currently we will only test on mixedL0
