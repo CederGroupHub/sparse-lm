@@ -2,9 +2,7 @@
 
 
 from sparselm.model.miqp._best_subset import (
-    BestGroupSelection,
     BestSubsetSelection,
-    RidgedBestGroupSelection,
     RidgedBestSubsetSelection,
 )
 from sparselm.model.miqp._regularized_l0 import (
@@ -17,9 +15,7 @@ from sparselm.model.miqp._regularized_l0 import (
 
 __all__ = [
     "BestSubsetSelection",
-    "BestGroupSelection",
     "RidgedBestSubsetSelection",
-    "RidgedBestGroupSelection",
     "RegularizedL0",
     "L1L0",
     "L2L0",

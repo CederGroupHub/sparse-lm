@@ -15,12 +15,15 @@ from sparselm.model._base import CVXEstimator
 class BestSubsetSelection(CVXEstimator):
     """MIQP Best Subset Selection estimator.
 
+    Generalized best subset that allows grouping subsets.
+
     WARNING: Even with gurobi solver, this can take a very long time to
     converge for large problems and under-determined problems.
     """
 
     def __init__(
         self,
+        groups,
         sparse_bound,
         big_M=1000,
         hierarchy=None,
@@ -35,6 +38,11 @@ class BestSubsetSelection(CVXEstimator):
         """Initialize estimator.
 
         Args:
+            groups (list or ndarray):
+                array-like of integers specifying groups. Length should be the
+                same as model, where each integer entry specifies the group
+                each parameter corresponds to. If no grouping is required, simply
+                pass a list of all different numbers, i.e. using range.
             sparse_bound (int):
                 Upper bound on sparsity. The upper bound on total number of
                 nonzero coefficients.
@@ -82,7 +90,10 @@ class BestSubsetSelection(CVXEstimator):
         self.hierarchy = hierarchy
         self._big_M = cp.Parameter(nonneg=True, value=big_M)
         self.ignore_psd_check = ignore_psd_check
-        self._z0 = None
+
+        self.groups = np.asarray(groups)
+        self._group_masks = [self.groups == i for i in np.unique(groups)]
+        self._z0 = cp.Variable(len(self._group_masks), boolean=True)
 
     @property
     def sparse_bound(self):
@@ -118,12 +129,12 @@ class BestSubsetSelection(CVXEstimator):
 
     def _gen_constraints(self, X, y):
         """Generate the constraints used to solve l0 regularization."""
-        self._z0 = cp.Variable(X.shape[1], boolean=True)
-        constraints = [
-            self._big_M * self._z0 >= self._beta,
-            self._big_M * self._z0 >= -self._beta,
-            cp.sum(self._z0) <= self._bound,
-        ]
+        constraints = []
+        for i, mask in enumerate(self._group_masks):
+            constraints += [
+                self._big_M * self._z0[i] >= self._beta[mask],
+                self._big_M * self._z0[i] >= -self._beta[mask],
+            ]
 
         if self.hierarchy is not None:
             constraints += self._gen_hierarchy_constraints()
@@ -143,6 +154,7 @@ class RidgedBestSubsetSelection(BestSubsetSelection):
 
     def __init__(
         self,
+        groups,
         sparse_bound,
         alpha=1.0,
         big_M=1000,
@@ -158,6 +170,11 @@ class RidgedBestSubsetSelection(BestSubsetSelection):
         """Initialize estimator.
 
         Args:
+            groups (list or ndarray):
+                array-like of integers specifying groups. Length should be the
+                same as model, where each integer entry specifies the group
+                each parameter corresponds to. If no grouping is required, simply
+                pass a list of all different numbers, i.e. using range.
             sparse_bound (int):
                 Upper bound on sparsity. The upper bound on total number of
                 nonzero coefficients.
@@ -194,6 +211,7 @@ class RidgedBestSubsetSelection(BestSubsetSelection):
                 See docs in CVXEstimator for more information.
         """
         super().__init__(
+            groups=groups,
             sparse_bound=sparse_bound,
             big_M=big_M,
             hierarchy=hierarchy,
@@ -224,175 +242,3 @@ class RidgedBestSubsetSelection(BestSubsetSelection):
             self._beta
         )
         return objective
-
-
-class BestGroupSelection(BestSubsetSelection):
-    """MIQP Best group selection estimator."""
-
-    def __init__(
-        self,
-        groups,
-        sparse_bound,
-        big_M=1000,
-        hierarchy=None,
-        ignore_psd_check=True,
-        fit_intercept=False,
-        copy_X=True,
-        warm_start=False,
-        solver=None,
-        solver_options=None,
-        **kwargs,
-    ):
-        """Initialize a Lasso estimator.
-
-        Args:
-            groups (list or ndarray):
-                array-like of integers specifying groups. Length should be the
-                same as model, where each integer entry specifies the group
-                each parameter corresponds to.
-            sparse_bound (int):
-                Upper bound on sparsity. The upper bound on total number of
-                nonzero coefficients.
-            big_M (float):
-                Upper bound on the norm of coefficients associated with each
-                cluster (groups of coefficients) ||Beta_c||_2
-            hierarchy (list):
-                A list of lists of integers storing hierarchy relations between
-                coefficients.
-                Each sublist contains indices of other coefficients
-                on which the coefficient associated with each element of
-                the list depends. i.e. hierarchy = [[1, 2], [0], []] mean that
-                coefficient 0 depends on 1, and 2; 1 depends on 0, and 2 has no
-                dependence.
-            ignore_psd_check (bool):
-                Whether to ignore cvxpy's PSD checks  of matrix used in quadratic
-                form. Default is True to avoid raising errors for poorly
-                conditioned matrices. But if you want to be strict set to False.
-            fit_intercept (bool):
-                Whether the intercept should be estimated or not.
-                If False, the data is assumed to be already centered.
-            copy_X (bool):
-                If True, X will be copied; else, it may be overwritten.
-            warm_start (bool):
-                When set to True, reuse the solution of the previous call to
-                fit as initialization, otherwise, just erase the previous
-                solution.
-            solver (str):
-                cvxpy backend solver to use. Supported solvers are:
-                ECOS, ECOS_BB, CVXOPT, SCS, GUROBI, Elemental.
-                GLPK and GLPK_MI (via CVXOPT GLPK interface)
-            solver_options:
-                dictionary of keyword arguments passed to cvxpy solve.
-                See docs in CVXEstimator for more information.
-        """
-        super().__init__(
-            sparse_bound=sparse_bound,
-            big_M=big_M,
-            hierarchy=hierarchy,
-            ignore_psd_check=ignore_psd_check,
-            fit_intercept=fit_intercept,
-            copy_X=copy_X,
-            warm_start=warm_start,
-            solver=solver,
-            solver_options=solver_options,
-            **kwargs,
-        )
-        self.groups = np.asarray(groups)
-        self._group_masks = [self.groups == i for i in np.unique(groups)]
-        self._z0 = cp.Variable(len(self._group_masks), boolean=True)
-
-    def _gen_constraints(self, X, y):
-        """Generate the constraints used to solve l0 regularization."""
-        constraints = []
-        for i, mask in enumerate(self._group_masks):
-            constraints += [
-                self._big_M * self._z0[i] >= self._beta[mask],
-                self._big_M * self._z0[i] >= -self._beta[mask],
-            ]
-
-        if self.hierarchy is not None:
-            constraints += self._gen_hierarchy_constraints()
-        return constraints
-
-
-class RidgedBestGroupSelection(RidgedBestSubsetSelection, BestGroupSelection):
-    """Best group selection estimator with ridge regularization."""
-
-    def __init__(
-        self,
-        groups,
-        sparse_bound,
-        alpha=1.0,
-        big_M=1000,
-        hierarchy=None,
-        ignore_psd_check=True,
-        fit_intercept=False,
-        copy_X=True,
-        warm_start=False,
-        solver=None,
-        solver_options=None,
-    ):
-        """Initialize estimator.
-
-        Args:
-            groups (list or ndarray):
-                array-like of integers specifying groups. Length should be the
-                same as model, where each integer entry specifies the group
-                each parameter corresponds to.
-            sparse_bound (int):
-                Upper bound on sparsity. The upper bound on total number of
-                nonzero coefficients.
-            alpha (float):
-                Ridge regularization hyper-parameter.
-            big_M (float):
-                Upper bound on the norm of coefficients associated with each
-                cluster (groups of coefficients) ||Beta_c||_2
-            hierarchy (list):
-                A list of lists of integers storing hierarchy relations between
-                coefficients.
-                Each sublist contains indices of other coefficients
-                on which the coefficient associated with each element of
-                the list depends. i.e. hierarchy = [[1, 2], [0], []] mean that
-                coefficient 0 depends on 1, and 2; 1 depends on 0, and 2 has no
-                dependence.
-            ignore_psd_check (bool):
-                Whether to ignore cvxpy's PSD checks  of matrix used in quadratic
-                form. Default is True to avoid raising errors for poorly
-                conditioned matrices. But if you want to be strict set to False.
-            fit_intercept (bool):
-                Whether the intercept should be estimated or not.
-                If False, the data is assumed to be already centered.
-            copy_X (bool):
-                If True, X will be copied; else, it may be overwritten.
-            warm_start (bool):
-                When set to True, reuse the solution of the previous call to
-                fit as initialization, otherwise, just erase the previous
-                solution.
-            solver (str):
-                cvxpy backend solver to use. Supported solvers are:
-                ECOS, ECOS_BB, CVXOPT, SCS, GUROBI, Elemental.
-                GLPK and GLPK_MI (via CVXOPT GLPK interface)
-            solver_options:
-                dictionary of keyword arguments passed to cvxpy solve.
-                See docs in CVXEstimator for more information.
-        """
-        # need to call super for sklearn clone function
-        super().__init__(
-            groups=groups,
-            sparse_bound=sparse_bound,
-            alpha=alpha,
-            big_M=big_M,
-            hierarchy=hierarchy,
-            ignore_psd_check=ignore_psd_check,
-            fit_intercept=fit_intercept,
-            copy_X=copy_X,
-            warm_start=warm_start,
-            solver=solver,
-            solver_options=solver_options,
-        )
-
-    def _gen_objective(self, X, y):
-        RidgedBestSubsetSelection._gen_objective(self, X, y)
-
-    def _gen_constraints(self, X, y):
-        BestGroupSelection._gen_constraints(self, X, y)
