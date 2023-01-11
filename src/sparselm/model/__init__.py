@@ -1,18 +1,18 @@
 """Classes implementing generalized linear regression estimators."""
 
-from ._lasso import (
-    GroupLasso,
-    Lasso,
-    OverlapGroupLasso,
-    RidgedGroupLasso,
-    SparseGroupLasso,
-)
 from ._adaptive_lasso import (
     AdaptiveGroupLasso,
     AdaptiveLasso,
     AdaptiveOverlapGroupLasso,
     AdaptiveRidgedGroupLasso,
     AdaptiveSparseGroupLasso,
+)
+from ._lasso import (
+    GroupLasso,
+    Lasso,
+    OverlapGroupLasso,
+    RidgedGroupLasso,
+    SparseGroupLasso,
 )
 from ._miqp import (
     L1L0,
