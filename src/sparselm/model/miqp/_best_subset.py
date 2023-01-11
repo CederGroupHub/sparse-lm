@@ -9,7 +9,7 @@ import cvxpy as cp
 import numpy as np
 from cvxpy.atoms.affine.wraps import psd_wrap
 
-from sparselm.model._base import CVXEstimator
+from src.sparselm.model._base import CVXEstimator
 
 
 class BestSubsetSelection(CVXEstimator):

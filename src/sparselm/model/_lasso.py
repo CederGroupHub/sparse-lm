@@ -18,7 +18,7 @@ import cvxpy as cp
 import numpy as np
 from scipy.linalg import sqrtm
 
-from sparselm.model._base import CVXEstimator
+from src.sparselm.model._base import CVXEstimator
 
 
 class Lasso(CVXEstimator):
