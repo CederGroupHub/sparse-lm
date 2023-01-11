@@ -6,8 +6,9 @@ checked in real CE systems."""
 import cvxpy as cp
 import numpy as np
 import pytest
-from src.sparselm import L1L0, L2L0
-from src.sparselm import GridSearchCV, LineSearchCV
+
+from sparselm.model import L1L0, L2L0
+from sparselm.model_selection import GridSearchCV, LineSearchCV
 
 ALL_CRITERION = ["max_score", "one_std_score"]
 # Currently we will only test on mixedL0
