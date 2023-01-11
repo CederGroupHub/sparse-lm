@@ -1,13 +1,19 @@
 """MIQP based solvers for sparse solutions with hierarchical constraints.
 
-Mixed L1L0 and L2L0 solvers.
+Generalized regularized l0 solvers that allow grouping parameters as detailed in:
+
+    https://doi.org/10.1287/opre.2015.1436
+
 L1L0 proposed by Wenxuan Huang:
+
     https://arxiv.org/abs/1807.10753
+
 L2L0 proposed by Peichen Zhong:
+
     https://journals.aps.org/prb/abstract/10.1103/PhysRevB.106.024203
 
-Estimators allow optional inclusion of hierarchical at the single feature
-single coefficient level.
+Estimators allow optional inclusion of hierarchical constraints at the single coefficient
+or group of coefficients level.
 """
 
 __author__ = "Luis Barroso-Luque, Fengyu Xie"
@@ -17,14 +23,13 @@ import warnings
 from abc import ABCMeta, abstractmethod
 
 import cvxpy as cp
-import numpy as np
-from cvxpy.atoms.affine.wraps import psd_wrap
 
-from sparselm.model._base import CVXEstimator, TikhonovMixin
+from ._base import MIQP_L0
+from sparselm.model._base import TikhonovMixin
 
 
-class RegularizedL0(CVXEstimator):
-    """Implementation of MIQP l0 regularized estimator.
+class RegularizedL0(MIQP_L0):
+    """Implementation of mixed-integer quadratic programming l0 regularized estimator.
 
     Supports grouping parameters and group-level hierarchy, but requires groups as a
     compulsory argument.
@@ -93,6 +98,10 @@ class RegularizedL0(CVXEstimator):
                 See docs in CVXEstimator for more information.
         """
         super().__init__(
+            groups=groups,
+            big_M=big_M,
+            hierarchy=hierarchy,
+            ignore_psd_check=ignore_psd_check,
             fit_intercept=fit_intercept,
             copy_X=copy_X,
             warm_start=warm_start,
@@ -100,15 +109,8 @@ class RegularizedL0(CVXEstimator):
             solver_options=solver_options,
         )
 
-        self.hierarchy = hierarchy
         self._alpha = alpha
         self._lambda0 = cp.Parameter(nonneg=True, value=alpha)
-        self._big_M = cp.Parameter(nonneg=True, value=big_M)
-        self.ignore_psd_check = ignore_psd_check
-
-        self.groups = np.asarray(groups)
-        self._group_masks = [self.groups == i for i in np.unique(groups)]
-        self._z0 = cp.Variable(len(self._group_masks), boolean=True)
 
     @property
     def alpha(self):
@@ -121,47 +123,11 @@ class RegularizedL0(CVXEstimator):
         self._alpha = val
         self._lambda0.value = val
 
-    @property
-    def big_M(self):
-        """Get MIQP big M value."""
-        return self._big_M.value
-
-    @big_M.setter
-    def big_M(self, val):
-        """Set MIQP big M value."""
-        self._big_M.value = val
-
     def _gen_objective(self, X, y):
-        """Generate the quadratic form portion of objective."""
+        """Generate the quadratic form and l0 regularization portion of objective."""
         c0 = 2 * X.shape[0]  # keeps hyperparameter scale independent
-        XTX = psd_wrap(X.T @ X) if self.ignore_psd_check else X.T @ X
-        objective = (
-            cp.quad_form(self._beta, XTX)
-            - 2 * y.T @ X @ self._beta
-            + c0 * self._lambda0 * cp.sum(self._z0)
-        )
+        objective = super()._gen_objective(X, y) + c0 * self._lambda0 * cp.sum(self._z0)
         return objective
-
-    def _gen_constraints(self, X, y):
-        """Generate the constraints used to solve l0 regularization."""
-        constraints = []
-        for i, mask in enumerate(self._group_masks):
-            constraints += [
-                self._big_M * self._z0[i] >= self._beta[mask],
-                self._big_M * self._z0[i] >= -self._beta[mask],
-            ]
-
-        if self.hierarchy is not None:
-            constraints += self._gen_hierarchy_constraints()
-        return constraints
-
-    def _gen_hierarchy_constraints(self):
-        """Generate single feature hierarchy constraints."""
-        return [
-            self._z0[high_id] <= self._z0[sub_id]
-            for high_id, sub_ids in enumerate(self.hierarchy)
-            for sub_id in sub_ids
-        ]
 
 
 class MixedL0(RegularizedL0, metaclass=ABCMeta):
@@ -290,6 +256,7 @@ class L1L0(MixedL0):
 
     Estimator with L1L0 regularization solved with mixed integer programming
     as discussed in:
+
     https://arxiv.org/abs/1807.10753
 
     Installation of Gurobi is not a must, but highly recommended.
@@ -389,7 +356,6 @@ class L1L0(MixedL0):
         constraints = super()._gen_constraints(X, y)
         # L1 constraints (why not do an l1 norm in the objective instead?)
         constraints += [self._z1 >= self._beta, self._z1 >= -1.0 * self._beta]
-
         return constraints
 
     def _gen_objective(self, X, y):
