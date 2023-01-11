@@ -1,0 +1,1197 @@
+<!doctype html>
+<html class="no-js" lang="en">
+  <head><meta charset="utf-8"/>
+    <meta name="viewport" content="width=device-width,initial-scale=1"/>
+    <meta name="color-scheme" content="light dark"><meta name="generator" content="Docutils 0.19: https://docutils.sourceforge.io/" />
+<link rel="index" title="Index" href="genindex.html" /><link rel="search" title="Search" href="search.html" /><link rel="next" title="sparselm.model_selection" href="sparselm.model_selection.html" /><link rel="prev" title="API Documentation" href="api.html" />
+
+    <!-- Generated with Sphinx 6.1.3 and Furo 2022.12.07 -->
+        <title>sparselm.model - sparse-lm</title>
+      <link rel="stylesheet" type="text/css" href="_static/pygments.css" />
+    <link rel="stylesheet" type="text/css" href="_static/styles/furo.css?digest=91d0f0d1c444bdcb17a68e833c7a53903343c195" />
+    <link rel="stylesheet" type="text/css" href="_static/styles/furo-extensions.css?digest=30d1aed668e5c3a91c3e3bf6a60b675221979f0e" />
+    <link rel="stylesheet" type="text/css" href="_static/custom.css" />
+    
+    
+
+
+<style>
+  body {
+    --color-code-background: #eeffcc;
+  --color-code-foreground: black;
+  --admonition-font-size: 92%;
+  --admonition-title-font-size: 92%;
+  --font-stack: Lato,-apple-system,BlinkMacSystemFont,Segoe UI,Helvetica,Arial,sans-serif,Apple Color Emoji,Segoe UI Emoji;
+  --font-size--small: 92%;
+  --font-size--small--2: 87.5%;
+  --font-size--small--3: 87.5%;
+  --font-size--small--4: 87.5%;
+  
+  }
+  @media not print {
+    body[data-theme="dark"] {
+      --color-code-background: #272822;
+  --color-code-foreground: #f8f8f2;
+  --admonition-font-size: 92%;
+  --admonition-title-font-size: 92%;
+  --font-stack: Lato,-apple-system,BlinkMacSystemFont,Segoe UI,Helvetica,Arial,sans-serif,Apple Color Emoji,Segoe UI Emoji;
+  --font-size--small: 92%;
+  --font-size--small--2: 87.5%;
+  --font-size--small--3: 87.5%;
+  --font-size--small--4: 87.5%;
+  
+    }
+    @media (prefers-color-scheme: dark) {
+      body:not([data-theme="light"]) {
+        --color-code-background: #272822;
+  --color-code-foreground: #f8f8f2;
+  --admonition-font-size: 92%;
+  --admonition-title-font-size: 92%;
+  --font-stack: Lato,-apple-system,BlinkMacSystemFont,Segoe UI,Helvetica,Arial,sans-serif,Apple Color Emoji,Segoe UI Emoji;
+  --font-size--small: 92%;
+  --font-size--small--2: 87.5%;
+  --font-size--small--3: 87.5%;
+  --font-size--small--4: 87.5%;
+  
+      }
+    }
+  }
+</style></head>
+  <body>
+    
+    <script>
+      document.body.dataset.theme = localStorage.getItem("theme") || "auto";
+    </script>
+    
+
+<svg xmlns="http://www.w3.org/2000/svg" style="display: none;">
+  <symbol id="svg-toc" viewBox="0 0 24 24">
+    <title>Contents</title>
+    <svg stroke="currentColor" fill="currentColor" stroke-width="0" viewBox="0 0 1024 1024">
+      <path d="M408 442h480c4.4 0 8-3.6 8-8v-56c0-4.4-3.6-8-8-8H408c-4.4 0-8 3.6-8 8v56c0 4.4 3.6 8 8 8zm-8 204c0 4.4 3.6 8 8 8h480c4.4 0 8-3.6 8-8v-56c0-4.4-3.6-8-8-8H408c-4.4 0-8 3.6-8 8v56zm504-486H120c-4.4 0-8 3.6-8 8v56c0 4.4 3.6 8 8 8h784c4.4 0 8-3.6 8-8v-56c0-4.4-3.6-8-8-8zm0 632H120c-4.4 0-8 3.6-8 8v56c0 4.4 3.6 8 8 8h784c4.4 0 8-3.6 8-8v-56c0-4.4-3.6-8-8-8zM115.4 518.9L271.7 642c5.8 4.6 14.4.5 14.4-6.9V388.9c0-7.4-8.5-11.5-14.4-6.9L115.4 505.1a8.74 8.74 0 0 0 0 13.8z"/>
+    </svg>
+  </symbol>
+  <symbol id="svg-menu" viewBox="0 0 24 24">
+    <title>Menu</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather-menu">
+      <line x1="3" y1="12" x2="21" y2="12"></line>
+      <line x1="3" y1="6" x2="21" y2="6"></line>
+      <line x1="3" y1="18" x2="21" y2="18"></line>
+    </svg>
+  </symbol>
+  <symbol id="svg-arrow-right" viewBox="0 0 24 24">
+    <title>Expand</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather-chevron-right">
+      <polyline points="9 18 15 12 9 6"></polyline>
+    </svg>
+  </symbol>
+  <symbol id="svg-sun" viewBox="0 0 24 24">
+    <title>Light mode</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="feather-sun">
+      <circle cx="12" cy="12" r="5"></circle>
+      <line x1="12" y1="1" x2="12" y2="3"></line>
+      <line x1="12" y1="21" x2="12" y2="23"></line>
+      <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+      <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+      <line x1="1" y1="12" x2="3" y2="12"></line>
+      <line x1="21" y1="12" x2="23" y2="12"></line>
+      <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+      <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+    </svg>
+  </symbol>
+  <symbol id="svg-moon" viewBox="0 0 24 24">
+    <title>Dark mode</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="icon-tabler-moon">
+      <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+      <path d="M12 3c.132 0 .263 0 .393 0a7.5 7.5 0 0 0 7.92 12.446a9 9 0 1 1 -8.313 -12.454z" />
+    </svg>
+  </symbol>
+  <symbol id="svg-sun-half" viewBox="0 0 24 24">
+    <title>Auto light/dark mode</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="icon-tabler-shadow">
+      <path stroke="none" d="M0 0h24v24H0z" fill="none"/>
+      <circle cx="12" cy="12" r="9" />
+      <path d="M13 12h5" />
+      <path d="M13 15h4" />
+      <path d="M13 18h1" />
+      <path d="M13 9h4" />
+      <path d="M13 6h1" />
+    </svg>
+  </symbol>
+</svg>
+
+<input type="checkbox" class="sidebar-toggle" name="__navigation" id="__navigation">
+<input type="checkbox" class="sidebar-toggle" name="__toc" id="__toc">
+<label class="overlay sidebar-overlay" for="__navigation">
+  <div class="visually-hidden">Hide navigation sidebar</div>
+</label>
+<label class="overlay toc-overlay" for="__toc">
+  <div class="visually-hidden">Hide table of contents sidebar</div>
+</label>
+
+
+
+<div class="page">
+  <header class="mobile-header">
+    <div class="header-left">
+      <label class="nav-overlay-icon" for="__navigation">
+        <div class="visually-hidden">Toggle site navigation sidebar</div>
+        <i class="icon"><svg><use href="#svg-menu"></use></svg></i>
+      </label>
+    </div>
+    <div class="header-center">
+      <a href="index.html"><div class="brand">sparse-lm</div></a>
+    </div>
+    <div class="header-right">
+      <div class="theme-toggle-container theme-toggle-header">
+        <button class="theme-toggle">
+          <div class="visually-hidden">Toggle Light / Dark / Auto color theme</div>
+          <svg class="theme-icon-when-auto"><use href="#svg-sun-half"></use></svg>
+          <svg class="theme-icon-when-dark"><use href="#svg-moon"></use></svg>
+          <svg class="theme-icon-when-light"><use href="#svg-sun"></use></svg>
+        </button>
+      </div>
+      <label class="toc-overlay-icon toc-header-icon" for="__toc">
+        <div class="visually-hidden">Toggle table of contents sidebar</div>
+        <i class="icon"><svg><use href="#svg-toc"></use></svg></i>
+      </label>
+    </div>
+  </header>
+  <aside class="sidebar-drawer">
+    <div class="sidebar-container">
+      
+      <div class="sidebar-sticky"><a class="sidebar-brand" href="index.html">
+  
+  
+  <span class="sidebar-brand-text">sparse-lm</span>
+  
+</a><form class="sidebar-search-container" method="get" action="search.html" role="search">
+  <input class="sidebar-search" placeholder="Search" name="q" aria-label="Search">
+  <input type="hidden" name="check_keywords" value="yes">
+  <input type="hidden" name="area" value="default">
+</form>
+<div id="searchbox"></div><div class="sidebar-scroll"><div class="sidebar-tree">
+  <p class="caption" role="heading"><span class="caption-text">Getting Started</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="install.html">Install</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Information</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="license.html">License</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://github.com/CederGroupHub/sparse-lm">GitHub</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Reference</span></p>
+<ul class="current">
+<li class="toctree-l1 current has-children"><a class="reference internal" href="api.html">API</a><input checked="" class="toctree-checkbox" id="toctree-checkbox-1" name="toctree-checkbox-1" role="switch" type="checkbox"/><label for="toctree-checkbox-1"><div class="visually-hidden">Toggle child pages in navigation</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul class="current">
+<li class="toctree-l2 current current-page"><a class="current reference internal" href="#">sparselm.model</a></li>
+<li class="toctree-l2"><a class="reference internal" href="sparselm.model_selection.html">sparselm.model_selection</a></li>
+<li class="toctree-l2"><a class="reference internal" href="sparselm.tools.html">sparselm.tools</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="genindex.html">Index</a></li>
+</ul>
+
+</div>
+</div>
+
+      </div>
+      
+    </div>
+  </aside>
+  <div class="main">
+    <div class="content">
+      <div class="article-container">
+        <a href="#" class="back-to-top muted-link">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+            <path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8v12z"></path>
+          </svg>
+          <span>Back to top</span>
+        </a>
+        <div class="content-icon-container">
+          
+<div class="theme-toggle-container theme-toggle-content">
+            <button class="theme-toggle">
+              <div class="visually-hidden">Toggle Light / Dark / Auto color theme</div>
+              <svg class="theme-icon-when-auto"><use href="#svg-sun-half"></use></svg>
+              <svg class="theme-icon-when-dark"><use href="#svg-moon"></use></svg>
+              <svg class="theme-icon-when-light"><use href="#svg-sun"></use></svg>
+            </button>
+          </div>
+          <label class="toc-overlay-icon toc-content-icon" for="__toc">
+            <div class="visually-hidden">Toggle table of contents sidebar</div>
+            <i class="icon"><svg><use href="#svg-toc"></use></svg></i>
+          </label>
+        </div>
+        <article role="main">
+          <section id="module-sparselm.model">
+<span id="sparselm-model"></span><h1>sparselm.model<a class="headerlink" href="#module-sparselm.model" title="Permalink to this heading">#</a></h1>
+<p>Classes implementing generalized linear regression estimators.</p>
+<dl class="py class">
+<dt class="sig sig-object py" id="sparselm.model.OrdinaryLeastSquares">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">sparselm.model.</span></span><span class="sig-name descname"><span class="pre">OrdinaryLeastSquares</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">fit_intercept</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">copy_X</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">warm_start</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">solver</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">solver_options</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/sparselm/model/_ols.html#OrdinaryLeastSquares"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#sparselm.model.OrdinaryLeastSquares" title="Permalink to this definition">#</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">CVXEstimator</span></code></p>
+<p>OLS Linear Regression Estimator implemented with cvxpy.</p>
+<p>Initialize estimator.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>fit_intercept</strong> (<a class="reference external" href="https://docs.python.org/3.9/library/functions.html#bool" title="(in Python v3.9)"><em>bool</em></a>) – Whether the intercept should be estimated or not.
+If False, the data is assumed to be already centered.</p></li>
+<li><p><strong>copy_X</strong> (<a class="reference external" href="https://docs.python.org/3.9/library/functions.html#bool" title="(in Python v3.9)"><em>bool</em></a>) – If True, X will be copied; else, it may be overwritten.</p></li>
+<li><p><strong>warm_start</strong> (<a class="reference external" href="https://docs.python.org/3.9/library/functions.html#bool" title="(in Python v3.9)"><em>bool</em></a>) – When set to True, reuse the solution of the previous call to
+fit as initialization, otherwise, just erase the previous
+solution.</p></li>
+<li><p><strong>solver</strong> (<a class="reference external" href="https://docs.python.org/3.9/library/stdtypes.html#str" title="(in Python v3.9)"><em>str</em></a>) – cvxpy backend solver to use. Supported solvers are:
+ECOS, ECOS_BB, CVXOPT, SCS, GUROBI, Elemental.
+GLPK and GLPK_MI (via CVXOPT GLPK interface)</p></li>
+<li><p><strong>solver_options</strong> (<a class="reference external" href="https://docs.python.org/3.9/library/stdtypes.html#dict" title="(in Python v3.9)"><em>dict</em></a>) – dictionary of keyword arguments passed to cvxpy solve.
+See docs linked above for more information.</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="sparselm.model.Lasso">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">sparselm.model.</span></span><span class="sig-name descname"><span class="pre">Lasso</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">alpha</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1.0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fit_intercept</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">copy_X</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">warm_start</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">solver</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">solver_options</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/sparselm/model/_lasso.html#Lasso"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#sparselm.model.Lasso" title="Permalink to this definition">#</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">CVXEstimator</span></code></p>
+<p>Lasso Estimator implemented with cvxpy.</p>
+<dl class="simple">
+<dt>Regularized model:</dt><dd><p>|| X * Beta - y ||^2_2 + alpha * ||Beta||_1</p>
+</dd>
+</dl>
+<p>Where w represents a vector of weights that is iteratively updated.</p>
+<p>Initialize a Lasso estimator.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>alpha</strong> (<a class="reference external" href="https://docs.python.org/3.9/library/functions.html#float" title="(in Python v3.9)"><em>float</em></a>) – Regularization hyper-parameter.</p></li>
+<li><p><strong>fit_intercept</strong> (<a class="reference external" href="https://docs.python.org/3.9/library/functions.html#bool" title="(in Python v3.9)"><em>bool</em></a>) – Whether the intercept should be estimated or not.
+If False, the data is assumed to be already centered.</p></li>
+<li><p><strong>copy_X</strong> (<a class="reference external" href="https://docs.python.org/3.9/library/functions.html#bool" title="(in Python v3.9)"><em>bool</em></a>) – If True, X will be copied; else, it may be overwritten.</p></li>
+<li><p><strong>warm_start</strong> (<a class="reference external" href="https://docs.python.org/3.9/library/functions.html#bool" title="(in Python v3.9)"><em>bool</em></a>) – When set to True, reuse the solution of the previous call to
+fit as initialization, otherwise, just erase the previous
+solution.</p></li>
+<li><p><strong>solver</strong> (<a class="reference external" href="https://docs.python.org/3.9/library/stdtypes.html#str" title="(in Python v3.9)"><em>str</em></a>) – cvxpy backend solver to use. Supported solvers are:
+ECOS, ECOS_BB, CVXOPT, SCS, GUROBI, Elemental.
+GLPK and GLPK_MI (via CVXOPT GLPK interface)</p></li>
+<li><p><strong>solver_options</strong> – dictionary of keyword arguments passed to cvxpy solve.
+See docs in CVXEstimator for more information.</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="py property">
+<dt class="sig sig-object py" id="sparselm.model.Lasso.alpha">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">alpha</span></span><a class="headerlink" href="#sparselm.model.Lasso.alpha" title="Permalink to this definition">#</a></dt>
+<dd><p>Get alpha hyperparameter value.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="sparselm.model.BestSubsetSelection">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">sparselm.model.</span></span><span class="sig-name descname"><span class="pre">BestSubsetSelection</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">groups</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sparse_bound</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">big_M</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1000</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">hierarchy</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ignore_psd_check</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fit_intercept</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">copy_X</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">warm_start</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">solver</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">solver_options</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/sparselm/model/_miqp/_best_subset.html#BestSubsetSelection"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#sparselm.model.BestSubsetSelection" title="Permalink to this definition">#</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">CVXEstimator</span></code></p>
+<p>MIQP Best Subset Selection estimator.</p>
+<p>Generalized best subset that allows grouping subsets.</p>
+<p>WARNING: Even with gurobi solver, this can take a very long time to
+converge for large problems and under-determined problems.</p>
+<p>Initialize estimator.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>groups</strong> (<a class="reference external" href="https://docs.python.org/3.9/library/stdtypes.html#list" title="(in Python v3.9)"><em>list</em></a><em> or </em><em>ndarray</em>) – array-like of integers specifying groups. Length should be the
+same as model, where each integer entry specifies the group
+each parameter corresponds to. If no grouping is required, simply
+pass a list of all different numbers, i.e. using range.</p></li>
+<li><p><strong>sparse_bound</strong> (<a class="reference external" href="https://docs.python.org/3.9/library/functions.html#int" title="(in Python v3.9)"><em>int</em></a>) – Upper bound on sparsity. The upper bound on total number of
+nonzero coefficients.</p></li>
+<li><p><strong>big_M</strong> (<a class="reference external" href="https://docs.python.org/3.9/library/functions.html#float" title="(in Python v3.9)"><em>float</em></a>) – Upper bound on the norm of coefficients associated with each
+cluster (groups of coefficients) ||Beta_c||_2</p></li>
+<li><p><strong>hierarchy</strong> (<a class="reference external" href="https://docs.python.org/3.9/library/stdtypes.html#list" title="(in Python v3.9)"><em>list</em></a>) – A list of lists of integers storing hierarchy relations between
+coefficients.
+Each sublist contains indices of other coefficients
+on which the coefficient associated with each element of
+the list depends. i.e. hierarchy = [[1, 2], [0], []] mean that
+coefficient 0 depends on 1, and 2; 1 depends on 0, and 2 has no
+dependence.</p></li>
+<li><p><strong>ignore_psd_check</strong> (<a class="reference external" href="https://docs.python.org/3.9/library/functions.html#bool" title="(in Python v3.9)"><em>bool</em></a>) – Whether to ignore cvxpy’s PSD checks  of matrix used in quadratic
+form. Default is True to avoid raising errors for poorly
+conditioned matrices. But if you want to be strict set to False.</p></li>
+<li><p><strong>fit_intercept</strong> (<a class="reference external" href="https://docs.python.org/3.9/library/functions.html#bool" title="(in Python v3.9)"><em>bool</em></a>) – Whether the intercept should be estimated or not.
+If False, the data is assumed to be already centered.</p></li>
+<li><p><strong>copy_X</strong> (<a class="reference external" href="https://docs.python.org/3.9/library/functions.html#bool" title="(in Python v3.9)"><em>bool</em></a>) – If True, X will be copied; else, it may be overwritten.</p></li>
+<li><p><strong>warm_start</strong> (<a class="reference external" href="https://docs.python.org/3.9/library/functions.html#bool" title="(in Python v3.9)"><em>bool</em></a>) – When set to True, reuse the solution of the previous call to
+fit as initialization, otherwise, just erase the previous
+solution.</p></li>
+<li><p><strong>solver</strong> (<a class="reference external" href="https://docs.python.org/3.9/library/stdtypes.html#str" title="(in Python v3.9)"><em>str</em></a>) – cvxpy backend solver to use. Supported solvers are:
+ECOS, ECOS_BB, CVXOPT, SCS, GUROBI, Elemental.
+GLPK and GLPK_MI (via CVXOPT GLPK interface)</p></li>
+<li><p><strong>solver_options</strong> – dictionary of keyword arguments passed to cvxpy solve.
+See docs in CVXEstimator for more information.</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="py property">
+<dt class="sig sig-object py" id="sparselm.model.BestSubsetSelection.sparse_bound">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">sparse_bound</span></span><a class="headerlink" href="#sparselm.model.BestSubsetSelection.sparse_bound" title="Permalink to this definition">#</a></dt>
+<dd><p>Get sparse bound value.</p>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="sparselm.model.BestSubsetSelection.big_M">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">big_M</span></span><a class="headerlink" href="#sparselm.model.BestSubsetSelection.big_M" title="Permalink to this definition">#</a></dt>
+<dd><p>Get MIQP big M value.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="sparselm.model.RidgedBestSubsetSelection">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">sparselm.model.</span></span><span class="sig-name descname"><span class="pre">RidgedBestSubsetSelection</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">groups</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sparse_bound</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">alpha</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1.0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">big_M</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1000</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">hierarchy</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ignore_psd_check</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fit_intercept</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">copy_X</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">warm_start</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">solver</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">solver_options</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/sparselm/model/_miqp/_best_subset.html#RidgedBestSubsetSelection"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#sparselm.model.RidgedBestSubsetSelection" title="Permalink to this definition">#</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#sparselm.model.BestSubsetSelection" title="sparselm.model._miqp._best_subset.BestSubsetSelection"><code class="xref py py-class docutils literal notranslate"><span class="pre">BestSubsetSelection</span></code></a></p>
+<p>MIQP  Best subset selection estimator with ridge regularization.</p>
+<p>Initialize estimator.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>groups</strong> (<a class="reference external" href="https://docs.python.org/3.9/library/stdtypes.html#list" title="(in Python v3.9)"><em>list</em></a><em> or </em><em>ndarray</em>) – array-like of integers specifying groups. Length should be the
+same as model, where each integer entry specifies the group
+each parameter corresponds to. If no grouping is required, simply
+pass a list of all different numbers, i.e. using range.</p></li>
+<li><p><strong>sparse_bound</strong> (<a class="reference external" href="https://docs.python.org/3.9/library/functions.html#int" title="(in Python v3.9)"><em>int</em></a>) – Upper bound on sparsity. The upper bound on total number of
+nonzero coefficients.</p></li>
+<li><p><strong>big_M</strong> (<a class="reference external" href="https://docs.python.org/3.9/library/functions.html#float" title="(in Python v3.9)"><em>float</em></a>) – Upper bound on the norm of coefficients associated with each
+cluster (groups of coefficients) ||Beta_c||_2</p></li>
+<li><p><strong>hierarchy</strong> (<a class="reference external" href="https://docs.python.org/3.9/library/stdtypes.html#list" title="(in Python v3.9)"><em>list</em></a>) – A list of lists of integers storing hierarchy relations between
+coefficients.
+Each sublist contains indices of other coefficients
+on which the coefficient associated with each element of
+the list depends. i.e. hierarchy = [[1, 2], [0], []] mean that
+coefficient 0 depends on 1, and 2; 1 depends on 0, and 2 has no
+dependence.</p></li>
+<li><p><strong>ignore_psd_check</strong> (<a class="reference external" href="https://docs.python.org/3.9/library/functions.html#bool" title="(in Python v3.9)"><em>bool</em></a>) – Whether to ignore cvxpy’s PSD checks  of matrix used in quadratic
+form. Default is True to avoid raising errors for poorly
+conditioned matrices. But if you want to be strict set to False.</p></li>
+<li><p><strong>fit_intercept</strong> (<a class="reference external" href="https://docs.python.org/3.9/library/functions.html#bool" title="(in Python v3.9)"><em>bool</em></a>) – Whether the intercept should be estimated or not.
+If False, the data is assumed to be already centered.</p></li>
+<li><p><strong>copy_X</strong> (<a class="reference external" href="https://docs.python.org/3.9/library/functions.html#bool" title="(in Python v3.9)"><em>bool</em></a>) – If True, X will be copied; else, it may be overwritten.</p></li>
+<li><p><strong>warm_start</strong> (<a class="reference external" href="https://docs.python.org/3.9/library/functions.html#bool" title="(in Python v3.9)"><em>bool</em></a>) – When set to True, reuse the solution of the previous call to
+fit as initialization, otherwise, just erase the previous
+solution.</p></li>
+<li><p><strong>solver</strong> (<a class="reference external" href="https://docs.python.org/3.9/library/stdtypes.html#str" title="(in Python v3.9)"><em>str</em></a>) – cvxpy backend solver to use. Supported solvers are:
+ECOS, ECOS_BB, CVXOPT, SCS, GUROBI, Elemental.
+GLPK and GLPK_MI (via CVXOPT GLPK interface)</p></li>
+<li><p><strong>solver_options</strong> – dictionary of keyword arguments passed to cvxpy solve.
+See docs in CVXEstimator for more information.</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="py property">
+<dt class="sig sig-object py" id="sparselm.model.RidgedBestSubsetSelection.alpha">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">alpha</span></span><a class="headerlink" href="#sparselm.model.RidgedBestSubsetSelection.alpha" title="Permalink to this definition">#</a></dt>
+<dd><p>Get alpha hyper-parameter value.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="sparselm.model.RegularizedL0">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">sparselm.model.</span></span><span class="sig-name descname"><span class="pre">RegularizedL0</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">groups</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">alpha</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1.0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">big_M</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1000</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">hierarchy</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ignore_psd_check</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fit_intercept</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">copy_X</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">warm_start</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">solver</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">solver_options</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/sparselm/model/_miqp/_regularized_l0.html#RegularizedL0"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#sparselm.model.RegularizedL0" title="Permalink to this definition">#</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">CVXEstimator</span></code></p>
+<p>Implementation of MIQP l0 regularized estimator.</p>
+<p>Initialize estimator.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>groups</strong> (<a class="reference external" href="https://docs.python.org/3.9/library/stdtypes.html#list" title="(in Python v3.9)"><em>list</em></a><em> or </em><em>ndarray</em>) – array-like of integers specifying groups. Length should be the
+same as model, where each integer entry specifies the group
+each parameter corresponds to. One dimensional.
+Note: in cluster expansion, a group can either be each correlation
+function (function-level hierarchy) or be each cluster orbit
+(orbit-level hierarchy). In the first case, each index should be its
+own group, so use range(len(ecis)). In the second case, correlation
+functions under the same orbit will be considered as the same group,
+so use function_orbit_ids here.
+Each external term in cluster subspace should be considered as its
+own group.</p></li>
+<li><p><strong>alpha</strong> (<a class="reference external" href="https://docs.python.org/3.9/library/functions.html#float" title="(in Python v3.9)"><em>float</em></a>) – Regularization hyper-parameter.</p></li>
+<li><p><strong>big_M</strong> (<a class="reference external" href="https://docs.python.org/3.9/library/functions.html#float" title="(in Python v3.9)"><em>float</em></a>) – Upper bound on the norm of coefficients associated with each
+cluster (groups of coefficients) ||Beta_c||_2</p></li>
+<li><p><strong>hierarchy</strong> (<a class="reference external" href="https://docs.python.org/3.9/library/stdtypes.html#list" title="(in Python v3.9)"><em>list</em></a>) – A list of lists of integers storing hierarchy relations between
+groups.
+Each sublist contains indices of other groups
+on which the group associated with each element of
+the list depends. i.e. hierarchy = [[1, 2], [0], []] mean that
+group 0 depends on 1, and 2; 1 depends on 0, and 2 has no
+dependence.</p></li>
+<li><p><strong>ignore_psd_check</strong> (<a class="reference external" href="https://docs.python.org/3.9/library/functions.html#bool" title="(in Python v3.9)"><em>bool</em></a>) – Whether to ignore cvxpy’s PSD checks  of matrix used in quadratic
+form. Default is True to avoid raising errors for poorly
+conditioned matrices. But if you want to be strict set to False.</p></li>
+<li><p><strong>fit_intercept</strong> (<a class="reference external" href="https://docs.python.org/3.9/library/functions.html#bool" title="(in Python v3.9)"><em>bool</em></a>) – Whether the intercept should be estimated or not.
+If False, the data is assumed to be already centered.</p></li>
+<li><p><strong>copy_X</strong> (<a class="reference external" href="https://docs.python.org/3.9/library/functions.html#bool" title="(in Python v3.9)"><em>bool</em></a>) – If True, X will be copied; else, it may be overwritten.</p></li>
+<li><p><strong>warm_start</strong> (<a class="reference external" href="https://docs.python.org/3.9/library/functions.html#bool" title="(in Python v3.9)"><em>bool</em></a>) – When set to True, reuse the solution of the previous call to
+fit as initialization, otherwise, just erase the previous
+solution.</p></li>
+<li><p><strong>solver</strong> (<a class="reference external" href="https://docs.python.org/3.9/library/stdtypes.html#str" title="(in Python v3.9)"><em>str</em></a>) – cvxpy backend solver to use. Supported solvers are:
+ECOS, ECOS_BB, CVXOPT, SCS, GUROBI, Elemental.
+GLPK and GLPK_MI (via CVXOPT GLPK interface)</p></li>
+<li><p><strong>solver_options</strong> (<a class="reference external" href="https://docs.python.org/3.9/library/stdtypes.html#dict" title="(in Python v3.9)"><em>dict</em></a>) – dictionary of keyword arguments passed to cvxpy solve.
+See docs in CVXEstimator for more information.</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="py property">
+<dt class="sig sig-object py" id="sparselm.model.RegularizedL0.alpha">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">alpha</span></span><a class="headerlink" href="#sparselm.model.RegularizedL0.alpha" title="Permalink to this definition">#</a></dt>
+<dd><p>Get alpha hyperparameter value.</p>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="sparselm.model.RegularizedL0.big_M">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">big_M</span></span><a class="headerlink" href="#sparselm.model.RegularizedL0.big_M" title="Permalink to this definition">#</a></dt>
+<dd><p>Get MIQP big M value.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="sparselm.model.L1L0">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">sparselm.model.</span></span><span class="sig-name descname"><span class="pre">L1L0</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">groups</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">alpha</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1.0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">l0_ratio</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.5</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">big_M</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1000</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">hierarchy</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ignore_psd_check</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fit_intercept</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">copy_X</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">warm_start</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">solver</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">solver_options</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/sparselm/model/_miqp/_regularized_l0.html#L1L0"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#sparselm.model.L1L0" title="Permalink to this definition">#</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">MixedL0</span></code></p>
+<p>L1L0 regularized estimator.</p>
+<p>Estimator with L1L0 regularization solved with mixed integer programming
+as discussed in:
+<a class="reference external" href="https://arxiv.org/abs/1807.10753">https://arxiv.org/abs/1807.10753</a></p>
+<p>Removed Gurobi dependency!
+Uses any solver it has in hand. If nothing, will use ECOS_BB.
+ECOS_BB is only supported after cvxpy-1.1.6. It will not be given
+automatically pulled up by cvxpy, and has to be explicitly called
+passed in the constructor with solver=’ECOS_BB’.</p>
+<p>Installation of Gurobi is no longer a must, but highly recommended.
+You can get a free academic gurobi license…
+ECOS_BB also works but can be very slow.</p>
+<dl class="simple">
+<dt>Regularized model is:</dt><dd><dl class="simple">
+<dt>||X * Beta - y||^2 + alpha * l0_ratio * ||Beta||_0</dt><dd><ul class="simple">
+<li><p>alpha * (1 - l0_ratio) * ||Beta||_1</p></li>
+</ul>
+</dd>
+</dl>
+</dd>
+</dl>
+<p>Initialize estimator.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>groups</strong> (<a class="reference external" href="https://docs.python.org/3.9/library/stdtypes.html#list" title="(in Python v3.9)"><em>list</em></a><em> or </em><em>ndarray</em>) – array-like of integers specifying groups. Length should be the
+same as model, where each integer entry specifies the group
+each parameter corresponds to. One dimensional.
+Note: in cluster expansion, a group can either be each correlation
+function (function-level hierarchy) or be each cluster orbit
+(orbit-level hierarchy). In the first case, each index should be its
+own group, so use range(len(ecis)). In the second case, correlation
+functions under the same orbit will be considered as the same group,
+so use function_orbit_ids here.
+Each external term in cluster subspace should be considered as its
+own group.</p></li>
+<li><p><strong>alpha</strong> (<a class="reference external" href="https://docs.python.org/3.9/library/functions.html#float" title="(in Python v3.9)"><em>float</em></a>) – Regularization hyper-parameter.</p></li>
+<li><p><strong>l0_ratio</strong> (<a class="reference external" href="https://docs.python.org/3.9/library/functions.html#float" title="(in Python v3.9)"><em>float</em></a>) – Mixing parameter between l1 and l0 regularization.</p></li>
+<li><p><strong>big_M</strong> (<a class="reference external" href="https://docs.python.org/3.9/library/functions.html#float" title="(in Python v3.9)"><em>float</em></a>) – Upper bound on the norm of coefficients associated with each
+cluster (groups of coefficients) ||Beta_c||_2</p></li>
+<li><p><strong>hierarchy</strong> (<a class="reference external" href="https://docs.python.org/3.9/library/stdtypes.html#list" title="(in Python v3.9)"><em>list</em></a>) – A list of lists of integers storing hierarchy relations between
+coefficients.
+Each sublist contains indices of other coefficients
+on which the coefficient associated with each element of
+the list depends. i.e. hierarchy = [[1, 2], [0], []] mean that
+coefficient 0 depends on 1, and 2; 1 depends on 0, and 2 has no
+dependence.</p></li>
+<li><p><strong>ignore_psd_check</strong> (<a class="reference external" href="https://docs.python.org/3.9/library/functions.html#bool" title="(in Python v3.9)"><em>bool</em></a>) – Whether to ignore cvxpy’s PSD checks of matrix used in quadratic
+form. Default is True to avoid raising errors for poorly
+conditioned matrices. But if you want to be strict set to False.</p></li>
+<li><p><strong>fit_intercept</strong> (<a class="reference external" href="https://docs.python.org/3.9/library/functions.html#bool" title="(in Python v3.9)"><em>bool</em></a>) – Whether the intercept should be estimated or not.
+If False, the data is assumed to be already centered.</p></li>
+<li><p><strong>copy_X</strong> (<a class="reference external" href="https://docs.python.org/3.9/library/functions.html#bool" title="(in Python v3.9)"><em>bool</em></a>) – If True, X will be copied; else, it may be overwritten.</p></li>
+<li><p><strong>warm_start</strong> (<a class="reference external" href="https://docs.python.org/3.9/library/functions.html#bool" title="(in Python v3.9)"><em>bool</em></a>) – When set to True, reuse the solution of the previous call to
+fit as initialization, otherwise, just erase the previous
+solution.</p></li>
+<li><p><strong>solver</strong> (<a class="reference external" href="https://docs.python.org/3.9/library/stdtypes.html#str" title="(in Python v3.9)"><em>str</em></a>) – cvxpy backend solver to use. Supported solvers are:
+ECOS, ECOS_BB, CVXOPT, SCS, GUROBI, Elemental.
+GLPK and GLPK_MI (via CVXOPT GLPK interface)</p></li>
+<li><p><strong>solver_options</strong> (<a class="reference external" href="https://docs.python.org/3.9/library/stdtypes.html#dict" title="(in Python v3.9)"><em>dict</em></a>) – dictionary of keyword arguments passed to cvxpy solve.
+See docs in CVXEstimator for more information.</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="sparselm.model.L2L0">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">sparselm.model.</span></span><span class="sig-name descname"><span class="pre">L2L0</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">groups</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">alpha</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1.0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">l0_ratio</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.5</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">big_M</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1000</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">hierarchy</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ignore_psd_check</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fit_intercept</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">copy_X</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">warm_start</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">solver</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tikhonov_w</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">solver_options</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/sparselm/model/_miqp/_regularized_l0.html#L2L0"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#sparselm.model.L2L0" title="Permalink to this definition">#</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">MixedL0</span></code></p>
+<p>L2L0 regularized estimator.</p>
+<p>Estimator with L2L0 regularization solved with mixed integer programming
+proposed by Peichen Zhong.</p>
+<p><a class="reference external" href="https://arxiv.org/abs/2204.13789">https://arxiv.org/abs/2204.13789</a></p>
+<dl class="simple">
+<dt>Regularized model is:</dt><dd><dl class="simple">
+<dt>||X * Beta - y||^2 + alpha * l0_ratio * ||Beta||_0</dt><dd><ul class="simple">
+<li><p>alpha * (1 - l0_ratio) * ||Beta||^2_2</p></li>
+</ul>
+</dd>
+</dl>
+</dd>
+</dl>
+<p>Initialize L2L0 estimator.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>groups</strong> (<a class="reference external" href="https://docs.python.org/3.9/library/stdtypes.html#list" title="(in Python v3.9)"><em>list</em></a><em> or </em><em>ndarray</em>) – array-like of integers specifying groups. Length should be the
+same as model, where each integer entry specifies the group
+each parameter corresponds to. One dimensional.
+Note: in cluster expansion, a group can either be each correlation
+function (function-level hierarchy) or be each cluster orbit
+(orbit-level hierarchy). In the first case, each index should be its
+own group, so use range(len(ecis)). In the second case, correlation
+functions under the same orbit will be considered as the same group,
+so use function_orbit_ids here.
+Each external term in cluster subspace should be considered as its
+own group.</p></li>
+<li><p><strong>alpha</strong> (<a class="reference external" href="https://docs.python.org/3.9/library/functions.html#float" title="(in Python v3.9)"><em>float</em></a>) – Regularization hyper-parameter.</p></li>
+<li><p><strong>l0_ratio</strong> (<a class="reference external" href="https://docs.python.org/3.9/library/functions.html#float" title="(in Python v3.9)"><em>float</em></a>) – Mixing parameter between l1 and l0 regularization.</p></li>
+<li><p><strong>big_M</strong> (<a class="reference external" href="https://docs.python.org/3.9/library/functions.html#float" title="(in Python v3.9)"><em>float</em></a>) – Upper bound on the norm of coefficients associated with each
+cluster (groups of coefficients) ||Beta_c||_2</p></li>
+<li><p><strong>hierarchy</strong> (<a class="reference external" href="https://docs.python.org/3.9/library/stdtypes.html#list" title="(in Python v3.9)"><em>list</em></a>) – A list of lists of integers storing hierarchy relations between
+coefficients.
+Each sublist contains indices of other coefficients
+on which the coefficient associated with each element of
+the list depends. i.e. hierarchy = [[1, 2], [0], []] mean that
+coefficient 0 depends on 1, and 2; 1 depends on 0, and 2 has no
+dependence.</p></li>
+<li><p><strong>ignore_psd_check</strong> (<a class="reference external" href="https://docs.python.org/3.9/library/functions.html#bool" title="(in Python v3.9)"><em>bool</em></a>) – Wether to ignore cvxpy’s PSD checks of matrix used in quadratic
+form. Default is True to avoid raising errors for poorly
+conditioned matrices. But if you want to be strict set to False.</p></li>
+<li><p><strong>fit_intercept</strong> (<a class="reference external" href="https://docs.python.org/3.9/library/functions.html#bool" title="(in Python v3.9)"><em>bool</em></a>) – Whether the intercept should be estimated or not.
+If False, the data is assumed to be already centered.</p></li>
+<li><p><strong>copy_X</strong> (<a class="reference external" href="https://docs.python.org/3.9/library/functions.html#bool" title="(in Python v3.9)"><em>bool</em></a>) – If True, X will be copied; else, it may be overwritten.</p></li>
+<li><p><strong>warm_start</strong> (<a class="reference external" href="https://docs.python.org/3.9/library/functions.html#bool" title="(in Python v3.9)"><em>bool</em></a>) – When set to True, reuse the solution of the previous call to
+fit as initialization, otherwise, just erase the previous
+solution.</p></li>
+<li><p><strong>solver</strong> (<a class="reference external" href="https://docs.python.org/3.9/library/stdtypes.html#str" title="(in Python v3.9)"><em>str</em></a>) – cvxpy backend solver to use. Supported solvers are:
+ECOS, ECOS_BB, CVXOPT, SCS, GUROBI, Elemental.
+GLPK and GLPK_MI (via CVXOPT GLPK interface)</p></li>
+<li><p><strong>tikhonov_w</strong> (<em>np.array</em>) – Matrix to add weights to L2 regularization.</p></li>
+<li><p><strong>solver_options</strong> (<a class="reference external" href="https://docs.python.org/3.9/library/stdtypes.html#dict" title="(in Python v3.9)"><em>dict</em></a>) – dictionary of keyword arguments passed to cvxpy solve.
+See docs in CVXEstimator for more information.</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="sparselm.model.GroupLasso">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">sparselm.model.</span></span><span class="sig-name descname"><span class="pre">GroupLasso</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">groups</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">alpha</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1.0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">group_weights</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">standardize</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fit_intercept</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">copy_X</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">warm_start</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">solver</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">solver_options</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/sparselm/model/_lasso.html#GroupLasso"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#sparselm.model.GroupLasso" title="Permalink to this definition">#</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#sparselm.model.Lasso" title="sparselm.model._lasso.Lasso"><code class="xref py py-class docutils literal notranslate"><span class="pre">Lasso</span></code></a></p>
+<p>Group Lasso implementation.</p>
+<dl class="simple">
+<dt>Regularized model:</dt><dd><p>|| X * Beta - y ||^2_2 + alpha * sum_{G} w_G * ||Beta_G||_2</p>
+</dd>
+</dl>
+<p>Where G represents groups of features/coefficients</p>
+<p>Initialize estimator.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>groups</strong> (<a class="reference external" href="https://docs.python.org/3.9/library/stdtypes.html#list" title="(in Python v3.9)"><em>list</em></a><em> or </em><em>ndarray</em>) – array-like of integers specifying groups. Length should be the
+same as model, where each integer entry specifies the group
+each parameter corresponds to.</p></li>
+<li><p><strong>alpha</strong> (<a class="reference external" href="https://docs.python.org/3.9/library/functions.html#float" title="(in Python v3.9)"><em>float</em></a>) – Regularization hyper-parameter.</p></li>
+<li><p><strong>fit_intercept</strong> (<a class="reference external" href="https://docs.python.org/3.9/library/functions.html#bool" title="(in Python v3.9)"><em>bool</em></a>) – Whether the intercept should be estimated or not.
+If False, the data is assumed to be already centered.</p></li>
+<li><p><strong>group_weights</strong> (<em>ndarray</em>) – optional
+Weights for each group to use in the regularization term.
+The default is to use the sqrt of the group sizes, however any
+weight can be specified. The array must be the
+same length as the groups given. If you need all groups
+weighted equally just pass an array of ones.</p></li>
+<li><p><strong>standardize</strong> (<a class="reference external" href="https://docs.python.org/3.9/library/functions.html#bool" title="(in Python v3.9)"><em>bool</em></a>) – optional
+Whether to standardize the group regularization penalty using
+the feature matrix. See the following for reference:
+<a class="reference external" href="http://faculty.washington.edu/nrsimon/standGL.pdf">http://faculty.washington.edu/nrsimon/standGL.pdf</a></p></li>
+<li><p><strong>copy_X</strong> (<a class="reference external" href="https://docs.python.org/3.9/library/functions.html#bool" title="(in Python v3.9)"><em>bool</em></a>) – If True, X will be copied; else, it may be overwritten.</p></li>
+<li><p><strong>warm_start</strong> (<a class="reference external" href="https://docs.python.org/3.9/library/functions.html#bool" title="(in Python v3.9)"><em>bool</em></a>) – When set to True, reuse the solution of the previous call to
+fit as initialization, otherwise, just erase the previous
+solution.</p></li>
+<li><p><strong>solver</strong> (<a class="reference external" href="https://docs.python.org/3.9/library/stdtypes.html#str" title="(in Python v3.9)"><em>str</em></a>) – cvxpy backend solver to use. Supported solvers are:
+ECOS, ECOS_BB, CVXOPT, SCS, GUROBI, Elemental.
+GLPK and GLPK_MI (via CVXOPT GLPK interface)</p></li>
+<li><p><strong>solver_options</strong> – dictionary of keyword arguments passed to cvxpy solve.
+See docs in CVXEstimator for more information.</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="sparselm.model.OverlapGroupLasso">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">sparselm.model.</span></span><span class="sig-name descname"><span class="pre">OverlapGroupLasso</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">group_list</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">alpha</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1.0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">group_weights</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">standardize</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fit_intercept</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">copy_X</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">warm_start</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">solver</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">solver_options</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/sparselm/model/_lasso.html#OverlapGroupLasso"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#sparselm.model.OverlapGroupLasso" title="Permalink to this definition">#</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#sparselm.model.GroupLasso" title="sparselm.model._lasso.GroupLasso"><code class="xref py py-class docutils literal notranslate"><span class="pre">GroupLasso</span></code></a></p>
+<p>Overlap Group Lasso implementation.</p>
+<dl class="simple">
+<dt>Regularized model:</dt><dd><p>|| X * Beta - y ||^2_2 + alpha * sum_{G} w_G * ||Beta_G||_2</p>
+</dd>
+</dl>
+<p>Where G represents groups of features/coefficients, and overlaping groups
+are acceptable. Meaning a coefficients can be in more than one group.</p>
+<p>Initialize estimator.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>group_list</strong> (<a class="reference external" href="https://docs.python.org/3.9/library/stdtypes.html#list" title="(in Python v3.9)"><em>list</em></a><em> of </em><em>lists</em>) – list of lists of integers specifying groups. The length of the
+list holding lists should be the same as model. Each inner list
+has integers specifying the groups the coefficient for that
+index belongs to. i.e. [[1,2],[2,3],[1,2,3]] means the first
+coefficient belongs to group 1 and 2, the second to 2, and 3
+and the third to 1, 2 and 3. In other words the 3 groups would
+be: (0, 2), (0, 1, 2), (1, 2)</p></li>
+<li><p><strong>alpha</strong> (<a class="reference external" href="https://docs.python.org/3.9/library/functions.html#float" title="(in Python v3.9)"><em>float</em></a>) – Regularization hyper-parameter.</p></li>
+<li><p><strong>group_weights</strong> (<em>ndarray</em>) – optional
+Weights for each group to use in the regularization term.
+The default is to use the sqrt of the group sizes, however any
+weight can be specified. The array must be the
+same length as the number of different groups given.
+If you need all groups weighted equally just pass an array of
+ones.</p></li>
+<li><p><strong>standardize</strong> (<a class="reference external" href="https://docs.python.org/3.9/library/functions.html#bool" title="(in Python v3.9)"><em>bool</em></a>) – optional
+Whether to standardize the group regularization penalty using
+the feature matrix. See the following for reference:
+<a class="reference external" href="http://faculty.washington.edu/nrsimon/standGL.pdf">http://faculty.washington.edu/nrsimon/standGL.pdf</a></p></li>
+<li><p><strong>fit_intercept</strong> (<a class="reference external" href="https://docs.python.org/3.9/library/functions.html#bool" title="(in Python v3.9)"><em>bool</em></a>) – Whether the intercept should be estimated or not.
+If False, the data is assumed to be already centered.</p></li>
+<li><p><strong>copy_X</strong> (<a class="reference external" href="https://docs.python.org/3.9/library/functions.html#bool" title="(in Python v3.9)"><em>bool</em></a>) – If True, X will be copied; else, it may be overwritten.</p></li>
+<li><p><strong>warm_start</strong> (<a class="reference external" href="https://docs.python.org/3.9/library/functions.html#bool" title="(in Python v3.9)"><em>bool</em></a>) – When set to True, reuse the solution of the previous call to
+fit as initialization, otherwise, just erase the previous
+solution.</p></li>
+<li><p><strong>solver</strong> (<a class="reference external" href="https://docs.python.org/3.9/library/stdtypes.html#str" title="(in Python v3.9)"><em>str</em></a>) – cvxpy backend solver to use. Supported solvers are:
+ECOS, ECOS_BB, CVXOPT, SCS, GUROBI, Elemental.
+GLPK and GLPK_MI (via CVXOPT GLPK interface)</p></li>
+<li><p><strong>solver_options</strong> – dictionary of keyword arguments passed to cvxpy solve.
+See docs in CVXEstimator for more information.</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="sparselm.model.SparseGroupLasso">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">sparselm.model.</span></span><span class="sig-name descname"><span class="pre">SparseGroupLasso</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">groups</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">l1_ratio</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.5</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">alpha</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1.0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">group_weights</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">standardize</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fit_intercept</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">copy_X</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">warm_start</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">solver</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">solver_options</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/sparselm/model/_lasso.html#SparseGroupLasso"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#sparselm.model.SparseGroupLasso" title="Permalink to this definition">#</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#sparselm.model.GroupLasso" title="sparselm.model._lasso.GroupLasso"><code class="xref py py-class docutils literal notranslate"><span class="pre">GroupLasso</span></code></a></p>
+<p>Sparse Group Lasso.</p>
+<dl class="simple">
+<dt>Regularized model:</dt><dd><dl class="simple">
+<dt>|| X * Beta - y ||^2_2</dt><dd><ul class="simple">
+<li><p>alpha * l1_ratio * ||Beta||_1</p></li>
+<li><p>alpha * (1 - l1_ratio) * sum_{G}||Beta_G||_2</p></li>
+</ul>
+</dd>
+</dl>
+</dd>
+</dl>
+<p>Where G represents groups of features / coefficients</p>
+<p>Initialize estimator.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>groups</strong> (<a class="reference external" href="https://docs.python.org/3.9/library/stdtypes.html#list" title="(in Python v3.9)"><em>list</em></a><em> or </em><em>ndarray</em>) – array-like of integers specifying groups. Length should be the
+same as model, where each integer entry specifies the group
+each parameter corresponds to.</p></li>
+<li><p><strong>l1_ratio</strong> (<a class="reference external" href="https://docs.python.org/3.9/library/functions.html#float" title="(in Python v3.9)"><em>float</em></a>) – Mixing parameter between l1 and group lasso regularization.</p></li>
+<li><p><strong>alpha</strong> (<a class="reference external" href="https://docs.python.org/3.9/library/functions.html#float" title="(in Python v3.9)"><em>float</em></a>) – Regularization hyper-parameter.</p></li>
+<li><p><strong>group_weights</strong> (<em>ndarray</em>) – optional
+Weights for each group to use in the regularization term.
+The default is to use the sqrt of the group sizes, however any
+weight can be specified. The array must be the
+same length as the groups given. If you need all groups
+weighted equally just pass an array of ones.</p></li>
+<li><p><strong>standardize</strong> (<a class="reference external" href="https://docs.python.org/3.9/library/functions.html#bool" title="(in Python v3.9)"><em>bool</em></a>) – optional
+Whether to standardize the group regularization penalty using
+the feature matrix. See the following for reference:
+<a class="reference external" href="http://faculty.washington.edu/nrsimon/standGL.pdf">http://faculty.washington.edu/nrsimon/standGL.pdf</a></p></li>
+<li><p><strong>fit_intercept</strong> (<a class="reference external" href="https://docs.python.org/3.9/library/functions.html#bool" title="(in Python v3.9)"><em>bool</em></a>) – Whether the intercept should be estimated or not.
+If False, the data is assumed to be already centered.</p></li>
+<li><p><strong>copy_X</strong> (<a class="reference external" href="https://docs.python.org/3.9/library/functions.html#bool" title="(in Python v3.9)"><em>bool</em></a>) – If True, X will be copied; else, it may be overwritten.</p></li>
+<li><p><strong>warm_start</strong> (<a class="reference external" href="https://docs.python.org/3.9/library/functions.html#bool" title="(in Python v3.9)"><em>bool</em></a>) – When set to True, reuse the solution of the previous call to
+fit as initialization, otherwise, just erase the previous
+solution.</p></li>
+<li><p><strong>solver</strong> (<a class="reference external" href="https://docs.python.org/3.9/library/stdtypes.html#str" title="(in Python v3.9)"><em>str</em></a>) – cvxpy backend solver to use. Supported solvers are:
+ECOS, ECOS_BB, CVXOPT, SCS, GUROBI, Elemental.
+GLPK and GLPK_MI (via CVXOPT GLPK interface)</p></li>
+<li><p><strong>solver_options</strong> – dictionary of keyword arguments passed to cvxpy solve.
+See docs in CVXEstimator for more information.</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="py property">
+<dt class="sig sig-object py" id="sparselm.model.SparseGroupLasso.alpha">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">alpha</span></span><a class="headerlink" href="#sparselm.model.SparseGroupLasso.alpha" title="Permalink to this definition">#</a></dt>
+<dd><p>Get alpha hyperparameter value.</p>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="sparselm.model.SparseGroupLasso.l1_ratio">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">l1_ratio</span></span><a class="headerlink" href="#sparselm.model.SparseGroupLasso.l1_ratio" title="Permalink to this definition">#</a></dt>
+<dd><p>Get l1 ratio.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="sparselm.model.RidgedGroupLasso">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">sparselm.model.</span></span><span class="sig-name descname"><span class="pre">RidgedGroupLasso</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">groups</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">alpha</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1.0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">delta</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1.0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">group_weights</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">standardize</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fit_intercept</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">copy_X</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">warm_start</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">solver</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">solver_options</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/sparselm/model/_lasso.html#RidgedGroupLasso"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#sparselm.model.RidgedGroupLasso" title="Permalink to this definition">#</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#sparselm.model.GroupLasso" title="sparselm.model._lasso.GroupLasso"><code class="xref py py-class docutils literal notranslate"><span class="pre">GroupLasso</span></code></a></p>
+<p>Ridged Group Lasso implementation.</p>
+<dl class="simple">
+<dt>Regularized model:</dt><dd><dl class="simple">
+<dt>|| X * Beta - y ||^2_2 + alpha * sum_{G} w_G * ||Beta_G||_2</dt><dd><ul class="simple">
+<li><p>sum_{G} delta_l * ||Beta_G||^2_2</p></li>
+</ul>
+</dd>
+</dl>
+</dd>
+</dl>
+<p>Where G represents groups of features/coefficients</p>
+<p>For details on proper standardization refer to:
+<a class="reference external" href="http://faculty.washington.edu/nrsimon/standGL.pdf">http://faculty.washington.edu/nrsimon/standGL.pdf</a></p>
+<p>Initialize estimator.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>groups</strong> (<a class="reference external" href="https://docs.python.org/3.9/library/stdtypes.html#list" title="(in Python v3.9)"><em>list</em></a><em> or </em><em>ndarray</em>) – array-like of integers specifying groups. Length should be the
+same as model, where each integer entry specifies the group
+each parameter corresponds to.</p></li>
+<li><p><strong>alpha</strong> (<a class="reference external" href="https://docs.python.org/3.9/library/functions.html#float" title="(in Python v3.9)"><em>float</em></a>) – Regularization hyper-parameter.</p></li>
+<li><p><strong>delta</strong> (<em>ndarray</em>) – optional
+Positive 1D array. Regularization vector for ridge penalty.</p></li>
+<li><p><strong>group_weights</strong> (<em>ndarray</em>) – optional
+Weights for each group to use in the regularization term.
+The default is to use the sqrt of the group sizes, however any
+weight can be specified. The array must be the
+same length as the groups given. If you need all groups
+weighted equally just pass an array of ones.</p></li>
+<li><p><strong>standardize</strong> (<a class="reference external" href="https://docs.python.org/3.9/library/functions.html#bool" title="(in Python v3.9)"><em>bool</em></a>) – optional
+Whether to standardize the group regularization penalty using
+the feature matrix. See the following for reference:
+<a class="reference external" href="http://faculty.washington.edu/nrsimon/standGL.pdf">http://faculty.washington.edu/nrsimon/standGL.pdf</a></p></li>
+<li><p><strong>fit_intercept</strong> (<a class="reference external" href="https://docs.python.org/3.9/library/functions.html#bool" title="(in Python v3.9)"><em>bool</em></a>) – Whether the intercept should be estimated or not.
+If False, the data is assumed to be already centered.</p></li>
+<li><p><strong>copy_X</strong> (<a class="reference external" href="https://docs.python.org/3.9/library/functions.html#bool" title="(in Python v3.9)"><em>bool</em></a>) – If True, X will be copied; else, it may be overwritten.</p></li>
+<li><p><strong>warm_start</strong> (<a class="reference external" href="https://docs.python.org/3.9/library/functions.html#bool" title="(in Python v3.9)"><em>bool</em></a>) – When set to True, reuse the solution of the previous call to
+fit as initialization, otherwise, just erase the previous
+solution.</p></li>
+<li><p><strong>solver</strong> (<a class="reference external" href="https://docs.python.org/3.9/library/stdtypes.html#str" title="(in Python v3.9)"><em>str</em></a>) – cvxpy backend solver to use. Supported solvers are:
+ECOS, ECOS_BB, CVXOPT, SCS, GUROBI, Elemental.
+GLPK and GLPK_MI (via CVXOPT GLPK interface)</p></li>
+<li><p><strong>solver_options</strong> – dictionary of keyword arguments passed to cvxpy solve.
+See docs in CVXEstimator for more information.</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="py property">
+<dt class="sig sig-object py" id="sparselm.model.RidgedGroupLasso.delta">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">delta</span></span><a class="headerlink" href="#sparselm.model.RidgedGroupLasso.delta" title="Permalink to this definition">#</a></dt>
+<dd><p>Get ridge regularization vector.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="sparselm.model.AdaptiveLasso">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">sparselm.model.</span></span><span class="sig-name descname"><span class="pre">AdaptiveLasso</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">alpha</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1.0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">max_iter</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">5</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">eps</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1e-06</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tol</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1e-10</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">update_function</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fit_intercept</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">copy_X</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">warm_start</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">solver</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">solver_options</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/sparselm/model/_adaptive_lasso.html#AdaptiveLasso"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#sparselm.model.AdaptiveLasso" title="Permalink to this definition">#</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#sparselm.model.Lasso" title="sparselm.model._lasso.Lasso"><code class="xref py py-class docutils literal notranslate"><span class="pre">Lasso</span></code></a></p>
+<p>Adaptive Lasso implementation.</p>
+<p>Also known as iteratively re-weighted Lasso.
+Regularized model:</p>
+<blockquote>
+<div><p>|| X * Beta - y ||^2_2 + alpha * ||w^T Beta||_1</p>
+</div></blockquote>
+<p>Where w represents a vector of weights that is iteratively updated.</p>
+<p>Initialize estimator.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>alpha</strong> (<a class="reference external" href="https://docs.python.org/3.9/library/functions.html#float" title="(in Python v3.9)"><em>float</em></a>) – Regularization hyper-parameter.</p></li>
+<li><p><strong>max_iter</strong> (<a class="reference external" href="https://docs.python.org/3.9/library/functions.html#int" title="(in Python v3.9)"><em>int</em></a>) – Maximum number of re-weighting iteration steps.</p></li>
+<li><p><strong>eps</strong> (<a class="reference external" href="https://docs.python.org/3.9/library/functions.html#float" title="(in Python v3.9)"><em>float</em></a>) – Value to add to denominator of weights.</p></li>
+<li><p><strong>tol</strong> (<a class="reference external" href="https://docs.python.org/3.9/library/functions.html#float" title="(in Python v3.9)"><em>float</em></a>) – Absolute convergence tolerance for difference between weights
+at successive steps.</p></li>
+<li><p><strong>update_function</strong> (<em>Callable</em>) – optional
+A function with signature f(beta, eps) used to update the
+weights at each iteration. Default is 1/(<a href="#id1"><span class="problematic" id="id2">|beta|</span></a> + eps)</p></li>
+<li><p><strong>fit_intercept</strong> (<a class="reference external" href="https://docs.python.org/3.9/library/functions.html#bool" title="(in Python v3.9)"><em>bool</em></a>) – Whether the intercept should be estimated or not.
+If False, the data is assumed to be already centered.</p></li>
+<li><p><strong>copy_X</strong> (<a class="reference external" href="https://docs.python.org/3.9/library/functions.html#bool" title="(in Python v3.9)"><em>bool</em></a>) – If True, X will be copied; else, it may be overwritten.</p></li>
+<li><p><strong>warm_start</strong> (<a class="reference external" href="https://docs.python.org/3.9/library/functions.html#bool" title="(in Python v3.9)"><em>bool</em></a>) – When set to True, reuse the solution of the previous call to
+fit as initialization, otherwise, just erase the previous
+solution.</p></li>
+<li><p><strong>solver</strong> (<a class="reference external" href="https://docs.python.org/3.9/library/stdtypes.html#str" title="(in Python v3.9)"><em>str</em></a>) – cvxpy backend solver to use. Supported solvers are:
+ECOS, ECOS_BB, CVXOPT, SCS, GUROBI, Elemental.
+GLPK and GLPK_MI (via CVXOPT GLPK interface)</p></li>
+<li><p><strong>solver_options</strong> – dictionary of keyword arguments passed to cvxpy solve.
+See docs in CVXEstimator for more information.</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="sparselm.model.AdaptiveGroupLasso">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">sparselm.model.</span></span><span class="sig-name descname"><span class="pre">AdaptiveGroupLasso</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">groups</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">alpha</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1.0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">group_weights</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">max_iter</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">5</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">eps</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1e-06</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tol</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1e-10</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">update_function</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">standardize</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fit_intercept</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">copy_X</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">warm_start</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">solver</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">solver_options</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/sparselm/model/_adaptive_lasso.html#AdaptiveGroupLasso"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#sparselm.model.AdaptiveGroupLasso" title="Permalink to this definition">#</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#sparselm.model.AdaptiveLasso" title="sparselm.model._adaptive_lasso.AdaptiveLasso"><code class="xref py py-class docutils literal notranslate"><span class="pre">AdaptiveLasso</span></code></a>, <a class="reference internal" href="#sparselm.model.GroupLasso" title="sparselm.model._lasso.GroupLasso"><code class="xref py py-class docutils literal notranslate"><span class="pre">GroupLasso</span></code></a></p>
+<p>Adaptive Group Lasso, iteratively re-weighted group lasso.</p>
+<dl class="simple">
+<dt>Regularized model:</dt><dd><p>|| X * Beta - y ||^2_2 + alpha * sum_{G} w_G * ||Beta_G||_2</p>
+</dd>
+</dl>
+<p>Where w represents a vector of weights that is iteratively updated.</p>
+<p>Initialize estimator.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>groups</strong> (<a class="reference external" href="https://docs.python.org/3.9/library/stdtypes.html#list" title="(in Python v3.9)"><em>list</em></a><em> or </em><em>ndarray</em>) – array-like of integers specifying groups. Length should be the
+same as model, where each integer entry specifies the group
+each parameter corresponds to.</p></li>
+<li><p><strong>alpha</strong> (<a class="reference external" href="https://docs.python.org/3.9/library/functions.html#float" title="(in Python v3.9)"><em>float</em></a>) – Regularization hyper-parameter.</p></li>
+<li><p><strong>group_weights</strong> (<em>ndarray</em>) – optional
+Weights for each group to use in the regularization term.
+The default is to use the sqrt of the group sizes, however any
+weight can be specified. The array must be the
+same length as the groups given. If you need all groups
+weighted equally just pass an array of ones.</p></li>
+<li><p><strong>max_iter</strong> (<a class="reference external" href="https://docs.python.org/3.9/library/functions.html#int" title="(in Python v3.9)"><em>int</em></a>) – Maximum number of re-weighting iteration steps.</p></li>
+<li><p><strong>eps</strong> (<a class="reference external" href="https://docs.python.org/3.9/library/functions.html#float" title="(in Python v3.9)"><em>float</em></a>) – Value to add to denominator of weights.</p></li>
+<li><p><strong>tol</strong> (<a class="reference external" href="https://docs.python.org/3.9/library/functions.html#float" title="(in Python v3.9)"><em>float</em></a>) – Absolute convergence tolerance for difference between weights
+at successive steps.</p></li>
+<li><p><strong>update_function</strong> (<em>Callable</em>) – optional
+A function with signature f(group_norms, eps) used to update the
+weights at each iteration. Where group_norms are the norms of
+the coefficients Beta for each group.
+Default is 1/(group_norms + eps)</p></li>
+<li><p><strong>standardize</strong> (<a class="reference external" href="https://docs.python.org/3.9/library/functions.html#bool" title="(in Python v3.9)"><em>bool</em></a>) – optional
+Whether to standardize the group regularization penalty using
+the feature matrix. See the following for reference:
+<a class="reference external" href="http://faculty.washington.edu/nrsimon/standGL.pdf">http://faculty.washington.edu/nrsimon/standGL.pdf</a></p></li>
+<li><p><strong>fit_intercept</strong> (<a class="reference external" href="https://docs.python.org/3.9/library/functions.html#bool" title="(in Python v3.9)"><em>bool</em></a>) – Whether the intercept should be estimated or not.
+If False, the data is assumed to be already centered.</p></li>
+<li><p><strong>copy_X</strong> (<a class="reference external" href="https://docs.python.org/3.9/library/functions.html#bool" title="(in Python v3.9)"><em>bool</em></a>) – If True, X will be copied; else, it may be overwritten.</p></li>
+<li><p><strong>warm_start</strong> (<a class="reference external" href="https://docs.python.org/3.9/library/functions.html#bool" title="(in Python v3.9)"><em>bool</em></a>) – When set to True, reuse the solution of the previous call to
+fit as initialization, otherwise, just erase the previous
+solution.</p></li>
+<li><p><strong>solver</strong> (<a class="reference external" href="https://docs.python.org/3.9/library/stdtypes.html#str" title="(in Python v3.9)"><em>str</em></a>) – cvxpy backend solver to use. Supported solvers are:
+ECOS, ECOS_BB, CVXOPT, SCS, GUROBI, Elemental.
+GLPK and GLPK_MI (via CVXOPT GLPK interface)</p></li>
+<li><p><strong>solver_options</strong> – dictionary of keyword arguments passed to cvxpy solve.
+See docs in CVXEstimator for more information.</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="sparselm.model.AdaptiveOverlapGroupLasso">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">sparselm.model.</span></span><span class="sig-name descname"><span class="pre">AdaptiveOverlapGroupLasso</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">group_list</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">alpha</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1.0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">group_weights</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">max_iter</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">5</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">eps</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1e-06</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tol</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1e-10</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">update_function</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">standardize</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fit_intercept</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">copy_X</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">warm_start</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">solver</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">solver_options</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/sparselm/model/_adaptive_lasso.html#AdaptiveOverlapGroupLasso"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#sparselm.model.AdaptiveOverlapGroupLasso" title="Permalink to this definition">#</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#sparselm.model.OverlapGroupLasso" title="sparselm.model._lasso.OverlapGroupLasso"><code class="xref py py-class docutils literal notranslate"><span class="pre">OverlapGroupLasso</span></code></a>, <a class="reference internal" href="#sparselm.model.AdaptiveGroupLasso" title="sparselm.model._adaptive_lasso.AdaptiveGroupLasso"><code class="xref py py-class docutils literal notranslate"><span class="pre">AdaptiveGroupLasso</span></code></a></p>
+<p>Adaptive Overlap Group Lasso implementation.</p>
+<dl class="simple">
+<dt>Regularized model:</dt><dd><p>|| X * Beta - y ||^2_2 + alpha * sum_{G} w_G * ||Beta_G||_2</p>
+</dd>
+</dl>
+<p>Where G represents groups of features/coefficients, and overlaping groups
+are acceptable. Meaning a coefficients can be in more than one group.</p>
+<p>Initialize estimator.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>group_list</strong> (<a class="reference external" href="https://docs.python.org/3.9/library/stdtypes.html#list" title="(in Python v3.9)"><em>list</em></a><em> of </em><em>lists</em>) – list of lists of integers specifying groups. The length of the
+list holding lists should be the same as model. Each inner list
+has integers specifying the groups the coefficient for that
+index belongs to. i.e. [[1,2],[2,3],[1,2,3]] means the first
+coefficient belongs to group 1 and 2, the second to 2, and 3
+and the third to 1, 2 and 3. In other words the 3 groups would
+be: (0, 2), (0, 1, 2), (1, 2)</p></li>
+<li><p><strong>alpha</strong> (<a class="reference external" href="https://docs.python.org/3.9/library/functions.html#float" title="(in Python v3.9)"><em>float</em></a>) – Regularization hyper-parameter.</p></li>
+<li><p><strong>group_weights</strong> (<em>ndarray</em>) – optional
+Weights for each group to use in the regularization term.
+The default is to use the sqrt of the group sizes, however any
+weight can be specified. The array must be the
+same length as the number of different groups given.
+If you need all groups weighted equally just pass an array of
+ones.</p></li>
+<li><p><strong>max_iter</strong> (<a class="reference external" href="https://docs.python.org/3.9/library/functions.html#int" title="(in Python v3.9)"><em>int</em></a>) – Maximum number of re-weighting iteration steps.</p></li>
+<li><p><strong>eps</strong> (<a class="reference external" href="https://docs.python.org/3.9/library/functions.html#float" title="(in Python v3.9)"><em>float</em></a>) – Value to add to denominator of weights.</p></li>
+<li><p><strong>tol</strong> (<a class="reference external" href="https://docs.python.org/3.9/library/functions.html#float" title="(in Python v3.9)"><em>float</em></a>) – Absolute convergence tolerance for difference between weights
+at successive steps.</p></li>
+<li><p><strong>update_function</strong> (<em>Callable</em>) – optional
+A function with signature f(group_norms, eps) used to update the
+weights at each iteration. Where group_norms are the norms of
+the coefficients Beta for each group.
+Default is 1/(group_norms + eps)</p></li>
+<li><p><strong>standardize</strong> (<a class="reference external" href="https://docs.python.org/3.9/library/functions.html#bool" title="(in Python v3.9)"><em>bool</em></a>) – optional
+Whether to standardize the group regularization penalty using
+the feature matrix. See the following for reference:
+<a class="reference external" href="http://faculty.washington.edu/nrsimon/standGL.pdf">http://faculty.washington.edu/nrsimon/standGL.pdf</a></p></li>
+<li><p><strong>fit_intercept</strong> (<a class="reference external" href="https://docs.python.org/3.9/library/functions.html#bool" title="(in Python v3.9)"><em>bool</em></a>) – Whether the intercept should be estimated or not.
+If False, the data is assumed to be already centered.</p></li>
+<li><p><strong>copy_X</strong> (<a class="reference external" href="https://docs.python.org/3.9/library/functions.html#bool" title="(in Python v3.9)"><em>bool</em></a>) – If True, X will be copied; else, it may be overwritten.</p></li>
+<li><p><strong>warm_start</strong> (<a class="reference external" href="https://docs.python.org/3.9/library/functions.html#bool" title="(in Python v3.9)"><em>bool</em></a>) – When set to True, reuse the solution of the previous call to
+fit as initialization, otherwise, just erase the previous
+solution.</p></li>
+<li><p><strong>solver</strong> (<a class="reference external" href="https://docs.python.org/3.9/library/stdtypes.html#str" title="(in Python v3.9)"><em>str</em></a>) – cvxpy backend solver to use. Supported solvers are:
+ECOS, ECOS_BB, CVXOPT, SCS, GUROBI, Elemental.
+GLPK and GLPK_MI (via CVXOPT GLPK interface)</p></li>
+<li><p><strong>solver_options</strong> – dictionary of keyword arguments passed to cvxpy solve.
+See docs in CVXEstimator for more information.</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="sparselm.model.AdaptiveSparseGroupLasso">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">sparselm.model.</span></span><span class="sig-name descname"><span class="pre">AdaptiveSparseGroupLasso</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">groups</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">l1_ratio</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.5</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">alpha</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1.0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">group_weights</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">max_iter</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">5</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">eps</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1e-06</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tol</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1e-10</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">update_function</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">standardize</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fit_intercept</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">copy_X</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">warm_start</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">solver</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">solver_options</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/sparselm/model/_adaptive_lasso.html#AdaptiveSparseGroupLasso"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#sparselm.model.AdaptiveSparseGroupLasso" title="Permalink to this definition">#</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#sparselm.model.AdaptiveLasso" title="sparselm.model._adaptive_lasso.AdaptiveLasso"><code class="xref py py-class docutils literal notranslate"><span class="pre">AdaptiveLasso</span></code></a>, <a class="reference internal" href="#sparselm.model.SparseGroupLasso" title="sparselm.model._lasso.SparseGroupLasso"><code class="xref py py-class docutils literal notranslate"><span class="pre">SparseGroupLasso</span></code></a></p>
+<p>Adaptive Sparse Group Lasso, iteratively re-weighted sparse group lasso.</p>
+<dl class="simple">
+<dt>Regularized model:</dt><dd><dl class="simple">
+<dt>|| X * Beta - y ||^2_2</dt><dd><ul class="simple">
+<li><p>alpha * l1_ratio * ||w1^T Beta||_1</p></li>
+<li><p>alpha * (1 - l1_ratio) * sum_{G} w2_G * ||Beta_G||_2</p></li>
+</ul>
+</dd>
+</dl>
+</dd>
+</dl>
+<p>Where w1, w2 represent vectors of weights that is iteratively updated.</p>
+<p>Initialize estimator.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>groups</strong> (<a class="reference external" href="https://docs.python.org/3.9/library/stdtypes.html#list" title="(in Python v3.9)"><em>list</em></a><em> or </em><em>ndarray</em>) – array-like of integers specifying groups. Length should be the
+same as model, where each integer entry specifies the group
+each parameter corresponds to.</p></li>
+<li><p><strong>l1_ratio</strong> (<a class="reference external" href="https://docs.python.org/3.9/library/functions.html#float" title="(in Python v3.9)"><em>float</em></a>) – Mixing parameter between l1 and group lasso regularization.</p></li>
+<li><p><strong>alpha</strong> (<a class="reference external" href="https://docs.python.org/3.9/library/functions.html#float" title="(in Python v3.9)"><em>float</em></a>) – Regularization hyper-parameter.</p></li>
+<li><p><strong>group_weights</strong> (<em>ndarray</em>) – optional
+Weights for each group to use in the regularization term.
+The default is to use the sqrt of the group sizes, however any
+weight can be specified. The array must be the
+same length as the groups given. If you need all groups
+weighted equally just pass an array of ones.</p></li>
+<li><p><strong>max_iter</strong> (<a class="reference external" href="https://docs.python.org/3.9/library/functions.html#int" title="(in Python v3.9)"><em>int</em></a>) – Maximum number of re-weighting iteration steps.</p></li>
+<li><p><strong>eps</strong> (<a class="reference external" href="https://docs.python.org/3.9/library/functions.html#float" title="(in Python v3.9)"><em>float</em></a>) – Value to add to denominator of weights.</p></li>
+<li><p><strong>tol</strong> (<a class="reference external" href="https://docs.python.org/3.9/library/functions.html#float" title="(in Python v3.9)"><em>float</em></a>) – Absolute convergence tolerance for difference between weights
+at successive steps.</p></li>
+<li><p><strong>update_function</strong> (<em>Callable</em>) – optional
+A function with signature f(group_norms, eps) used to update the
+weights at each iteration. Where group_norms are the norms of
+the coefficients Beta for each group.
+Default is 1/(group_norms + eps)</p></li>
+<li><p><strong>standardize</strong> (<a class="reference external" href="https://docs.python.org/3.9/library/functions.html#bool" title="(in Python v3.9)"><em>bool</em></a>) – optional
+Whether to standardize the group regularization penalty using
+the feature matrix. See the following for reference:
+<a class="reference external" href="http://faculty.washington.edu/nrsimon/standGL.pdf">http://faculty.washington.edu/nrsimon/standGL.pdf</a></p></li>
+<li><p><strong>fit_intercept</strong> (<a class="reference external" href="https://docs.python.org/3.9/library/functions.html#bool" title="(in Python v3.9)"><em>bool</em></a>) – Whether the intercept should be estimated or not.
+If False, the data is assumed to be already centered.</p></li>
+<li><p><strong>copy_X</strong> (<a class="reference external" href="https://docs.python.org/3.9/library/functions.html#bool" title="(in Python v3.9)"><em>bool</em></a>) – If True, X will be copied; else, it may be overwritten.</p></li>
+<li><p><strong>warm_start</strong> (<a class="reference external" href="https://docs.python.org/3.9/library/functions.html#bool" title="(in Python v3.9)"><em>bool</em></a>) – When set to True, reuse the solution of the previous call to
+fit as initialization, otherwise, just erase the previous
+solution.</p></li>
+<li><p><strong>solver</strong> (<a class="reference external" href="https://docs.python.org/3.9/library/stdtypes.html#str" title="(in Python v3.9)"><em>str</em></a>) – cvxpy backend solver to use. Supported solvers are:
+ECOS, ECOS_BB, CVXOPT, SCS, GUROBI, Elemental.
+GLPK and GLPK_MI (via CVXOPT GLPK interface)</p></li>
+<li><p><strong>solver_options</strong> – dictionary of keyword arguments passed to cvxpy solve.
+See docs in CVXEstimator for more information.</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="sparselm.model.AdaptiveRidgedGroupLasso">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">sparselm.model.</span></span><span class="sig-name descname"><span class="pre">AdaptiveRidgedGroupLasso</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">groups</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">alpha</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1.0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">delta</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1.0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">group_weights</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">max_iter</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">5</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">eps</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1e-06</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tol</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1e-10</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">update_function</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">standardize</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fit_intercept</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">copy_X</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">warm_start</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">solver</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">solver_options</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/sparselm/model/_adaptive_lasso.html#AdaptiveRidgedGroupLasso"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#sparselm.model.AdaptiveRidgedGroupLasso" title="Permalink to this definition">#</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#sparselm.model.AdaptiveGroupLasso" title="sparselm.model._adaptive_lasso.AdaptiveGroupLasso"><code class="xref py py-class docutils literal notranslate"><span class="pre">AdaptiveGroupLasso</span></code></a>, <a class="reference internal" href="#sparselm.model.RidgedGroupLasso" title="sparselm.model._lasso.RidgedGroupLasso"><code class="xref py py-class docutils literal notranslate"><span class="pre">RidgedGroupLasso</span></code></a></p>
+<p>Adaptive Ridged Group Lasso implementation.</p>
+<dl class="simple">
+<dt>Regularized model:</dt><dd><dl class="simple">
+<dt>|| X * Beta - y ||^2_2 + alpha * sum_{G} w_G * ||Beta_G||_2</dt><dd><ul class="simple">
+<li><p>sum_{G} w_l * ||Beta_G||^2_2</p></li>
+</ul>
+</dd>
+</dl>
+</dd>
+</dl>
+<p>Where G represents groups of features/coefficients, and w_l represents a
+vector of weights that are updated iteratively.</p>
+<p>For details on proper standardization refer to:
+<a class="reference external" href="http://faculty.washington.edu/nrsimon/standGL.pdf">http://faculty.washington.edu/nrsimon/standGL.pdf</a></p>
+<ul class="simple">
+<li><p>Adaptive iterative weights are only done on the group norm and not the ridge</p></li>
+</ul>
+<p>portion.</p>
+<p>Initialize estimator.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>groups</strong> (<a class="reference external" href="https://docs.python.org/3.9/library/stdtypes.html#list" title="(in Python v3.9)"><em>list</em></a><em> or </em><em>ndarray</em>) – array-like of integers specifying groups. Length should be the
+same as model, where each integer entry specifies the group
+each parameter corresponds to.</p></li>
+<li><p><strong>alpha</strong> (<a class="reference external" href="https://docs.python.org/3.9/library/functions.html#float" title="(in Python v3.9)"><em>float</em></a>) – Regularization hyper-parameter.</p></li>
+<li><p><strong>delta</strong> (<em>ndarray</em>) – optional
+Positive 1D array. Regularization vector for ridge penalty.</p></li>
+<li><p><strong>group_weights</strong> (<em>ndarray</em>) – optional
+Weights for each group to use in the regularization term.
+The default is to use the sqrt of the group sizes, however any
+weight can be specified. The array must be the
+same length as the groups given. If you need all groups
+weighted equally just pass an array of ones.</p></li>
+<li><p><strong>fit_intercept</strong> (<a class="reference external" href="https://docs.python.org/3.9/library/functions.html#bool" title="(in Python v3.9)"><em>bool</em></a>) – Whether the intercept should be estimated or not.
+If False, the data is assumed to be already centered.</p></li>
+<li><p><strong>max_iter</strong> (<a class="reference external" href="https://docs.python.org/3.9/library/functions.html#int" title="(in Python v3.9)"><em>int</em></a>) – Maximum number of re-weighting iteration steps.</p></li>
+<li><p><strong>eps</strong> (<a class="reference external" href="https://docs.python.org/3.9/library/functions.html#float" title="(in Python v3.9)"><em>float</em></a>) – Value to add to denominator of weights.</p></li>
+<li><p><strong>tol</strong> (<a class="reference external" href="https://docs.python.org/3.9/library/functions.html#float" title="(in Python v3.9)"><em>float</em></a>) – Absolute convergence tolerance for difference between weights
+at successive steps.</p></li>
+<li><p><strong>update_function</strong> (<em>Callable</em>) – optional
+A function with signature f(group_norms, eps) used to update the
+weights at each iteration. Where group_norms are the norms of
+the coefficients Beta for each group.
+Default is 1/(group_norms + eps)</p></li>
+<li><p><strong>copy_X</strong> (<a class="reference external" href="https://docs.python.org/3.9/library/functions.html#bool" title="(in Python v3.9)"><em>bool</em></a>) – If True, X will be copied; else, it may be overwritten.</p></li>
+<li><p><strong>warm_start</strong> (<a class="reference external" href="https://docs.python.org/3.9/library/functions.html#bool" title="(in Python v3.9)"><em>bool</em></a>) – When set to True, reuse the solution of the previous call to
+fit as initialization, otherwise, just erase the previous
+solution.</p></li>
+<li><p><strong>solver</strong> (<a class="reference external" href="https://docs.python.org/3.9/library/stdtypes.html#str" title="(in Python v3.9)"><em>str</em></a>) – cvxpy backend solver to use. Supported solvers are:
+ECOS, ECOS_BB, CVXOPT, SCS, GUROBI, Elemental.
+GLPK and GLPK_MI (via CVXOPT GLPK interface)</p></li>
+<li><p><strong>solver_options</strong> – dictionary of keyword arguments passed to cvxpy solve.
+See docs in CVXEstimator for more information.</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+</section>
+
+        </article>
+      </div>
+      <footer>
+        
+        <div class="related-pages">
+          <a class="next-page" href="sparselm.model_selection.html">
+              <div class="page-info">
+                <div class="context">
+                  <span>Next</span>
+                </div>
+                <div class="title">sparselm.model_selection</div>
+              </div>
+              <svg class="furo-related-icon"><use href="#svg-arrow-right"></use></svg>
+            </a>
+          <a class="prev-page" href="api.html">
+              <svg class="furo-related-icon"><use href="#svg-arrow-right"></use></svg>
+              <div class="page-info">
+                <div class="context">
+                  <span>Previous</span>
+                </div>
+                
+                <div class="title">API Documentation</div>
+                
+              </div>
+            </a>
+        </div>
+        <div class="bottom-of-page">
+          <div class="left-details">
+            <div class="copyright">
+                Copyright &#169; 2022-2023, Ceder Group
+            </div>
+            Made with 
+            <a href="https://github.com/pradyunsg/furo">Furo</a>
+            
+          </div>
+          <div class="right-details">
+            
+          </div>
+        </div>
+        
+      </footer>
+    </div>
+    <aside class="toc-drawer">
+      
+      
+      <div class="toc-sticky toc-scroll">
+        <div class="toc-title-container">
+          <span class="toc-title">
+            On this page
+          </span>
+        </div>
+        <div class="toc-tree-container">
+          <div class="toc-tree">
+            <ul>
+<li><a class="reference internal" href="#">sparselm.model</a><ul>
+<li><a class="reference internal" href="#sparselm.model.OrdinaryLeastSquares"><code class="docutils literal notranslate"><span class="pre">OrdinaryLeastSquares</span></code></a></li>
+<li><a class="reference internal" href="#sparselm.model.Lasso"><code class="docutils literal notranslate"><span class="pre">Lasso</span></code></a><ul>
+<li><a class="reference internal" href="#sparselm.model.Lasso.alpha"><code class="docutils literal notranslate"><span class="pre">Lasso.alpha</span></code></a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#sparselm.model.BestSubsetSelection"><code class="docutils literal notranslate"><span class="pre">BestSubsetSelection</span></code></a><ul>
+<li><a class="reference internal" href="#sparselm.model.BestSubsetSelection.sparse_bound"><code class="docutils literal notranslate"><span class="pre">BestSubsetSelection.sparse_bound</span></code></a></li>
+<li><a class="reference internal" href="#sparselm.model.BestSubsetSelection.big_M"><code class="docutils literal notranslate"><span class="pre">BestSubsetSelection.big_M</span></code></a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#sparselm.model.RidgedBestSubsetSelection"><code class="docutils literal notranslate"><span class="pre">RidgedBestSubsetSelection</span></code></a><ul>
+<li><a class="reference internal" href="#sparselm.model.RidgedBestSubsetSelection.alpha"><code class="docutils literal notranslate"><span class="pre">RidgedBestSubsetSelection.alpha</span></code></a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#sparselm.model.RegularizedL0"><code class="docutils literal notranslate"><span class="pre">RegularizedL0</span></code></a><ul>
+<li><a class="reference internal" href="#sparselm.model.RegularizedL0.alpha"><code class="docutils literal notranslate"><span class="pre">RegularizedL0.alpha</span></code></a></li>
+<li><a class="reference internal" href="#sparselm.model.RegularizedL0.big_M"><code class="docutils literal notranslate"><span class="pre">RegularizedL0.big_M</span></code></a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#sparselm.model.L1L0"><code class="docutils literal notranslate"><span class="pre">L1L0</span></code></a></li>
+<li><a class="reference internal" href="#sparselm.model.L2L0"><code class="docutils literal notranslate"><span class="pre">L2L0</span></code></a></li>
+<li><a class="reference internal" href="#sparselm.model.GroupLasso"><code class="docutils literal notranslate"><span class="pre">GroupLasso</span></code></a></li>
+<li><a class="reference internal" href="#sparselm.model.OverlapGroupLasso"><code class="docutils literal notranslate"><span class="pre">OverlapGroupLasso</span></code></a></li>
+<li><a class="reference internal" href="#sparselm.model.SparseGroupLasso"><code class="docutils literal notranslate"><span class="pre">SparseGroupLasso</span></code></a><ul>
+<li><a class="reference internal" href="#sparselm.model.SparseGroupLasso.alpha"><code class="docutils literal notranslate"><span class="pre">SparseGroupLasso.alpha</span></code></a></li>
+<li><a class="reference internal" href="#sparselm.model.SparseGroupLasso.l1_ratio"><code class="docutils literal notranslate"><span class="pre">SparseGroupLasso.l1_ratio</span></code></a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#sparselm.model.RidgedGroupLasso"><code class="docutils literal notranslate"><span class="pre">RidgedGroupLasso</span></code></a><ul>
+<li><a class="reference internal" href="#sparselm.model.RidgedGroupLasso.delta"><code class="docutils literal notranslate"><span class="pre">RidgedGroupLasso.delta</span></code></a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#sparselm.model.AdaptiveLasso"><code class="docutils literal notranslate"><span class="pre">AdaptiveLasso</span></code></a></li>
+<li><a class="reference internal" href="#sparselm.model.AdaptiveGroupLasso"><code class="docutils literal notranslate"><span class="pre">AdaptiveGroupLasso</span></code></a></li>
+<li><a class="reference internal" href="#sparselm.model.AdaptiveOverlapGroupLasso"><code class="docutils literal notranslate"><span class="pre">AdaptiveOverlapGroupLasso</span></code></a></li>
+<li><a class="reference internal" href="#sparselm.model.AdaptiveSparseGroupLasso"><code class="docutils literal notranslate"><span class="pre">AdaptiveSparseGroupLasso</span></code></a></li>
+<li><a class="reference internal" href="#sparselm.model.AdaptiveRidgedGroupLasso"><code class="docutils literal notranslate"><span class="pre">AdaptiveRidgedGroupLasso</span></code></a></li>
+</ul>
+</li>
+</ul>
+
+          </div>
+        </div>
+      </div>
+      
+      
+    </aside>
+  </div>
+</div><script data-url_root="./" id="documentation_options" src="_static/documentation_options.js"></script>
+    <script src="_static/doctools.js"></script>
+    <script src="_static/sphinx_highlight.js"></script>
+    <script src="_static/scripts/furo.js"></script>
+    </body>
+</html>
