@@ -20,13 +20,15 @@ import cvxpy as cp
 import numpy as np
 from cvxpy.atoms.affine.wraps import psd_wrap
 
-from sparselm.model._base import CVXEstimator
+from sparselm.model._base import CVXEstimator, TikhonovMixin
 
 
-# RegularizedL0 now supports orbit-level hierarchy, but now requires groups as a
-# compulsory argument.
 class RegularizedL0(CVXEstimator):
-    """Implementation of MIQP l0 regularized estimator."""
+    """Implementation of MIQP l0 regularized estimator.
+
+    Supports grouping parameters and group-level hierarchy, but requires groups as a
+    compulsory argument.
+    """
 
     def __init__(
         self,
@@ -252,7 +254,7 @@ class MixedL0(RegularizedL0, metaclass=ABCMeta):
             )
 
         self._lambda0.value = l0_ratio * alpha
-        self._lambda1 = cp.Parameter(nonneg=True, value=(1 - l0_ratio) * alpha)
+        self._lambda2 = cp.Parameter(nonneg=True, value=(1 - l0_ratio) * alpha)
         #  save exact value so sklearn clone is happy dappy
         self._l0_ratio = l0_ratio
 
@@ -261,7 +263,7 @@ class MixedL0(RegularizedL0, metaclass=ABCMeta):
         """Set hyperparameter values."""
         self._alpha = val
         self._lambda0.value = self.l0_ratio * val
-        self._lambda1.value = (1 - self.l0_ratio) * val
+        self._lambda2.value = (1 - self.l0_ratio) * val
 
     @property
     def l0_ratio(self):
@@ -275,7 +277,7 @@ class MixedL0(RegularizedL0, metaclass=ABCMeta):
             raise ValueError("l0_ratio must be between 0 and 1.")
         self._l0_ratio = val
         self._lambda0.value = val * self.alpha
-        self._lambda1.value = (1 - val) * self.alpha
+        self._lambda2.value = (1 - val) * self.alpha
 
     @abstractmethod
     def _gen_objective(self, X, y):
@@ -290,19 +292,16 @@ class L1L0(MixedL0):
     as discussed in:
     https://arxiv.org/abs/1807.10753
 
-    Removed Gurobi dependency!
-    Uses any solver it has in hand. If nothing, will use ECOS_BB.
-    ECOS_BB is only supported after cvxpy-1.1.6. It will not be given
-    automatically pulled up by cvxpy, and has to be explicitly called
-    passed in the constructor with solver='ECOS_BB'.
-
-    Installation of Gurobi is no longer a must, but highly recommended.
+    Installation of Gurobi is not a must, but highly recommended.
     You can get a free academic gurobi license...
     ECOS_BB also works but can be very slow.
 
     Regularized model is:
-        ||X * Beta - y||^2 + alpha * l0_ratio * ||Beta||_0
-                           + alpha * (1 - l0_ratio) * ||Beta||_1
+
+    .. math::
+
+        ||X * \beta - y||^2 + \alpha * l0_ratio * ||\beta||_0
+                           + \alpha * (1 - l0_ratio) * ||\beta||_1
     """
 
     def __init__(
@@ -397,22 +396,32 @@ class L1L0(MixedL0):
         """Generate the objective function used in l1l0 regression model."""
         self._z1 = cp.Variable(X.shape[1])
         c0 = 2 * X.shape[0]  # keeps hyperparameter scale independent
-        objective = super()._gen_objective(X, y) + c0 * self._lambda1 * cp.sum(self._z1)
+        objective = super()._gen_objective(X, y) + c0 * self._lambda2 * cp.sum(self._z1)
 
         return objective
 
 
-class L2L0(MixedL0):
+class L2L0(TikhonovMixin, MixedL0):
     """L2L0 regularized estimator.
 
-    Estimator with L2L0 regularization solved with mixed integer programming
-    proposed by Peichen Zhong.
+    Based on estimator with L2L0 regularization solved with mixed integer programming
+    proposed by Peichen Zhong:
 
     https://arxiv.org/abs/2204.13789
 
+    Extended to allow grouping of coefficients and group-level hierarchy as described
+    in:
+
+    https://doi.org/10.1287/opre.2015.1436
+
+    And allows using a Tihkonov matrix in the l2 term.
+
     Regularized model is:
-        ||X * Beta - y||^2 + alpha * l0_ratio * ||Beta||_0
-                           + alpha * (1 - l0_ratio) * ||Beta||^2_2
+
+    .. math::
+
+        ||X * \beta - y||^2 + \alpha * l0_ratio * ||\beta||_0
+                           + \alpha * (1 - l0_ratio) * ||\beta||^2_2
     """
 
     def __init__(
@@ -422,12 +431,12 @@ class L2L0(MixedL0):
         l0_ratio=0.5,
         big_M=1000,
         hierarchy=None,
+        tikhonov_w=None,
         ignore_psd_check=True,
         fit_intercept=False,
         copy_X=True,
         warm_start=False,
         solver=None,
-        tikhonov_w=None,
         solver_options=None,
     ):
         """Initialize L2L0 estimator.
@@ -460,6 +469,8 @@ class L2L0(MixedL0):
                 the list depends. i.e. hierarchy = [[1, 2], [0], []] mean that
                 coefficient 0 depends on 1, and 2; 1 depends on 0, and 2 has no
                 dependence.
+            tikhonov_w (np.array):
+                Matrix to add weights to L2 regularization.
             ignore_psd_check (bool):
                 Wether to ignore cvxpy's PSD checks of matrix used in quadratic
                 form. Default is True to avoid raising errors for poorly
@@ -477,8 +488,6 @@ class L2L0(MixedL0):
                 cvxpy backend solver to use. Supported solvers are:
                 ECOS, ECOS_BB, CVXOPT, SCS, GUROBI, Elemental.
                 GLPK and GLPK_MI (via CVXOPT GLPK interface)
-            tikhonov_w (np.array):
-                Matrix to add weights to L2 regularization.
             solver_options (dict):
                 dictionary of keyword arguments passed to cvxpy solve.
                 See docs in CVXEstimator for more information.
@@ -497,14 +506,3 @@ class L2L0(MixedL0):
             solver_options=solver_options,
         )
         self.tikhonov_w = tikhonov_w
-
-    def _gen_objective(self, X, y):
-        """Generate the objective function used in l2l0 regression model."""
-        c0 = 2 * X.shape[0]  # keeps hyperparameter scale independent
-        tikhonov_w = np.eye(X.shape[1]) if self.tikhonov_w is None else self.tikhonov_w
-
-        objective = super()._gen_objective(X, y) + c0 * self._lambda1 * cp.sum_squares(
-            tikhonov_w @ self._beta
-        )
-
-        return objective

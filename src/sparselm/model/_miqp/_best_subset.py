@@ -9,7 +9,7 @@ import cvxpy as cp
 import numpy as np
 from cvxpy.atoms.affine.wraps import psd_wrap
 
-from sparselm.model._base import CVXEstimator
+from sparselm.model._base import CVXEstimator, TikhonovMixin
 
 
 class BestSubsetSelection(CVXEstimator):
@@ -149,7 +149,7 @@ class BestSubsetSelection(CVXEstimator):
         ]
 
 
-class RidgedBestSubsetSelection(BestSubsetSelection):
+class RidgedBestSubsetSelection(TikhonovMixin, BestSubsetSelection):
     """MIQP  Best subset selection estimator with ridge regularization."""
 
     def __init__(
@@ -159,6 +159,7 @@ class RidgedBestSubsetSelection(BestSubsetSelection):
         alpha=1.0,
         big_M=1000,
         hierarchy=None,
+        tikhonov_w=None,
         ignore_psd_check=True,
         fit_intercept=False,
         copy_X=True,
@@ -189,6 +190,8 @@ class RidgedBestSubsetSelection(BestSubsetSelection):
                 the list depends. i.e. hierarchy = [[1, 2], [0], []] mean that
                 coefficient 0 depends on 1, and 2; 1 depends on 0, and 2 has no
                 dependence.
+            tikhonov_w (np.array):
+                Matrix to add weights to L2 regularization.
             ignore_psd_check (bool):
                 Whether to ignore cvxpy's PSD checks  of matrix used in quadratic
                 form. Default is True to avoid raising errors for poorly
@@ -223,22 +226,24 @@ class RidgedBestSubsetSelection(BestSubsetSelection):
             solver_options=solver_options,
             **kwargs,
         )
-        self._alpha = cp.Parameter(nonneg=True, value=alpha)
+
+        self.tikhonov_w = tikhonov_w
+        self._lambda2 = cp.Parameter(nonneg=True, value=alpha)
 
     @property
     def alpha(self):
         """Get alpha hyper-parameter value."""
-        return self._alpha.value
+        return self._lambda2.value
 
     @alpha.setter
     def alpha(self, val):
         """Set alpha hyper-parameter value."""
-        self._alpha.value = val
+        self._lambda2.value = val
 
-    def _gen_objective(self, X, y):
-        """Generate the objective function used in l2l0 regression model."""
-        c0 = 2 * X.shape[0]  # keeps hyperparameter scale independent
-        objective = super()._gen_objective(X, y) + c0 * self._alpha * cp.sum_squares(
-            self._beta
-        )
-        return objective
+#    def _gen_objective(self, X, y):
+#        """Generate the objective function used in l2l0 regression model."""
+#        c0 = 2 * X.shape[0]  # keeps hyperparameter scale independent
+#        objective = super()._gen_objective(X, y) + c0 * self._alpha * cp.sum_squares(
+#            self._beta
+#        )
+#        return objective
