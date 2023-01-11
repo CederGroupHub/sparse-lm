@@ -10,8 +10,7 @@ Sparse Linear Regression Models
 > Use at your own risk!
 
 **sparse-lm**  includes several regularized regression estimators that are absent in the
-[`sklearn.linear_model`](https://scikit-learn.org/stable/modules/classes.html#module-sklearn.linear_model)
-module. The estimators in **sparse-lm** are designed to fit right into
+`sklearn.linear_model` module. The estimators in **sparse-lm** are designed to fit right into
 [scikit-lean](https://scikit-learn.org/stable/index.html) by inheriting from their base
 `LinearModel`. But the underlying optimization problem is expressed and solved by
 leveraging [cvxpy](https://www.cvxpy.org/).
@@ -35,7 +34,9 @@ From pypi:
 
 Usage
 -----
-If you already use **scikit-learn**, using **sparse-lm** will be very easy
+If you already use **scikit-learn**, using **sparse-lm** will be very easy. Just use any
+model like you would any linear model in **scikit-learn**:
+
 ```python
 import numpy as np
 from sklearn.datasets import make_regression
