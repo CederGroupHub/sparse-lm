@@ -14,7 +14,7 @@ from joblib import Parallel
 from sklearn.base import clone, is_classifier
 from sklearn.metrics import check_scoring
 from sklearn.metrics._scorer import _check_multimetric_scoring
-from sklearn.model_selection import GridSearchCV
+from sklearn.model_selection import GridSearchCV as _GridSearchCV
 from sklearn.model_selection._search import BaseSearchCV
 from sklearn.model_selection._split import check_cv
 from sklearn.model_selection._validation import (
@@ -26,10 +26,10 @@ from sklearn.utils.fixes import delayed
 from sklearn.utils.validation import _check_fit_params, indexable
 
 
-class GridSearch(GridSearchCV):
+class GridSearchCV(_GridSearchCV):
     """Exhaustive search over specified parameter values for an estimator.
 
-    Same as GridSearchCV but we allow one standard error rule on all
+    Same as GridSearchCV but allows to use one standard error rule on all
     non-negative numerical hyper-parameters, in order to get a
     robust sparce estimation. Same documentation as scikit-learn's
     GridSearchCV.
@@ -59,20 +59,20 @@ class GridSearch(GridSearchCV):
         """Initialize CVSearch tool.
 
         Args:
-            estimator(Estimator):
+            estimator (Estimator):
                 A object of that type is instantiated for each grid point.
                 This is assumed to implement the scikit-learn estimator interface.
                 Either estimator needs to provide a ``score`` function,
                 or ``scoring`` must be passed.
-            param_grid(dict or list[dict]):
+            param_grid (dict or list[dict]):
                 Dictionary representing grid of hyper-parameters with their names
                 as keys and possible values. If given as a list of multiple dicts,
                 will search on multiple grids in parallel.
-            opt_selection_method(str, default="max_score"):
+            opt_selection_method (str, default="max_score"):
                 The method to select optimal hyper params. Default to "max_score", which
                 means to maximize the score. Can also choose "one_std_score", which means
                 to apply one standard error rule on scores.
-            scoring(str, callable, list, tuple or dict, default="neg_root_mean_squared_error"):
+            scoring (str, callable, list, tuple or dict, default="neg_root_mean_squared_error"):
                 Strategy to evaluate the performance of the cross-validated model on
                 the test set.
                 If `scoring` represents a single score, one can use:
@@ -87,12 +87,12 @@ class GridSearch(GridSearchCV):
                 Note: In sparse-lm, using "neg_root_mean_squared_error" is default
                 because in cluster expansion it is more conventional to analyze and present
                 errors in the root-mean-square error format compared to the r2_score.
-            n_jobs(int, default=None):
+            n_jobs (int, default=None):
                 Number of jobs to run in parallel.
                 ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
                 ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
                 for more details.
-            refit(bool, str, or callable, default=True)
+            refit (bool, str, or callable, default=True)
                 Refit an estimator using the best found parameters on the whole
                 dataset.
                 For multiple metric evaluation, this needs to be a `str` denoting the
@@ -113,7 +113,7 @@ class GridSearch(GridSearchCV):
                 scorer.
                 See ``scoring`` parameter to know more about multiple metric
                 evaluation.
-            cv(int, cross-validation generator or an iterable, default=None):
+            cv (int, cross-validation generator or an iterable, default=None):
                 Determines the cross-validation splitting strategy.
                 Possible inputs for cv are:
                 - None, to use the default 5-fold cross validation,
@@ -126,14 +126,14 @@ class GridSearch(GridSearchCV):
                 with `shuffle=False` so the splits will be the same across calls.
                 Refer :ref:`User Guide <cross_validation>` for the various
                 cross-validation strategies that can be used here.
-            verbose(int, default=0):
+            verbose (int, default=0):
                 Controls the verbosity: the higher, the more messages.
                 - >1 : the computation time for each fold and parameter candidate is
                   displayed;
                 - >2 : the score is also displayed;
                 - >3 : the fold and candidate parameter indexes are also displayed
                   together with the starting time of the computation.
-            pre_dispatch(int, or str, default='2*n_jobs'):
+            pre_dispatch (int, or str, default='2*n_jobs'):
                 Controls the number of jobs that get dispatched during parallel
                 execution. Reducing this number can be useful to avoid an
                 explosion of memory consumption when more jobs get dispatched
@@ -146,12 +146,12 @@ class GridSearch(GridSearchCV):
                       spawned
                     - A str, giving an expression as a function of n_jobs,
                       as in '2*n_jobs'
-            error_score('raise' or numeric, default=np.nan):
+            error_score ('raise' or numeric, default=np.nan):
                 Value to assign to the score if an error occurs in estimator fitting.
                 If set to 'raise', the error is raised. If a numeric value is given,
                 FitFailedWarning is raised. This parameter does not affect the refit
                 step, which will always raise the error.
-            return_train_score(bool, default=False):
+            return_train_score (bool, default=False):
                 If ``False``, the ``cv_results_`` attribute will not include training
                 scores.
                 Computing training scores is used to get insights on how different
@@ -406,7 +406,7 @@ class GridSearch(GridSearchCV):
         return self
 
 
-class LineSearch(BaseSearchCV):
+class LineSearchCV(BaseSearchCV):
     """Implements line search.
 
     In line search, we do 1 dimensional grid searches on each hyper-param up
@@ -433,17 +433,17 @@ class LineSearch(BaseSearchCV):
         """Initialize a LineSearch.
 
         Args:
-            estimator(Estimator):
+            estimator (Estimator):
                 A object of that type is instantiated for each grid point.
                 This is assumed to implement the scikit-learn estimator interface.
                 Either estimator needs to provide a ``score`` function,
                 or ``scoring`` must be passed.
-            param_grid(list[tuple]):
+            param_grid (list[tuple]):
                 List of tuples with parameters names (`str`) as first element
                 and lists of parameter settings to try as the second element.
                 In LineSearch, the hyper-params given first will be searched first
                 in a cycle. Multiple grids search is NOT supported!
-            opt_selection_method(list(str) or str, default="max_score"):
+            opt_selection_method (list(str) or str, default="max_score"):
                 The method to select optimal hyper params. Default to "max_score", which
                 means to maximize score score. Can also choose "one_std_score", which means
                 to apply one standard error rule on score scores.
@@ -452,13 +452,13 @@ class LineSearch(BaseSearchCV):
                 the param_grid. For example, a good practice when using L2L0 estimator
                 shall be opt_selection_method = ["one_std_score", "max_score"] for "alpha"
                 and "l0_ratio", respectively.
-            n_iter(int, default=None):
+            n_iter (int, default=None):
                 Number of iterations to perform. One iteration means a 1D search on
                 one hyper-param, and we scan one hyper-param at a time in the order of
                 param_grid.
                 n_iter must be at least as large as the number of hyper-params. Default
                 is 2 * number of hyper-params.
-            scoring(str, callable, list, tuple or dict, default="neg_root_mean_squared_error"):
+            scoring (str, callable, list, tuple or dict, default="neg_root_mean_squared_error"):
                 Strategy to evaluate the performance of the cross-validated model on
                 the test set.
                 If `scoring` represents a single score, one can use:
@@ -473,12 +473,12 @@ class LineSearch(BaseSearchCV):
                 Note: In sparse-lm, using "neg_root_mean_squared_error" is default
                 because in cluster expansion it is more conventional to analyze and present
                 errors in the root-mean-square error format compared to the r2_score.
-            n_jobs(int, default=None):
+            n_jobs (int, default=None):
                 Number of jobs to run in parallel.
                 ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
                 ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
                 for more details.
-            refit(bool, str, or callable, default=True)
+            refit (bool, str, or callable, default=True)
                 Refit an estimator using the best found parameters on the whole
                 dataset.
                 For multiple metric evaluation, this needs to be a `str` denoting the
@@ -499,7 +499,7 @@ class LineSearch(BaseSearchCV):
                 scorer.
                 See ``scoring`` parameter to know more about multiple metric
                 evaluation.
-            cv(int, cross-validation generator or an iterable, default=None):
+            cv (int, cross-validation generator or an iterable, default=None):
                 Determines the cross-validation splitting strategy.
                 Possible inputs for cv are:
                 - None, to use the default 5-fold cross validation,
@@ -512,14 +512,14 @@ class LineSearch(BaseSearchCV):
                 with `shuffle=False` so the splits will be the same across calls.
                 Refer :ref:`User Guide <cross_validation>` for the various
                 cross-validation strategies that can be used here.
-            verbose(int, default=0):
+            verbose (int, default=0):
                 Controls the verbosity: the higher, the more messages.
                 - >1 : the computation time for each fold and parameter candidate is
                   displayed;
                 - >2 : the score is also displayed;
                 - >3 : the fold and candidate parameter indexes are also displayed
                   together with the starting time of the computation.
-            pre_dispatch(int, or str, default='2*n_jobs'):
+            pre_dispatch (int, or str, default='2*n_jobs'):
                 Controls the number of jobs that get dispatched during parallel
                 execution. Reducing this number can be useful to avoid an
                 explosion of memory consumption when more jobs get dispatched
@@ -532,12 +532,12 @@ class LineSearch(BaseSearchCV):
                       spawned
                     - A str, giving an expression as a function of n_jobs,
                       as in '2*n_jobs'
-            error_score('raise' or numeric, default=np.nan):
+            error_score ('raise' or numeric, default=np.nan):
                 Value to assign to the score if an error occurs in estimator fitting.
                 If set to 'raise', the error is raised. If a numeric value is given,
                 FitFailedWarning is raised. This parameter does not affect the refit
                 step, which will always raise the error.
-            return_train_score(bool, default=False):
+            return_train_score (bool, default=False):
                 If ``False``, the ``cv_results_`` attribute will not include training
                 scores.
                 Computing training scores is used to get insights on how different
@@ -636,7 +636,7 @@ class LineSearch(BaseSearchCV):
             ):
                 param_line[name] = [last_value] if pid != param_id else values
 
-            grid_search = GridSearch(
+            grid_search = GridSearchCV(
                 estimator=self.estimator,
                 param_grid=param_line,
                 opt_selection_method=self.opt_selection_methods[param_id],

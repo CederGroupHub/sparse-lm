@@ -8,7 +8,7 @@ import numpy as np
 import pytest
 
 from sparselm.model.miqp._regularized_l0 import L1L0, L2L0
-from sparselm.optimizer import GridSearch, LineSearch
+from sparselm.model_selection import GridSearchCV, LineSearchCV
 
 ALL_CRITERION = ["max_score", "one_std_score"]
 # Currently we will only test on mixedL0
@@ -88,7 +88,7 @@ def test_mixed_l0_wts(random_model, mixed_l2l0_est, random_weights):
 
 @pytest.fixture(scope="module", params=ALL_CRITERION)
 def grid_search(estimator, param_grid, request):
-    grid_searcher = GridSearch(
+    grid_searcher = GridSearchCV(
         estimator, param_grid, opt_selection_method=request.param
     )
     return grid_searcher
@@ -98,7 +98,7 @@ def grid_search(estimator, param_grid, request):
 def line_search(estimator, param_grid, request):
     # Multi-grids not supported in line search mode.
     param_grid_lines = sorted((key, values) for key, values in param_grid[0].items())
-    line_searcher = LineSearch(
+    line_searcher = LineSearchCV(
         estimator, param_grid_lines, opt_selection_method=request.param, n_iter=3
     )
     return line_searcher
