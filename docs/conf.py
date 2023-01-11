@@ -123,5 +123,5 @@ intersphinx_mapping = {
     "python": ("https://docs.python.org/3.9", None),
     "scikit-learn": ("https://scikit-learn.org/stable", None),
     "numpy": ("https://numpy.org/doc/stable/", None),
-    "cvxpy": ("https://www.cvxpy.org/en/latest/", None)
+    "cvxpy": ("https://www.cvxpy.org/en/latest/", None),
 }

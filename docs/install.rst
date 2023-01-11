@@ -32,4 +32,3 @@ to run tests must be installed::
 Then run the tests using::
 
     pytest
-
