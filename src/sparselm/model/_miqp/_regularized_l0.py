@@ -300,7 +300,7 @@ class L1L0(MixedL0):
 
     .. math::
 
-        ||X * \beta - y||^2 + \alpha * l0_ratio * ||\beta||_0
+        ||X \beta - y||^2 + \alpha * l0_ratio * ||\beta||_0
                            + \alpha * (1 - l0_ratio) * ||\beta||_1
     """
 
@@ -420,7 +420,7 @@ class L2L0(TikhonovMixin, MixedL0):
 
     .. math::
 
-        ||X * \beta - y||^2 + \alpha * l0_ratio * ||\beta||_0
+        ||X \beta - y||^2 + \alpha * l0_ratio * ||\beta||_0
                            + \alpha * (1 - l0_ratio) * ||\beta||^2_2
     """
 

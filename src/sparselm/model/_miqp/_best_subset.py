@@ -239,11 +239,3 @@ class RidgedBestSubsetSelection(TikhonovMixin, BestSubsetSelection):
     def alpha(self, val):
         """Set alpha hyper-parameter value."""
         self._lambda2.value = val
-
-#    def _gen_objective(self, X, y):
-#        """Generate the objective function used in l2l0 regression model."""
-#        c0 = 2 * X.shape[0]  # keeps hyperparameter scale independent
-#        objective = super()._gen_objective(X, y) + c0 * self._alpha * cp.sum_squares(
-#            self._beta
-#        )
-#        return objective

@@ -37,7 +37,11 @@ class AdaptiveLasso(Lasso):
 
     Also known as iteratively re-weighted Lasso.
     Regularized model:
-        || X * Beta - y ||^2_2 + alpha * ||w^T Beta||_1
+    
+    .. math::
+    
+        || X \beta - y ||^2_2 + \alpha ||w^T \beta||_1
+    
     Where w represents a vector of weights that is iteratively updated.
     """
 
@@ -138,7 +142,10 @@ class AdaptiveGroupLasso(AdaptiveLasso, GroupLasso):
     r"""Adaptive Group Lasso, iteratively re-weighted group lasso.
 
     Regularized model:
-        || X * Beta - y ||^2_2 + alpha * \sum_{G} w_G * ||Beta_G||_2
+    
+    .. math::
+    
+        || X \beta - y ||^2_2 + \alpha * \sum_{G} w_G ||\beta_G||_2
 
     Where w represents a vector of weights that is iteratively updated.
     """
@@ -246,8 +253,12 @@ class AdaptiveOverlapGroupLasso(OverlapGroupLasso, AdaptiveGroupLasso):
     r"""Adaptive Overlap Group Lasso implementation.
 
     Regularized model:
-        || X * Beta - y ||^2_2 + alpha * \sum_{G} w_G * ||Beta_G||_2
-    Where G represents groups of features/coefficients, and overlaping groups
+    
+    .. math::
+
+        || X \beta - y ||^2_2 + \alpha * \sum_{G} w_G ||\beta_G||_2
+        
+    Where G represents groups of features/coefficients, and overlapping groups
     are acceptable. Meaning a coefficients can be in more than one group.
     """
 
@@ -352,9 +363,12 @@ class AdaptiveSparseGroupLasso(AdaptiveLasso, SparseGroupLasso):
     r"""Adaptive Sparse Group Lasso, iteratively re-weighted sparse group lasso.
 
     Regularized model:
-        || X * Beta - y ||^2_2
-            + alpha * l1_ratio * ||w1^T Beta||_1
-            + alpha * (1 - l1_ratio) * \sum_{G} w2_G * ||Beta_G||_2
+    
+    .. math::
+        
+        || X \beta - y ||^2_2
+            + \alpha * l1_ratio * ||w1^T \beta||_1
+            + \alpha * (1 - l1_ratio) * \sum_{G} w2_G ||\beta_G||_2
 
     Where w1, w2 represent vectors of weights that is iteratively updated.
     """
@@ -485,8 +499,12 @@ class AdaptiveRidgedGroupLasso(AdaptiveGroupLasso, RidgedGroupLasso):
     r"""Adaptive Ridged Group Lasso implementation.
 
     Regularized model:
-        || X * Beta - y ||^2_2 + alpha * \sum_{G} w_G * ||Beta_G||_2
-                               + \sum_{G} w_l * ||Beta_G||^2_2
+    
+    .. math::
+    
+        || X \beta - y ||^2_2 + \alpha * \sum_{G} w_G ||\beta_G||_2
+                               + \sum_{G} w_l ||\beta_G||^2_2
+
     Where G represents groups of features/coefficients, and w_l represents a
     vector of weights that are updated iteratively.
 
