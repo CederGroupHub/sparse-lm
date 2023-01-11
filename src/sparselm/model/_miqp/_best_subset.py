@@ -8,6 +8,7 @@ __author__ = "Luis Barroso-Luque"
 import cvxpy as cp
 
 from sparselm.model._base import TikhonovMixin
+
 from ._base import MIQP_L0
 
 

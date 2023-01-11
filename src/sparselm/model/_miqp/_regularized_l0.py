@@ -24,8 +24,9 @@ from abc import ABCMeta, abstractmethod
 
 import cvxpy as cp
 
-from ._base import MIQP_L0
 from sparselm.model._base import TikhonovMixin
+
+from ._base import MIQP_L0
 
 
 class RegularizedL0(MIQP_L0):

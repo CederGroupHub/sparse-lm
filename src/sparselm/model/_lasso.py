@@ -26,11 +26,11 @@ class Lasso(CVXEstimator):
     Lasso Estimator implemented with cvxpy.
 
     Regularized model:
-    
+
     .. math::
-    
+
         || X \beta - y ||^2_2 + \alpha * ||\beta||_1
-    
+
     """
 
     def __init__(
@@ -97,9 +97,9 @@ class GroupLasso(Lasso):
     r"""Group Lasso implementation.
 
     Regularized model:
-    
+
     .. math::
-    
+
         || X \beta - y ||^2_2 + \alpha * \sum_{G} w_G * ||\beta_G||_2
 
     Where G represents groups of features/coefficients
@@ -202,7 +202,7 @@ class OverlapGroupLasso(GroupLasso):
 
     Regularized model:
     .. math::
-    
+
         || X \beta - y ||^2_2 + \alpha * \sum_{G} w_G * ||\beta_G||_2
 
     Where G represents groups of features/coefficients, and overlapping groups
@@ -310,9 +310,9 @@ class SparseGroupLasso(GroupLasso):
     r"""Sparse Group Lasso.
 
     Regularized model:
-    
+
     .. math::
-    
+
         || X \beta - y ||^2_2
             + \alpha * l1_ratio * ||\beta||_1
             + \alpha * (1 - l1_ratio) * \sum_{G}||\beta_G||_2
@@ -437,9 +437,9 @@ class RidgedGroupLasso(GroupLasso):
     r"""Ridged Group Lasso implementation.
 
     Regularized model:
-    
+
     .. math::
-    
+
         || X \beta - y ||^2_2 + \alpha * \sum_{G} w_G * ||\beta_G||_2
                                + \sum_{G} \delta_l * ||\beta_G||^2_2
 

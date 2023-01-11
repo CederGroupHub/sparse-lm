@@ -4,8 +4,9 @@
 __author__ = "Luis Barroso-Luque"
 
 from abc import ABCMeta
-import numpy as np
+
 import cvxpy as cp
+import numpy as np
 from cvxpy.atoms.affine.wraps import psd_wrap
 
 from .._base import CVXEstimator
@@ -18,6 +19,7 @@ class MIQP_L0(CVXEstimator, metaclass=ABCMeta):
 
     https://doi.org/10.1287/opre.2015.1436
     """
+
     def __init__(
         self,
         groups,
