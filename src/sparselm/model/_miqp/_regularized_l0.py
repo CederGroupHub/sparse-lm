@@ -52,17 +52,11 @@ class RegularizedL0(MIQP_L0):
 
         Args:
             groups (list or ndarray):
-                array-like of integers specifying groups. Length should be the
+                1D array-like of integers specifying groups. Length should be the
                 same as model, where each integer entry specifies the group
-                each parameter corresponds to. One dimensional.
-                Note: in cluster expansion, a group can either be each correlation
-                function (function-level hierarchy) or be each cluster orbit
-                (orbit-level hierarchy). In the first case, each index should be its
-                own group, so use range(len(ecis)). In the second case, correlation
-                functions under the same orbit will be considered as the same group,
-                so use function_orbit_ids here.
-                Each external term in cluster subspace should be considered as its
-                own group.
+                each parameter corresponds to. If no grouping is needed pass a list
+                of all distinct numbers (ie range(len(coefs)) to create singleton groups
+                for each parameter.
             alpha (float):
                 L0 pseudo-norm regularization hyper-parameter.
             big_M (float):
@@ -148,17 +142,11 @@ class MixedL0(RegularizedL0, metaclass=ABCMeta):
 
         Args:
             groups (list or ndarray):
-                array-like of integers specifying groups. Length should be the
+                1D array-like of integers specifying groups. Length should be the
                 same as model, where each integer entry specifies the group
-                each parameter corresponds to. One dimensional.
-                Note: in cluster expansion, a group can either be each correlation
-                function (function-level hierarchy) or be each cluster orbit
-                (orbit-level hierarchy). In the first case, each index should be its
-                own group, so use range(len(ecis)). In the second case, correlation
-                functions under the same orbit will be considered as the same group,
-                so use function_orbit_ids here.
-                Each external term in cluster subspace should be considered as its
-                own group.
+                each parameter corresponds to. If no grouping is needed pass a list
+                of all distinct numbers (ie range(len(coefs)) to create singleton groups
+                for each parameter.
             alpha (float):
                 L0 pseudo-norm regularization hyper-parameter.
             eta (float):
@@ -262,17 +250,11 @@ class L1L0(MixedL0):
 
         Args:
             groups (list or ndarray):
-                array-like of integers specifying groups. Length should be the
+                1D array-like of integers specifying groups. Length should be the
                 same as model, where each integer entry specifies the group
-                each parameter corresponds to. One dimensional.
-                Note: in cluster expansion, a group can either be each correlation
-                function (function-level hierarchy) or be each cluster orbit
-                (orbit-level hierarchy). In the first case, each index should be its
-                own group, so use range(len(ecis)). In the second case, correlation
-                functions under the same orbit will be considered as the same group,
-                so use function_orbit_ids here.
-                Each external term in cluster subspace should be considered as its
-                own group.
+                each parameter corresponds to. If no grouping is needed pass a list
+                of all distinct numbers (ie range(len(coefs)) to create singleton groups
+                for each parameter.
             alpha (float):
                 L0 pseudo-norm regularization hyper-parameter.
             eta (float):
@@ -381,17 +363,11 @@ class L2L0(TikhonovMixin, MixedL0):
 
         Args:
             groups (list or ndarray):
-                array-like of integers specifying groups. Length should be the
+                1D array-like of integers specifying groups. Length should be the
                 same as model, where each integer entry specifies the group
-                each parameter corresponds to. One dimensional.
-                Note: in cluster expansion, a group can either be each correlation
-                function (function-level hierarchy) or be each cluster orbit
-                (orbit-level hierarchy). In the first case, each index should be its
-                own group, so use range(len(ecis)). In the second case, correlation
-                functions under the same orbit will be considered as the same group,
-                so use function_orbit_ids here.
-                Each external term in cluster subspace should be considered as its
-                own group.
+                each parameter corresponds to. If no grouping is needed pass a list
+                of all distinct numbers (ie range(len(coefs)) to create singleton groups
+                for each parameter.
             alpha (float):
                 L0 pseudo-norm regularization hyper-parameter.
             eta (float):
