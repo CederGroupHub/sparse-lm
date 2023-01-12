@@ -19,7 +19,6 @@ or group of coefficients level.
 __author__ = "Luis Barroso-Luque, Fengyu Xie"
 
 
-import warnings
 from abc import ABCMeta, abstractmethod
 
 import cvxpy as cp
@@ -242,7 +241,7 @@ class L1L0(MixedL0):
 
     .. math::
 
-        ||X \beta - y||^2 + \alpha ||\beta||_0 + \eta ||\beta||_1
+        ||X \beta - y||^2 + \alpha ||\beta||_0 + \\eta ||\beta||_1
     """
 
     def __init__(
