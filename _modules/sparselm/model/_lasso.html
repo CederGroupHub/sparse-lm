@@ -251,12 +251,15 @@
 
 
 <div class="viewcode-block" id="Lasso"><a class="viewcode-back" href="../../../sparselm.model.html#sparselm.model.Lasso">[docs]</a><span class="k">class</span> <span class="nc">Lasso</span><span class="p">(</span><span class="n">CVXEstimator</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Lasso Estimator implemented with cvxpy.</span>
 
 <span class="sd">    Regularized model:</span>
-<span class="sd">        || X * Beta - y ||^2_2 + alpha * ||Beta||_1</span>
-<span class="sd">    Where w represents a vector of weights that is iteratively updated.</span>
+
+<span class="sd">    .. math::</span>
+
+<span class="sd">        || X \beta - y ||^2_2 + \alpha ||\beta||_1</span>
+
 <span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
@@ -323,7 +326,11 @@
 <span class="w">    </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;Group Lasso implementation.</span>
 
 <span class="sd">    Regularized model:</span>
-<span class="sd">        || X * Beta - y ||^2_2 + alpha * \sum_{G} w_G * ||Beta_G||_2</span>
+
+<span class="sd">    .. math::</span>
+
+<span class="sd">        || X \beta - y ||^2_2 + \alpha \sum_{G} w_G ||\beta_G||_2</span>
+
 <span class="sd">    Where G represents groups of features/coefficients</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
@@ -419,12 +426,17 @@
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_alpha</span> <span class="o">*</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">group_weights</span> <span class="o">@</span> <span class="bp">self</span><span class="o">.</span><span class="n">_gen_group_norms</span><span class="p">(</span><span class="n">X</span><span class="p">))</span></div>
 
 
+<span class="c1"># TODO this implementation is not efficient, reimplement.</span>
 <div class="viewcode-block" id="OverlapGroupLasso"><a class="viewcode-back" href="../../../sparselm.model.html#sparselm.model.OverlapGroupLasso">[docs]</a><span class="k">class</span> <span class="nc">OverlapGroupLasso</span><span class="p">(</span><span class="n">GroupLasso</span><span class="p">):</span>
 <span class="w">    </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;Overlap Group Lasso implementation.</span>
 
 <span class="sd">    Regularized model:</span>
-<span class="sd">        || X * Beta - y ||^2_2 + alpha * \sum_{G} w_G * ||Beta_G||_2</span>
-<span class="sd">    Where G represents groups of features/coefficients, and overlaping groups</span>
+
+<span class="sd">    .. math::</span>
+
+<span class="sd">        || X \beta - y ||^2_2 + \alpha \sum_{G} w_G ||\beta_G||_2</span>
+
+<span class="sd">    Where G represents groups of features/coefficients, and overlapping groups</span>
 <span class="sd">    are acceptable. Meaning a coefficients can be in more than one group.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
@@ -529,10 +541,14 @@
 <span class="w">    </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;Sparse Group Lasso.</span>
 
 <span class="sd">    Regularized model:</span>
-<span class="sd">        || X * Beta - y ||^2_2</span>
-<span class="sd">            + alpha * l1_ratio * ||Beta||_1</span>
-<span class="sd">            + alpha * (1 - l1_ratio) * \sum_{G}||Beta_G||_2</span>
-<span class="sd">    Where G represents groups of features / coefficients</span>
+
+<span class="sd">    .. math::</span>
+
+<span class="sd">        || X \beta - y ||^2_2</span>
+<span class="sd">            + \alpha r ||\beta||_1</span>
+<span class="sd">            + \alpha (1 - r) * \sum_{G}||\beta_G||_2</span>
+
+<span class="sd">    Where G represents groups of features / coefficients. And r is the L1 ratio.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
@@ -652,8 +668,12 @@
 <span class="w">    </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;Ridged Group Lasso implementation.</span>
 
 <span class="sd">    Regularized model:</span>
-<span class="sd">        || X * Beta - y ||^2_2 + alpha * \sum_{G} w_G * ||Beta_G||_2</span>
-<span class="sd">                               + \sum_{G} delta_l * ||Beta_G||^2_2</span>
+
+<span class="sd">    .. math::</span>
+
+<span class="sd">        || X \beta - y ||^2_2 + \alpha \sum_{G} w_G ||\beta_G||_2</span>
+<span class="sd">                               + \sum_{G} \delta_l ||\beta_G||^2_2</span>
+
 <span class="sd">    Where G represents groups of features/coefficients</span>
 
 <span class="sd">    For details on proper standardization refer to:</span>

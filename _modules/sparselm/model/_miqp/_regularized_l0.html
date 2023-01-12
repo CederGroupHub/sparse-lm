@@ -229,33 +229,50 @@
           <h1>Source code for sparselm.model._miqp._regularized_l0</h1><div class="highlight"><pre>
 <span></span><span class="sd">&quot;&quot;&quot;MIQP based solvers for sparse solutions with hierarchical constraints.</span>
 
-<span class="sd">Mixed L1L0 and L2L0 solvers.</span>
+<span class="sd">Generalized regularized l0 solvers that allow grouping parameters as detailed in:</span>
+
+<span class="sd">    https://doi.org/10.1287/opre.2015.1436</span>
+
 <span class="sd">L1L0 proposed by Wenxuan Huang:</span>
+
 <span class="sd">    https://arxiv.org/abs/1807.10753</span>
+
 <span class="sd">L2L0 proposed by Peichen Zhong:</span>
+
 <span class="sd">    https://journals.aps.org/prb/abstract/10.1103/PhysRevB.106.024203</span>
 
-<span class="sd">Estimators allow optional inclusion of hierarchical at the single feature</span>
-<span class="sd">single coefficient level.</span>
+<span class="sd">Estimators allow optional inclusion of hierarchical constraints at the single coefficient</span>
+<span class="sd">or group of coefficients level.</span>
 <span class="sd">&quot;&quot;&quot;</span>
 
 <span class="n">__author__</span> <span class="o">=</span> <span class="s2">&quot;Luis Barroso-Luque, Fengyu Xie&quot;</span>
 
 
-<span class="kn">import</span> <span class="nn">warnings</span>
 <span class="kn">from</span> <span class="nn">abc</span> <span class="kn">import</span> <span class="n">ABCMeta</span><span class="p">,</span> <span class="n">abstractmethod</span>
 
 <span class="kn">import</span> <span class="nn">cvxpy</span> <span class="k">as</span> <span class="nn">cp</span>
-<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
-<span class="kn">from</span> <span class="nn">cvxpy.atoms.affine.wraps</span> <span class="kn">import</span> <span class="n">psd_wrap</span>
 
-<span class="kn">from</span> <span class="nn">sparselm.model._base</span> <span class="kn">import</span> <span class="n">CVXEstimator</span>
+<span class="kn">from</span> <span class="nn">sparselm.model._base</span> <span class="kn">import</span> <span class="n">TikhonovMixin</span>
+
+<span class="kn">from</span> <span class="nn">._base</span> <span class="kn">import</span> <span class="n">MIQP_L0</span>
 
 
-<span class="c1"># RegularizedL0 now supports orbit-level hierarchy, but now requires groups as a</span>
-<span class="c1"># compulsory argument.</span>
-<div class="viewcode-block" id="RegularizedL0"><a class="viewcode-back" href="../../../../sparselm.model.html#sparselm.model.RegularizedL0">[docs]</a><span class="k">class</span> <span class="nc">RegularizedL0</span><span class="p">(</span><span class="n">CVXEstimator</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Implementation of MIQP l0 regularized estimator.&quot;&quot;&quot;</span>
+<div class="viewcode-block" id="RegularizedL0"><a class="viewcode-back" href="../../../../sparselm.model.html#sparselm.model.RegularizedL0">[docs]</a><span class="k">class</span> <span class="nc">RegularizedL0</span><span class="p">(</span><span class="n">MIQP_L0</span><span class="p">):</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;Implementation of mixed-integer quadratic programming l0 regularized estimator.</span>
+
+<span class="sd">    Supports grouping parameters and group-level hierarchy, but requires groups as a</span>
+<span class="sd">    compulsory argument.</span>
+
+<span class="sd">    Regularized model:</span>
+
+<span class="sd">    .. math::</span>
+
+<span class="sd">        || X \beta - y ||^2_2 + \alpha \sum_{G} z_G</span>
+
+<span class="sd">    Where G represents groups of features/coefficients and :math:`z_G` is are boolean</span>
+<span class="sd">    valued slack variables.</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
@@ -274,19 +291,13 @@
 
 <span class="sd">        Args:</span>
 <span class="sd">            groups (list or ndarray):</span>
-<span class="sd">                array-like of integers specifying groups. Length should be the</span>
+<span class="sd">                1D array-like of integers specifying groups. Length should be the</span>
 <span class="sd">                same as model, where each integer entry specifies the group</span>
-<span class="sd">                each parameter corresponds to. One dimensional.</span>
-<span class="sd">                Note: in cluster expansion, a group can either be each correlation</span>
-<span class="sd">                function (function-level hierarchy) or be each cluster orbit</span>
-<span class="sd">                (orbit-level hierarchy). In the first case, each index should be its</span>
-<span class="sd">                own group, so use range(len(ecis)). In the second case, correlation</span>
-<span class="sd">                functions under the same orbit will be considered as the same group,</span>
-<span class="sd">                so use function_orbit_ids here.</span>
-<span class="sd">                Each external term in cluster subspace should be considered as its</span>
-<span class="sd">                own group.</span>
+<span class="sd">                each parameter corresponds to. If no grouping is needed pass a list</span>
+<span class="sd">                of all distinct numbers (ie range(len(coefs)) to create singleton groups</span>
+<span class="sd">                for each parameter.</span>
 <span class="sd">            alpha (float):</span>
-<span class="sd">                Regularization hyper-parameter.</span>
+<span class="sd">                L0 pseudo-norm regularization hyper-parameter.</span>
 <span class="sd">            big_M (float):</span>
 <span class="sd">                Upper bound on the norm of coefficients associated with each</span>
 <span class="sd">                cluster (groups of coefficients) ||Beta_c||_2</span>
@@ -320,75 +331,33 @@
 <span class="sd">                See docs in CVXEstimator for more information.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span>
+            <span class="n">groups</span><span class="o">=</span><span class="n">groups</span><span class="p">,</span>
+            <span class="n">big_M</span><span class="o">=</span><span class="n">big_M</span><span class="p">,</span>
+            <span class="n">hierarchy</span><span class="o">=</span><span class="n">hierarchy</span><span class="p">,</span>
+            <span class="n">ignore_psd_check</span><span class="o">=</span><span class="n">ignore_psd_check</span><span class="p">,</span>
             <span class="n">fit_intercept</span><span class="o">=</span><span class="n">fit_intercept</span><span class="p">,</span>
             <span class="n">copy_X</span><span class="o">=</span><span class="n">copy_X</span><span class="p">,</span>
             <span class="n">warm_start</span><span class="o">=</span><span class="n">warm_start</span><span class="p">,</span>
             <span class="n">solver</span><span class="o">=</span><span class="n">solver</span><span class="p">,</span>
             <span class="n">solver_options</span><span class="o">=</span><span class="n">solver_options</span><span class="p">,</span>
         <span class="p">)</span>
-
-        <span class="bp">self</span><span class="o">.</span><span class="n">hierarchy</span> <span class="o">=</span> <span class="n">hierarchy</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_alpha</span> <span class="o">=</span> <span class="n">alpha</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_lambda0</span> <span class="o">=</span> <span class="n">cp</span><span class="o">.</span><span class="n">Parameter</span><span class="p">(</span><span class="n">nonneg</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">value</span><span class="o">=</span><span class="n">alpha</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_big_M</span> <span class="o">=</span> <span class="n">cp</span><span class="o">.</span><span class="n">Parameter</span><span class="p">(</span><span class="n">nonneg</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">value</span><span class="o">=</span><span class="n">big_M</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">ignore_psd_check</span> <span class="o">=</span> <span class="n">ignore_psd_check</span>
-
-        <span class="bp">self</span><span class="o">.</span><span class="n">groups</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">groups</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_group_masks</span> <span class="o">=</span> <span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">groups</span> <span class="o">==</span> <span class="n">i</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">np</span><span class="o">.</span><span class="n">unique</span><span class="p">(</span><span class="n">groups</span><span class="p">)]</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_z0</span> <span class="o">=</span> <span class="n">cp</span><span class="o">.</span><span class="n">Variable</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_group_masks</span><span class="p">),</span> <span class="n">boolean</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_eta</span> <span class="o">=</span> <span class="n">cp</span><span class="o">.</span><span class="n">Parameter</span><span class="p">(</span><span class="n">nonneg</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">value</span><span class="o">=</span><span class="n">alpha</span><span class="p">)</span>
 
     <span class="nd">@property</span>
     <span class="k">def</span> <span class="nf">alpha</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Get alpha hyperparameter value.&quot;&quot;&quot;</span>
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_alpha</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_eta</span><span class="o">.</span><span class="n">value</span>
 
     <span class="nd">@alpha</span><span class="o">.</span><span class="n">setter</span>
     <span class="k">def</span> <span class="nf">alpha</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">val</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Set alpha hyperparameter value.&quot;&quot;&quot;</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_alpha</span> <span class="o">=</span> <span class="n">val</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_lambda0</span><span class="o">.</span><span class="n">value</span> <span class="o">=</span> <span class="n">val</span>
-
-    <span class="nd">@property</span>
-    <span class="k">def</span> <span class="nf">big_M</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Get MIQP big M value.&quot;&quot;&quot;</span>
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_big_M</span><span class="o">.</span><span class="n">value</span>
-
-    <span class="nd">@big_M</span><span class="o">.</span><span class="n">setter</span>
-    <span class="k">def</span> <span class="nf">big_M</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">val</span><span class="p">):</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Set MIQP big M value.&quot;&quot;&quot;</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_big_M</span><span class="o">.</span><span class="n">value</span> <span class="o">=</span> <span class="n">val</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_eta</span><span class="o">.</span><span class="n">value</span> <span class="o">=</span> <span class="n">val</span>
 
     <span class="k">def</span> <span class="nf">_gen_objective</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">,</span> <span class="n">y</span><span class="p">):</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Generate the quadratic form portion of objective.&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Generate the quadratic form and l0 regularization portion of objective.&quot;&quot;&quot;</span>
         <span class="n">c0</span> <span class="o">=</span> <span class="mi">2</span> <span class="o">*</span> <span class="n">X</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>  <span class="c1"># keeps hyperparameter scale independent</span>
-        <span class="n">XTX</span> <span class="o">=</span> <span class="n">psd_wrap</span><span class="p">(</span><span class="n">X</span><span class="o">.</span><span class="n">T</span> <span class="o">@</span> <span class="n">X</span><span class="p">)</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">ignore_psd_check</span> <span class="k">else</span> <span class="n">X</span><span class="o">.</span><span class="n">T</span> <span class="o">@</span> <span class="n">X</span>
-        <span class="n">objective</span> <span class="o">=</span> <span class="p">(</span>
-            <span class="n">cp</span><span class="o">.</span><span class="n">quad_form</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_beta</span><span class="p">,</span> <span class="n">XTX</span><span class="p">)</span>
-            <span class="o">-</span> <span class="mi">2</span> <span class="o">*</span> <span class="n">y</span><span class="o">.</span><span class="n">T</span> <span class="o">@</span> <span class="n">X</span> <span class="o">@</span> <span class="bp">self</span><span class="o">.</span><span class="n">_beta</span>
-            <span class="o">+</span> <span class="n">c0</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">_lambda0</span> <span class="o">*</span> <span class="n">cp</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_z0</span><span class="p">)</span>
-        <span class="p">)</span>
-        <span class="k">return</span> <span class="n">objective</span>
-
-    <span class="k">def</span> <span class="nf">_gen_constraints</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">,</span> <span class="n">y</span><span class="p">):</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Generate the constraints used to solve l0 regularization.&quot;&quot;&quot;</span>
-        <span class="n">constraints</span> <span class="o">=</span> <span class="p">[]</span>
-        <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">mask</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_group_masks</span><span class="p">):</span>
-            <span class="n">constraints</span> <span class="o">+=</span> <span class="p">[</span>
-                <span class="bp">self</span><span class="o">.</span><span class="n">_big_M</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">_z0</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">&gt;=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_beta</span><span class="p">[</span><span class="n">mask</span><span class="p">],</span>
-                <span class="bp">self</span><span class="o">.</span><span class="n">_big_M</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">_z0</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">&gt;=</span> <span class="o">-</span><span class="bp">self</span><span class="o">.</span><span class="n">_beta</span><span class="p">[</span><span class="n">mask</span><span class="p">],</span>
-            <span class="p">]</span>
-
-        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">hierarchy</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
-            <span class="n">constraints</span> <span class="o">+=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_gen_hierarchy_constraints</span><span class="p">()</span>
-        <span class="k">return</span> <span class="n">constraints</span>
-
-    <span class="k">def</span> <span class="nf">_gen_hierarchy_constraints</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Generate single feature hierarchy constraints.&quot;&quot;&quot;</span>
-        <span class="k">return</span> <span class="p">[</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">_z0</span><span class="p">[</span><span class="n">high_id</span><span class="p">]</span> <span class="o">&lt;=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_z0</span><span class="p">[</span><span class="n">sub_id</span><span class="p">]</span>
-            <span class="k">for</span> <span class="n">high_id</span><span class="p">,</span> <span class="n">sub_ids</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">hierarchy</span><span class="p">)</span>
-            <span class="k">for</span> <span class="n">sub_id</span> <span class="ow">in</span> <span class="n">sub_ids</span>
-        <span class="p">]</span></div>
+        <span class="n">objective</span> <span class="o">=</span> <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">_gen_objective</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="n">y</span><span class="p">)</span> <span class="o">+</span> <span class="n">c0</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">_eta</span> <span class="o">*</span> <span class="n">cp</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_z0</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">objective</span></div>
 
 
 <span class="k">class</span> <span class="nc">MixedL0</span><span class="p">(</span><span class="n">RegularizedL0</span><span class="p">,</span> <span class="n">metaclass</span><span class="o">=</span><span class="n">ABCMeta</span><span class="p">):</span>
@@ -398,7 +367,7 @@
         <span class="bp">self</span><span class="p">,</span>
         <span class="n">groups</span><span class="p">,</span>
         <span class="n">alpha</span><span class="o">=</span><span class="mf">1.0</span><span class="p">,</span>
-        <span class="n">l0_ratio</span><span class="o">=</span><span class="mf">0.5</span><span class="p">,</span>
+        <span class="n">eta</span><span class="o">=</span><span class="mf">1.0</span><span class="p">,</span>
         <span class="n">big_M</span><span class="o">=</span><span class="mi">1000</span><span class="p">,</span>
         <span class="n">hierarchy</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
         <span class="n">ignore_psd_check</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
@@ -412,21 +381,15 @@
 
 <span class="sd">        Args:</span>
 <span class="sd">            groups (list or ndarray):</span>
-<span class="sd">                array-like of integers specifying groups. Length should be the</span>
+<span class="sd">                1D array-like of integers specifying groups. Length should be the</span>
 <span class="sd">                same as model, where each integer entry specifies the group</span>
-<span class="sd">                each parameter corresponds to. One dimensional.</span>
-<span class="sd">                Note: in cluster expansion, a group can either be each correlation</span>
-<span class="sd">                function (function-level hierarchy) or be each cluster orbit</span>
-<span class="sd">                (orbit-level hierarchy). In the first case, each index should be its</span>
-<span class="sd">                own group, so use range(len(ecis)). In the second case, correlation</span>
-<span class="sd">                functions under the same orbit will be considered as the same group,</span>
-<span class="sd">                so use function_orbit_ids here.</span>
-<span class="sd">                Each external term in cluster subspace should be considered as its</span>
-<span class="sd">                own group.</span>
+<span class="sd">                each parameter corresponds to. If no grouping is needed pass a list</span>
+<span class="sd">                of all distinct numbers (ie range(len(coefs)) to create singleton groups</span>
+<span class="sd">                for each parameter.</span>
 <span class="sd">            alpha (float):</span>
-<span class="sd">                Regularization hyper-parameter.</span>
-<span class="sd">            l0_ratio (float):</span>
-<span class="sd">                Mixing parameter between l1 and l0 regularization.</span>
+<span class="sd">                L0 pseudo-norm regularization hyper-parameter.</span>
+<span class="sd">            eta (float):</span>
+<span class="sd">                standard norm regularization hyper-parameter (usually l1 or l2).</span>
 <span class="sd">            big_M (float):</span>
 <span class="sd">                Upper bound on the norm of coefficients associated with each</span>
 <span class="sd">                cluster (groups of coefficients) ||Beta_c||_2</span>
@@ -471,40 +434,17 @@
             <span class="n">solver</span><span class="o">=</span><span class="n">solver</span><span class="p">,</span>
             <span class="n">solver_options</span><span class="o">=</span><span class="n">solver_options</span><span class="p">,</span>
         <span class="p">)</span>
-
-        <span class="k">if</span> <span class="ow">not</span> <span class="mi">0</span> <span class="o">&lt;=</span> <span class="n">l0_ratio</span> <span class="o">&lt;=</span> <span class="mi">1</span><span class="p">:</span>
-            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;l0_ratio must be between 0 and 1.&quot;</span><span class="p">)</span>
-        <span class="k">elif</span> <span class="n">l0_ratio</span> <span class="o">==</span> <span class="mf">0.0</span><span class="p">:</span>
-            <span class="n">warnings</span><span class="o">.</span><span class="n">warn</span><span class="p">(</span>
-                <span class="s2">&quot;It&#39;s more efficient to use Ridge/Lasso instead of l0_ratio=0&quot;</span><span class="p">,</span>
-                <span class="ne">UserWarning</span><span class="p">,</span>
-            <span class="p">)</span>
-
-        <span class="bp">self</span><span class="o">.</span><span class="n">_lambda0</span><span class="o">.</span><span class="n">value</span> <span class="o">=</span> <span class="n">l0_ratio</span> <span class="o">*</span> <span class="n">alpha</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_lambda1</span> <span class="o">=</span> <span class="n">cp</span><span class="o">.</span><span class="n">Parameter</span><span class="p">(</span><span class="n">nonneg</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">value</span><span class="o">=</span><span class="p">(</span><span class="mi">1</span> <span class="o">-</span> <span class="n">l0_ratio</span><span class="p">)</span> <span class="o">*</span> <span class="n">alpha</span><span class="p">)</span>
-        <span class="c1">#  save exact value so sklearn clone is happy dappy</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_l0_ratio</span> <span class="o">=</span> <span class="n">l0_ratio</span>
-
-    <span class="nd">@RegularizedL0</span><span class="o">.</span><span class="n">alpha</span><span class="o">.</span><span class="n">setter</span>
-    <span class="k">def</span> <span class="nf">alpha</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">val</span><span class="p">):</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Set hyperparameter values.&quot;&quot;&quot;</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_alpha</span> <span class="o">=</span> <span class="n">val</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_lambda0</span><span class="o">.</span><span class="n">value</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">l0_ratio</span> <span class="o">*</span> <span class="n">val</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_lambda1</span><span class="o">.</span><span class="n">value</span> <span class="o">=</span> <span class="p">(</span><span class="mi">1</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">l0_ratio</span><span class="p">)</span> <span class="o">*</span> <span class="n">val</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_eta</span> <span class="o">=</span> <span class="n">cp</span><span class="o">.</span><span class="n">Parameter</span><span class="p">(</span><span class="n">nonneg</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">value</span><span class="o">=</span><span class="n">eta</span><span class="p">)</span>
 
     <span class="nd">@property</span>
-    <span class="k">def</span> <span class="nf">l0_ratio</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Get l0 ratio.&quot;&quot;&quot;</span>
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_l0_ratio</span>
+    <span class="k">def</span> <span class="nf">eta</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Get eta hyperparameter value.&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_eta</span><span class="o">.</span><span class="n">value</span>
 
-    <span class="nd">@l0_ratio</span><span class="o">.</span><span class="n">setter</span>
-    <span class="k">def</span> <span class="nf">l0_ratio</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">val</span><span class="p">):</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Set l0 ratio.&quot;&quot;&quot;</span>
-        <span class="k">if</span> <span class="ow">not</span> <span class="mi">0</span> <span class="o">&lt;=</span> <span class="n">val</span> <span class="o">&lt;=</span> <span class="mi">1</span><span class="p">:</span>
-            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;l0_ratio must be between 0 and 1.&quot;</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_l0_ratio</span> <span class="o">=</span> <span class="n">val</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_lambda0</span><span class="o">.</span><span class="n">value</span> <span class="o">=</span> <span class="n">val</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">alpha</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_lambda1</span><span class="o">.</span><span class="n">value</span> <span class="o">=</span> <span class="p">(</span><span class="mi">1</span> <span class="o">-</span> <span class="n">val</span><span class="p">)</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">alpha</span>
+    <span class="nd">@eta</span><span class="o">.</span><span class="n">setter</span>
+    <span class="k">def</span> <span class="nf">eta</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">val</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Set eta hyperparameter values.&quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_eta</span><span class="o">.</span><span class="n">val</span> <span class="o">=</span> <span class="n">val</span>
 
     <span class="nd">@abstractmethod</span>
     <span class="k">def</span> <span class="nf">_gen_objective</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">,</span> <span class="n">y</span><span class="p">):</span>
@@ -513,32 +453,32 @@
 
 
 <div class="viewcode-block" id="L1L0"><a class="viewcode-back" href="../../../../sparselm.model.html#sparselm.model.L1L0">[docs]</a><span class="k">class</span> <span class="nc">L1L0</span><span class="p">(</span><span class="n">MixedL0</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;L1L0 regularized estimator.</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;L1L0 regularized estimator.</span>
 
 <span class="sd">    Estimator with L1L0 regularization solved with mixed integer programming</span>
 <span class="sd">    as discussed in:</span>
+
 <span class="sd">    https://arxiv.org/abs/1807.10753</span>
 
-<span class="sd">    Removed Gurobi dependency!</span>
-<span class="sd">    Uses any solver it has in hand. If nothing, will use ECOS_BB.</span>
-<span class="sd">    ECOS_BB is only supported after cvxpy-1.1.6. It will not be given</span>
-<span class="sd">    automatically pulled up by cvxpy, and has to be explicitly called</span>
-<span class="sd">    passed in the constructor with solver=&#39;ECOS_BB&#39;.</span>
-
-<span class="sd">    Installation of Gurobi is no longer a must, but highly recommended.</span>
+<span class="sd">    Installation of Gurobi is not a must, but highly recommended.</span>
 <span class="sd">    You can get a free academic gurobi license...</span>
 <span class="sd">    ECOS_BB also works but can be very slow.</span>
 
 <span class="sd">    Regularized model is:</span>
-<span class="sd">        ||X * Beta - y||^2 + alpha * l0_ratio * ||Beta||_0</span>
-<span class="sd">                           + alpha * (1 - l0_ratio) * ||Beta||_1</span>
+
+<span class="sd">    .. math::</span>
+
+<span class="sd">        || X \beta - y ||^2_2 + \alpha \sum_{G} z_G + \eta ||\beta||_1</span>
+
+<span class="sd">    Where G represents groups of features/coefficients and :math:`z_G` is are boolean</span>
+<span class="sd">    valued slack variables.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
         <span class="n">groups</span><span class="p">,</span>
         <span class="n">alpha</span><span class="o">=</span><span class="mf">1.0</span><span class="p">,</span>
-        <span class="n">l0_ratio</span><span class="o">=</span><span class="mf">0.5</span><span class="p">,</span>
+        <span class="n">eta</span><span class="o">=</span><span class="mf">1.0</span><span class="p">,</span>
         <span class="n">big_M</span><span class="o">=</span><span class="mi">1000</span><span class="p">,</span>
         <span class="n">hierarchy</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
         <span class="n">ignore_psd_check</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
@@ -552,21 +492,15 @@
 
 <span class="sd">        Args:</span>
 <span class="sd">            groups (list or ndarray):</span>
-<span class="sd">                array-like of integers specifying groups. Length should be the</span>
+<span class="sd">                1D array-like of integers specifying groups. Length should be the</span>
 <span class="sd">                same as model, where each integer entry specifies the group</span>
-<span class="sd">                each parameter corresponds to. One dimensional.</span>
-<span class="sd">                Note: in cluster expansion, a group can either be each correlation</span>
-<span class="sd">                function (function-level hierarchy) or be each cluster orbit</span>
-<span class="sd">                (orbit-level hierarchy). In the first case, each index should be its</span>
-<span class="sd">                own group, so use range(len(ecis)). In the second case, correlation</span>
-<span class="sd">                functions under the same orbit will be considered as the same group,</span>
-<span class="sd">                so use function_orbit_ids here.</span>
-<span class="sd">                Each external term in cluster subspace should be considered as its</span>
-<span class="sd">                own group.</span>
+<span class="sd">                each parameter corresponds to. If no grouping is needed pass a list</span>
+<span class="sd">                of all distinct numbers (ie range(len(coefs)) to create singleton groups</span>
+<span class="sd">                for each parameter.</span>
 <span class="sd">            alpha (float):</span>
-<span class="sd">                Regularization hyper-parameter.</span>
-<span class="sd">            l0_ratio (float):</span>
-<span class="sd">                Mixing parameter between l1 and l0 regularization.</span>
+<span class="sd">                L0 pseudo-norm regularization hyper-parameter.</span>
+<span class="sd">            eta (float):</span>
+<span class="sd">                L1 regularization hyper-parameter.</span>
 <span class="sd">            big_M (float):</span>
 <span class="sd">                Upper bound on the norm of coefficients associated with each</span>
 <span class="sd">                cluster (groups of coefficients) ||Beta_c||_2</span>
@@ -601,8 +535,8 @@
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span>
             <span class="n">groups</span><span class="o">=</span><span class="n">groups</span><span class="p">,</span>
+            <span class="n">eta</span><span class="o">=</span><span class="n">eta</span><span class="p">,</span>
             <span class="n">alpha</span><span class="o">=</span><span class="n">alpha</span><span class="p">,</span>
-            <span class="n">l0_ratio</span><span class="o">=</span><span class="n">l0_ratio</span><span class="p">,</span>
             <span class="n">big_M</span><span class="o">=</span><span class="n">big_M</span><span class="p">,</span>
             <span class="n">hierarchy</span><span class="o">=</span><span class="n">hierarchy</span><span class="p">,</span>
             <span class="n">ignore_psd_check</span><span class="o">=</span><span class="n">ignore_psd_check</span><span class="p">,</span>
@@ -619,65 +553,69 @@
         <span class="n">constraints</span> <span class="o">=</span> <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">_gen_constraints</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="n">y</span><span class="p">)</span>
         <span class="c1"># L1 constraints (why not do an l1 norm in the objective instead?)</span>
         <span class="n">constraints</span> <span class="o">+=</span> <span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">_z1</span> <span class="o">&gt;=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_beta</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_z1</span> <span class="o">&gt;=</span> <span class="o">-</span><span class="mf">1.0</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">_beta</span><span class="p">]</span>
-
         <span class="k">return</span> <span class="n">constraints</span>
 
     <span class="k">def</span> <span class="nf">_gen_objective</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">,</span> <span class="n">y</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Generate the objective function used in l1l0 regression model.&quot;&quot;&quot;</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_z1</span> <span class="o">=</span> <span class="n">cp</span><span class="o">.</span><span class="n">Variable</span><span class="p">(</span><span class="n">X</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>
         <span class="n">c0</span> <span class="o">=</span> <span class="mi">2</span> <span class="o">*</span> <span class="n">X</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>  <span class="c1"># keeps hyperparameter scale independent</span>
-        <span class="n">objective</span> <span class="o">=</span> <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">_gen_objective</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="n">y</span><span class="p">)</span> <span class="o">+</span> <span class="n">c0</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">_lambda1</span> <span class="o">*</span> <span class="n">cp</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_z1</span><span class="p">)</span>
-
+        <span class="n">objective</span> <span class="o">=</span> <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">_gen_objective</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="n">y</span><span class="p">)</span> <span class="o">+</span> <span class="n">c0</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">_eta</span> <span class="o">*</span> <span class="n">cp</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_z1</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">objective</span></div>
 
 
-<div class="viewcode-block" id="L2L0"><a class="viewcode-back" href="../../../../sparselm.model.html#sparselm.model.L2L0">[docs]</a><span class="k">class</span> <span class="nc">L2L0</span><span class="p">(</span><span class="n">MixedL0</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;L2L0 regularized estimator.</span>
+<div class="viewcode-block" id="L2L0"><a class="viewcode-back" href="../../../../sparselm.model.html#sparselm.model.L2L0">[docs]</a><span class="k">class</span> <span class="nc">L2L0</span><span class="p">(</span><span class="n">TikhonovMixin</span><span class="p">,</span> <span class="n">MixedL0</span><span class="p">):</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;L2L0 regularized estimator.</span>
 
-<span class="sd">    Estimator with L2L0 regularization solved with mixed integer programming</span>
-<span class="sd">    proposed by Peichen Zhong.</span>
+<span class="sd">    Based on estimator with L2L0 regularization solved with mixed integer programming</span>
+<span class="sd">    proposed by Peichen Zhong:</span>
 
 <span class="sd">    https://arxiv.org/abs/2204.13789</span>
 
+<span class="sd">    Extended to allow grouping of coefficients and group-level hierarchy as described</span>
+<span class="sd">    in:</span>
+
+<span class="sd">    https://doi.org/10.1287/opre.2015.1436</span>
+
+<span class="sd">    And allows using a Tihkonov matrix in the l2 term.</span>
+
 <span class="sd">    Regularized model is:</span>
-<span class="sd">        ||X * Beta - y||^2 + alpha * l0_ratio * ||Beta||_0</span>
-<span class="sd">                           + alpha * (1 - l0_ratio) * ||Beta||^2_2</span>
+
+<span class="sd">    .. math::</span>
+
+<span class="sd">        || X \beta - y ||^2_2 + \alpha \sum_{G} z_G + \eta ||W\beta||^2_2</span>
+
+<span class="sd">    Where G represents groups of features/coefficients and :math:`z_G` is are boolean</span>
+<span class="sd">    valued slack variables. W is a Tikhonov matrix.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
         <span class="n">groups</span><span class="p">,</span>
         <span class="n">alpha</span><span class="o">=</span><span class="mf">1.0</span><span class="p">,</span>
-        <span class="n">l0_ratio</span><span class="o">=</span><span class="mf">0.5</span><span class="p">,</span>
+        <span class="n">eta</span><span class="o">=</span><span class="mf">1.0</span><span class="p">,</span>
         <span class="n">big_M</span><span class="o">=</span><span class="mi">1000</span><span class="p">,</span>
         <span class="n">hierarchy</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+        <span class="n">tikhonov_w</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
         <span class="n">ignore_psd_check</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
         <span class="n">fit_intercept</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
         <span class="n">copy_X</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
         <span class="n">warm_start</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
         <span class="n">solver</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
-        <span class="n">tikhonov_w</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
         <span class="n">solver_options</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
     <span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Initialize L2L0 estimator.</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            groups (list or ndarray):</span>
-<span class="sd">                array-like of integers specifying groups. Length should be the</span>
+<span class="sd">                1D array-like of integers specifying groups. Length should be the</span>
 <span class="sd">                same as model, where each integer entry specifies the group</span>
-<span class="sd">                each parameter corresponds to. One dimensional.</span>
-<span class="sd">                Note: in cluster expansion, a group can either be each correlation</span>
-<span class="sd">                function (function-level hierarchy) or be each cluster orbit</span>
-<span class="sd">                (orbit-level hierarchy). In the first case, each index should be its</span>
-<span class="sd">                own group, so use range(len(ecis)). In the second case, correlation</span>
-<span class="sd">                functions under the same orbit will be considered as the same group,</span>
-<span class="sd">                so use function_orbit_ids here.</span>
-<span class="sd">                Each external term in cluster subspace should be considered as its</span>
-<span class="sd">                own group.</span>
+<span class="sd">                each parameter corresponds to. If no grouping is needed pass a list</span>
+<span class="sd">                of all distinct numbers (ie range(len(coefs)) to create singleton groups</span>
+<span class="sd">                for each parameter.</span>
 <span class="sd">            alpha (float):</span>
-<span class="sd">                Regularization hyper-parameter.</span>
-<span class="sd">            l0_ratio (float):</span>
-<span class="sd">                Mixing parameter between l1 and l0 regularization.</span>
+<span class="sd">                L0 pseudo-norm regularization hyper-parameter.</span>
+<span class="sd">            eta (float):</span>
+<span class="sd">                L2 regularization hyper-parameter.</span>
 <span class="sd">            big_M (float):</span>
 <span class="sd">                Upper bound on the norm of coefficients associated with each</span>
 <span class="sd">                cluster (groups of coefficients) ||Beta_c||_2</span>
@@ -689,6 +627,8 @@
 <span class="sd">                the list depends. i.e. hierarchy = [[1, 2], [0], []] mean that</span>
 <span class="sd">                coefficient 0 depends on 1, and 2; 1 depends on 0, and 2 has no</span>
 <span class="sd">                dependence.</span>
+<span class="sd">            tikhonov_w (np.array):</span>
+<span class="sd">                Matrix to add weights to L2 regularization.</span>
 <span class="sd">            ignore_psd_check (bool):</span>
 <span class="sd">                Wether to ignore cvxpy&#39;s PSD checks of matrix used in quadratic</span>
 <span class="sd">                form. Default is True to avoid raising errors for poorly</span>
@@ -706,8 +646,6 @@
 <span class="sd">                cvxpy backend solver to use. Supported solvers are:</span>
 <span class="sd">                ECOS, ECOS_BB, CVXOPT, SCS, GUROBI, Elemental.</span>
 <span class="sd">                GLPK and GLPK_MI (via CVXOPT GLPK interface)</span>
-<span class="sd">            tikhonov_w (np.array):</span>
-<span class="sd">                Matrix to add weights to L2 regularization.</span>
 <span class="sd">            solver_options (dict):</span>
 <span class="sd">                dictionary of keyword arguments passed to cvxpy solve.</span>
 <span class="sd">                See docs in CVXEstimator for more information.</span>
@@ -715,7 +653,7 @@
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span>
             <span class="n">groups</span><span class="o">=</span><span class="n">groups</span><span class="p">,</span>
             <span class="n">alpha</span><span class="o">=</span><span class="n">alpha</span><span class="p">,</span>
-            <span class="n">l0_ratio</span><span class="o">=</span><span class="n">l0_ratio</span><span class="p">,</span>
+            <span class="n">eta</span><span class="o">=</span><span class="n">eta</span><span class="p">,</span>
             <span class="n">big_M</span><span class="o">=</span><span class="n">big_M</span><span class="p">,</span>
             <span class="n">hierarchy</span><span class="o">=</span><span class="n">hierarchy</span><span class="p">,</span>
             <span class="n">ignore_psd_check</span><span class="o">=</span><span class="n">ignore_psd_check</span><span class="p">,</span>
@@ -725,18 +663,7 @@
             <span class="n">solver</span><span class="o">=</span><span class="n">solver</span><span class="p">,</span>
             <span class="n">solver_options</span><span class="o">=</span><span class="n">solver_options</span><span class="p">,</span>
         <span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">tikhonov_w</span> <span class="o">=</span> <span class="n">tikhonov_w</span>
-
-    <span class="k">def</span> <span class="nf">_gen_objective</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">,</span> <span class="n">y</span><span class="p">):</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Generate the objective function used in l2l0 regression model.&quot;&quot;&quot;</span>
-        <span class="n">c0</span> <span class="o">=</span> <span class="mi">2</span> <span class="o">*</span> <span class="n">X</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>  <span class="c1"># keeps hyperparameter scale independent</span>
-        <span class="n">tikhonov_w</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">eye</span><span class="p">(</span><span class="n">X</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">tikhonov_w</span> <span class="ow">is</span> <span class="kc">None</span> <span class="k">else</span> <span class="bp">self</span><span class="o">.</span><span class="n">tikhonov_w</span>
-
-        <span class="n">objective</span> <span class="o">=</span> <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">_gen_objective</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="n">y</span><span class="p">)</span> <span class="o">+</span> <span class="n">c0</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">_lambda1</span> <span class="o">*</span> <span class="n">cp</span><span class="o">.</span><span class="n">sum_squares</span><span class="p">(</span>
-            <span class="n">tikhonov_w</span> <span class="o">@</span> <span class="bp">self</span><span class="o">.</span><span class="n">_beta</span>
-        <span class="p">)</span>
-
-        <span class="k">return</span> <span class="n">objective</span></div>
+        <span class="bp">self</span><span class="o">.</span><span class="n">tikhonov_w</span> <span class="o">=</span> <span class="n">tikhonov_w</span></div>
 </pre></div>
         </article>
       </div>

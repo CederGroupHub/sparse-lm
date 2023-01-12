@@ -240,11 +240,11 @@
 
 <span class="sd">NOTE: In certain cases these can yield infeasible problems. This can cause</span>
 <span class="sd">processes to die and as a result make a calculation hang indefinitely when</span>
-<span class="sd">using a them in a multiprocess model selection tool such as sklearn</span>
+<span class="sd">using them in a multiprocess model selection tool such as sklearn</span>
 <span class="sd">GridSearchCV with n_jobs &gt; 1.</span>
 
 <span class="sd">In that case either tweak settings/solvers around so that that does not happen</span>
-<span class="sd">or run with n_jobs=1 (but that may take a while to solve_</span>
+<span class="sd">or run with n_jobs=1 (but that may take a while to solve)</span>
 <span class="sd">&quot;&quot;&quot;</span>
 
 <span class="n">__author__</span> <span class="o">=</span> <span class="s2">&quot;Luis Barroso-Luque&quot;</span>
@@ -262,11 +262,15 @@
 
 
 <div class="viewcode-block" id="AdaptiveLasso"><a class="viewcode-back" href="../../../sparselm.model.html#sparselm.model.AdaptiveLasso">[docs]</a><span class="k">class</span> <span class="nc">AdaptiveLasso</span><span class="p">(</span><span class="n">Lasso</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Adaptive Lasso implementation.</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;Adaptive Lasso implementation.</span>
 
 <span class="sd">    Also known as iteratively re-weighted Lasso.</span>
 <span class="sd">    Regularized model:</span>
-<span class="sd">        || X * Beta - y ||^2_2 + alpha * ||w^T Beta||_1</span>
+
+<span class="sd">    .. math::</span>
+
+<span class="sd">        || X \beta - y ||^2_2 + \alpha ||w^T \beta||_1</span>
+
 <span class="sd">    Where w represents a vector of weights that is iteratively updated.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
@@ -367,7 +371,10 @@
 <span class="w">    </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;Adaptive Group Lasso, iteratively re-weighted group lasso.</span>
 
 <span class="sd">    Regularized model:</span>
-<span class="sd">        || X * Beta - y ||^2_2 + alpha * \sum_{G} w_G * ||Beta_G||_2</span>
+
+<span class="sd">    .. math::</span>
+
+<span class="sd">        || X \beta - y ||^2_2 + \alpha * \sum_{G} w_G ||\beta_G||_2</span>
 
 <span class="sd">    Where w represents a vector of weights that is iteratively updated.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
@@ -475,8 +482,12 @@
 <span class="w">    </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;Adaptive Overlap Group Lasso implementation.</span>
 
 <span class="sd">    Regularized model:</span>
-<span class="sd">        || X * Beta - y ||^2_2 + alpha * \sum_{G} w_G * ||Beta_G||_2</span>
-<span class="sd">    Where G represents groups of features/coefficients, and overlaping groups</span>
+
+<span class="sd">    .. math::</span>
+
+<span class="sd">        || X \beta - y ||^2_2 + \alpha \sum_{G} w_G ||\beta_G||_2</span>
+
+<span class="sd">    Where G represents groups of features/coefficients, and overlapping groups</span>
 <span class="sd">    are acceptable. Meaning a coefficients can be in more than one group.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
@@ -581,11 +592,15 @@
 <span class="w">    </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;Adaptive Sparse Group Lasso, iteratively re-weighted sparse group lasso.</span>
 
 <span class="sd">    Regularized model:</span>
-<span class="sd">        || X * Beta - y ||^2_2</span>
-<span class="sd">            + alpha * l1_ratio * ||w1^T Beta||_1</span>
-<span class="sd">            + alpha * (1 - l1_ratio) * \sum_{G} w2_G * ||Beta_G||_2</span>
 
-<span class="sd">    Where w1, w2 represent vectors of weights that is iteratively updated.</span>
+<span class="sd">    .. math::</span>
+
+<span class="sd">        || X \beta - y ||^2_2</span>
+<span class="sd">            + \alpha r ||w^T \beta||_1</span>
+<span class="sd">            + \alpha (1 - r) \sum_{G} v_G ||\beta_G||_2</span>
+
+<span class="sd">    Where w, v represent vectors of weights that are iteratively updated.</span>
+<span class="sd">    And r is the L1 ratio.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
@@ -714,8 +729,12 @@
 <span class="w">    </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;Adaptive Ridged Group Lasso implementation.</span>
 
 <span class="sd">    Regularized model:</span>
-<span class="sd">        || X * Beta - y ||^2_2 + alpha * \sum_{G} w_G * ||Beta_G||_2</span>
-<span class="sd">                               + \sum_{G} w_l * ||Beta_G||^2_2</span>
+
+<span class="sd">    .. math::</span>
+
+<span class="sd">        || X \beta - y ||^2_2 + \alpha \sum_{G} w_G ||\beta_G||_2</span>
+<span class="sd">                               + \sum_{G} w_l ||\beta_G||^2_2</span>
+
 <span class="sd">    Where G represents groups of features/coefficients, and w_l represents a</span>
 <span class="sd">    vector of weights that are updated iteratively.</span>
 

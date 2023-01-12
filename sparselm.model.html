@@ -261,11 +261,11 @@ See docs linked above for more information.</p></li>
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">sparselm.model.</span></span><span class="sig-name descname"><span class="pre">Lasso</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">alpha</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1.0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fit_intercept</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">copy_X</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">warm_start</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">solver</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">solver_options</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/sparselm/model/_lasso.html#Lasso"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#sparselm.model.Lasso" title="Permalink to this definition">#</a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">CVXEstimator</span></code></p>
 <p>Lasso Estimator implemented with cvxpy.</p>
-<dl class="simple">
-<dt>Regularized model:</dt><dd><p>|| X * Beta - y ||^2_2 + alpha * ||Beta||_1</p>
-</dd>
-</dl>
-<p>Where w represents a vector of weights that is iteratively updated.</p>
+<p>Regularized model:</p>
+<div class="math-wrapper docutils container">
+<div class="math notranslate nohighlight">
+\[|| X \beta - y ||^2_2 + \alpha ||\beta||_1\]</div>
+</div>
 <p>Initialize a Lasso estimator.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
@@ -296,7 +296,7 @@ See docs in CVXEstimator for more information.</p></li>
 <dl class="py class">
 <dt class="sig sig-object py" id="sparselm.model.BestSubsetSelection">
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">sparselm.model.</span></span><span class="sig-name descname"><span class="pre">BestSubsetSelection</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">groups</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sparse_bound</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">big_M</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1000</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">hierarchy</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ignore_psd_check</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fit_intercept</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">copy_X</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">warm_start</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">solver</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">solver_options</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/sparselm/model/_miqp/_best_subset.html#BestSubsetSelection"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#sparselm.model.BestSubsetSelection" title="Permalink to this definition">#</a></dt>
-<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">CVXEstimator</span></code></p>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">MIQP_L0</span></code></p>
 <p>MIQP Best Subset Selection estimator.</p>
 <p>Generalized best subset that allows grouping subsets.</p>
 <p>WARNING: Even with gurobi solver, this can take a very long time to
@@ -343,18 +343,12 @@ See docs in CVXEstimator for more information.</p></li>
 <dd><p>Get sparse bound value.</p>
 </dd></dl>
 
-<dl class="py property">
-<dt class="sig sig-object py" id="sparselm.model.BestSubsetSelection.big_M">
-<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">big_M</span></span><a class="headerlink" href="#sparselm.model.BestSubsetSelection.big_M" title="Permalink to this definition">#</a></dt>
-<dd><p>Get MIQP big M value.</p>
-</dd></dl>
-
 </dd></dl>
 
 <dl class="py class">
 <dt class="sig sig-object py" id="sparselm.model.RidgedBestSubsetSelection">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">sparselm.model.</span></span><span class="sig-name descname"><span class="pre">RidgedBestSubsetSelection</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">groups</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sparse_bound</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">alpha</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1.0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">big_M</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1000</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">hierarchy</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ignore_psd_check</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fit_intercept</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">copy_X</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">warm_start</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">solver</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">solver_options</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/sparselm/model/_miqp/_best_subset.html#RidgedBestSubsetSelection"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#sparselm.model.RidgedBestSubsetSelection" title="Permalink to this definition">#</a></dt>
-<dd><p>Bases: <a class="reference internal" href="#sparselm.model.BestSubsetSelection" title="sparselm.model._miqp._best_subset.BestSubsetSelection"><code class="xref py py-class docutils literal notranslate"><span class="pre">BestSubsetSelection</span></code></a></p>
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">sparselm.model.</span></span><span class="sig-name descname"><span class="pre">RidgedBestSubsetSelection</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">groups</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sparse_bound</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">eta</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1.0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">big_M</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1000</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">hierarchy</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tikhonov_w</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ignore_psd_check</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fit_intercept</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">copy_X</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">warm_start</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">solver</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">solver_options</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/sparselm/model/_miqp/_best_subset.html#RidgedBestSubsetSelection"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#sparselm.model.RidgedBestSubsetSelection" title="Permalink to this definition">#</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">TikhonovMixin</span></code>, <a class="reference internal" href="#sparselm.model.BestSubsetSelection" title="sparselm.model._miqp._best_subset.BestSubsetSelection"><code class="xref py py-class docutils literal notranslate"><span class="pre">BestSubsetSelection</span></code></a></p>
 <p>MIQP  Best subset selection estimator with ridge regularization.</p>
 <p>Initialize estimator.</p>
 <dl class="field-list simple">
@@ -366,6 +360,7 @@ each parameter corresponds to. If no grouping is required, simply
 pass a list of all different numbers, i.e. using range.</p></li>
 <li><p><strong>sparse_bound</strong> (<a class="reference external" href="https://docs.python.org/3.9/library/functions.html#int" title="(in Python v3.9)"><em>int</em></a>) – Upper bound on sparsity. The upper bound on total number of
 nonzero coefficients.</p></li>
+<li><p><strong>eta</strong> (<a class="reference external" href="https://docs.python.org/3.9/library/functions.html#float" title="(in Python v3.9)"><em>float</em></a>) – L2 regularization hyper-parameter.</p></li>
 <li><p><strong>big_M</strong> (<a class="reference external" href="https://docs.python.org/3.9/library/functions.html#float" title="(in Python v3.9)"><em>float</em></a>) – Upper bound on the norm of coefficients associated with each
 cluster (groups of coefficients) ||Beta_c||_2</p></li>
 <li><p><strong>hierarchy</strong> (<a class="reference external" href="https://docs.python.org/3.9/library/stdtypes.html#list" title="(in Python v3.9)"><em>list</em></a>) – A list of lists of integers storing hierarchy relations between
@@ -375,6 +370,7 @@ on which the coefficient associated with each element of
 the list depends. i.e. hierarchy = [[1, 2], [0], []] mean that
 coefficient 0 depends on 1, and 2; 1 depends on 0, and 2 has no
 dependence.</p></li>
+<li><p><strong>tikhonov_w</strong> (<em>np.array</em>) – Matrix to add weights to L2 regularization.</p></li>
 <li><p><strong>ignore_psd_check</strong> (<a class="reference external" href="https://docs.python.org/3.9/library/functions.html#bool" title="(in Python v3.9)"><em>bool</em></a>) – Whether to ignore cvxpy’s PSD checks  of matrix used in quadratic
 form. Default is True to avoid raising errors for poorly
 conditioned matrices. But if you want to be strict set to False.</p></li>
@@ -393,8 +389,8 @@ See docs in CVXEstimator for more information.</p></li>
 </dd>
 </dl>
 <dl class="py property">
-<dt class="sig sig-object py" id="sparselm.model.RidgedBestSubsetSelection.alpha">
-<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">alpha</span></span><a class="headerlink" href="#sparselm.model.RidgedBestSubsetSelection.alpha" title="Permalink to this definition">#</a></dt>
+<dt class="sig sig-object py" id="sparselm.model.RidgedBestSubsetSelection.eta">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">eta</span></span><a class="headerlink" href="#sparselm.model.RidgedBestSubsetSelection.eta" title="Permalink to this definition">#</a></dt>
 <dd><p>Get alpha hyper-parameter value.</p>
 </dd></dl>
 
@@ -403,24 +399,27 @@ See docs in CVXEstimator for more information.</p></li>
 <dl class="py class">
 <dt class="sig sig-object py" id="sparselm.model.RegularizedL0">
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">sparselm.model.</span></span><span class="sig-name descname"><span class="pre">RegularizedL0</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">groups</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">alpha</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1.0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">big_M</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1000</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">hierarchy</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ignore_psd_check</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fit_intercept</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">copy_X</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">warm_start</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">solver</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">solver_options</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/sparselm/model/_miqp/_regularized_l0.html#RegularizedL0"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#sparselm.model.RegularizedL0" title="Permalink to this definition">#</a></dt>
-<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">CVXEstimator</span></code></p>
-<p>Implementation of MIQP l0 regularized estimator.</p>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">MIQP_L0</span></code></p>
+<p>Implementation of mixed-integer quadratic programming l0 regularized estimator.</p>
+<p>Supports grouping parameters and group-level hierarchy, but requires groups as a
+compulsory argument.</p>
+<p>Regularized model:</p>
+<div class="math-wrapper docutils container">
+<div class="math notranslate nohighlight">
+\[|| X \beta - y ||^2_2 + \alpha \sum_{G} z_G\]</div>
+</div>
+<p>Where G represents groups of features/coefficients and <span class="math notranslate nohighlight">\(z_G\)</span> is are boolean
+valued slack variables.</p>
 <p>Initialize estimator.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>groups</strong> (<a class="reference external" href="https://docs.python.org/3.9/library/stdtypes.html#list" title="(in Python v3.9)"><em>list</em></a><em> or </em><em>ndarray</em>) – array-like of integers specifying groups. Length should be the
+<li><p><strong>groups</strong> (<a class="reference external" href="https://docs.python.org/3.9/library/stdtypes.html#list" title="(in Python v3.9)"><em>list</em></a><em> or </em><em>ndarray</em>) – 1D array-like of integers specifying groups. Length should be the
 same as model, where each integer entry specifies the group
-each parameter corresponds to. One dimensional.
-Note: in cluster expansion, a group can either be each correlation
-function (function-level hierarchy) or be each cluster orbit
-(orbit-level hierarchy). In the first case, each index should be its
-own group, so use range(len(ecis)). In the second case, correlation
-functions under the same orbit will be considered as the same group,
-so use function_orbit_ids here.
-Each external term in cluster subspace should be considered as its
-own group.</p></li>
-<li><p><strong>alpha</strong> (<a class="reference external" href="https://docs.python.org/3.9/library/functions.html#float" title="(in Python v3.9)"><em>float</em></a>) – Regularization hyper-parameter.</p></li>
+each parameter corresponds to. If no grouping is needed pass a list
+of all distinct numbers (ie range(len(coefs)) to create singleton groups
+for each parameter.</p></li>
+<li><p><strong>alpha</strong> (<a class="reference external" href="https://docs.python.org/3.9/library/functions.html#float" title="(in Python v3.9)"><em>float</em></a>) – L0 pseudo-norm regularization hyper-parameter.</p></li>
 <li><p><strong>big_M</strong> (<a class="reference external" href="https://docs.python.org/3.9/library/functions.html#float" title="(in Python v3.9)"><em>float</em></a>) – Upper bound on the norm of coefficients associated with each
 cluster (groups of coefficients) ||Beta_c||_2</p></li>
 <li><p><strong>hierarchy</strong> (<a class="reference external" href="https://docs.python.org/3.9/library/stdtypes.html#list" title="(in Python v3.9)"><em>list</em></a>) – A list of lists of integers storing hierarchy relations between
@@ -453,56 +452,37 @@ See docs in CVXEstimator for more information.</p></li>
 <dd><p>Get alpha hyperparameter value.</p>
 </dd></dl>
 
-<dl class="py property">
-<dt class="sig sig-object py" id="sparselm.model.RegularizedL0.big_M">
-<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">big_M</span></span><a class="headerlink" href="#sparselm.model.RegularizedL0.big_M" title="Permalink to this definition">#</a></dt>
-<dd><p>Get MIQP big M value.</p>
-</dd></dl>
-
 </dd></dl>
 
 <dl class="py class">
 <dt class="sig sig-object py" id="sparselm.model.L1L0">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">sparselm.model.</span></span><span class="sig-name descname"><span class="pre">L1L0</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">groups</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">alpha</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1.0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">l0_ratio</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.5</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">big_M</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1000</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">hierarchy</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ignore_psd_check</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fit_intercept</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">copy_X</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">warm_start</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">solver</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">solver_options</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/sparselm/model/_miqp/_regularized_l0.html#L1L0"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#sparselm.model.L1L0" title="Permalink to this definition">#</a></dt>
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">sparselm.model.</span></span><span class="sig-name descname"><span class="pre">L1L0</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">groups</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">alpha</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1.0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">eta</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1.0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">big_M</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1000</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">hierarchy</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ignore_psd_check</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fit_intercept</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">copy_X</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">warm_start</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">solver</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">solver_options</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/sparselm/model/_miqp/_regularized_l0.html#L1L0"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#sparselm.model.L1L0" title="Permalink to this definition">#</a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">MixedL0</span></code></p>
 <p>L1L0 regularized estimator.</p>
 <p>Estimator with L1L0 regularization solved with mixed integer programming
-as discussed in:
-<a class="reference external" href="https://arxiv.org/abs/1807.10753">https://arxiv.org/abs/1807.10753</a></p>
-<p>Removed Gurobi dependency!
-Uses any solver it has in hand. If nothing, will use ECOS_BB.
-ECOS_BB is only supported after cvxpy-1.1.6. It will not be given
-automatically pulled up by cvxpy, and has to be explicitly called
-passed in the constructor with solver=’ECOS_BB’.</p>
-<p>Installation of Gurobi is no longer a must, but highly recommended.
+as discussed in:</p>
+<p><a class="reference external" href="https://arxiv.org/abs/1807.10753">https://arxiv.org/abs/1807.10753</a></p>
+<p>Installation of Gurobi is not a must, but highly recommended.
 You can get a free academic gurobi license…
 ECOS_BB also works but can be very slow.</p>
-<dl class="simple">
-<dt>Regularized model is:</dt><dd><dl class="simple">
-<dt>||X * Beta - y||^2 + alpha * l0_ratio * ||Beta||_0</dt><dd><ul class="simple">
-<li><p>alpha * (1 - l0_ratio) * ||Beta||_1</p></li>
-</ul>
-</dd>
-</dl>
-</dd>
-</dl>
+<p>Regularized model is:</p>
+<div class="math-wrapper docutils container">
+<div class="math notranslate nohighlight">
+\[|| X \beta - y ||^2_2 + \alpha \sum_{G} z_G + \eta ||\beta||_1\]</div>
+</div>
+<p>Where G represents groups of features/coefficients and <span class="math notranslate nohighlight">\(z_G\)</span> is are boolean
+valued slack variables.</p>
 <p>Initialize estimator.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>groups</strong> (<a class="reference external" href="https://docs.python.org/3.9/library/stdtypes.html#list" title="(in Python v3.9)"><em>list</em></a><em> or </em><em>ndarray</em>) – array-like of integers specifying groups. Length should be the
+<li><p><strong>groups</strong> (<a class="reference external" href="https://docs.python.org/3.9/library/stdtypes.html#list" title="(in Python v3.9)"><em>list</em></a><em> or </em><em>ndarray</em>) – 1D array-like of integers specifying groups. Length should be the
 same as model, where each integer entry specifies the group
-each parameter corresponds to. One dimensional.
-Note: in cluster expansion, a group can either be each correlation
-function (function-level hierarchy) or be each cluster orbit
-(orbit-level hierarchy). In the first case, each index should be its
-own group, so use range(len(ecis)). In the second case, correlation
-functions under the same orbit will be considered as the same group,
-so use function_orbit_ids here.
-Each external term in cluster subspace should be considered as its
-own group.</p></li>
-<li><p><strong>alpha</strong> (<a class="reference external" href="https://docs.python.org/3.9/library/functions.html#float" title="(in Python v3.9)"><em>float</em></a>) – Regularization hyper-parameter.</p></li>
-<li><p><strong>l0_ratio</strong> (<a class="reference external" href="https://docs.python.org/3.9/library/functions.html#float" title="(in Python v3.9)"><em>float</em></a>) – Mixing parameter between l1 and l0 regularization.</p></li>
+each parameter corresponds to. If no grouping is needed pass a list
+of all distinct numbers (ie range(len(coefs)) to create singleton groups
+for each parameter.</p></li>
+<li><p><strong>alpha</strong> (<a class="reference external" href="https://docs.python.org/3.9/library/functions.html#float" title="(in Python v3.9)"><em>float</em></a>) – L0 pseudo-norm regularization hyper-parameter.</p></li>
+<li><p><strong>eta</strong> (<a class="reference external" href="https://docs.python.org/3.9/library/functions.html#float" title="(in Python v3.9)"><em>float</em></a>) – L1 regularization hyper-parameter.</p></li>
 <li><p><strong>big_M</strong> (<a class="reference external" href="https://docs.python.org/3.9/library/functions.html#float" title="(in Python v3.9)"><em>float</em></a>) – Upper bound on the norm of coefficients associated with each
 cluster (groups of coefficients) ||Beta_c||_2</p></li>
 <li><p><strong>hierarchy</strong> (<a class="reference external" href="https://docs.python.org/3.9/library/stdtypes.html#list" title="(in Python v3.9)"><em>list</em></a>) – A list of lists of integers storing hierarchy relations between
@@ -533,38 +513,34 @@ See docs in CVXEstimator for more information.</p></li>
 
 <dl class="py class">
 <dt class="sig sig-object py" id="sparselm.model.L2L0">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">sparselm.model.</span></span><span class="sig-name descname"><span class="pre">L2L0</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">groups</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">alpha</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1.0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">l0_ratio</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.5</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">big_M</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1000</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">hierarchy</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ignore_psd_check</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fit_intercept</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">copy_X</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">warm_start</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">solver</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tikhonov_w</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">solver_options</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/sparselm/model/_miqp/_regularized_l0.html#L2L0"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#sparselm.model.L2L0" title="Permalink to this definition">#</a></dt>
-<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">MixedL0</span></code></p>
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">sparselm.model.</span></span><span class="sig-name descname"><span class="pre">L2L0</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">groups</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">alpha</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1.0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">eta</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1.0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">big_M</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1000</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">hierarchy</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tikhonov_w</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ignore_psd_check</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fit_intercept</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">copy_X</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">warm_start</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">solver</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">solver_options</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/sparselm/model/_miqp/_regularized_l0.html#L2L0"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#sparselm.model.L2L0" title="Permalink to this definition">#</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">TikhonovMixin</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">MixedL0</span></code></p>
 <p>L2L0 regularized estimator.</p>
-<p>Estimator with L2L0 regularization solved with mixed integer programming
-proposed by Peichen Zhong.</p>
+<p>Based on estimator with L2L0 regularization solved with mixed integer programming
+proposed by Peichen Zhong:</p>
 <p><a class="reference external" href="https://arxiv.org/abs/2204.13789">https://arxiv.org/abs/2204.13789</a></p>
-<dl class="simple">
-<dt>Regularized model is:</dt><dd><dl class="simple">
-<dt>||X * Beta - y||^2 + alpha * l0_ratio * ||Beta||_0</dt><dd><ul class="simple">
-<li><p>alpha * (1 - l0_ratio) * ||Beta||^2_2</p></li>
-</ul>
-</dd>
-</dl>
-</dd>
-</dl>
+<p>Extended to allow grouping of coefficients and group-level hierarchy as described
+in:</p>
+<p><a class="reference external" href="https://doi.org/10.1287/opre.2015.1436">https://doi.org/10.1287/opre.2015.1436</a></p>
+<p>And allows using a Tihkonov matrix in the l2 term.</p>
+<p>Regularized model is:</p>
+<div class="math-wrapper docutils container">
+<div class="math notranslate nohighlight">
+\[|| X \beta - y ||^2_2 + \alpha \sum_{G} z_G + \eta ||W\beta||^2_2\]</div>
+</div>
+<p>Where G represents groups of features/coefficients and <span class="math notranslate nohighlight">\(z_G\)</span> is are boolean
+valued slack variables. W is a Tikhonov matrix.</p>
 <p>Initialize L2L0 estimator.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>groups</strong> (<a class="reference external" href="https://docs.python.org/3.9/library/stdtypes.html#list" title="(in Python v3.9)"><em>list</em></a><em> or </em><em>ndarray</em>) – array-like of integers specifying groups. Length should be the
+<li><p><strong>groups</strong> (<a class="reference external" href="https://docs.python.org/3.9/library/stdtypes.html#list" title="(in Python v3.9)"><em>list</em></a><em> or </em><em>ndarray</em>) – 1D array-like of integers specifying groups. Length should be the
 same as model, where each integer entry specifies the group
-each parameter corresponds to. One dimensional.
-Note: in cluster expansion, a group can either be each correlation
-function (function-level hierarchy) or be each cluster orbit
-(orbit-level hierarchy). In the first case, each index should be its
-own group, so use range(len(ecis)). In the second case, correlation
-functions under the same orbit will be considered as the same group,
-so use function_orbit_ids here.
-Each external term in cluster subspace should be considered as its
-own group.</p></li>
-<li><p><strong>alpha</strong> (<a class="reference external" href="https://docs.python.org/3.9/library/functions.html#float" title="(in Python v3.9)"><em>float</em></a>) – Regularization hyper-parameter.</p></li>
-<li><p><strong>l0_ratio</strong> (<a class="reference external" href="https://docs.python.org/3.9/library/functions.html#float" title="(in Python v3.9)"><em>float</em></a>) – Mixing parameter between l1 and l0 regularization.</p></li>
+each parameter corresponds to. If no grouping is needed pass a list
+of all distinct numbers (ie range(len(coefs)) to create singleton groups
+for each parameter.</p></li>
+<li><p><strong>alpha</strong> (<a class="reference external" href="https://docs.python.org/3.9/library/functions.html#float" title="(in Python v3.9)"><em>float</em></a>) – L0 pseudo-norm regularization hyper-parameter.</p></li>
+<li><p><strong>eta</strong> (<a class="reference external" href="https://docs.python.org/3.9/library/functions.html#float" title="(in Python v3.9)"><em>float</em></a>) – L2 regularization hyper-parameter.</p></li>
 <li><p><strong>big_M</strong> (<a class="reference external" href="https://docs.python.org/3.9/library/functions.html#float" title="(in Python v3.9)"><em>float</em></a>) – Upper bound on the norm of coefficients associated with each
 cluster (groups of coefficients) ||Beta_c||_2</p></li>
 <li><p><strong>hierarchy</strong> (<a class="reference external" href="https://docs.python.org/3.9/library/stdtypes.html#list" title="(in Python v3.9)"><em>list</em></a>) – A list of lists of integers storing hierarchy relations between
@@ -574,6 +550,7 @@ on which the coefficient associated with each element of
 the list depends. i.e. hierarchy = [[1, 2], [0], []] mean that
 coefficient 0 depends on 1, and 2; 1 depends on 0, and 2 has no
 dependence.</p></li>
+<li><p><strong>tikhonov_w</strong> (<em>np.array</em>) – Matrix to add weights to L2 regularization.</p></li>
 <li><p><strong>ignore_psd_check</strong> (<a class="reference external" href="https://docs.python.org/3.9/library/functions.html#bool" title="(in Python v3.9)"><em>bool</em></a>) – Wether to ignore cvxpy’s PSD checks of matrix used in quadratic
 form. Default is True to avoid raising errors for poorly
 conditioned matrices. But if you want to be strict set to False.</p></li>
@@ -586,7 +563,6 @@ solution.</p></li>
 <li><p><strong>solver</strong> (<a class="reference external" href="https://docs.python.org/3.9/library/stdtypes.html#str" title="(in Python v3.9)"><em>str</em></a>) – cvxpy backend solver to use. Supported solvers are:
 ECOS, ECOS_BB, CVXOPT, SCS, GUROBI, Elemental.
 GLPK and GLPK_MI (via CVXOPT GLPK interface)</p></li>
-<li><p><strong>tikhonov_w</strong> (<em>np.array</em>) – Matrix to add weights to L2 regularization.</p></li>
 <li><p><strong>solver_options</strong> (<a class="reference external" href="https://docs.python.org/3.9/library/stdtypes.html#dict" title="(in Python v3.9)"><em>dict</em></a>) – dictionary of keyword arguments passed to cvxpy solve.
 See docs in CVXEstimator for more information.</p></li>
 </ul>
@@ -599,10 +575,11 @@ See docs in CVXEstimator for more information.</p></li>
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">sparselm.model.</span></span><span class="sig-name descname"><span class="pre">GroupLasso</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">groups</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">alpha</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1.0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">group_weights</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">standardize</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fit_intercept</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">copy_X</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">warm_start</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">solver</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">solver_options</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/sparselm/model/_lasso.html#GroupLasso"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#sparselm.model.GroupLasso" title="Permalink to this definition">#</a></dt>
 <dd><p>Bases: <a class="reference internal" href="#sparselm.model.Lasso" title="sparselm.model._lasso.Lasso"><code class="xref py py-class docutils literal notranslate"><span class="pre">Lasso</span></code></a></p>
 <p>Group Lasso implementation.</p>
-<dl class="simple">
-<dt>Regularized model:</dt><dd><p>|| X * Beta - y ||^2_2 + alpha * sum_{G} w_G * ||Beta_G||_2</p>
-</dd>
-</dl>
+<p>Regularized model:</p>
+<div class="math-wrapper docutils container">
+<div class="math notranslate nohighlight">
+\[|| X \beta - y ||^2_2 + \alpha \sum_{G} w_G ||\beta_G||_2\]</div>
+</div>
 <p>Where G represents groups of features/coefficients</p>
 <p>Initialize estimator.</p>
 <dl class="field-list simple">
@@ -643,11 +620,12 @@ See docs in CVXEstimator for more information.</p></li>
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">sparselm.model.</span></span><span class="sig-name descname"><span class="pre">OverlapGroupLasso</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">group_list</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">alpha</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1.0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">group_weights</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">standardize</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fit_intercept</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">copy_X</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">warm_start</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">solver</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">solver_options</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/sparselm/model/_lasso.html#OverlapGroupLasso"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#sparselm.model.OverlapGroupLasso" title="Permalink to this definition">#</a></dt>
 <dd><p>Bases: <a class="reference internal" href="#sparselm.model.GroupLasso" title="sparselm.model._lasso.GroupLasso"><code class="xref py py-class docutils literal notranslate"><span class="pre">GroupLasso</span></code></a></p>
 <p>Overlap Group Lasso implementation.</p>
-<dl class="simple">
-<dt>Regularized model:</dt><dd><p>|| X * Beta - y ||^2_2 + alpha * sum_{G} w_G * ||Beta_G||_2</p>
-</dd>
-</dl>
-<p>Where G represents groups of features/coefficients, and overlaping groups
+<p>Regularized model:</p>
+<div class="math-wrapper docutils container">
+<div class="math notranslate nohighlight">
+\[|| X \beta - y ||^2_2 + \alpha \sum_{G} w_G ||\beta_G||_2\]</div>
+</div>
+<p>Where G represents groups of features/coefficients, and overlapping groups
 are acceptable. Meaning a coefficients can be in more than one group.</p>
 <p>Initialize estimator.</p>
 <dl class="field-list simple">
@@ -693,17 +671,14 @@ See docs in CVXEstimator for more information.</p></li>
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">sparselm.model.</span></span><span class="sig-name descname"><span class="pre">SparseGroupLasso</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">groups</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">l1_ratio</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.5</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">alpha</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1.0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">group_weights</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">standardize</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fit_intercept</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">copy_X</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">warm_start</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">solver</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">solver_options</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/sparselm/model/_lasso.html#SparseGroupLasso"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#sparselm.model.SparseGroupLasso" title="Permalink to this definition">#</a></dt>
 <dd><p>Bases: <a class="reference internal" href="#sparselm.model.GroupLasso" title="sparselm.model._lasso.GroupLasso"><code class="xref py py-class docutils literal notranslate"><span class="pre">GroupLasso</span></code></a></p>
 <p>Sparse Group Lasso.</p>
-<dl class="simple">
-<dt>Regularized model:</dt><dd><dl class="simple">
-<dt>|| X * Beta - y ||^2_2</dt><dd><ul class="simple">
-<li><p>alpha * l1_ratio * ||Beta||_1</p></li>
-<li><p>alpha * (1 - l1_ratio) * sum_{G}||Beta_G||_2</p></li>
-</ul>
-</dd>
-</dl>
-</dd>
-</dl>
-<p>Where G represents groups of features / coefficients</p>
+<p>Regularized model:</p>
+<div class="math-wrapper docutils container">
+<div class="math notranslate nohighlight">
+\[|| X \beta - y ||^2_2
+    + \alpha r ||\beta||_1
+    + \alpha (1 - r) * \sum_{G}||\beta_G||_2\]</div>
+</div>
+<p>Where G represents groups of features / coefficients. And r is the L1 ratio.</p>
 <p>Initialize estimator.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
@@ -756,15 +731,12 @@ See docs in CVXEstimator for more information.</p></li>
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">sparselm.model.</span></span><span class="sig-name descname"><span class="pre">RidgedGroupLasso</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">groups</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">alpha</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1.0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">delta</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1.0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">group_weights</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">standardize</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fit_intercept</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">copy_X</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">warm_start</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">solver</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">solver_options</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/sparselm/model/_lasso.html#RidgedGroupLasso"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#sparselm.model.RidgedGroupLasso" title="Permalink to this definition">#</a></dt>
 <dd><p>Bases: <a class="reference internal" href="#sparselm.model.GroupLasso" title="sparselm.model._lasso.GroupLasso"><code class="xref py py-class docutils literal notranslate"><span class="pre">GroupLasso</span></code></a></p>
 <p>Ridged Group Lasso implementation.</p>
-<dl class="simple">
-<dt>Regularized model:</dt><dd><dl class="simple">
-<dt>|| X * Beta - y ||^2_2 + alpha * sum_{G} w_G * ||Beta_G||_2</dt><dd><ul class="simple">
-<li><p>sum_{G} delta_l * ||Beta_G||^2_2</p></li>
-</ul>
-</dd>
-</dl>
-</dd>
-</dl>
+<p>Regularized model:</p>
+<div class="math-wrapper docutils container">
+<div class="math notranslate nohighlight">
+\[|| X \beta - y ||^2_2 + \alpha \sum_{G} w_G ||\beta_G||_2
+                       + \sum_{G} \delta_l ||\beta_G||^2_2\]</div>
+</div>
 <p>Where G represents groups of features/coefficients</p>
 <p>For details on proper standardization refer to:
 <a class="reference external" href="http://faculty.washington.edu/nrsimon/standGL.pdf">http://faculty.washington.edu/nrsimon/standGL.pdf</a></p>
@@ -817,9 +789,10 @@ See docs in CVXEstimator for more information.</p></li>
 <p>Adaptive Lasso implementation.</p>
 <p>Also known as iteratively re-weighted Lasso.
 Regularized model:</p>
-<blockquote>
-<div><p>|| X * Beta - y ||^2_2 + alpha * ||w^T Beta||_1</p>
-</div></blockquote>
+<div class="math-wrapper docutils container">
+<div class="math notranslate nohighlight">
+\[|| X \beta - y ||^2_2 + \alpha ||w^T \beta||_1\]</div>
+</div>
 <p>Where w represents a vector of weights that is iteratively updated.</p>
 <p>Initialize estimator.</p>
 <dl class="field-list simple">
@@ -854,10 +827,11 @@ See docs in CVXEstimator for more information.</p></li>
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">sparselm.model.</span></span><span class="sig-name descname"><span class="pre">AdaptiveGroupLasso</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">groups</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">alpha</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1.0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">group_weights</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">max_iter</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">5</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">eps</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1e-06</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tol</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1e-10</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">update_function</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">standardize</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fit_intercept</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">copy_X</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">warm_start</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">solver</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">solver_options</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/sparselm/model/_adaptive_lasso.html#AdaptiveGroupLasso"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#sparselm.model.AdaptiveGroupLasso" title="Permalink to this definition">#</a></dt>
 <dd><p>Bases: <a class="reference internal" href="#sparselm.model.AdaptiveLasso" title="sparselm.model._adaptive_lasso.AdaptiveLasso"><code class="xref py py-class docutils literal notranslate"><span class="pre">AdaptiveLasso</span></code></a>, <a class="reference internal" href="#sparselm.model.GroupLasso" title="sparselm.model._lasso.GroupLasso"><code class="xref py py-class docutils literal notranslate"><span class="pre">GroupLasso</span></code></a></p>
 <p>Adaptive Group Lasso, iteratively re-weighted group lasso.</p>
-<dl class="simple">
-<dt>Regularized model:</dt><dd><p>|| X * Beta - y ||^2_2 + alpha * sum_{G} w_G * ||Beta_G||_2</p>
-</dd>
-</dl>
+<p>Regularized model:</p>
+<div class="math-wrapper docutils container">
+<div class="math notranslate nohighlight">
+\[|| X \beta - y ||^2_2 + \alpha * \sum_{G} w_G ||\beta_G||_2\]</div>
+</div>
 <p>Where w represents a vector of weights that is iteratively updated.</p>
 <p>Initialize estimator.</p>
 <dl class="field-list simple">
@@ -907,11 +881,12 @@ See docs in CVXEstimator for more information.</p></li>
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">sparselm.model.</span></span><span class="sig-name descname"><span class="pre">AdaptiveOverlapGroupLasso</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">group_list</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">alpha</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1.0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">group_weights</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">max_iter</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">5</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">eps</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1e-06</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tol</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1e-10</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">update_function</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">standardize</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fit_intercept</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">copy_X</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">warm_start</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">solver</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">solver_options</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/sparselm/model/_adaptive_lasso.html#AdaptiveOverlapGroupLasso"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#sparselm.model.AdaptiveOverlapGroupLasso" title="Permalink to this definition">#</a></dt>
 <dd><p>Bases: <a class="reference internal" href="#sparselm.model.OverlapGroupLasso" title="sparselm.model._lasso.OverlapGroupLasso"><code class="xref py py-class docutils literal notranslate"><span class="pre">OverlapGroupLasso</span></code></a>, <a class="reference internal" href="#sparselm.model.AdaptiveGroupLasso" title="sparselm.model._adaptive_lasso.AdaptiveGroupLasso"><code class="xref py py-class docutils literal notranslate"><span class="pre">AdaptiveGroupLasso</span></code></a></p>
 <p>Adaptive Overlap Group Lasso implementation.</p>
-<dl class="simple">
-<dt>Regularized model:</dt><dd><p>|| X * Beta - y ||^2_2 + alpha * sum_{G} w_G * ||Beta_G||_2</p>
-</dd>
-</dl>
-<p>Where G represents groups of features/coefficients, and overlaping groups
+<p>Regularized model:</p>
+<div class="math-wrapper docutils container">
+<div class="math notranslate nohighlight">
+\[|| X \beta - y ||^2_2 + \alpha \sum_{G} w_G ||\beta_G||_2\]</div>
+</div>
+<p>Where G represents groups of features/coefficients, and overlapping groups
 are acceptable. Meaning a coefficients can be in more than one group.</p>
 <p>Initialize estimator.</p>
 <dl class="field-list simple">
@@ -966,17 +941,15 @@ See docs in CVXEstimator for more information.</p></li>
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">sparselm.model.</span></span><span class="sig-name descname"><span class="pre">AdaptiveSparseGroupLasso</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">groups</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">l1_ratio</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.5</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">alpha</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1.0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">group_weights</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">max_iter</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">5</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">eps</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1e-06</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tol</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1e-10</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">update_function</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">standardize</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fit_intercept</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">copy_X</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">warm_start</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">solver</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">solver_options</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/sparselm/model/_adaptive_lasso.html#AdaptiveSparseGroupLasso"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#sparselm.model.AdaptiveSparseGroupLasso" title="Permalink to this definition">#</a></dt>
 <dd><p>Bases: <a class="reference internal" href="#sparselm.model.AdaptiveLasso" title="sparselm.model._adaptive_lasso.AdaptiveLasso"><code class="xref py py-class docutils literal notranslate"><span class="pre">AdaptiveLasso</span></code></a>, <a class="reference internal" href="#sparselm.model.SparseGroupLasso" title="sparselm.model._lasso.SparseGroupLasso"><code class="xref py py-class docutils literal notranslate"><span class="pre">SparseGroupLasso</span></code></a></p>
 <p>Adaptive Sparse Group Lasso, iteratively re-weighted sparse group lasso.</p>
-<dl class="simple">
-<dt>Regularized model:</dt><dd><dl class="simple">
-<dt>|| X * Beta - y ||^2_2</dt><dd><ul class="simple">
-<li><p>alpha * l1_ratio * ||w1^T Beta||_1</p></li>
-<li><p>alpha * (1 - l1_ratio) * sum_{G} w2_G * ||Beta_G||_2</p></li>
-</ul>
-</dd>
-</dl>
-</dd>
-</dl>
-<p>Where w1, w2 represent vectors of weights that is iteratively updated.</p>
+<p>Regularized model:</p>
+<div class="math-wrapper docutils container">
+<div class="math notranslate nohighlight">
+\[|| X \beta - y ||^2_2
+    + \alpha r ||w^T \beta||_1
+    + \alpha (1 - r) \sum_{G} v_G ||\beta_G||_2\]</div>
+</div>
+<p>Where w, v represent vectors of weights that are iteratively updated.
+And r is the L1 ratio.</p>
 <p>Initialize estimator.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
@@ -1026,15 +999,12 @@ See docs in CVXEstimator for more information.</p></li>
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">sparselm.model.</span></span><span class="sig-name descname"><span class="pre">AdaptiveRidgedGroupLasso</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">groups</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">alpha</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1.0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">delta</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1.0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">group_weights</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">max_iter</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">5</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">eps</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1e-06</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tol</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1e-10</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">update_function</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">standardize</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fit_intercept</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">copy_X</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">warm_start</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">solver</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">solver_options</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/sparselm/model/_adaptive_lasso.html#AdaptiveRidgedGroupLasso"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#sparselm.model.AdaptiveRidgedGroupLasso" title="Permalink to this definition">#</a></dt>
 <dd><p>Bases: <a class="reference internal" href="#sparselm.model.AdaptiveGroupLasso" title="sparselm.model._adaptive_lasso.AdaptiveGroupLasso"><code class="xref py py-class docutils literal notranslate"><span class="pre">AdaptiveGroupLasso</span></code></a>, <a class="reference internal" href="#sparselm.model.RidgedGroupLasso" title="sparselm.model._lasso.RidgedGroupLasso"><code class="xref py py-class docutils literal notranslate"><span class="pre">RidgedGroupLasso</span></code></a></p>
 <p>Adaptive Ridged Group Lasso implementation.</p>
-<dl class="simple">
-<dt>Regularized model:</dt><dd><dl class="simple">
-<dt>|| X * Beta - y ||^2_2 + alpha * sum_{G} w_G * ||Beta_G||_2</dt><dd><ul class="simple">
-<li><p>sum_{G} w_l * ||Beta_G||^2_2</p></li>
-</ul>
-</dd>
-</dl>
-</dd>
-</dl>
+<p>Regularized model:</p>
+<div class="math-wrapper docutils container">
+<div class="math notranslate nohighlight">
+\[|| X \beta - y ||^2_2 + \alpha \sum_{G} w_G ||\beta_G||_2
+                       + \sum_{G} w_l ||\beta_G||^2_2\]</div>
+</div>
 <p>Where G represents groups of features/coefficients, and w_l represents a
 vector of weights that are updated iteratively.</p>
 <p>For details on proper standardization refer to:
@@ -1148,16 +1118,14 @@ See docs in CVXEstimator for more information.</p></li>
 </li>
 <li><a class="reference internal" href="#sparselm.model.BestSubsetSelection"><code class="docutils literal notranslate"><span class="pre">BestSubsetSelection</span></code></a><ul>
 <li><a class="reference internal" href="#sparselm.model.BestSubsetSelection.sparse_bound"><code class="docutils literal notranslate"><span class="pre">BestSubsetSelection.sparse_bound</span></code></a></li>
-<li><a class="reference internal" href="#sparselm.model.BestSubsetSelection.big_M"><code class="docutils literal notranslate"><span class="pre">BestSubsetSelection.big_M</span></code></a></li>
 </ul>
 </li>
 <li><a class="reference internal" href="#sparselm.model.RidgedBestSubsetSelection"><code class="docutils literal notranslate"><span class="pre">RidgedBestSubsetSelection</span></code></a><ul>
-<li><a class="reference internal" href="#sparselm.model.RidgedBestSubsetSelection.alpha"><code class="docutils literal notranslate"><span class="pre">RidgedBestSubsetSelection.alpha</span></code></a></li>
+<li><a class="reference internal" href="#sparselm.model.RidgedBestSubsetSelection.eta"><code class="docutils literal notranslate"><span class="pre">RidgedBestSubsetSelection.eta</span></code></a></li>
 </ul>
 </li>
 <li><a class="reference internal" href="#sparselm.model.RegularizedL0"><code class="docutils literal notranslate"><span class="pre">RegularizedL0</span></code></a><ul>
 <li><a class="reference internal" href="#sparselm.model.RegularizedL0.alpha"><code class="docutils literal notranslate"><span class="pre">RegularizedL0.alpha</span></code></a></li>
-<li><a class="reference internal" href="#sparselm.model.RegularizedL0.big_M"><code class="docutils literal notranslate"><span class="pre">RegularizedL0.big_M</span></code></a></li>
 </ul>
 </li>
 <li><a class="reference internal" href="#sparselm.model.L1L0"><code class="docutils literal notranslate"><span class="pre">L1L0</span></code></a></li>
@@ -1193,5 +1161,6 @@ See docs in CVXEstimator for more information.</p></li>
     <script src="_static/doctools.js"></script>
     <script src="_static/sphinx_highlight.js"></script>
     <script src="_static/scripts/furo.js"></script>
+    <script async="async" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
     </body>
 </html>
