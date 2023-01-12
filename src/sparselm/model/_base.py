@@ -207,7 +207,7 @@ class CVXEstimator(RegressorMixin, LinearModel, metaclass=ABCMeta):
 class TikhonovMixin:
     """Mixin class to add a Tihhonov/ridge regularization term.
 
-    When using this Mixin, a cvxpy parameter should be set as the _lambda2 attribute
+    When using this Mixin, a cvxpy parameter should be set as the _eta attribute
     and an attribute tikhonov_w can be added to allow a matrix otherwise simple l2/Ridge
     is used.
     """
@@ -221,7 +221,7 @@ class TikhonovMixin:
         else:
             tikhonov_w = np.eye(X.shape[1])
 
-        objective = super()._gen_objective(X, y) + c0 * self._lambda2 * cp.sum_squares(
+        objective = super()._gen_objective(X, y) + c0 * self._eta * cp.sum_squares(
             tikhonov_w @ self._beta
         )
 

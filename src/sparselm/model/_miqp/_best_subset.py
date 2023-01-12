@@ -118,7 +118,7 @@ class RidgedBestSubsetSelection(TikhonovMixin, BestSubsetSelection):
         self,
         groups,
         sparse_bound,
-        alpha=1.0,
+        eta=1.0,
         big_M=1000,
         hierarchy=None,
         tikhonov_w=None,
@@ -141,6 +141,8 @@ class RidgedBestSubsetSelection(TikhonovMixin, BestSubsetSelection):
             sparse_bound (int):
                 Upper bound on sparsity. The upper bound on total number of
                 nonzero coefficients.
+            eta (float):
+                L2 regularization hyper-parameter.
             big_M (float):
                 Upper bound on the norm of coefficients associated with each
                 cluster (groups of coefficients) ||Beta_c||_2
@@ -188,16 +190,15 @@ class RidgedBestSubsetSelection(TikhonovMixin, BestSubsetSelection):
             solver_options=solver_options,
             **kwargs,
         )
-
         self.tikhonov_w = tikhonov_w
-        self._lambda2 = cp.Parameter(nonneg=True, value=alpha)
+        self._eta = cp.Parameter(nonneg=True, value=eta)
 
     @property
-    def alpha(self):
+    def eta(self):
         """Get alpha hyper-parameter value."""
-        return self._lambda2.value
+        return self._eta.value
 
-    @alpha.setter
-    def alpha(self, val):
+    @eta.setter
+    def eta(self, val):
         """Set alpha hyper-parameter value."""
-        self._lambda2.value = val
+        self._eta.value = val

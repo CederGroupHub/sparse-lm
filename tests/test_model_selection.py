@@ -76,7 +76,7 @@ def mixed_l2l0_est(random_model, request):
 
 def test_mixed_l0_wts(random_model, mixed_l2l0_est, random_weights):
     femat, energies, ecis = random_model
-    mixed_l2l0_est.alpha = 1e-5
+    mixed_l2l0_est.eta = 1e-5
     mixed_l2l0_est.fit(X=femat, y=energies)
     energies_pred = mixed_l2l0_est.predict(femat)
     assert energies_pred is not None

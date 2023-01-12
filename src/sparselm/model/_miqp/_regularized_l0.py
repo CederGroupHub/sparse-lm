@@ -65,7 +65,7 @@ class RegularizedL0(MIQP_L0):
                 Each external term in cluster subspace should be considered as its
                 own group.
             alpha (float):
-                Regularization hyper-parameter.
+                L0 pseudo-norm regularization hyper-parameter.
             big_M (float):
                 Upper bound on the norm of coefficients associated with each
                 cluster (groups of coefficients) ||Beta_c||_2
@@ -109,25 +109,22 @@ class RegularizedL0(MIQP_L0):
             solver=solver,
             solver_options=solver_options,
         )
-
-        self._alpha = alpha
-        self._lambda0 = cp.Parameter(nonneg=True, value=alpha)
+        self._eta = cp.Parameter(nonneg=True, value=alpha)
 
     @property
     def alpha(self):
         """Get alpha hyperparameter value."""
-        return self._alpha
+        return self._eta.value
 
     @alpha.setter
     def alpha(self, val):
         """Set alpha hyperparameter value."""
-        self._alpha = val
-        self._lambda0.value = val
+        self._eta.value = val
 
     def _gen_objective(self, X, y):
         """Generate the quadratic form and l0 regularization portion of objective."""
         c0 = 2 * X.shape[0]  # keeps hyperparameter scale independent
-        objective = super()._gen_objective(X, y) + c0 * self._lambda0 * cp.sum(self._z0)
+        objective = super()._gen_objective(X, y) + c0 * self._eta * cp.sum(self._z0)
         return objective
 
 
@@ -138,7 +135,7 @@ class MixedL0(RegularizedL0, metaclass=ABCMeta):
         self,
         groups,
         alpha=1.0,
-        l0_ratio=0.5,
+        eta=1.0,
         big_M=1000,
         hierarchy=None,
         ignore_psd_check=True,
@@ -164,9 +161,9 @@ class MixedL0(RegularizedL0, metaclass=ABCMeta):
                 Each external term in cluster subspace should be considered as its
                 own group.
             alpha (float):
-                Regularization hyper-parameter.
-            l0_ratio (float):
-                Mixing parameter between l1 and l0 regularization.
+                L0 pseudo-norm regularization hyper-parameter.
+            eta (float):
+                standard norm regularization hyper-parameter (usually l1 or l2).
             big_M (float):
                 Upper bound on the norm of coefficients associated with each
                 cluster (groups of coefficients) ||Beta_c||_2
@@ -211,40 +208,17 @@ class MixedL0(RegularizedL0, metaclass=ABCMeta):
             solver=solver,
             solver_options=solver_options,
         )
-
-        if not 0 <= l0_ratio <= 1:
-            raise ValueError("l0_ratio must be between 0 and 1.")
-        elif l0_ratio == 0.0:
-            warnings.warn(
-                "It's more efficient to use Ridge/Lasso instead of l0_ratio=0",
-                UserWarning,
-            )
-
-        self._lambda0.value = l0_ratio * alpha
-        self._lambda2 = cp.Parameter(nonneg=True, value=(1 - l0_ratio) * alpha)
-        #  save exact value so sklearn clone is happy dappy
-        self._l0_ratio = l0_ratio
-
-    @RegularizedL0.alpha.setter
-    def alpha(self, val):
-        """Set hyperparameter values."""
-        self._alpha = val
-        self._lambda0.value = self.l0_ratio * val
-        self._lambda2.value = (1 - self.l0_ratio) * val
+        self._eta = cp.Parameter(nonneg=True, value=eta)
 
     @property
-    def l0_ratio(self):
-        """Get l0 ratio."""
-        return self._l0_ratio
+    def eta(self):
+        """Get eta hyperparameter value."""
+        return self._eta.value
 
-    @l0_ratio.setter
-    def l0_ratio(self, val):
-        """Set l0 ratio."""
-        if not 0 <= val <= 1:
-            raise ValueError("l0_ratio must be between 0 and 1.")
-        self._l0_ratio = val
-        self._lambda0.value = val * self.alpha
-        self._lambda2.value = (1 - val) * self.alpha
+    @eta.setter
+    def eta(self, val):
+        """Set eta hyperparameter values."""
+        self._eta.val = val
 
     @abstractmethod
     def _gen_objective(self, X, y):
@@ -268,15 +242,14 @@ class L1L0(MixedL0):
 
     .. math::
 
-        ||X \beta - y||^2 + \alpha * l0_ratio * ||\beta||_0
-                           + \alpha * (1 - l0_ratio) * ||\beta||_1
+        ||X \beta - y||^2 + \alpha ||\beta||_0 + \eta ||\beta||_1
     """
 
     def __init__(
         self,
         groups,
         alpha=1.0,
-        l0_ratio=0.5,
+        eta=1.0,
         big_M=1000,
         hierarchy=None,
         ignore_psd_check=True,
@@ -302,9 +275,9 @@ class L1L0(MixedL0):
                 Each external term in cluster subspace should be considered as its
                 own group.
             alpha (float):
-                Regularization hyper-parameter.
-            l0_ratio (float):
-                Mixing parameter between l1 and l0 regularization.
+                L0 pseudo-norm regularization hyper-parameter.
+            eta (float):
+                L1 regularization hyper-parameter.
             big_M (float):
                 Upper bound on the norm of coefficients associated with each
                 cluster (groups of coefficients) ||Beta_c||_2
@@ -339,8 +312,8 @@ class L1L0(MixedL0):
         """
         super().__init__(
             groups=groups,
+            eta=eta,
             alpha=alpha,
-            l0_ratio=l0_ratio,
             big_M=big_M,
             hierarchy=hierarchy,
             ignore_psd_check=ignore_psd_check,
@@ -363,8 +336,7 @@ class L1L0(MixedL0):
         """Generate the objective function used in l1l0 regression model."""
         self._z1 = cp.Variable(X.shape[1])
         c0 = 2 * X.shape[0]  # keeps hyperparameter scale independent
-        objective = super()._gen_objective(X, y) + c0 * self._lambda2 * cp.sum(self._z1)
-
+        objective = super()._gen_objective(X, y) + c0 * self._eta * cp.sum(self._z1)
         return objective
 
 
@@ -395,7 +367,7 @@ class L2L0(TikhonovMixin, MixedL0):
         self,
         groups,
         alpha=1.0,
-        l0_ratio=0.5,
+        eta=1.0,
         big_M=1000,
         hierarchy=None,
         tikhonov_w=None,
@@ -422,9 +394,9 @@ class L2L0(TikhonovMixin, MixedL0):
                 Each external term in cluster subspace should be considered as its
                 own group.
             alpha (float):
-                Regularization hyper-parameter.
-            l0_ratio (float):
-                Mixing parameter between l1 and l0 regularization.
+                L0 pseudo-norm regularization hyper-parameter.
+            eta (float):
+                L2 regularization hyper-parameter.
             big_M (float):
                 Upper bound on the norm of coefficients associated with each
                 cluster (groups of coefficients) ||Beta_c||_2
@@ -462,7 +434,7 @@ class L2L0(TikhonovMixin, MixedL0):
         super().__init__(
             groups=groups,
             alpha=alpha,
-            l0_ratio=l0_ratio,
+            eta=eta,
             big_M=big_M,
             hierarchy=hierarchy,
             ignore_psd_check=ignore_psd_check,
