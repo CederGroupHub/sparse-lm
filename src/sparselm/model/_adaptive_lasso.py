@@ -33,7 +33,7 @@ from ._lasso import (
 
 
 class AdaptiveLasso(Lasso):
-    """Adaptive Lasso implementation.
+    r"""Adaptive Lasso implementation.
 
     Also known as iteratively re-weighted Lasso.
     Regularized model:
@@ -256,7 +256,7 @@ class AdaptiveOverlapGroupLasso(OverlapGroupLasso, AdaptiveGroupLasso):
 
     .. math::
 
-        || X \beta - y ||^2_2 + \alpha * \sum_{G} w_G ||\beta_G||_2
+        || X \beta - y ||^2_2 + \alpha \sum_{G} w_G ||\beta_G||_2
 
     Where G represents groups of features/coefficients, and overlapping groups
     are acceptable. Meaning a coefficients can be in more than one group.
@@ -367,10 +367,11 @@ class AdaptiveSparseGroupLasso(AdaptiveLasso, SparseGroupLasso):
     .. math::
 
         || X \beta - y ||^2_2
-            + \alpha * l1_ratio * ||w1^T \beta||_1
-            + \alpha * (1 - l1_ratio) * \sum_{G} w2_G ||\beta_G||_2
+            + \alpha r ||w^T \beta||_1
+            + \alpha (1 - r) \sum_{G} v_G ||\beta_G||_2
 
-    Where w1, w2 represent vectors of weights that is iteratively updated.
+    Where w, v represent vectors of weights that are iteratively updated.
+    And r is the L1 ratio.
     """
 
     def __init__(
@@ -502,7 +503,7 @@ class AdaptiveRidgedGroupLasso(AdaptiveGroupLasso, RidgedGroupLasso):
 
     .. math::
 
-        || X \beta - y ||^2_2 + \alpha * \sum_{G} w_G ||\beta_G||_2
+        || X \beta - y ||^2_2 + \alpha \sum_{G} w_G ||\beta_G||_2
                                + \sum_{G} w_l ||\beta_G||^2_2
 
     Where G represents groups of features/coefficients, and w_l represents a

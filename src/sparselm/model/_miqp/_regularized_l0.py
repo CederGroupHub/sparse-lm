@@ -29,10 +29,20 @@ from ._base import MIQP_L0
 
 
 class RegularizedL0(MIQP_L0):
-    """Implementation of mixed-integer quadratic programming l0 regularized estimator.
+    r"""Implementation of mixed-integer quadratic programming l0 regularized estimator.
 
     Supports grouping parameters and group-level hierarchy, but requires groups as a
     compulsory argument.
+
+    Regularized model:
+
+    .. math::
+
+        || X \beta - y ||^2_2 + \alpha \sum_{G} z_G
+
+    Where G represents groups of features/coefficients and :math:`z_G` is are boolean
+    valued slack variables.
+
     """
 
     def __init__(
@@ -214,7 +224,7 @@ class MixedL0(RegularizedL0, metaclass=ABCMeta):
 
 
 class L1L0(MixedL0):
-    """L1L0 regularized estimator.
+    r"""L1L0 regularized estimator.
 
     Estimator with L1L0 regularization solved with mixed integer programming
     as discussed in:
@@ -229,7 +239,10 @@ class L1L0(MixedL0):
 
     .. math::
 
-        ||X \beta - y||^2 + \alpha ||\beta||_0 + \\eta ||\beta||_1
+        || X \beta - y ||^2_2 + \alpha \sum_{G} z_G + \eta ||\beta||_1
+
+    Where G represents groups of features/coefficients and :math:`z_G` is are boolean
+    valued slack variables.
     """
 
     def __init__(
@@ -322,7 +335,7 @@ class L1L0(MixedL0):
 
 
 class L2L0(TikhonovMixin, MixedL0):
-    """L2L0 regularized estimator.
+    r"""L2L0 regularized estimator.
 
     Based on estimator with L2L0 regularization solved with mixed integer programming
     proposed by Peichen Zhong:
@@ -340,8 +353,10 @@ class L2L0(TikhonovMixin, MixedL0):
 
     .. math::
 
-        ||X \beta - y||^2 + \alpha * l0_ratio * ||\beta||_0
-                           + \alpha * (1 - l0_ratio) * ||\beta||^2_2
+        || X \beta - y ||^2_2 + \alpha \sum_{G} z_G + \eta ||W\beta||^2_2
+
+    Where G represents groups of features/coefficients and :math:`z_G` is are boolean
+    valued slack variables. W is a Tikhonov matrix.
     """
 
     def __init__(

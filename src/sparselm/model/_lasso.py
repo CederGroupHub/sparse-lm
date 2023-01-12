@@ -22,14 +22,14 @@ from ._base import CVXEstimator
 
 
 class Lasso(CVXEstimator):
-    """
+    r"""
     Lasso Estimator implemented with cvxpy.
 
     Regularized model:
 
     .. math::
 
-        || X \beta - y ||^2_2 + \alpha * ||\beta||_1
+        || X \beta - y ||^2_2 + \alpha ||\beta||_1
 
     """
 
@@ -100,7 +100,7 @@ class GroupLasso(Lasso):
 
     .. math::
 
-        || X \beta - y ||^2_2 + \alpha * \sum_{G} w_G * ||\beta_G||_2
+        || X \beta - y ||^2_2 + \alpha \sum_{G} w_G ||\beta_G||_2
 
     Where G represents groups of features/coefficients
     """
@@ -196,14 +196,16 @@ class GroupLasso(Lasso):
     def _gen_regularization(self, X):
         return self._alpha * (self.group_weights @ self._gen_group_norms(X))
 
+
 # TODO this implementation is not efficient, reimplement.
 class OverlapGroupLasso(GroupLasso):
     r"""Overlap Group Lasso implementation.
 
     Regularized model:
+
     .. math::
 
-        || X \beta - y ||^2_2 + \alpha * \sum_{G} w_G * ||\beta_G||_2
+        || X \beta - y ||^2_2 + \alpha \sum_{G} w_G ||\beta_G||_2
 
     Where G represents groups of features/coefficients, and overlapping groups
     are acceptable. Meaning a coefficients can be in more than one group.
@@ -314,10 +316,10 @@ class SparseGroupLasso(GroupLasso):
     .. math::
 
         || X \beta - y ||^2_2
-            + \alpha * l1_ratio * ||\beta||_1
-            + \alpha * (1 - l1_ratio) * \sum_{G}||\beta_G||_2
+            + \alpha r ||\beta||_1
+            + \alpha (1 - r) * \sum_{G}||\beta_G||_2
 
-    Where G represents groups of features / coefficients
+    Where G represents groups of features / coefficients. And r is the L1 ratio.
     """
 
     def __init__(
@@ -440,8 +442,8 @@ class RidgedGroupLasso(GroupLasso):
 
     .. math::
 
-        || X \beta - y ||^2_2 + \alpha * \sum_{G} w_G * ||\beta_G||_2
-                               + \sum_{G} \delta_l * ||\beta_G||^2_2
+        || X \beta - y ||^2_2 + \alpha \sum_{G} w_G ||\beta_G||_2
+                               + \sum_{G} \delta_l ||\beta_G||^2_2
 
     Where G represents groups of features/coefficients
 

@@ -35,6 +35,7 @@ extensions = [
     "sphinx.ext.intersphinx",
     "sphinx.ext.viewcode",
     "sphinx.ext.autosummary",
+    "sphinx.ext.mathjax",
     "m2r2",
     # "nbsphinx",
     # "nbsphinx_link",
