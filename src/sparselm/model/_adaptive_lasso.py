@@ -11,11 +11,11 @@ optimization problem.
 
 NOTE: In certain cases these can yield infeasible problems. This can cause
 processes to die and as a result make a calculation hang indefinitely when
-using a them in a multiprocess model selection tool such as sklearn
+using them in a multiprocess model selection tool such as sklearn
 GridSearchCV with n_jobs > 1.
 
 In that case either tweak settings/solvers around so that that does not happen
-or run with n_jobs=1 (but that may take a while to solve_
+or run with n_jobs=1 (but that may take a while to solve)
 """
 
 __author__ = "Luis Barroso-Luque"

@@ -196,7 +196,7 @@ class GroupLasso(Lasso):
     def _gen_regularization(self, X):
         return self._alpha * (self.group_weights @ self._gen_group_norms(X))
 
-
+# TODO this implementation is not efficient, reimplement.
 class OverlapGroupLasso(GroupLasso):
     r"""Overlap Group Lasso implementation.
 
