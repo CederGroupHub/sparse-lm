@@ -75,7 +75,6 @@ class MIQP_L0(CVXEstimator, metaclass=ABCMeta):
                 dictionary of keyword arguments passed to cvxpy solve.
                 See docs in CVXEstimator for more information.
         """
-
         super().__init__(
             fit_intercept=fit_intercept,
             copy_X=copy_X,
