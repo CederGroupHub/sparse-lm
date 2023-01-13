@@ -20,8 +20,8 @@ ONLY_L2L0 = [L2L0]
 def param_grid():
     # Test on multiple grids
     return [
-        {"alpha": [0.01, 0.1], "l0_ratio": [0.1, 0.3]},
-        {"alpha": [0.02, 0.2], "l0_ratio": [0.2, 0.4]},
+        {"alpha": [0.01, 0.1], "eta": [0.03, 0.3]},
+        {"alpha": [0.02, 0.2], "eta": [0.04, 0.4]},
     ]
 
 
@@ -76,7 +76,7 @@ def mixed_l2l0_est(random_model, request):
 
 def test_mixed_l0_wts(random_model, mixed_l2l0_est, random_weights):
     femat, energies, ecis = random_model
-    mixed_l2l0_est.alpha = 1e-5
+    mixed_l2l0_est.eta = 1e-5
     mixed_l2l0_est.fit(X=femat, y=energies)
     energies_pred = mixed_l2l0_est.predict(femat)
     assert energies_pred is not None
@@ -109,9 +109,9 @@ def test_grid_search(random_model, grid_search):
     grid_search.fit(X=femat, y=energies)
     assert "best_params_" in vars(grid_search)
     best_params = grid_search.best_params_
-    assert "alpha" in best_params and "l0_ratio" in best_params
+    assert "alpha" in best_params and "eta" in best_params
     assert best_params["alpha"] in [0.01, 0.1, 0.02, 0.2]
-    assert best_params["l0_ratio"] in [0.1, 0.2, 0.3, 0.4]
+    assert best_params["eta"] in [0.03, 0.3, 0.04, 0.4]
 
     assert grid_search.best_score_ <= 1
     assert "coef_" in vars(grid_search.best_estimator_)
@@ -126,9 +126,9 @@ def test_line_search(random_model, line_search):
     line_search.fit(X=femat, y=energies)
     assert "best_params_" in vars(line_search)
     best_params = line_search.best_params_
-    assert "alpha" in best_params and "l0_ratio" in best_params
+    assert "alpha" in best_params and "eta" in best_params
     assert best_params["alpha"] in [0.01, 0.1]
-    assert best_params["l0_ratio"] in [0.1, 0.3]
+    assert best_params["eta"] in [0.03, 0.3]
 
     assert line_search.best_score_ <= 1
     assert "coef_" in vars(line_search.best_estimator_)

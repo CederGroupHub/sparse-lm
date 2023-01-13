@@ -22,12 +22,15 @@ from ._base import CVXEstimator
 
 
 class Lasso(CVXEstimator):
-    """
+    r"""
     Lasso Estimator implemented with cvxpy.
 
     Regularized model:
-        || X * Beta - y ||^2_2 + alpha * ||Beta||_1
-    Where w represents a vector of weights that is iteratively updated.
+
+    .. math::
+
+        || X \beta - y ||^2_2 + \alpha ||\beta||_1
+
     """
 
     def __init__(
@@ -94,7 +97,11 @@ class GroupLasso(Lasso):
     r"""Group Lasso implementation.
 
     Regularized model:
-        || X * Beta - y ||^2_2 + alpha * \sum_{G} w_G * ||Beta_G||_2
+
+    .. math::
+
+        || X \beta - y ||^2_2 + \alpha \sum_{G} w_G ||\beta_G||_2
+
     Where G represents groups of features/coefficients
     """
 
@@ -190,12 +197,17 @@ class GroupLasso(Lasso):
         return self._alpha * (self.group_weights @ self._gen_group_norms(X))
 
 
+# TODO this implementation is not efficient, reimplement.
 class OverlapGroupLasso(GroupLasso):
     r"""Overlap Group Lasso implementation.
 
     Regularized model:
-        || X * Beta - y ||^2_2 + alpha * \sum_{G} w_G * ||Beta_G||_2
-    Where G represents groups of features/coefficients, and overlaping groups
+
+    .. math::
+
+        || X \beta - y ||^2_2 + \alpha \sum_{G} w_G ||\beta_G||_2
+
+    Where G represents groups of features/coefficients, and overlapping groups
     are acceptable. Meaning a coefficients can be in more than one group.
     """
 
@@ -300,10 +312,14 @@ class SparseGroupLasso(GroupLasso):
     r"""Sparse Group Lasso.
 
     Regularized model:
-        || X * Beta - y ||^2_2
-            + alpha * l1_ratio * ||Beta||_1
-            + alpha * (1 - l1_ratio) * \sum_{G}||Beta_G||_2
-    Where G represents groups of features / coefficients
+
+    .. math::
+
+        || X \beta - y ||^2_2
+            + \alpha r ||\beta||_1
+            + \alpha (1 - r) * \sum_{G}||\beta_G||_2
+
+    Where G represents groups of features / coefficients. And r is the L1 ratio.
     """
 
     def __init__(
@@ -423,8 +439,12 @@ class RidgedGroupLasso(GroupLasso):
     r"""Ridged Group Lasso implementation.
 
     Regularized model:
-        || X * Beta - y ||^2_2 + alpha * \sum_{G} w_G * ||Beta_G||_2
-                               + \sum_{G} delta_l * ||Beta_G||^2_2
+
+    .. math::
+
+        || X \beta - y ||^2_2 + \alpha \sum_{G} w_G ||\beta_G||_2
+                               + \sum_{G} \delta_l ||\beta_G||^2_2
+
     Where G represents groups of features/coefficients
 
     For details on proper standardization refer to:

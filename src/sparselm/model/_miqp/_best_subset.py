@@ -6,13 +6,13 @@ Allows hierarchy constraints similar to mixed L0 solvers.
 __author__ = "Luis Barroso-Luque"
 
 import cvxpy as cp
-import numpy as np
-from cvxpy.atoms.affine.wraps import psd_wrap
 
-from sparselm.model._base import CVXEstimator
+from sparselm.model._base import TikhonovMixin
+
+from ._base import MIQP_L0
 
 
-class BestSubsetSelection(CVXEstimator):
+class BestSubsetSelection(MIQP_L0):
     """MIQP Best Subset Selection estimator.
 
     Generalized best subset that allows grouping subsets.
@@ -79,6 +79,10 @@ class BestSubsetSelection(CVXEstimator):
                 See docs in CVXEstimator for more information.
         """
         super().__init__(
+            groups=groups,
+            big_M=big_M,
+            hierarchy=hierarchy,
+            ignore_psd_check=ignore_psd_check,
             fit_intercept=fit_intercept,
             copy_X=copy_X,
             warm_start=warm_start,
@@ -87,13 +91,6 @@ class BestSubsetSelection(CVXEstimator):
         )
 
         self._bound = cp.Parameter(nonneg=True, value=sparse_bound)
-        self.hierarchy = hierarchy
-        self._big_M = cp.Parameter(nonneg=True, value=big_M)
-        self.ignore_psd_check = ignore_psd_check
-
-        self.groups = np.asarray(groups)
-        self._group_masks = [self.groups == i for i in np.unique(groups)]
-        self._z0 = cp.Variable(len(self._group_masks), boolean=True)
 
     @property
     def sparse_bound(self):
@@ -107,58 +104,24 @@ class BestSubsetSelection(CVXEstimator):
             raise ValueError("sparse_bound must be > 0")
         self._bound.value = val
 
-    @property
-    def big_M(self):
-        """Get MIQP big M value."""
-        return self._big_M.value
-
-    @big_M.setter
-    def big_M(self, val):
-        """Set MIQP big M value."""
-        self._big_M.value = val
-
-    def _gen_objective(self, X, y):
-        """Generate the quadratic form portion of objective."""
-        # psd_wrap will ignore cvxpy PSD checks, without it errors will
-        # likely be raised since correlation matrices are usually very
-        # poorly conditioned
-        XTX = psd_wrap(X.T @ X) if self.ignore_psd_check else X.T @ X
-        objective = cp.quad_form(self._beta, XTX) - 2 * y.T @ X @ self._beta
-        # objective = cp.sum_squares(X @ self._beta - y)
-        return objective
-
     def _gen_constraints(self, X, y):
         """Generate the constraints used to solve l0 regularization."""
-        constraints = []
-        for i, mask in enumerate(self._group_masks):
-            constraints += [
-                self._big_M * self._z0[i] >= self._beta[mask],
-                self._big_M * self._z0[i] >= -self._beta[mask],
-            ]
-
-        if self.hierarchy is not None:
-            constraints += self._gen_hierarchy_constraints()
+        constraints = [cp.sum(self._z0) <= self._bound]
+        constraints += super()._gen_constraints(X, y)
         return constraints
 
-    def _gen_hierarchy_constraints(self):
-        """Generate single feature hierarchy constraints."""
-        return [
-            self._z0[high_id] <= self._z0[sub_id]
-            for high_id, sub_ids in enumerate(self.hierarchy)
-            for sub_id in sub_ids
-        ]
 
-
-class RidgedBestSubsetSelection(BestSubsetSelection):
+class RidgedBestSubsetSelection(TikhonovMixin, BestSubsetSelection):
     """MIQP  Best subset selection estimator with ridge regularization."""
 
     def __init__(
         self,
         groups,
         sparse_bound,
-        alpha=1.0,
+        eta=1.0,
         big_M=1000,
         hierarchy=None,
+        tikhonov_w=None,
         ignore_psd_check=True,
         fit_intercept=False,
         copy_X=True,
@@ -178,6 +141,8 @@ class RidgedBestSubsetSelection(BestSubsetSelection):
             sparse_bound (int):
                 Upper bound on sparsity. The upper bound on total number of
                 nonzero coefficients.
+            eta (float):
+                L2 regularization hyper-parameter.
             big_M (float):
                 Upper bound on the norm of coefficients associated with each
                 cluster (groups of coefficients) ||Beta_c||_2
@@ -189,6 +154,8 @@ class RidgedBestSubsetSelection(BestSubsetSelection):
                 the list depends. i.e. hierarchy = [[1, 2], [0], []] mean that
                 coefficient 0 depends on 1, and 2; 1 depends on 0, and 2 has no
                 dependence.
+            tikhonov_w (np.array):
+                Matrix to add weights to L2 regularization.
             ignore_psd_check (bool):
                 Whether to ignore cvxpy's PSD checks  of matrix used in quadratic
                 form. Default is True to avoid raising errors for poorly
@@ -223,22 +190,15 @@ class RidgedBestSubsetSelection(BestSubsetSelection):
             solver_options=solver_options,
             **kwargs,
         )
-        self._alpha = cp.Parameter(nonneg=True, value=alpha)
+        self.tikhonov_w = tikhonov_w
+        self._eta = cp.Parameter(nonneg=True, value=eta)
 
     @property
-    def alpha(self):
+    def eta(self):
         """Get alpha hyper-parameter value."""
-        return self._alpha.value
+        return self._eta.value
 
-    @alpha.setter
-    def alpha(self, val):
+    @eta.setter
+    def eta(self, val):
         """Set alpha hyper-parameter value."""
-        self._alpha.value = val
-
-    def _gen_objective(self, X, y):
-        """Generate the objective function used in l2l0 regression model."""
-        c0 = 2 * X.shape[0]  # keeps hyperparameter scale independent
-        objective = super()._gen_objective(X, y) + c0 * self._alpha * cp.sum_squares(
-            self._beta
-        )
-        return objective
+        self._eta.value = val
