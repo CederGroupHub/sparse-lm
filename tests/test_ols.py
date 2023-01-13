@@ -1,8 +1,8 @@
 """Sanity checks: literally just copied from sklearn tests... """
 
-import pytest
-import numpy.testing as npt
 import numpy as np
+import numpy.testing as npt
+import pytest
 from sklearn.preprocessing import add_dummy_feature
 
 from sparselm.model import OrdinaryLeastSquares
@@ -35,7 +35,7 @@ def test_linear_regression():
 @pytest.mark.parametrize("fit_intercept", [True, False])
 def test_linear_regression_sample_weights(fit_intercept, rng):
     # It would not work with under-determined systems
-    n_samples, n_features = 6, 5
+    n_samples, n_features = 10, 8
 
     X = rng.normal(size=(n_samples, n_features))
     y = rng.normal(size=n_samples)
