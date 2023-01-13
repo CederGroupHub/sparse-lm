@@ -112,7 +112,7 @@ class CVXEstimator(RegressorMixin, LinearModel, metaclass=ABCMeta):
         )
 
         if sample_weight is not None:
-            X, y = _rescale_data(X, y, sample_weight)
+            X, y, _ = _rescale_data(X, y, sample_weight)
 
         self.coef_ = self._solve(X, y, *args, **kwargs)
         self._set_intercept(X_offset, y_offset, X_scale)
