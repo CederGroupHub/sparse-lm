@@ -1,8 +1,3 @@
-"""This file only contains software functionality tests, which means
-we only test on randomly generated feature matrices, ecis and energies,
-to make sure our codes will run, but the physicality of results are not
-checked in real CE systems."""
-
 import cvxpy as cp
 import numpy as np
 import pytest
