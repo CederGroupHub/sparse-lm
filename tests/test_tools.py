@@ -1,12 +1,14 @@
-import pytest
 import warnings
 from functools import partial
+
 import numpy.testing as npt
+import pytest
+
 from sparselm.model import OrdinaryLeastSquares
 from sparselm.tools import constrain_coefficients
 
 
-@pytest.mark.parametrize('test_number', range(5))  # run the test 5 times
+@pytest.mark.parametrize("test_number", range(5))  # run the test 5 times
 def test_constrain_coefficients(test_number, rng):
     n_samples, n_features = 10, 8
     X = rng.normal(size=(n_samples, n_features))
@@ -45,11 +47,13 @@ def test_constrain_coefficients(test_number, rng):
     npt.assert_almost_equal(cstr_coefs, cstr_coefs2)
 
     # Test different low and high values
-    low = rng.random(size=3) -0.5
+    low = rng.random(size=3) - 0.5
     high = rng.random(size=3) + low
 
     with warnings.catch_warnings(record=True) as w:
-        cstr_coefs = constrain_coefficients(inds, high, low)(partial(fit, reg=reg))(X, y)
+        cstr_coefs = constrain_coefficients(inds, high, low)(partial(fit, reg=reg))(
+            X, y
+        )
 
     assert cstr_coefs.shape == coefs.shape
 
@@ -57,7 +61,9 @@ def test_constrain_coefficients(test_number, rng):
     # in that case just test that the indeed that warning was raised.
     if len(w) > 0:
         with pytest.warns(RuntimeWarning):
-            cstr_coefs = constrain_coefficients(inds, high, low)(partial(fit, reg=reg))(X, y)
+            cstr_coefs = constrain_coefficients(inds, high, low)(partial(fit, reg=reg))(
+                X, y
+            )
     else:
         for i, l, h in zip(inds, low, high):
             assert l <= cstr_coefs[i] <= h
@@ -72,7 +78,9 @@ def test_constrain_coefficients(test_number, rng):
 
     # just use high value
     with warnings.catch_warnings(record=True) as w:
-        cstr_coefs = constrain_coefficients(inds, high=high)(partial(fit, reg=reg))(X, y)
+        cstr_coefs = constrain_coefficients(inds, high=high)(partial(fit, reg=reg))(
+            X, y
+        )
 
     assert cstr_coefs.shape == coefs.shape
 
@@ -80,7 +88,9 @@ def test_constrain_coefficients(test_number, rng):
     # in that case just test that the indeed that warning was raised.
     if len(w) > 0:
         with pytest.warns(RuntimeWarning):
-            cstr_coefs = constrain_coefficients(inds, high, low)(partial(fit, reg=reg))(X, y)
+            cstr_coefs = constrain_coefficients(inds, high=high)(partial(fit, reg=reg))(
+                X, y
+            )
     else:
         for i, h in zip(inds, high):
             assert cstr_coefs[i] <= h
@@ -95,7 +105,9 @@ def test_constrain_coefficients(test_number, rng):
     # in that case just test that the indeed that warning was raised.
     if len(w) > 0:
         with pytest.warns(RuntimeWarning):
-            cstr_coefs = constrain_coefficients(inds, low=low)(partial(fit, reg=reg))(X, y)
+            cstr_coefs = constrain_coefficients(inds, low=low)(partial(fit, reg=reg))(
+                X, y
+            )
     else:
         for i, l in zip(inds, low):
             assert l <= cstr_coefs[i]
