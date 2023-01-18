@@ -69,3 +69,38 @@ def test_constrain_coefficients(test_number, rng):
 
     cstr_coefs2 = fit_constrained(X, y, reg=reg)
     npt.assert_almost_equal(cstr_coefs, cstr_coefs2)
+
+    # just use high value
+    with warnings.catch_warnings(record=True) as w:
+        cstr_coefs = constrain_coefficients(inds, high=high)(partial(fit, reg=reg))(X, y)
+
+    assert cstr_coefs.shape == coefs.shape
+
+    # Check if warning was raised, meaning coefficients were not within range
+    # in that case just test that the indeed that warning was raised.
+    if len(w) > 0:
+        with pytest.warns(RuntimeWarning):
+            cstr_coefs = constrain_coefficients(inds, high, low)(partial(fit, reg=reg))(X, y)
+    else:
+        for i, h in zip(inds, high):
+            assert cstr_coefs[i] <= h
+
+    # just use low value
+    with warnings.catch_warnings(record=True) as w:
+        cstr_coefs = constrain_coefficients(inds, low=low)(partial(fit, reg=reg))(X, y)
+
+    assert cstr_coefs.shape == coefs.shape
+
+    # Check if warning was raised, meaning coefficients were not within range
+    # in that case just test that the indeed that warning was raised.
+    if len(w) > 0:
+        with pytest.warns(RuntimeWarning):
+            cstr_coefs = constrain_coefficients(inds, low=low)(partial(fit, reg=reg))(X, y)
+    else:
+        for i, l in zip(inds, low):
+            assert l <= cstr_coefs[i]
+
+
+# TODO write this test
+def test_r2_score_to_cv_error():
+    pass
