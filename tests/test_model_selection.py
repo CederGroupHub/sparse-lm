@@ -69,13 +69,13 @@ def mixed_l2l0_est(random_energy_model, request):
     # return request.param(solver="ECOS_BB")
 
 
-def test_mixed_l0_wts(random_energy_model, mixed_l2l0_est, random_weights):
+def test_mixed_l0_wts(random_energy_model, mixed_l2l0_est, rng):
     femat, energies, ecis = random_energy_model
     mixed_l2l0_est.eta = 1e-5
     mixed_l2l0_est.fit(X=femat, y=energies)
     energies_pred = mixed_l2l0_est.predict(femat)
     assert energies_pred is not None
-    mixed_l2l0_est.tikhonov_w = random_weights
+    mixed_l2l0_est.tikhonov_w = 1000 * rng.random(femat.shape[1])
     mixed_l2l0_est.fit(X=femat, y=energies)
     energies_pred_wtd = mixed_l2l0_est.predict(femat)
     assert energies_pred_wtd is not None

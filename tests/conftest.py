@@ -3,10 +3,11 @@ import pytest
 from sklearn.datasets import make_regression
 
 SEED = None
+
 # Set to small values bc gurobi non-commercial can not solver large model.
-n_features = 30
-n_samples = 40
-n_informative = 20
+N_FEATURES = [20, 40]  # an overdetermined and underdetermined case
+N_SAMPLES = 30
+N_INFORMATIVE = 10
 
 
 @pytest.fixture(scope="package")
@@ -15,40 +16,35 @@ def rng():
     return np.random.default_rng(SEED)
 
 
-@pytest.fixture(scope="package")
-def random_model(rng):
+@pytest.fixture(scope="package", params=N_FEATURES)
+def random_model(rng, request):
     """Returns a fully random set of X, y, and beta representing a linear model."""
     X, y, beta = make_regression(
-        n_samples=n_samples,
-        n_features=n_features,
-        n_informative=n_informative,
+        n_samples=N_SAMPLES,
+        n_features=request.param,
+        n_informative=N_INFORMATIVE,
         coef=True,
         random_state=rng.integers(0, 2**32 - 1),
     )
     return X, y, beta
 
 
-@pytest.fixture(scope="package")
-def random_energy_model(rng):
+@pytest.fixture(scope="package", params=N_FEATURES)
+def random_energy_model(rng, request):
     """Returns a random set of X, y, and beta with added gaussian noise for a linear
     model with sparse coefficients beta decay (on average) exponentially with the index
     of the coefficient.
     """
-    X = rng.random((n_samples, n_features))
-    beta = np.zeros(n_features)  # coefficients
-    non_zero_ids = rng.choice(n_features, size=n_informative, replace=False)
+    X = rng.random((N_SAMPLES, request.param))
+    beta = np.zeros(request.param)  # coefficients
+    non_zero_ids = rng.choice(request.param, size=N_INFORMATIVE, replace=False)
     non_zero_ids = np.array(np.round(non_zero_ids), dtype=int)
+
     for idx in non_zero_ids:
         eci = 0
         mag = np.exp(-0.5 * idx)
         while np.isclose(eci, 0):
             eci = (rng.random() - 0.5) * 2 * mag
         beta[idx] = eci
-    y = X @ beta + rng.normal(size=n_samples) * 2e-3  # fake energies
+    y = X @ beta + rng.normal(size=N_SAMPLES) * 2e-3  # fake energies
     return X, y, beta
-
-
-@pytest.fixture(scope="package")
-def random_weights(rng):
-    weights = 1000 * rng.random(n_features)
-    return np.diag(weights)
