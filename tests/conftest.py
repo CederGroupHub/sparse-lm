@@ -5,8 +5,8 @@ from sklearn.datasets import make_regression
 SEED = None
 
 # Set to small values bc gurobi non-commercial can not solver large model.
-N_FEATURES = [20, 40]  # an overdetermined and underdetermined case
-N_SAMPLES = 30
+N_FEATURES = [20, 30]  # an overdetermined and underdetermined case
+N_SAMPLES = 25
 N_INFORMATIVE = 10
 
 

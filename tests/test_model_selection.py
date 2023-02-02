@@ -50,13 +50,6 @@ def estimator(random_energy_model, request):
     # return request.param(solver="ECOS_BB")
 
 
-def test_single_estimator(random_energy_model, estimator):
-    femat, energies, ecis = random_energy_model
-    estimator.fit(X=femat, y=energies)
-    energies_pred = estimator.predict(femat)
-    assert energies_pred is not None
-
-
 @pytest.fixture(scope="module", params=ONLY_L2L0)
 def mixed_l2l0_est(random_energy_model, request):
     ecis = random_energy_model[2]

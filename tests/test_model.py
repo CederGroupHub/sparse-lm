@@ -37,3 +37,4 @@ def test_general_fit(estimator_cls, random_model, rng):
 
     # assert a value of coefficients has been set correctly
     assert len(estimator.coef_) == len(beta)
+    assert len(estimator.predict(X)) == len(y)
