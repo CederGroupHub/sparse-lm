@@ -6,7 +6,7 @@ Simply check that they execute successfully on random data.
 from inspect import getmembers, isclass, signature
 
 import pytest
-
+import numpy as np
 import sparselm.model as spm
 
 ALL_ESTIMATORS = getmembers(spm, isclass)
@@ -34,7 +34,16 @@ def test_general_fit(estimator_cls, random_model, rng):
 
     estimator = estimator_cls[1](**args)
     estimator.fit(X, y)
-
     # assert a value of coefficients has been set correctly
+    assert isinstance(estimator.coef_, np.ndarray)
     assert len(estimator.coef_) == len(beta)
     assert len(estimator.predict(X)) == len(y)
+    assert estimator.intercept_ == 0.0
+
+    estimator = estimator_cls[1](fit_intercept=True, **args)
+    estimator.fit(X, y)
+    # assert a value of coefficients has been set correctly
+    assert isinstance(estimator.coef_, np.ndarray)
+    assert len(estimator.coef_) == len(beta)
+    assert len(estimator.predict(X)) == len(y)
+    assert estimator.intercept_ != 0.0
