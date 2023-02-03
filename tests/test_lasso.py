@@ -2,25 +2,10 @@ import numpy as np
 import numpy.testing as npt
 import pytest
 
-from sparselm.model import  (
-    GroupLasso,
-    Lasso,
-    OverlapGroupLasso,
-    RidgedGroupLasso,
-    SparseGroupLasso,
-)
-
-from sparselm.model import (
-    AdaptiveGroupLasso,
-    AdaptiveLasso,
-    AdaptiveOverlapGroupLasso,
-    AdaptiveRidgedGroupLasso,
-    AdaptiveSparseGroupLasso,
-)
-
+from sparselm.model import AdaptiveGroupLasso, AdaptiveLasso, GroupLasso, Lasso
 
 # a high threshold since beta from make_regression are always ~ 1E1
-THRESHOLD = 1E-2
+THRESHOLD = 1e-2
 
 
 @pytest.fixture(params=[4, 10])
@@ -35,10 +20,11 @@ def random_model_with_groups(random_model, rng, request):
 
     groups = np.zeros(len(beta))
     for i, c in enumerate(coef_mask):
-        groups[i] = rng.choice(active_group_inds) if c else rng.choice(inactive_group_inds)
+        groups[i] = (
+            rng.choice(active_group_inds) if c else rng.choice(inactive_group_inds)
+        )
 
     return X, y, beta, groups
-
 
 
 def test_lasso_toy():
@@ -76,7 +62,6 @@ def test_lasso_toy():
     npt.assert_array_almost_equal(pred, [0, 0, 0])
 
 
-
 def test_lasso_non_float_y():
     # Borrowed from sklearn tests
     X = [[0, 0], [1, 1], [-1, -1]]
@@ -102,18 +87,61 @@ def test_adaptive_lasso_sparser(random_model):
 
 
 # TODO flakey test, depends on THRESHOLD value
-def test_group_lasso(random_model_with_groups):
+@pytest.mark.parametrize("standardize", [False, True])
+def test_group_lasso(random_model_with_groups, standardize):
     X, y, beta, groups = random_model_with_groups
-    active_mask = abs(beta) > THRESHOLD
 
-    glasso = GroupLasso(groups=groups, alpha=5, fit_intercept=True)
+    glasso = GroupLasso(
+        groups=groups, alpha=5, fit_intercept=True, standardize=standardize
+    )
     glasso.fit(X, y)
 
-    aglasso = AdaptiveGroupLasso(groups=groups, alpha=0.1, fit_intercept=True)
+    aglasso = AdaptiveGroupLasso(
+        groups=groups, alpha=0.1, fit_intercept=True, standardize=standardize
+    )
     aglasso.fit(X, y)
 
     # check that if all coefs in groups are consistent
     for gid in np.unique(groups):
-        assert (abs(glasso.coef_[groups == gid]) > THRESHOLD).all() or (abs(glasso.coef_[groups == gid]) <= THRESHOLD).all()
-        assert (abs(aglasso.coef_[groups == gid]) > THRESHOLD).all() or (abs(aglasso.coef_[groups == gid]) <= THRESHOLD).all()
+        all_active = (abs(glasso.coef_[groups == gid]) > THRESHOLD).all()
+        all_inactive = (abs(glasso.coef_[groups == gid]) <= THRESHOLD).all()
+        assert all_active or all_inactive
 
+        all_active = (abs(aglasso.coef_[groups == gid]) > THRESHOLD).all()
+        all_inactive = (abs(aglasso.coef_[groups == gid]) <= THRESHOLD).all()
+        assert all_active or all_inactive
+
+
+@pytest.mark.parametrize("standardize", [False, True])
+def test_group_lasso_weights(random_model_with_groups, standardize):
+    X, y, beta, groups = random_model_with_groups
+
+    group_weights = np.ones(len(np.unique(groups)))
+
+    glasso = GroupLasso(
+        groups=groups,
+        alpha=5,
+        group_weights=group_weights,
+        fit_intercept=True,
+        standardize=standardize,
+    )
+    glasso.fit(X, y)
+
+    aglasso = AdaptiveGroupLasso(
+        groups=groups,
+        alpha=0.1,
+        group_weights=group_weights,
+        fit_intercept=True,
+        standardize=standardize,
+    )
+    aglasso.fit(X, y)
+
+    # check that if all coefs in groups are consistent
+    for gid in np.unique(groups):
+        all_active = (abs(glasso.coef_[groups == gid]) > THRESHOLD).all()
+        all_inactive = (abs(glasso.coef_[groups == gid]) <= THRESHOLD).all()
+        assert all_active or all_inactive
+
+        all_active = (abs(aglasso.coef_[groups == gid]) > THRESHOLD).all()
+        all_inactive = (abs(aglasso.coef_[groups == gid]) <= THRESHOLD).all()
+        assert all_active or all_inactive

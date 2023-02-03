@@ -155,15 +155,16 @@ class GroupLasso(Lasso):
                 See docs in CVXEstimator for more information.
         """
         self.groups = np.asarray(groups)
-        self.group_masks = [self.groups == i for i in np.unique(groups)]
+        group_ids = np.sort(np.unique(groups))
+        self.group_masks = [self.groups == i for i in group_ids]
         self.standardize = standardize
         self._group_norms = None
 
         if group_weights is not None:
-            if len(group_weights) != len(self.group_masks):
+            if len(group_weights) != len(group_ids):
                 raise ValueError(
                     "group_weights must be the same length as the number of "
-                    f"groups:  {len(group_weights)} != {len(self.group_masks)}"
+                    f"unique groups:  {len(group_weights)} != {len(group_ids)}"
                 )
         self.group_weights = (
             group_weights

@@ -25,7 +25,7 @@ def random_model(rng, request):
         n_informative=N_INFORMATIVE,
         coef=True,
         random_state=rng.integers(0, 2**32 - 1),
-        bias=10 * rng.random()
+        bias=10 * rng.random(),
     )
     return X, y, beta
 

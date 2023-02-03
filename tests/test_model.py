@@ -5,8 +5,9 @@ Simply check that they execute successfully on random data.
 
 from inspect import getmembers, isclass, signature
 
-import pytest
 import numpy as np
+import pytest
+
 import sparselm.model as spm
 
 ALL_ESTIMATORS = getmembers(spm, isclass)
