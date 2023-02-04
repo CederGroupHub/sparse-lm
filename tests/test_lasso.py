@@ -2,8 +2,24 @@ import numpy as np
 import numpy.testing as npt
 import pytest
 
-from sparselm.model import AdaptiveGroupLasso, AdaptiveLasso, GroupLasso, Lasso
+from sparselm.model import (
+    AdaptiveGroupLasso,
+    AdaptiveLasso,
+    AdaptiveOverlapGroupLasso,
+    AdaptiveRidgedGroupLasso,
+    AdaptiveSparseGroupLasso,
+    GroupLasso,
+    Lasso,
+    SparseGroupLasso,
+)
 
+ADAPTIVE_ESTIMATORS = [
+    AdaptiveLasso,
+    AdaptiveGroupLasso,
+    AdaptiveSparseGroupLasso,
+    AdaptiveOverlapGroupLasso,
+    AdaptiveRidgedGroupLasso,
+]
 # a high threshold since beta from make_regression are always ~ 1E1
 THRESHOLD = 1e-2
 
@@ -145,3 +161,75 @@ def test_group_lasso_weights(random_model_with_groups, standardize):
         all_active = (abs(aglasso.coef_[groups == gid]) > THRESHOLD).all()
         all_inactive = (abs(aglasso.coef_[groups == gid]) <= THRESHOLD).all()
         assert all_active or all_inactive
+
+
+def test_bad_inputs(rng):
+    groups = rng.integers(0, 6, size=50)
+    group_weights = np.ones(len(np.unique(groups)) - 1)
+
+    # bad group weights
+    with pytest.raises(ValueError):
+        GroupLasso(groups, group_weights=group_weights)
+
+    # bad l1_ratio
+    lasso = SparseGroupLasso(groups)
+    with pytest.raises(ValueError):
+        lasso.l1_ratio = -1
+    with pytest.raises(ValueError):
+        lasso.l1_ratio = 2
+
+    with pytest.raises(ValueError):
+        SparseGroupLasso(groups, l1_ratio=-1)
+
+    with pytest.raises(ValueError):
+        SparseGroupLasso(groups, l1_ratio=2)
+
+    # test that it warns
+    with pytest.warns(UserWarning):
+        SparseGroupLasso(groups, l1_ratio=0)
+    with pytest.warns(UserWarning):
+        SparseGroupLasso(groups, l1_ratio=1)
+
+
+@pytest.mark.parametrize("estimator_cls", ADAPTIVE_ESTIMATORS)
+def test_adaptive_weights(estimator_cls, random_model_with_groups, rng):
+    X, y, beta, groups = random_model_with_groups
+
+    if estimator_cls.__name__ == "AdaptiveLasso":
+        estimator = estimator_cls()
+    elif estimator_cls.__name__ == "AdaptiveOverlapGroupLasso":
+        gids = np.unique(groups)
+        group_list = [
+            rng.choice(gids, replace=False, size=rng.integers(1, 4))
+            for _ in range(len(beta))
+        ]
+        estimator = estimator_cls(group_list=group_list)
+    else:
+        estimator = estimator_cls(groups=groups)
+
+    # force generating weights
+    if estimator_cls.__name__ == "AdaptiveOverlapGroupLasso":
+        _ = estimator._get_problem(X[:, estimator.beta_indices], y)
+    else:
+        _ = estimator._get_problem(X, y)
+
+    if isinstance(estimator._weights, tuple):
+        weights = [
+            estimator._weights[0].value.copy(),
+            estimator._weights[1].value.copy(),
+        ]
+    else:
+        weights = [estimator._weights.value.copy()]
+
+    estimator.fit(X, y)
+
+    if isinstance(estimator._weights, tuple):
+        new_weights = [estimator._weights[0].value, estimator._weights[1].value]
+    else:
+        new_weights = [estimator._weights.value]
+
+    # simply check that the weights are updated.
+    # TODO a better check would be to check that weights for active groups/coefs
+    #  are smaller than those of inactive ones
+    for nw, w in zip(new_weights, weights):
+        assert not any(nw_i == pytest.approx(w_i) for nw_i, w_i in zip(nw, w))
