@@ -89,6 +89,8 @@ class BestSubsetSelection(MIQP_L0):
             solver=solver,
             solver_options=solver_options,
         )
+        if sparse_bound <= 0:
+            raise ValueError("sparse_bound must be > 0")
 
         self._bound = cp.Parameter(nonneg=True, value=sparse_bound)
 

@@ -1,6 +1,6 @@
 import numpy as np
 import pytest
-from sklearn.datasets import make_regression
+from sklearn.datasets import make_regression, make_sparse_coded_signal
 
 SEED = 0
 
@@ -26,6 +26,11 @@ def rng():
 
 
 @pytest.fixture(params=CONVEX_SOLVERS)
+def solver(request):
+    return request.param
+
+
+@pytest.fixture(params=MIQP_SOLVERS)
 def solver(request):
     return request.param
 
@@ -63,3 +68,20 @@ def random_energy_model(rng, request):
         beta[idx] = eci
     y = X @ beta + rng.normal(size=N_SAMPLES) * 2e-3  # fake energies
     return X, y, beta
+
+
+@pytest.fixture(scope="package")
+def sparse_coded_signal_with_groups(rng):
+    n_samples, n_features, n_nonzero, n_targets = 10, 30, 5, 3
+    y, X, beta = make_sparse_coded_signal(
+        n_samples=n_samples,
+        n_components=n_features,
+        n_features=n_samples,
+        n_nonzero_coefs=n_nonzero,
+        random_state=rng.integers(0, 2**32 - 1),
+        data_transposed=True,
+    )
+    # Make X not of norm 1 for testing
+    X *= 10
+    y *= 10
+    return X, y[:, 0], beta[:, 0]
