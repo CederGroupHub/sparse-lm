@@ -36,6 +36,17 @@ def test_perfect_signal_recovery(sparse_coded_signal_with_groups):
     assert np.linalg.norm(coef) > np.linalg.norm(r_estimator.coef_)
 
 
+def test_set_parameters():
+    estimator = RidgedBestSubsetSelection(groups=[0, 1, 2], sparse_bound=1)
+    estimator.sparse_bound = 2
+    assert estimator.sparse_bound == 2
+    assert estimator._bound.value == 2
+
+    estimator.eta = 0.5
+    assert estimator.eta == 0.5
+    assert estimator._eta.value == 0.5
+
+
 def test_bad_input():
     with pytest.raises(ValueError):
         estimator = BestSubsetSelection(groups=[0, 1, 2], sparse_bound=-1)
