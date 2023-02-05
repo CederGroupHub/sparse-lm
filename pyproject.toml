@@ -31,7 +31,7 @@ classifiers = [
 
 [project.optional-dependencies]
 dev = ["pre-commit", "black", "isort", "flake8", "pylint", "pydocstyle", "flake8-pyproject"]
-tests = ["pytest >=7.2.0", "pytest-cov >=4.0.0", "coverage"]
+tests = ["pytest >=7.2.0", "pytest-cov >=4.0.0", "coverage", "gurobipy"]
 docs = ["sphinx>=5.3", "furo", "m2r2"]
 optional = ["gurobipy"]
 

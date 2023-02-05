@@ -2,7 +2,16 @@ import numpy as np
 import pytest
 from sklearn.datasets import make_regression
 
-SEED = None
+SEED = 0
+
+# A few solvers to test for convex problems
+# ECOS sometimes fails for Adaptive group estimators, but is fast
+# SCS and CXVOPT are reliable, but slower
+# GUROBI is best
+CONVEX_SOLVERS = ["GUROBI"]  # ["SCS", "CVXOPT", "GUROBI", "ECOS"]
+
+# ECOS_BB & GLPK_MI are open source alternative, but much slower
+MIQP_SOLVERS = ["GUROBI"]
 
 # Set to small values bc gurobi non-commercial can not solver large model.
 N_FEATURES = [20, 30]  # an overdetermined and underdetermined case
@@ -14,6 +23,11 @@ N_INFORMATIVE = 10
 def rng():
     """Seed and return an RNG for test reproducibility"""
     return np.random.default_rng(SEED)
+
+
+@pytest.fixture(params=CONVEX_SOLVERS)
+def solver(request):
+    return request.param
 
 
 @pytest.fixture(scope="package", params=N_FEATURES)
