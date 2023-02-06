@@ -112,22 +112,22 @@ class RegularizedL0(MIQP_L0):
             solver=solver,
             solver_options=solver_options,
         )
-        self._eta = cp.Parameter(nonneg=True, value=alpha)
+        self._alpha = cp.Parameter(nonneg=True, value=alpha)
 
     @property
     def alpha(self):
         """Get alpha hyperparameter value."""
-        return self._eta.value
+        return self._alpha.value
 
     @alpha.setter
     def alpha(self, val):
         """Set alpha hyperparameter value."""
-        self._eta.value = val
+        self._alpha.value = val
 
     def _gen_objective(self, X, y):
         """Generate the quadratic form and l0 regularization portion of objective."""
         c0 = 2 * X.shape[0]  # keeps hyperparameter scale independent
-        objective = super()._gen_objective(X, y) + c0 * self._eta * cp.sum(self._z0)
+        objective = super()._gen_objective(X, y) + c0 * self._alpha * cp.sum(self._z0)
         return objective
 
 

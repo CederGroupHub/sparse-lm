@@ -2,11 +2,11 @@ import numpy as np
 import numpy.testing as npt
 import pytest
 
-from sparselm.model import BestSubsetSelection, RidgedBestSubsetSelection
+from sparselm.model import BestSubsetSelection, RidgedBestSubsetSelection, RegularizedL0, L2L0, L1L0
 
 
-def test_perfect_signal_recovery(sparse_coded_signal_with_groups):
-    X, y, beta = sparse_coded_signal_with_groups
+def test_perfect_signal_recovery(sparse_coded_signal):
+    X, y, beta = sparse_coded_signal
     (idx,) = beta.nonzero()
 
     estimator = BestSubsetSelection(
@@ -15,7 +15,7 @@ def test_perfect_signal_recovery(sparse_coded_signal_with_groups):
     estimator.fit(X, y)
 
     npt.assert_array_equal(idx, np.flatnonzero(estimator.coef_))
-    npt.assert_array_almost_equal(beta, estimator.coef_, decimal=2)
+    npt.assert_array_almost_equal(beta, estimator.coef_)
 
     r_estimator = RidgedBestSubsetSelection(
         groups=np.arange(len(beta)), sparse_bound=np.count_nonzero(beta)
@@ -34,6 +34,15 @@ def test_perfect_signal_recovery(sparse_coded_signal_with_groups):
     npt.assert_array_almost_equal(beta, r_estimator.coef_, decimal=2)
     assert all(i in np.flatnonzero(r_estimator.coef_) for i in idx)
     assert np.linalg.norm(coef) > np.linalg.norm(r_estimator.coef_)
+
+    # very sensitive to the value of alpha for exact results
+    estimator = RegularizedL0(
+        groups=np.arange(len(beta)), alpha=0.025
+    )
+    estimator.fit(X, y)
+
+    npt.assert_array_equal(idx, np.flatnonzero(estimator.coef_))
+    npt.assert_array_almost_equal(beta, estimator.coef_)
 
 
 def test_set_parameters():
