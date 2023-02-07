@@ -24,25 +24,6 @@ ADAPTIVE_ESTIMATORS = [
 THRESHOLD = 1e-2
 
 
-@pytest.fixture(params=[4, 10])
-def random_model_with_groups(random_model, rng, request):
-    """Add a correct set of groups to model."""
-    X, y, beta = random_model
-    coef_mask = abs(beta) > THRESHOLD
-    n_groups = request.param
-    n_active_groups = n_groups // 3 + 1
-    active_group_inds = rng.choice(range(n_groups), size=n_active_groups, replace=False)
-    inactive_group_inds = np.setdiff1d(range(n_groups), active_group_inds)
-
-    groups = np.zeros(len(beta))
-    for i, c in enumerate(coef_mask):
-        groups[i] = (
-            rng.choice(active_group_inds) if c else rng.choice(inactive_group_inds)
-        )
-
-    return X, y, beta, groups
-
-
 def test_lasso_toy():
     # Borrowed from sklearn tests
     # Test Lasso on a toy example for various values of alpha.

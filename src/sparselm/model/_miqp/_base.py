@@ -116,12 +116,13 @@ class MIQP_L0(CVXEstimator, metaclass=ABCMeta):
         constraints = []
         for i, mask in enumerate(self._group_masks):
             constraints += [
-                self._big_M * self._z0[i] >= self._beta[mask],
-                self._big_M * self._z0[i] >= -self._beta[mask],
+                self._beta[mask] <= self._big_M * self._z0[i],
+                -self._big_M * self._z0[i] <= self._beta[mask],
             ]
 
         if self.hierarchy is not None:
             constraints += self._gen_hierarchy_constraints()
+
         return constraints
 
     def _gen_hierarchy_constraints(self):

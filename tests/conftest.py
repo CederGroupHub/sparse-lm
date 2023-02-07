@@ -2,7 +2,7 @@ import numpy as np
 import pytest
 from sklearn.datasets import make_regression, make_sparse_coded_signal
 
-SEED = 0
+SEED = 0 # None  # 0
 
 # A few solvers to test for convex problems
 # ECOS sometimes fails for Adaptive group estimators, but is fast
@@ -85,3 +85,21 @@ def sparse_coded_signal(rng):
     X *= 10
     y *= 10
     return X, y[:, 0], beta[:, 0]
+
+
+@pytest.fixture(params=[4, 6], scope="package")
+def random_model_with_groups(random_model, rng, request):
+    """Add a correct set of groups to model."""
+    X, y, beta = random_model
+    coef_mask = abs(beta) > 0
+    n_groups = request.param
+    n_active_groups = n_groups // 3 + 1
+    active_group_inds = rng.choice(range(n_groups), size=n_active_groups, replace=False)
+    inactive_group_inds = np.setdiff1d(range(n_groups), active_group_inds)
+
+    groups = np.zeros(len(beta), dtype=int)
+    for i, c in enumerate(coef_mask):
+        groups[i] = (
+            rng.choice(active_group_inds) if c else rng.choice(inactive_group_inds)
+        )
+    return X, y, beta, groups
