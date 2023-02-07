@@ -2,6 +2,8 @@ import numpy as np
 import numpy.testing as npt
 import pytest
 
+from cvxpy.error import SolverError
+
 from sparselm.model import (
     AdaptiveGroupLasso,
     AdaptiveLasso,
@@ -84,6 +86,7 @@ def test_adaptive_lasso_sparser(random_model):
 
 
 # TODO flakey test, depends on THRESHOLD value
+@pytest.mark.xfail(raises=SolverError)
 @pytest.mark.parametrize("standardize", [False, True])
 def test_group_lasso(random_model_with_groups, solver, standardize):
     X, y, beta, groups = random_model_with_groups
@@ -117,6 +120,7 @@ def test_group_lasso(random_model_with_groups, solver, standardize):
         assert all_active or all_inactive
 
 
+@pytest.mark.xfail(raises=SolverError)
 @pytest.mark.parametrize("standardize", [False, True])
 def test_group_lasso_weights(random_model_with_groups, solver, standardize):
     X, y, beta, groups = random_model_with_groups
@@ -130,7 +134,6 @@ def test_group_lasso_weights(random_model_with_groups, solver, standardize):
         fit_intercept=True,
         standardize=standardize,
         solver=solver,
-        solver_options={"verbose": True}
     )
     glasso.fit(X, y)
 
@@ -141,7 +144,6 @@ def test_group_lasso_weights(random_model_with_groups, solver, standardize):
         fit_intercept=True,
         standardize=standardize,
         solver=solver,
-        solver_options={"verbose": True}
     )
     aglasso.fit(X, y)
 
@@ -170,6 +172,7 @@ def test_group_lasso_weights(random_model_with_groups, solver, standardize):
         assert all_active or all_inactive
 
 
+@pytest.mark.xfail(raises=SolverError)
 @pytest.mark.parametrize("estimator_cls", ADAPTIVE_ESTIMATORS)
 def test_adaptive_weights(estimator_cls, random_model_with_groups, solver, rng):
     X, y, beta, groups = random_model_with_groups

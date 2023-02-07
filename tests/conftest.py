@@ -8,9 +8,13 @@ SEED = 0
 # ECOS sometimes fails for Adaptive group estimators, but is fast
 # SCS and CXVOPT are reliable, but slower
 # GUROBI is best
-CONVEX_SOLVERS = ["GUROBI"]  # ["SCS", "CVXOPT", "GUROBI", "ECOS"]
+CONVEX_SOLVERS = [
+    "GUROBI",
+    "SCS",
+    "CVXOPT"
+]
 
-# ECOS_BB & GLPK_MI are open source alternative, but much slower
+# ECOS_BB is open source alternative, but much slower, and can get things wrong
 MIQP_SOLVERS = ["GUROBI"]
 
 # Set to small values bc gurobi non-commercial can not solver large model.
@@ -31,7 +35,7 @@ def solver(request):
 
 
 @pytest.fixture(params=MIQP_SOLVERS)
-def solver(request):
+def miqp_solver(request):
     return request.param
 
 

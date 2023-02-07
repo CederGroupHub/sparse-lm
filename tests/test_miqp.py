@@ -64,15 +64,17 @@ def test_perfect_signal_recovery(sparse_coded_signal):
 
 
 @pytest.mark.parametrize("estimator_cls", MIQP_estimators)
-def test_slack_variables(estimator_cls, random_model_with_groups, solver, rng):
+def test_slack_variables(estimator_cls, random_model_with_groups, miqp_solver, rng):
     X, y, beta, groups = random_model_with_groups
 
     # ignore groups
     no_groups = np.arange(len(beta))
     if hasattr(estimator_cls, "sparse_bound"):
-        estimator = estimator_cls(no_groups, sparse_bound=len(beta) // 2, solver=solver)
+        estimator = estimator_cls(
+            no_groups, sparse_bound=len(beta) // 2, solver=miqp_solver
+        )
     else:
-        estimator = estimator_cls(no_groups, alpha=2.0, solver=solver)
+        estimator = estimator_cls(no_groups, alpha=2.0, solver=miqp_solver)
 
     estimator.fit(X, y)
     for coef, active in zip(estimator.coef_, estimator._z0.value):
@@ -85,10 +87,10 @@ def test_slack_variables(estimator_cls, random_model_with_groups, solver, rng):
     group_ids = np.unique(groups)
     if hasattr(estimator_cls, "sparse_bound"):
         estimator = estimator_cls(
-            groups, sparse_bound=len(group_ids) // 2, solver=solver
+            groups, sparse_bound=len(group_ids) // 2, solver=miqp_solver
         )
     else:
-        estimator = estimator_cls(groups, alpha=3.0, solver=solver)
+        estimator = estimator_cls(groups, alpha=3.0, solver=miqp_solver)
 
     estimator.fit(X, y)
     for gid, active in zip(group_ids, estimator._z0.value):
@@ -99,16 +101,18 @@ def test_slack_variables(estimator_cls, random_model_with_groups, solver, rng):
 
 
 @pytest.mark.parametrize("estimator_cls", MIQP_estimators)
-def test_singleton_hierarchy(estimator_cls, random_model, solver, rng):
+def test_singleton_hierarchy(estimator_cls, random_model, miqp_solver, rng):
     X, y, beta = random_model
     (idx,) = beta.nonzero()
 
     # ignore groups, single covariate hierarchy
     no_groups = np.arange(len(beta))
     if hasattr(estimator_cls, "sparse_bound"):
-        estimator = estimator_cls(no_groups, sparse_bound=len(beta) // 2, solver=solver)
+        estimator = estimator_cls(
+            no_groups, sparse_bound=len(beta) // 2, solver=miqp_solver
+        )
     else:
-        estimator = estimator_cls(no_groups, alpha=2.0, solver=solver)
+        estimator = estimator_cls(no_groups, alpha=2.0, solver=miqp_solver)
 
     fully_chained = [[len(beta) - 1]] + [[i] for i in range(0, len(beta) - 1)]
     estimator.hierarchy = fully_chained
@@ -143,7 +147,7 @@ def test_singleton_hierarchy(estimator_cls, random_model, solver, rng):
 
 
 @pytest.mark.parametrize("estimator_cls", MIQP_estimators)
-def test_group_hierarchy(estimator_cls, random_model_with_groups, solver, rng):
+def test_group_hierarchy(estimator_cls, random_model_with_groups, miqp_solver, rng):
     X, y, beta, groups = random_model_with_groups
     (idx,) = beta.nonzero()
 
@@ -151,12 +155,10 @@ def test_group_hierarchy(estimator_cls, random_model_with_groups, solver, rng):
     group_ids = np.unique(groups)
     if hasattr(estimator_cls, "sparse_bound"):
         estimator = estimator_cls(
-            groups,
-            sparse_bound=len(group_ids) // 2,
-            solver=solver,
+            groups, sparse_bound=len(group_ids) // 2, solver=miqp_solver
         )
     else:
-        estimator = estimator_cls(groups, alpha=3.0, solver=solver)
+        estimator = estimator_cls(groups, alpha=3.0, solver=miqp_solver)
 
     fully_chained = [[len(group_ids) - 1]] + [[i] for i in range(0, len(group_ids) - 1)]
     estimator.hierarchy = fully_chained
