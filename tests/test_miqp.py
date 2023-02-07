@@ -15,32 +15,14 @@ MIQP_estimators = [BestSubsetSelection, RidgedBestSubsetSelection, RegularizedL0
 THRESHOLD = 1e-12
 
 
-def assert_hierarchy_respected(coef, hierarchy, groups=None):
+def assert_hierarchy_respected(coef, slack_z, hierarchy, groups=None):
     groups = groups if groups is not None else np.arange(len(coef))
-    for high_id, sub_ids in enumerate(hierarchy):
-        for sub_id in sub_ids:
-            """
-            if abs(coef[groups == groups[sub_id]][0]) < THRESHOLD:
-                print("------INACTIVE COEF CONSTRAINT--------------")
-                print(sub_id, high_id)
-                print(abs(coef[groups == groups[sub_id]]))
-                print(abs(coef[groups == groups[high_id]]))
-                assert all(abs(coef[groups == groups[sub_id]]) < THRESHOLD)
-                assert all(abs(coef[groups == groups[high_id]]) < THRESHOLD)
-            else:
-                # print("always on!")
-                assert all(abs(coef[groups == groups[sub_id]]) > THRESHOLD)
-            """
-            if coef[groups == groups[sub_id]][0] == 0:
-                print("------INACTIVE COEF CONSTRAINT--------------")
-                print(sub_id, high_id)
-                print(abs(coef[groups == groups[sub_id]]))
-                print(abs(coef[groups == groups[high_id]]))
-                assert all(coef[groups == groups[sub_id]] == 0)
-                assert all(coef[groups == groups[high_id]] == 0)
-            else:
-                # print("always on!")
-                assert all(coef[groups == groups[sub_id]] != 0)
+    group_ids = np.unique(groups)
+    for grp_id, active, parents in zip(group_ids, slack_z, hierarchy):
+        if active == 1:  # all parents must also be active
+            assert all(
+                (abs(coef[groups == parent]) >= THRESHOLD).all() for parent in parents
+            )
 
 
 def test_perfect_signal_recovery(sparse_coded_signal):
@@ -97,7 +79,7 @@ def test_slack_variables(estimator_cls, random_model_with_groups, solver, rng):
         if active == 1:
             assert abs(coef) >= THRESHOLD
         else:
-            assert abs(coef) <= THRESHOLD
+            assert abs(coef) < THRESHOLD
 
     # now group hierarchy
     group_ids = np.unique(groups)
@@ -113,7 +95,7 @@ def test_slack_variables(estimator_cls, random_model_with_groups, solver, rng):
         if active == True:
             assert all(abs(estimator.coef_[groups == gid]) >= THRESHOLD)
         else:
-            assert all(abs(estimator.coef_[groups == gid]) <= THRESHOLD)
+            assert all(abs(estimator.coef_[groups == gid]) < THRESHOLD)
 
 
 @pytest.mark.parametrize("estimator_cls", MIQP_estimators)
@@ -137,6 +119,7 @@ def test_singleton_hierarchy(estimator_cls, random_model, solver, rng):
         assert all(estimator.coef_ == 0)
     else:
         assert all(estimator.coef_ != 0)
+    assert_hierarchy_respected(estimator.coef_, estimator._z0.value, fully_chained)
 
     hierarchy = []
     for i in range(len(beta)):
@@ -156,7 +139,7 @@ def test_singleton_hierarchy(estimator_cls, random_model, solver, rng):
     # TODO make hierarchy and other non cp.Parameter params reset problem if reset
     estimator._problem = None
     estimator.fit(X, y)
-    assert_hierarchy_respected(estimator.coef_, hierarchy)
+    assert_hierarchy_respected(estimator.coef_, estimator._z0.value, hierarchy)
 
 
 @pytest.mark.parametrize("estimator_cls", MIQP_estimators)
@@ -168,11 +151,12 @@ def test_group_hierarchy(estimator_cls, random_model_with_groups, solver, rng):
     group_ids = np.unique(groups)
     if hasattr(estimator_cls, "sparse_bound"):
         estimator = estimator_cls(
-            groups, sparse_bound=len(group_ids) // 2, solver=solver,
-            solver_options={"feastol": 1E-24}
+            groups,
+            sparse_bound=len(group_ids) // 2,
+            solver=solver,
         )
     else:
-        estimator = estimator_cls(groups, alpha=3.0, solver=solver, solver_options={"feastol": 1E-24})
+        estimator = estimator_cls(groups, alpha=3.0, solver=solver)
 
     fully_chained = [[len(group_ids) - 1]] + [[i] for i in range(0, len(group_ids) - 1)]
     estimator.hierarchy = fully_chained
@@ -183,6 +167,10 @@ def test_group_hierarchy(estimator_cls, random_model_with_groups, solver, rng):
         assert all(estimator.coef_ == 0)
     else:
         assert all(estimator.coef_ != 0)
+
+    assert_hierarchy_respected(
+        estimator.coef_, estimator._z0.value, fully_chained, groups=groups
+    )
 
     # pick two groups with nozero coefs
     grp1 = groups[idx[0]]
@@ -197,17 +185,16 @@ def test_group_hierarchy(estimator_cls, random_model_with_groups, solver, rng):
         else:
             hierarchy.append([])
         # first half of remaining depends on 2nd nonzero
-        if 0 < i < len(group_ids) // 2 and i != grp2:
+        if 0 < i < len(group_ids) // 2 and i not in [grp1, grp2]:
             hierarchy[i].append(grp2)
 
     estimator._problem = None  # TODO also remove this...
     estimator.hierarchy = hierarchy
     estimator.fit(X, y)
-    #print(estimator._z0.value)
-    for gid, active in zip(group_ids, estimator._z0.value):
-        print(active == 1, estimator.coef_[groups == gid])
-    print(hierarchy)
-    assert_hierarchy_respected(estimator.coef_, hierarchy, groups)
+
+    assert_hierarchy_respected(
+        estimator.coef_, estimator._z0.value, hierarchy, groups=groups
+    )
 
 
 def test_set_parameters():
