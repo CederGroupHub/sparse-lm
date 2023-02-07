@@ -82,11 +82,11 @@ def test_perfect_signal_recovery(sparse_coded_signal):
 
 
 @pytest.mark.parametrize("estimator_cls", MIQP_estimators)
-def test_hierarchy(estimator_cls, random_model_with_groups, solver, rng):
-    X, y, beta, groups = random_model_with_groups
+def test_singleton_hierarchy(estimator_cls, random_model, solver, rng):
+    X, y, beta = random_model
     (idx,) = beta.nonzero()
 
-    # first ignore groups, single covariate hierarchy
+    # ignore groups, single covariate hierarchy
     no_groups = np.arange(len(beta))
     if hasattr(estimator_cls, "sparse_bound"):
         estimator = estimator_cls(no_groups, sparse_bound=len(beta) // 2, solver=solver)
@@ -123,6 +123,12 @@ def test_hierarchy(estimator_cls, random_model_with_groups, solver, rng):
     estimator.fit(X, y)
     assert_hierarchy_respected(estimator.coef_, hierarchy)
 
+
+@pytest.mark.parametrize("estimator_cls", MIQP_estimators)
+def test_group_hierarchy(estimator_cls, random_model_with_groups, solver, rng):
+    X, y, beta, groups = random_model_with_groups
+    (idx,) = beta.nonzero()
+
     # now group hierarchy
     group_ids = np.unique(groups)
     if hasattr(estimator_cls, "sparse_bound"):
@@ -131,6 +137,16 @@ def test_hierarchy(estimator_cls, random_model_with_groups, solver, rng):
         )
     else:
         estimator = estimator_cls(groups, alpha=3.0, solver=solver)
+
+    fully_chained = [[len(group_ids) - 1]] + [[i] for i in range(0, len(group_ids) - 1)]
+    estimator.hierarchy = fully_chained
+    estimator.fit(X, y)
+
+    # bound is set lower than number of coefs so all must be zero in BestSubset
+    if any(estimator.coef_ == 0):
+        assert all(estimator.coef_ == 0)
+    else:
+        assert all(estimator.coef_ != 0)
 
     # pick two groups with nozero coefs
     grp1 = groups[idx[0]]
@@ -148,6 +164,7 @@ def test_hierarchy(estimator_cls, random_model_with_groups, solver, rng):
         if 0 < i < len(group_ids) // 2 and i != grp2:
             hierarchy[i].append(grp2)
 
+    estimator._problem = None  # TODO also remove this...
     estimator.hierarchy = hierarchy
     estimator.fit(X, y)
     print(estimator._z0.value)

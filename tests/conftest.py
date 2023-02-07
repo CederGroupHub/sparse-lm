@@ -2,7 +2,7 @@ import numpy as np
 import pytest
 from sklearn.datasets import make_regression, make_sparse_coded_signal
 
-SEED = 0 # None  # 0
+SEED = 0  # None  # 0
 
 # A few solvers to test for convex problems
 # ECOS sometimes fails for Adaptive group estimators, but is fast
