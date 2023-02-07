@@ -130,6 +130,7 @@ def test_group_lasso_weights(random_model_with_groups, solver, standardize):
         fit_intercept=True,
         standardize=standardize,
         solver=solver,
+        solver_options={"verbose": True}
     )
     glasso.fit(X, y)
 
@@ -140,6 +141,7 @@ def test_group_lasso_weights(random_model_with_groups, solver, standardize):
         fit_intercept=True,
         standardize=standardize,
         solver=solver,
+        solver_options={"verbose": True}
     )
     aglasso.fit(X, y)
 
