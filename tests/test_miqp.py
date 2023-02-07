@@ -12,7 +12,7 @@ from sparselm.model import (
 # exclude L1L0 since it breaks hierarchy constraints...
 MIQP_estimators = [BestSubsetSelection, RidgedBestSubsetSelection, RegularizedL0, L2L0]
 
-THRESHOLD = 1e-4
+THRESHOLD = 1e-12
 
 
 def assert_hierarchy_respected(coef, hierarchy, groups=None):
@@ -82,6 +82,41 @@ def test_perfect_signal_recovery(sparse_coded_signal):
 
 
 @pytest.mark.parametrize("estimator_cls", MIQP_estimators)
+def test_slack_variables(estimator_cls, random_model_with_groups, solver, rng):
+    X, y, beta, groups = random_model_with_groups
+
+    # ignore groups
+    no_groups = np.arange(len(beta))
+    if hasattr(estimator_cls, "sparse_bound"):
+        estimator = estimator_cls(no_groups, sparse_bound=len(beta) // 2, solver=solver)
+    else:
+        estimator = estimator_cls(no_groups, alpha=2.0, solver=solver)
+
+    estimator.fit(X, y)
+    for coef, active in zip(estimator.coef_, estimator._z0.value):
+        if active == 1:
+            assert abs(coef) >= THRESHOLD
+        else:
+            assert abs(coef) <= THRESHOLD
+
+    # now group hierarchy
+    group_ids = np.unique(groups)
+    if hasattr(estimator_cls, "sparse_bound"):
+        estimator = estimator_cls(
+            groups, sparse_bound=len(group_ids) // 2, solver=solver
+        )
+    else:
+        estimator = estimator_cls(groups, alpha=3.0, solver=solver)
+
+    estimator.fit(X, y)
+    for gid, active in zip(group_ids, estimator._z0.value):
+        if active == True:
+            assert all(abs(estimator.coef_[groups == gid]) >= THRESHOLD)
+        else:
+            assert all(abs(estimator.coef_[groups == gid]) <= THRESHOLD)
+
+
+@pytest.mark.parametrize("estimator_cls", MIQP_estimators)
 def test_singleton_hierarchy(estimator_cls, random_model, solver, rng):
     X, y, beta = random_model
     (idx,) = beta.nonzero()
@@ -133,10 +168,11 @@ def test_group_hierarchy(estimator_cls, random_model_with_groups, solver, rng):
     group_ids = np.unique(groups)
     if hasattr(estimator_cls, "sparse_bound"):
         estimator = estimator_cls(
-            groups, sparse_bound=len(group_ids) // 2, solver=solver
+            groups, sparse_bound=len(group_ids) // 2, solver=solver,
+            solver_options={"feastol": 1E-24}
         )
     else:
-        estimator = estimator_cls(groups, alpha=3.0, solver=solver)
+        estimator = estimator_cls(groups, alpha=3.0, solver=solver, solver_options={"feastol": 1E-24})
 
     fully_chained = [[len(group_ids) - 1]] + [[i] for i in range(0, len(group_ids) - 1)]
     estimator.hierarchy = fully_chained
@@ -167,7 +203,9 @@ def test_group_hierarchy(estimator_cls, random_model_with_groups, solver, rng):
     estimator._problem = None  # TODO also remove this...
     estimator.hierarchy = hierarchy
     estimator.fit(X, y)
-    print(estimator._z0.value)
+    #print(estimator._z0.value)
+    for gid, active in zip(group_ids, estimator._z0.value):
+        print(active == 1, estimator.coef_[groups == gid])
     print(hierarchy)
     assert_hierarchy_respected(estimator.coef_, hierarchy, groups)
 
