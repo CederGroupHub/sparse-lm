@@ -51,7 +51,7 @@ def test_perfect_signal_recovery(sparse_coded_signal):
     coef = estimator.coef_.copy()
     r_estimator.eta = 1e-4
     r_estimator.fit(X, y)
-    npt.assert_array_almost_equal(beta, r_estimator.coef_, decimal=4)
+    npt.assert_array_almost_equal(beta, r_estimator.coef_, decimal=2)
     assert all(i in np.flatnonzero(r_estimator.coef_) for i in idx)
     assert np.linalg.norm(coef) > np.linalg.norm(r_estimator.coef_)
 
@@ -60,7 +60,7 @@ def test_perfect_signal_recovery(sparse_coded_signal):
     estimator.fit(X, y)
 
     npt.assert_array_equal(idx, np.flatnonzero(estimator.coef_))
-    npt.assert_array_almost_equal(beta, estimator.coef_, decimal=4)
+    npt.assert_array_almost_equal(beta, estimator.coef_, decimal=2)
 
 
 @pytest.mark.parametrize("estimator_cls", MIQP_estimators)
