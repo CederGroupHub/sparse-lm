@@ -122,7 +122,7 @@ def test_group_lasso(random_model_with_groups, solver, standardize):
 @pytest.mark.xfail(raises=SolverError)
 @pytest.mark.parametrize("standardize", [False, True])
 def test_group_lasso_weights(random_model_with_groups, solver, standardize):
-    X, y, beta, groups = random_model_with_groups
+    X, y, _, groups = random_model_with_groups
 
     group_weights = np.ones(len(np.unique(groups)))
 

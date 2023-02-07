@@ -93,7 +93,7 @@ def line_search(estimator, param_grid, request):
 
 
 def test_grid_search(random_energy_model, grid_search):
-    femat, energies, ecis = random_energy_model
+    femat, energies, _ = random_energy_model
     grid_search.fit(X=femat, y=energies)
     assert "best_params_" in vars(grid_search)
     best_params = grid_search.best_params_
