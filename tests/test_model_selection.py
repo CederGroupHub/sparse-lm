@@ -63,7 +63,7 @@ def mixed_l2l0_est(random_energy_model, request):
 
 
 def test_mixed_l0_wts(random_energy_model, mixed_l2l0_est, rng):
-    femat, energies, ecis = random_energy_model
+    femat, energies, _ = random_energy_model
     mixed_l2l0_est.eta = 1e-5
     mixed_l2l0_est.fit(X=femat, y=energies)
     energies_pred = mixed_l2l0_est.predict(femat)

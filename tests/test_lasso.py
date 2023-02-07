@@ -74,7 +74,7 @@ def test_lasso_non_float_y():
 
 
 def test_adaptive_lasso_sparser(random_model):
-    X, y, beta = random_model
+    X, y, _ = random_model
     lasso = Lasso(fit_intercept=True)
     alasso = AdaptiveLasso(fit_intercept=True)
 
@@ -88,7 +88,7 @@ def test_adaptive_lasso_sparser(random_model):
 @pytest.mark.xfail(raises=SolverError)
 @pytest.mark.parametrize("standardize", [False, True])
 def test_group_lasso(random_model_with_groups, solver, standardize):
-    X, y, beta, groups = random_model_with_groups
+    X, y, _, groups = random_model_with_groups
 
     glasso = GroupLasso(
         groups=groups,

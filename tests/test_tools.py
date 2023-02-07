@@ -39,11 +39,11 @@ def test_constrain_coefficients(test_number, rng):
             assert 0 <= cstr_coefs[i] <= 2
 
     @constrain_coefficients(inds, 2, 0)
-    def fit_constrained(X, y, reg):
+    def fit_constrained1(X, y, reg):
         reg.fit(X, y)
         return reg.coef_
 
-    cstr_coefs2 = fit_constrained(X, y, reg=reg)
+    cstr_coefs2 = fit_constrained1(X, y, reg=reg)
     npt.assert_almost_equal(cstr_coefs, cstr_coefs2)
 
     # Test different low and high values
@@ -69,11 +69,11 @@ def test_constrain_coefficients(test_number, rng):
             assert l <= cstr_coefs[i] <= h
 
     @constrain_coefficients(inds, high, low)
-    def fit_constrained(X, y, reg):
+    def fit_constrained2(X, y, reg):
         reg.fit(X, y)
         return reg.coef_
 
-    cstr_coefs2 = fit_constrained(X, y, reg=reg)
+    cstr_coefs2 = fit_constrained2(X, y, reg=reg)
     npt.assert_almost_equal(cstr_coefs, cstr_coefs2)
 
     # just use high value
