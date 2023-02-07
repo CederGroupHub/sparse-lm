@@ -16,9 +16,9 @@ def constrain_coefficients(indices, high=None, low=None):
     and below the supplied value.
 
     Use this as a standard decorator with parameters:
-    - At runtime: coefs = constrain_dielectric(indices, high, low)(fit_method)(X, y)
+    - At runtime: coefs = constrain_coefficients(indices, high, low)(fit_method)(X, y)
     - In fit_method definitions:
-      @constrain_dielectric(indices, high, low)
+      @constrain_coefficients(indices, high, low)
       def your_fit_method(X, y):
 
     Args:
@@ -32,12 +32,18 @@ def constrain_coefficients(indices, high=None, low=None):
     indices = np.array(indices)
     if high is not None:
         high = (
-            high * np.ones(len(indices)) if isinstance(high, float) else np.array(high)
+            high * np.ones(len(indices))
+            if isinstance(high, (int, float))
+            else np.array(high)
         )
     else:
         high = np.inf * np.ones(len(indices))
     if low is not None:
-        low = low * np.ones(len(indices)) if isinstance(low, float) else np.array(low)
+        low = (
+            low * np.ones(len(indices))
+            if isinstance(low, (int, float))
+            else np.array(low)
+        )
     else:
         low = -np.inf * np.ones(len(indices))
 

@@ -7,9 +7,6 @@ Sparse Linear Regression Models
 [![pre-commit.ci status](https://results.pre-commit.ci/badge/github/CederGroupHub/sparse-lm/main.svg)](https://results.pre-commit.ci/latest/github/CederGroupHub/sparse-lm/main)
 [![pypi version](https://img.shields.io/pypi/v/sparse-lm?color=blue)](https://pypi.org/project/sparse-lm)
 
-> :warning: this package is currently largely lacking in unit-tests.
-> Use at your own risk!
-
 **sparse-lm**  includes several regularized regression estimators that are absent in the
 `sklearn.linear_model` module. The estimators in **sparse-lm** are designed to fit right into
 [scikit-lean](https://scikit-learn.org/stable/index.html) by inheriting from their base
@@ -42,7 +39,7 @@ model like you would any linear model in **scikit-learn**:
 import numpy as np
 from sklearn.datasets import make_regression
 from sklearn.model_selection import GridSearchCV
-from src.sparselm import AdaptiveLasso
+from sparselm import AdaptiveLasso
 
 X, y = make_regression(n_samples=200, n_features=5000, random_state=0)
 alasso = AdaptiveLasso(fit_intercept=False)

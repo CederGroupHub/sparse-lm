@@ -25,7 +25,7 @@ class BestSubsetSelection(MIQP_L0):
         self,
         groups,
         sparse_bound,
-        big_M=1000,
+        big_M=100,
         hierarchy=None,
         ignore_psd_check=True,
         fit_intercept=False,
@@ -89,6 +89,8 @@ class BestSubsetSelection(MIQP_L0):
             solver=solver,
             solver_options=solver_options,
         )
+        if sparse_bound <= 0:
+            raise ValueError("sparse_bound must be > 0")
 
         self._bound = cp.Parameter(nonneg=True, value=sparse_bound)
 
@@ -119,7 +121,7 @@ class RidgedBestSubsetSelection(TikhonovMixin, BestSubsetSelection):
         groups,
         sparse_bound,
         eta=1.0,
-        big_M=1000,
+        big_M=100,
         hierarchy=None,
         tikhonov_w=None,
         ignore_psd_check=True,

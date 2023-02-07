@@ -1,8 +1,3 @@
-"""This file only contains software functionality tests, which means
-we only test on randomly generated feature matrices, ecis and energies,
-to make sure our codes will run, but the physicality of results are not
-checked in real CE systems."""
-
 import cvxpy as cp
 import numpy as np
 import pytest
@@ -44,8 +39,8 @@ def test_solver():
 
 
 @pytest.fixture(scope="module", params=ALL_ESTIMATORS)
-def estimator(random_model, request):
-    ecis = random_model[2]
+def estimator(random_energy_model, request):
+    ecis = random_energy_model[2]
     # Each correlation function as its own group. Doing ordinary hierarchy.
     groups = list(range(len(ecis)))
     if "GUROBI" in cp.installed_solvers():
@@ -53,18 +48,11 @@ def estimator(random_model, request):
     else:
         return request.param(groups=groups, solver="ECOS_BB")
     # return request.param(solver="ECOS_BB")
-
-
-def test_single_estimator(random_model, estimator):
-    femat, energies, ecis = random_model
-    estimator.fit(X=femat, y=energies)
-    energies_pred = estimator.predict(femat)
-    assert energies_pred is not None
 
 
 @pytest.fixture(scope="module", params=ONLY_L2L0)
-def mixed_l2l0_est(random_model, request):
-    ecis = random_model[2]
+def mixed_l2l0_est(random_energy_model, request):
+    ecis = random_energy_model[2]
     # Each correlation function as its own group. Doing ordinary hierarchy.
     groups = list(range(len(ecis)))
     if "GUROBI" in cp.installed_solvers():
@@ -74,13 +62,13 @@ def mixed_l2l0_est(random_model, request):
     # return request.param(solver="ECOS_BB")
 
 
-def test_mixed_l0_wts(random_model, mixed_l2l0_est, random_weights):
-    femat, energies, ecis = random_model
+def test_mixed_l0_wts(random_energy_model, mixed_l2l0_est, rng):
+    femat, energies, _ = random_energy_model
     mixed_l2l0_est.eta = 1e-5
     mixed_l2l0_est.fit(X=femat, y=energies)
     energies_pred = mixed_l2l0_est.predict(femat)
     assert energies_pred is not None
-    mixed_l2l0_est.tikhonov_w = random_weights
+    mixed_l2l0_est.tikhonov_w = 1000 * rng.random(femat.shape[1])
     mixed_l2l0_est.fit(X=femat, y=energies)
     energies_pred_wtd = mixed_l2l0_est.predict(femat)
     assert energies_pred_wtd is not None
@@ -104,8 +92,8 @@ def line_search(estimator, param_grid, request):
     return line_searcher
 
 
-def test_grid_search(random_model, grid_search):
-    femat, energies, ecis = random_model
+def test_grid_search(random_energy_model, grid_search):
+    femat, energies, _ = random_energy_model
     grid_search.fit(X=femat, y=energies)
     assert "best_params_" in vars(grid_search)
     best_params = grid_search.best_params_
@@ -121,8 +109,8 @@ def test_grid_search(random_model, grid_search):
         assert np.sum((energies - energies_pred) ** 2) / len(energies) <= 1e-1
 
 
-def test_line_search(random_model, line_search):
-    femat, energies, ecis = random_model
+def test_line_search(random_energy_model, line_search):
+    femat, energies, _ = random_energy_model
     line_search.fit(X=femat, y=energies)
     assert "best_params_" in vars(line_search)
     best_params = line_search.best_params_

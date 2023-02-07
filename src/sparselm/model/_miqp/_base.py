@@ -116,18 +116,20 @@ class MIQP_L0(CVXEstimator, metaclass=ABCMeta):
         constraints = []
         for i, mask in enumerate(self._group_masks):
             constraints += [
-                self._big_M * self._z0[i] >= self._beta[mask],
-                self._big_M * self._z0[i] >= -self._beta[mask],
+                self._beta[mask] <= self._big_M * self._z0[i],
+                -self._big_M * self._z0[i] <= self._beta[mask],
             ]
 
         if self.hierarchy is not None:
             constraints += self._gen_hierarchy_constraints()
+
         return constraints
 
     def _gen_hierarchy_constraints(self):
         """Generate single feature hierarchy constraints."""
+        group_ids = np.sort(np.unique(self.groups))
         return [
             self._z0[high_id] <= self._z0[sub_id]
-            for high_id, sub_ids in enumerate(self.hierarchy)
+            for high_id, sub_ids in zip(group_ids, self.hierarchy)
             for sub_id in sub_ids
         ]
