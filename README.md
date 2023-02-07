@@ -42,7 +42,7 @@ model like you would any linear model in **scikit-learn**:
 import numpy as np
 from sklearn.datasets import make_regression
 from sklearn.model_selection import GridSearchCV
-from src.sparselm import AdaptiveLasso
+from sparselm import AdaptiveLasso
 
 X, y = make_regression(n_samples=200, n_features=5000, random_state=0)
 alasso = AdaptiveLasso(fit_intercept=False)
