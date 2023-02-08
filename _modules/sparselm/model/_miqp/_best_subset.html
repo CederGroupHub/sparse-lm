@@ -254,7 +254,7 @@
         <span class="bp">self</span><span class="p">,</span>
         <span class="n">groups</span><span class="p">,</span>
         <span class="n">sparse_bound</span><span class="p">,</span>
-        <span class="n">big_M</span><span class="o">=</span><span class="mi">1000</span><span class="p">,</span>
+        <span class="n">big_M</span><span class="o">=</span><span class="mi">100</span><span class="p">,</span>
         <span class="n">hierarchy</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
         <span class="n">ignore_psd_check</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
         <span class="n">fit_intercept</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
@@ -318,6 +318,8 @@
             <span class="n">solver</span><span class="o">=</span><span class="n">solver</span><span class="p">,</span>
             <span class="n">solver_options</span><span class="o">=</span><span class="n">solver_options</span><span class="p">,</span>
         <span class="p">)</span>
+        <span class="k">if</span> <span class="n">sparse_bound</span> <span class="o">&lt;=</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;sparse_bound must be &gt; 0&quot;</span><span class="p">)</span>
 
         <span class="bp">self</span><span class="o">.</span><span class="n">_bound</span> <span class="o">=</span> <span class="n">cp</span><span class="o">.</span><span class="n">Parameter</span><span class="p">(</span><span class="n">nonneg</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">value</span><span class="o">=</span><span class="n">sparse_bound</span><span class="p">)</span>
 
@@ -348,7 +350,7 @@
         <span class="n">groups</span><span class="p">,</span>
         <span class="n">sparse_bound</span><span class="p">,</span>
         <span class="n">eta</span><span class="o">=</span><span class="mf">1.0</span><span class="p">,</span>
-        <span class="n">big_M</span><span class="o">=</span><span class="mi">1000</span><span class="p">,</span>
+        <span class="n">big_M</span><span class="o">=</span><span class="mi">100</span><span class="p">,</span>
         <span class="n">hierarchy</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
         <span class="n">tikhonov_w</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
         <span class="n">ignore_psd_check</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>

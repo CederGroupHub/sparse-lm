@@ -238,16 +238,9 @@
 <section id="sparse-linear-regression-models">
 <h1>Sparse Linear Regression Models<a class="headerlink" href="#sparse-linear-regression-models" title="Permalink to this heading">#</a></h1>
 <a class="reference external image-reference" href="https://github.com/CederGroupHub/sparse-lm/actions/workflows/test.yml"><img alt="test" src="https://github.com/CederGroupHub/sparse-lm/actions/workflows/test.yml/badge.svg?branch=main" /></a>
+<a class="reference external image-reference" href="https://www.codacy.com/gh/CederGroupHub/sparse-lm/dashboard?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=CederGroupHub/sparse-lm&amp;utm_campaign=Badge_Coverage"><img alt="Codacy Badge" src="https://app.codacy.com/project/badge/Coverage/9b72db506d9c49b2a6c849348de8945e" /></a>
 <a class="reference external image-reference" href="https://results.pre-commit.ci/latest/github/CederGroupHub/sparse-lm/main"><img alt="pre-commit.ci status" src="https://results.pre-commit.ci/badge/github/CederGroupHub/sparse-lm/main.svg" /></a>
 <a class="reference external image-reference" href="https://pypi.org/project/sparse-lm"><img alt="pypi version" src="https://img.shields.io/pypi/v/sparse-lm?color=blue" /></a>
-<blockquote>
-<div><dl class="field-list simple">
-<dt class="field-odd">warning<span class="colon">:</span></dt>
-<dd class="field-odd"><p>this package is currently largely lacking in unit-tests.</p>
-</dd>
-</dl>
-<p>Use at your own risk!</p>
-</div></blockquote>
 <p><strong>sparse-lm</strong>  includes several regularized regression estimators that are absent in the
 <code class="docutils literal notranslate"><span class="pre">sklearn.linear_model</span></code> module. The estimators in <strong>sparse-lm</strong> are designed to fit right into
 <a class="reference external" href="https://scikit-learn.org/stable/index.html">scikit-lean</a> by inheriting from their base
@@ -279,7 +272,7 @@ model like you would any linear model in <strong>scikit-learn</strong>:</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
 <span class="kn">from</span> <span class="nn">sklearn.datasets</span> <span class="kn">import</span> <span class="n">make_regression</span>
 <span class="kn">from</span> <span class="nn">sklearn.model_selection</span> <span class="kn">import</span> <span class="n">GridSearchCV</span>
-<span class="kn">from</span> <span class="nn">src.sparselm</span> <span class="kn">import</span> <span class="n">AdaptiveLasso</span>
+<span class="kn">from</span> <span class="nn">sparselm</span> <span class="kn">import</span> <span class="n">AdaptiveLasso</span>
 
 <span class="n">X</span><span class="p">,</span> <span class="n">y</span> <span class="o">=</span> <span class="n">make_regression</span><span class="p">(</span><span class="n">n_samples</span><span class="o">=</span><span class="mi">200</span><span class="p">,</span> <span class="n">n_features</span><span class="o">=</span><span class="mi">5000</span><span class="p">,</span> <span class="n">random_state</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
 <span class="n">alasso</span> <span class="o">=</span> <span class="n">AdaptiveLasso</span><span class="p">(</span><span class="n">fit_intercept</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>

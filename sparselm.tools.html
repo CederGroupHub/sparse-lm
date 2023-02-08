@@ -239,10 +239,10 @@
 contains an EwaldTerm to constrain the dielectric constant to be positive
 and below the supplied value.</p>
 <p>Use this as a standard decorator with parameters:
-- At runtime: coefs = constrain_dielectric(indices, high, low)(fit_method)(X, y)
+- At runtime: coefs = constrain_coefficients(indices, high, low)(fit_method)(X, y)
 - In fit_method definitions:</p>
 <blockquote>
-<div><p>&#64;constrain_dielectric(indices, high, low)
+<div><p>&#64;constrain_coefficients(indices, high, low)
 def your_fit_method(X, y):</p>
 </div></blockquote>
 <dl class="field-list simple">
