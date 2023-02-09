@@ -100,6 +100,8 @@ class CVXEstimator(RegressorMixin, LinearModel, metaclass=ABCMeta):
         Returns:
             instance of self
         """
+        self._validate_params(X, y)
+
         X, y = self._validate_data(
             X, y, accept_sparse=False, y_numeric=True, multi_output=True
         )
@@ -107,7 +109,7 @@ class CVXEstimator(RegressorMixin, LinearModel, metaclass=ABCMeta):
         if sample_weight is not None:
             sample_weight = _check_sample_weight(sample_weight, X, dtype=X.dtype)
 
-        X, y, X_offset, y_offset, X_scale =  _preprocess_data(
+        X, y, X_offset, y_offset, X_scale = _preprocess_data(
             X,
             y,
             copy=self.copy_X,
@@ -124,6 +126,12 @@ class CVXEstimator(RegressorMixin, LinearModel, metaclass=ABCMeta):
         # return self for chaining fit and predict calls
         return self
 
+    def _validate_params(self, X: ArrayLike, y: ArrayLike):
+        """Validate hyper parameters.
+
+        Implement this in an estimator to check for valid hyper parameters.
+        """
+        return
 
     @abstractmethod
     def _gen_objective(self, X: ArrayLike, y: ArrayLike):

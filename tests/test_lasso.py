@@ -92,7 +92,7 @@ def test_group_lasso(random_model_with_groups, solver, standardize):
 
     glasso = GroupLasso(
         groups=groups,
-        alpha=5,
+        alpha=5.0,
         fit_intercept=True,
         standardize=standardize,
         solver=solver,
