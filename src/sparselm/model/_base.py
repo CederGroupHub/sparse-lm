@@ -107,8 +107,12 @@ class CVXEstimator(RegressorMixin, LinearModel, metaclass=ABCMeta):
         if sample_weight is not None:
             sample_weight = _check_sample_weight(sample_weight, X, dtype=X.dtype)
 
-        X, y, X_offset, y_offset, X_scale = self._preprocess_data(
-            X, y, copy=self.copy_X, sample_weight=sample_weight
+        X, y, X_offset, y_offset, X_scale =  _preprocess_data(
+            X,
+            y,
+            copy=self.copy_X,
+            fit_intercept=self.fit_intercept,
+            sample_weight=sample_weight,
         )
 
         if sample_weight is not None:
@@ -120,25 +124,6 @@ class CVXEstimator(RegressorMixin, LinearModel, metaclass=ABCMeta):
         # return self for chaining fit and predict calls
         return self
 
-    def _preprocess_data(
-        self,
-        X: ArrayLike,
-        y: ArrayLike,
-        copy: bool = True,
-        sample_weight: ArrayLike = None,
-    ):
-        """Pre-process data.
-
-        In the future, may add additional functionalities beyond sklearn
-        basics.
-        """
-        return _preprocess_data(
-            X,
-            y,
-            copy=copy,
-            fit_intercept=self.fit_intercept,
-            sample_weight=sample_weight,
-        )
 
     @abstractmethod
     def _gen_objective(self, X: ArrayLike, y: ArrayLike):
