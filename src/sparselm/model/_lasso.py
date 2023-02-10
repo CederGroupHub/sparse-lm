@@ -88,6 +88,7 @@ class Lasso(CVXEstimator):
 
     def _validate_params(self, X: ArrayLike, y: ArrayLike):
         """Validate parameters."""
+        super()._validate_params(X, y)
         check_scalar(self._alpha.value, "alpha", float, min_val=0.0)
 
     def _gen_regularization(self, X: ArrayLike):
@@ -286,6 +287,7 @@ class OverlapGroupLasso(GroupLasso):
 
     def _validate_params(self, X, y):
         """Validate group parameters."""
+        Lasso._validate_params(self, X, y)
         check_scalar(self._alpha.value, "alpha", float, min_val=0.0)
         if len(self.group_list) != X.shape[1]:
             raise ValueError(

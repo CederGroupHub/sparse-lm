@@ -103,6 +103,7 @@ class MIQP_L0(CVXEstimator, metaclass=ABCMeta):
 
     def _validate_params(self, X: ArrayLike, y: ArrayLike):
         """Validate parameters."""
+        super()._validate_params(X, y)
         check_scalar(self.big_M, "big_M", float, min_val=0.0)
         self.groups = _check_groups(self.groups, X.shape[1])
         self._group_masks = [self.groups == i for i in np.sort(np.unique(self.groups))]

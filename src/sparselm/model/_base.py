@@ -65,11 +65,7 @@ class CVXEstimator(RegressorMixin, LinearModel, metaclass=ABCMeta):
         self.copy_X = copy_X
         self.warm_start = warm_start
         self.solver = solver
-
-        if solver_options is None:
-            self.solver_options = {}
-        else:
-            self.solver_options = solver_options
+        self.solver_options = solver_options
 
         self._problem, self._beta, self._X, self._y = None, None, None, None
 
@@ -130,7 +126,10 @@ class CVXEstimator(RegressorMixin, LinearModel, metaclass=ABCMeta):
 
         Implement this in an estimator to check for valid hyper parameters.
         """
-        return
+        if self.solver_options is None:
+            self.solver_options = {}
+        elif not isinstance(self.solver_options, dict):
+            raise TypeError("solver_options must be a dictionary")
 
     @abstractmethod
     def _gen_objective(self, X: ArrayLike, y: ArrayLike):
