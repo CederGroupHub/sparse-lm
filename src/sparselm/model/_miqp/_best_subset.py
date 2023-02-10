@@ -23,8 +23,8 @@ class BestSubsetSelection(MIQP_L0):
 
     def __init__(
         self,
-        groups,
-        sparse_bound,
+        groups=None,
+        sparse_bound=100,
         big_M=100,
         hierarchy=None,
         ignore_psd_check=True,
@@ -118,8 +118,8 @@ class RidgedBestSubsetSelection(TikhonovMixin, BestSubsetSelection):
 
     def __init__(
         self,
-        groups,
-        sparse_bound,
+        groups=None,
+        sparse_bound=100,
         eta=1.0,
         big_M=100,
         hierarchy=None,

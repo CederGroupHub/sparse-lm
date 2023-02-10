@@ -47,7 +47,7 @@ class RegularizedL0(MIQP_L0):
 
     def __init__(
         self,
-        groups,
+        groups=None,
         alpha=1.0,
         big_M=100,
         hierarchy=None,
@@ -136,7 +136,7 @@ class MixedL0(RegularizedL0, metaclass=ABCMeta):
 
     def __init__(
         self,
-        groups,
+        groups=None,
         alpha=1.0,
         eta=1.0,
         big_M=100,
@@ -247,7 +247,7 @@ class L1L0(MixedL0):
 
     def __init__(
         self,
-        groups,
+        groups=None,
         alpha=1.0,
         eta=1.0,
         big_M=100,
@@ -361,7 +361,7 @@ class L2L0(TikhonovMixin, MixedL0):
 
     def __init__(
         self,
-        groups,
+        groups=None,
         alpha=1.0,
         eta=1.0,
         big_M=100,

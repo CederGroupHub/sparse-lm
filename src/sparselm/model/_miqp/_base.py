@@ -8,8 +8,10 @@ from abc import ABCMeta
 import cvxpy as cp
 import numpy as np
 from cvxpy.atoms.affine.wraps import psd_wrap
+from sklearn.utils.validation import check_scalar
 
 from .._base import CVXEstimator
+from ...utils.validation import check_groups
 
 
 class MIQP_L0(CVXEstimator, metaclass=ABCMeta):
@@ -22,7 +24,7 @@ class MIQP_L0(CVXEstimator, metaclass=ABCMeta):
 
     def __init__(
         self,
-        groups,
+        groups=None,
         big_M=100,
         hierarchy=None,
         ignore_psd_check=True,
@@ -84,12 +86,10 @@ class MIQP_L0(CVXEstimator, metaclass=ABCMeta):
         )
 
         self.hierarchy = hierarchy
-        self._big_M = cp.Parameter(nonneg=True, value=big_M)
         self.ignore_psd_check = ignore_psd_check
-
-        self.groups = np.asarray(groups)
-        self._group_masks = [self.groups == i for i in np.unique(groups)]
-        self._z0 = cp.Variable(len(self._group_masks), boolean=True)
+        self.groups = groups
+        self._big_M = cp.Parameter(nonneg=True, value=big_M)
+        self._z0 = cp.Variable(len(np.unique(groups)), boolean=True)
 
     @property
     def big_M(self):
@@ -100,6 +100,12 @@ class MIQP_L0(CVXEstimator, metaclass=ABCMeta):
     def big_M(self, val):
         """Set MIQP big M value."""
         self._big_M.value = val
+
+    def _validate_params(self, X: ArrayLike, y: ArrayLike):
+        """Validate parameters."""
+        check_scalar(big_M, "big_M", float, min_val=0.0)
+        self.groups = check_groups(self.groups, X.shape[1])
+        self._group_masks = [self.groups == i for i in np.unique(self.groups)]
 
     def _gen_objective(self, X, y):
         """Generate the quadratic form portion of objective."""
