@@ -53,7 +53,7 @@ def test_lasso_toy():
     npt.assert_array_almost_equal(lasso.coef_, [0.25])
     npt.assert_array_almost_equal(pred, [0.5, 0.75, 1.0])
 
-    lasso = Lasso(alpha=1)
+    lasso = Lasso(alpha=1.0)
     lasso.fit(X, Y)
     pred = lasso.predict(T)
     npt.assert_array_almost_equal(lasso.coef_, [0.0])
@@ -128,7 +128,7 @@ def test_group_lasso_weights(random_model_with_groups, solver, standardize):
 
     glasso = GroupLasso(
         groups=groups,
-        alpha=5,
+        alpha=5.0,
         group_weights=group_weights,
         fit_intercept=True,
         standardize=standardize,
@@ -189,6 +189,7 @@ def test_adaptive_weights(estimator_cls, random_model_with_groups, solver, rng):
         estimator = estimator_cls(groups=groups, solver=solver)
 
     # force generating weights
+    estimator._validate_params(X, y)
     if estimator_cls.__name__ == "AdaptiveOverlapGroupLasso":
         _ = estimator._get_problem(X[:, estimator.beta_indices], y)
     else:

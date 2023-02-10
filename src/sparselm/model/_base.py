@@ -100,8 +100,6 @@ class CVXEstimator(RegressorMixin, LinearModel, metaclass=ABCMeta):
         Returns:
             instance of self
         """
-        self._validate_params(X, y)
-
         X, y = self._validate_data(
             X, y, accept_sparse=False, y_numeric=True, multi_output=True
         )
@@ -120,6 +118,7 @@ class CVXEstimator(RegressorMixin, LinearModel, metaclass=ABCMeta):
         if sample_weight is not None:
             X, y, _ = _rescale_data(X, y, sample_weight)
 
+        self._validate_params(X, y)
         self.coef_ = self._solve(X, y, *args, **kwargs)
         self._set_intercept(X_offset, y_offset, X_scale)
 

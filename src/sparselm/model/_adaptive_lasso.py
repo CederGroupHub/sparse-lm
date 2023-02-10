@@ -348,6 +348,9 @@ class AdaptiveOverlapGroupLasso(OverlapGroupLasso, AdaptiveGroupLasso):
             solver_options=solver_options,
         )
 
+    #def _validate_params(self, X, y):
+    #    OverlapGroupLasso._validate_params(self, X, y)
+
     def _gen_objective(self, X, y):
         return AdaptiveGroupLasso._gen_objective(self, X, y)
 

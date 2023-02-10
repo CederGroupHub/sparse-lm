@@ -1,7 +1,7 @@
 """Data and hyper-parameters validation utilities."""
 
 import numpy as np
-from numpy.typing import ArrayLike
+
 
 def _check_groups(groups, n_features):
     """Check that groups are 1D and of the correct length
@@ -26,7 +26,9 @@ def _check_groups(groups, n_features):
         raise ValueError("groups must be a 1D array")
 
     if len(groups) != n_features:
-        raise ValueError(f"groups must be the same length as the number of features {n_features}")
+        raise ValueError(
+            f"groups must be the same length as the number of features {n_features}"
+        )
     return groups
 
 

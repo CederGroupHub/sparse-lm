@@ -17,12 +17,11 @@ import warnings
 import cvxpy as cp
 import numpy as np
 from numpy.typing import ArrayLike
-
 from scipy.linalg import sqrtm
 from sklearn.utils.validation import check_scalar
 
+from .._utils.validation import _check_group_weights, _check_groups
 from ._base import CVXEstimator
-from .._utils.validation import _check_groups, _check_group_weights
 
 
 class Lasso(CVXEstimator):
@@ -270,25 +269,10 @@ class OverlapGroupLasso(GroupLasso):
                 See docs in CVXEstimator for more information.
         """
         self.group_list = group_list
-        self.group_ids = np.unique([gid for grp in group_list for gid in grp])
-        self.group_ids.sort()
-        beta_indices = [
-            [i for i, grp in enumerate(group_list) if grp_id in grp]
-            for grp_id in self.group_ids
-        ]
-        extended_groups = np.concatenate(
-            [
-                len(g)
-                * [
-                    i,
-                ]
-                for i, g in enumerate(beta_indices)
-            ]
-        )
-        self.beta_indices = np.concatenate(beta_indices)
+        self.beta_indices = None
 
         super().__init__(
-            extended_groups,
+            None,
             alpha=alpha,
             group_weights=group_weights,
             standardize=standardize,
@@ -299,6 +283,33 @@ class OverlapGroupLasso(GroupLasso):
             solver_options=solver_options,
             **kwargs,
         )
+
+    def _validate_params(self, X, y):
+        """Validate group parameters."""
+        check_scalar(self._alpha.value, "alpha", float, min_val=0.0)
+        if len(self.group_list) != X.shape[1]:
+            raise ValueError(
+                "The length of the group list must be the same as the number of features."
+            )
+
+        group_ids = np.sort(np.unique([gid for grp in self.group_list for gid in grp]))
+        beta_indices = [
+            [i for i, grp in enumerate(self.group_list) if grp_id in grp]
+            for grp_id in group_ids
+        ]
+        extended_groups = np.concatenate(
+            [
+                len(g)
+                * [
+                    i,
+                ]
+                for i, g in enumerate(beta_indices)
+            ]
+        )
+        self.groups = _check_groups(extended_groups, len(extended_groups))
+        self.group_weights = _check_group_weights(self.group_weights, self.groups)
+        self._group_masks = [self.groups == i for i in group_ids]
+        self.beta_indices = np.concatenate(beta_indices)
 
     def _solve(self, X, y, *args, **kwargs):
         """Solve the cvxpy problem."""
@@ -520,7 +531,7 @@ class RidgedGroupLasso(GroupLasso):
             **kwargs,
         )
 
-        self._delta = None
+        self._delta = cp.Parameter(shape=(len(np.unique(groups)),), nonneg=True)
         self.delta = delta
 
     @property
@@ -531,10 +542,8 @@ class RidgedGroupLasso(GroupLasso):
     @delta.setter
     def delta(self, val):
         """Set ridge regularization vector."""
-        if self._delta is None:
-            self._delta = cp.Parameter(shape=(len(self._group_masks),), nonneg=True)
         if isinstance(val, float):
-            self._delta.value = val * np.ones(len(self._group_masks))
+            self._delta.value = val * np.ones(self._delta.shape[0])
         else:
             self._delta.value = val
 
