@@ -20,6 +20,9 @@ or run with n_jobs=1 (but that may take a while to solve)
 
 __author__ = "Luis Barroso-Luque"
 
+from typing import Callable
+from numpy.typing import ArrayLike
+
 import cvxpy as cp
 import numpy as np
 
@@ -103,12 +106,13 @@ class AdaptiveLasso(Lasso):
         self.tol = tol
         self.max_iter = max_iter
         self.eps = eps
+        self.update_function = update_function
         self._weights, self._previous_weights = None, None
 
-        if update_function is None:
+    def _validate_params(self, X: ArrayLike, y: ArrayLike):
+        super()._validate_params(X, y)
+        if self.update_function is None:
             self.update_function = lambda beta, eps: 1.0 / (abs(beta) + eps)
-        else:
-            self.update_function = update_function
 
     def _gen_regularization(self, X):
         self._weights = cp.Parameter(
@@ -348,8 +352,12 @@ class AdaptiveOverlapGroupLasso(OverlapGroupLasso, AdaptiveGroupLasso):
             solver_options=solver_options,
         )
 
-    # def _validate_params(self, X, y):
-    #    OverlapGroupLasso._validate_params(self, X, y)
+    def _validate_params(self, X, y):
+        # call directly since this has a diamond inheritance
+        if self.update_function is None:
+            self.update_function = lambda beta, eps: 1.0 / (abs(beta) + eps)
+
+        OverlapGroupLasso._validate_params(self, X, y)
 
     def _gen_objective(self, X, y):
         return AdaptiveGroupLasso._gen_objective(self, X, y)
@@ -379,7 +387,7 @@ class AdaptiveSparseGroupLasso(AdaptiveLasso, SparseGroupLasso):
 
     def __init__(
         self,
-        groups,
+        groups=None,
         l1_ratio=0.5,
         alpha=1.0,
         group_weights=None,
@@ -521,7 +529,7 @@ class AdaptiveRidgedGroupLasso(AdaptiveGroupLasso, RidgedGroupLasso):
 
     def __init__(
         self,
-        groups,
+        groups=None,
         alpha=1.0,
         delta=1.0,
         group_weights=None,
