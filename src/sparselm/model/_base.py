@@ -68,8 +68,6 @@ class CVXEstimator(RegressorMixin, LinearModel, metaclass=ABCMeta):
         self.solver = solver
         self.solver_options = solver_options
 
-        self._X, self._y = None, None
-
     @cached_property
     def problem(self):
         """Cache the cvxpy Problem or return None if not initialized."""
@@ -83,6 +81,16 @@ class CVXEstimator(RegressorMixin, LinearModel, metaclass=ABCMeta):
     @cached_property
     def constraints(self):
         """Cache the cvxpy Constraints or return None if not initialized."""
+        return None
+
+    @cached_property
+    def cached_X(self):
+        """Cache feature matrix for warm starts."""
+        return None
+
+    @cached_property
+    def cached_y(self):
+        """Cache target vector for warm starts."""
         return None
 
     def fit(
@@ -131,6 +139,21 @@ class CVXEstimator(RegressorMixin, LinearModel, metaclass=ABCMeta):
             X, y, _ = _rescale_data(X, y, sample_weight)
 
         self._validate_params(X, y)
+
+        if self.problem is None or self.warm_start is False:
+            self._initialize_problem(X, y)
+
+        if self.warm_start is True:
+            # cache training data
+            if self.cached_X is None:
+                self.cached_X = X
+            if self.cached_y is None:
+                self.cached_y = y
+
+            # check if input data has changed and force reset accordingly
+            if not np.array_equal(self.cached_X, X) or np.array_equal(self.cached_y, y):
+                self._initialize_problem(X, y)
+
         self.coef_ = self._solve(X, y, *args, **kwargs)
         self._set_intercept(X_offset, y_offset, X_scale)
 
@@ -188,24 +211,13 @@ class CVXEstimator(RegressorMixin, LinearModel, metaclass=ABCMeta):
                 Target vector
         """
         self.beta_ = cp.Variable(X.shape[1])
-        self._X = X
-        self._y = y
         self.objective = self._gen_objective(X, y)
         self.constraints = self._gen_constraints(X, y)
         self.problem = cp.Problem(cp.Minimize(self.objective), self.constraints)
 
-    def _get_problem(self, X: ArrayLike, y: ArrayLike):
-        """Define and create cvxpy optimization problem."""
-        if self.problem is None:
-            self._initialize_problem(X, y)
-        elif not np.array_equal(X, self._X) or not np.array_equal(y, self._y):
-            self._initialize_problem(X, y)
-        return self.problem
-
     def _solve(self, X: ArrayLike, y: ArrayLike, *args, **kwargs):
         """Solve the cvxpy problem."""
-        problem = self._get_problem(X, y)
-        problem.solve(
+        self.problem.solve(
             solver=self.solver, warm_start=self.warm_start, **self.solver_options
         )
         return self.beta_.value

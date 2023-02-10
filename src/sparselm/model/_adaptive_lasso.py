@@ -142,13 +142,12 @@ class AdaptiveLasso(Lasso):
         return np.linalg.norm(self._weights.value - self._previous_weights) <= self.tol
 
     def _solve(self, X, y, *args, **kwargs):
-        problem = self._get_problem(X, y)
-        problem.solve(
+        self.problem.solve(
             solver=self.solver, warm_start=self.warm_start, **self.solver_options
         )
         for _ in range(self.max_iter - 1):
             self._update_weights(self.beta_.value)
-            problem.solve(solver=self.solver, warm_start=True, **self.solver_options)
+            self.problem.solve(solver=self.solver, warm_start=True, **self.solver_options)
             if self._weights_converged():
                 break
         return self.beta_.value

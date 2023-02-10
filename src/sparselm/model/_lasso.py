@@ -273,7 +273,7 @@ class OverlapGroupLasso(GroupLasso):
         self.beta_indices = None
 
         super().__init__(
-            None,
+            groups=None,
             alpha=alpha,
             group_weights=group_weights,
             standardize=standardize,
@@ -313,10 +313,24 @@ class OverlapGroupLasso(GroupLasso):
         self._group_masks = [self.groups == i for i in group_ids]
         self.beta_indices = np.concatenate(beta_indices)
 
+    def _initialize_problem(self, X: ArrayLike, y: ArrayLike):
+        """Initialize cvxpy problem from the generated objective function.
+
+        Args:
+            X (ArrayLike):
+                Covariate/Feature matrix
+            y (ArrayLike):
+                Target vector
+        """
+        X_ext = X[:, self.beta_indices]
+        self.beta_ = cp.Variable(X_ext.shape[1])
+        self.objective = self._gen_objective(X_ext, y)
+        self.constraints = self._gen_constraints(X_ext, y)
+        self.problem = cp.Problem(cp.Minimize(self.objective), self.constraints)
+
     def _solve(self, X, y, *args, **kwargs):
         """Solve the cvxpy problem."""
-        problem = self._get_problem(X[:, self.beta_indices], y)
-        problem.solve(
+        self.problem.solve(
             solver=self.solver, warm_start=self.warm_start, **self.solver_options
         )
         beta = np.array(
