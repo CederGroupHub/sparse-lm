@@ -115,8 +115,8 @@ class MIQP_L0(CVXEstimator, metaclass=ABCMeta):
         # likely be raised since correlation matrices are usually very
         # poorly conditioned
         XTX = psd_wrap(X.T @ X) if self.ignore_psd_check else X.T @ X
-        objective = cp.quad_form(self._beta, XTX) - 2 * y.T @ X @ self._beta
-        # objective = cp.sum_squares(X @ self._beta - y)
+        objective = cp.quad_form(self.beta_, XTX) - 2 * y.T @ X @ self.beta_
+        # objective = cp.sum_squares(X @ self.beta_ - y)
         return objective
 
     def _gen_constraints(self, X, y):
@@ -124,8 +124,8 @@ class MIQP_L0(CVXEstimator, metaclass=ABCMeta):
         constraints = []
         for i, mask in enumerate(self._group_masks):
             constraints += [
-                self._beta[mask] <= self._big_M * self._z0[i],
-                -self._big_M * self._z0[i] <= self._beta[mask],
+                self.beta_[mask] <= self._big_M * self._z0[i],
+                -self._big_M * self._z0[i] <= self.beta_[mask],
             ]
 
         if self.hierarchy is not None:

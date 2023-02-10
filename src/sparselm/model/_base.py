@@ -6,6 +6,7 @@ The classes make use of and follow the scikit-learn API.
 __author__ = "Luis Barroso-Luque, Fengyu Xie"
 
 from abc import ABCMeta, abstractmethod
+from functools import cached_property
 
 import cvxpy as cp
 import numpy as np
@@ -67,7 +68,22 @@ class CVXEstimator(RegressorMixin, LinearModel, metaclass=ABCMeta):
         self.solver = solver
         self.solver_options = solver_options
 
-        self._problem, self._beta, self._X, self._y = None, None, None, None
+        self._X, self._y = None, None
+
+    @cached_property
+    def problem(self):
+        """Cache the cvxpy Problem or return None if not initialized."""
+        return None
+
+    @cached_property
+    def objective(self):
+        """Cache the cvxpy Objective or return None if not initialized."""
+        return None
+
+    @cached_property
+    def constraints(self):
+        """Cache the cvxpy Constraints or return None if not initialized."""
+        return None
 
     def fit(
         self,
@@ -171,20 +187,20 @@ class CVXEstimator(RegressorMixin, LinearModel, metaclass=ABCMeta):
             y (ArrayLike):
                 Target vector
         """
-        self._beta = cp.Variable(X.shape[1])
+        self.beta_ = cp.Variable(X.shape[1])
         self._X = X
         self._y = y
-        objective = self._gen_objective(X, y)
-        constraints = self._gen_constraints(X, y)
-        self._problem = cp.Problem(cp.Minimize(objective), constraints)
+        self.objective = self._gen_objective(X, y)
+        self.constraints = self._gen_constraints(X, y)
+        self.problem = cp.Problem(cp.Minimize(self.objective), self.constraints)
 
     def _get_problem(self, X: ArrayLike, y: ArrayLike):
         """Define and create cvxpy optimization problem."""
-        if self._problem is None:
+        if self.problem is None:
             self._initialize_problem(X, y)
         elif not np.array_equal(X, self._X) or not np.array_equal(y, self._y):
             self._initialize_problem(X, y)
-        return self._problem
+        return self.problem
 
     def _solve(self, X: ArrayLike, y: ArrayLike, *args, **kwargs):
         """Solve the cvxpy problem."""
@@ -192,7 +208,7 @@ class CVXEstimator(RegressorMixin, LinearModel, metaclass=ABCMeta):
         problem.solve(
             solver=self.solver, warm_start=self.warm_start, **self.solver_options
         )
-        return self._beta.value
+        return self.beta_.value
 
 
 class TikhonovMixin:
@@ -213,7 +229,7 @@ class TikhonovMixin:
             tikhonov_w = np.eye(X.shape[1])
 
         objective = super()._gen_objective(X, y) + c0 * self._eta * cp.sum_squares(
-            tikhonov_w @ self._beta
+            tikhonov_w @ self.beta_
         )
 
         return objective

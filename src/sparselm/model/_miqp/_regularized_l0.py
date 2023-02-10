@@ -323,7 +323,7 @@ class L1L0(MixedL0):
         """Generate the constraints used to solve l1l0 regularization."""
         constraints = super()._gen_constraints(X, y)
         # L1 constraints (why not do an l1 norm in the objective instead?)
-        constraints += [self._z1 >= self._beta, self._z1 >= -1.0 * self._beta]
+        constraints += [self._z1 >= self.beta_, self._z1 >= -1.0 * self.beta_]
         return constraints
 
     def _gen_objective(self, X, y):

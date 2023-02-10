@@ -92,12 +92,12 @@ class Lasso(CVXEstimator):
         check_scalar(self._alpha.value, "alpha", float, min_val=0.0)
 
     def _gen_regularization(self, X: ArrayLike):
-        return self._alpha * cp.norm1(self._beta)
+        return self._alpha * cp.norm1(self.beta_)
 
     def _gen_objective(self, X, y):
-        # can also use cp.norm2(X @ self._beta - y)**2 not sure whats better
+        # can also use cp.norm2(X @ self.beta_ - y)**2 not sure whats better
         reg = self._gen_regularization(X)
-        objective = 1 / (2 * X.shape[0]) * cp.sum_squares(X @ self._beta - y) + reg
+        objective = 1 / (2 * X.shape[0]) * cp.sum_squares(X @ self.beta_ - y) + reg
         return objective
 
 
@@ -188,11 +188,11 @@ class GroupLasso(Lasso):
     def _gen_group_norms(self, X):
         if self.standardize:
             grp_norms = cp.hstack(
-                [cp.norm2(X[:, mask] @ self._beta[mask]) for mask in self._group_masks]
+                [cp.norm2(X[:, mask] @ self.beta_[mask]) for mask in self._group_masks]
             )
         else:
             grp_norms = cp.hstack(
-                [cp.norm2(self._beta[mask]) for mask in self._group_masks]
+                [cp.norm2(self.beta_[mask]) for mask in self._group_masks]
             )
         self._group_norms = grp_norms
         return grp_norms
@@ -320,7 +320,7 @@ class OverlapGroupLasso(GroupLasso):
             solver=self.solver, warm_start=self.warm_start, **self.solver_options
         )
         beta = np.array(
-            [sum(self._beta.value[self.beta_indices == i]) for i in range(X.shape[1])]
+            [sum(self.beta_.value[self.beta_indices == i]) for i in range(X.shape[1])]
         )
         return beta
 
@@ -447,7 +447,7 @@ class SparseGroupLasso(GroupLasso):
 
     def _gen_regularization(self, X):
         grp_norms = super()._gen_group_norms(X)
-        l1_reg = cp.norm1(self._beta)
+        l1_reg = cp.norm1(self.beta_)
         reg = self._lambda1 * l1_reg + self._lambda2 * (self.group_weights @ grp_norms)
         return reg
 
@@ -558,14 +558,14 @@ class RidgedGroupLasso(GroupLasso):
                             X[:, mask].T @ X[:, mask]
                             + self._delta.value[i] ** 0.5 * np.eye(sum(mask))
                         )
-                        @ self._beta[mask]
+                        @ self.beta_[mask]
                     )
                     for i, mask in enumerate(self._group_masks)
                 ]
             )
         else:
             grp_norms = cp.hstack(
-                [cp.norm2(self._beta[mask]) for mask in self._group_masks]
+                [cp.norm2(self.beta_[mask]) for mask in self._group_masks]
             )
 
         self._group_norms = grp_norms.T
@@ -574,7 +574,7 @@ class RidgedGroupLasso(GroupLasso):
     def _gen_regularization(self, X):
         grp_norms = self._gen_group_norms(X)
         ridge = cp.hstack(
-            [cp.sum_squares(self._beta[mask]) for mask in self._group_masks]
+            [cp.sum_squares(self.beta_[mask]) for mask in self._group_masks]
         )
         reg = self._alpha * self.group_weights @ grp_norms + 0.5 * self._delta @ ridge
 

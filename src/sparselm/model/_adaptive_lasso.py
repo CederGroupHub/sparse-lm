@@ -130,11 +130,11 @@ class AdaptiveLasso(Lasso):
         self._weights = cp.Parameter(
             shape=X.shape[1], nonneg=True, value=self.alpha * np.ones(X.shape[1])
         )
-        return cp.norm1(cp.multiply(self._weights, self._beta))
+        return cp.norm1(cp.multiply(self._weights, self.beta_))
 
     def _update_weights(self, beta):
-        if beta is None and self._problem.value == -np.inf:
-            raise RuntimeError(f"{self._problem} is infeasible.")
+        if beta is None and self.problem.value == -np.inf:
+            raise RuntimeError(f"{self.problem} is infeasible.")
         self._previous_weights = self._weights.value
         self._weights.value = self.alpha * self.update_function(abs(beta), self.eps)
 
@@ -147,11 +147,11 @@ class AdaptiveLasso(Lasso):
             solver=self.solver, warm_start=self.warm_start, **self.solver_options
         )
         for _ in range(self.max_iter - 1):
-            self._update_weights(self._beta.value)
+            self._update_weights(self.beta_.value)
             problem.solve(solver=self.solver, warm_start=True, **self.solver_options)
             if self._weights_converged():
                 break
-        return self._beta.value
+        return self.beta_.value
 
 
 class AdaptiveGroupLasso(AdaptiveLasso, GroupLasso):
@@ -507,7 +507,7 @@ class AdaptiveSparseGroupLasso(AdaptiveLasso, SparseGroupLasso):
                 value=self._lambda2.value * self.group_weights,
             ),
         )
-        l1_reg = cp.norm1(cp.multiply(self._weights[0], self._beta))
+        l1_reg = cp.norm1(cp.multiply(self._weights[0], self.beta_))
         grp_reg = self._weights[1] @ grp_norms
         return l1_reg + grp_reg
 
@@ -636,6 +636,6 @@ class AdaptiveRidgedGroupLasso(AdaptiveGroupLasso, RidgedGroupLasso):
     def _gen_regularization(self, X):
         reg = AdaptiveGroupLasso._gen_regularization(self, X)
         ridge = cp.hstack(
-            [cp.sum_squares(self._beta[mask]) for mask in self._group_masks]
+            [cp.sum_squares(self.beta_[mask]) for mask in self._group_masks]
         )
         return reg + 0.5 * self._delta @ ridge

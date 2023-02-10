@@ -131,7 +131,7 @@ def test_singleton_hierarchy(estimator_cls, random_model, miqp_solver, rng):
 
     estimator.hierarchy = hierarchy
     # TODO make hierarchy and other non cp.Parameter params reset problem if reset
-    estimator._problem = None
+    estimator.problem = None
     estimator.fit(X, y)
     assert_hierarchy_respected(estimator.coef_, estimator._z0.value, hierarchy)
 
@@ -180,7 +180,7 @@ def test_group_hierarchy(estimator_cls, random_model_with_groups, miqp_solver, r
         if 0 < i < len(group_ids) // 2 and i not in [grp1, grp2]:
             hierarchy[i].append(grp2)
 
-    estimator._problem = None  # TODO also remove this...
+    estimator.problem = None  # TODO also remove this...
     estimator.hierarchy = hierarchy
     estimator.fit(X, y)
 
