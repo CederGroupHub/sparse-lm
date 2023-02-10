@@ -29,17 +29,13 @@ def test_perfect_signal_recovery(sparse_coded_signal):
     X, y, beta = sparse_coded_signal
     (idx,) = beta.nonzero()
 
-    estimator = BestSubsetSelection(
-        groups=np.arange(len(beta)), sparse_bound=np.count_nonzero(beta)
-    )
+    estimator = BestSubsetSelection(sparse_bound=np.count_nonzero(beta))
     estimator.fit(X, y)
 
     npt.assert_array_equal(idx, np.flatnonzero(estimator.coef_))
     npt.assert_array_almost_equal(beta, estimator.coef_)
 
-    r_estimator = RidgedBestSubsetSelection(
-        groups=np.arange(len(beta)), sparse_bound=np.count_nonzero(beta)
-    )
+    r_estimator = RidgedBestSubsetSelection(sparse_bound=np.count_nonzero(beta))
 
     # very low regularization should be the same
     r_estimator.eta = 1e-10
@@ -56,7 +52,7 @@ def test_perfect_signal_recovery(sparse_coded_signal):
     assert np.linalg.norm(coef) > np.linalg.norm(r_estimator.coef_)
 
     # very sensitive to the value of alpha for exact results
-    estimator = RegularizedL0(groups=np.arange(len(beta)), alpha=0.03)
+    estimator = RegularizedL0(alpha=0.03)
     estimator.fit(X, y)
 
     npt.assert_array_equal(idx, np.flatnonzero(estimator.coef_))
@@ -68,13 +64,10 @@ def test_slack_variables(estimator_cls, random_model_with_groups, miqp_solver, r
     X, y, beta, groups = random_model_with_groups
 
     # ignore groups
-    no_groups = np.arange(len(beta))
     if hasattr(estimator_cls, "sparse_bound"):
-        estimator = estimator_cls(
-            no_groups, sparse_bound=len(beta) // 2, solver=miqp_solver
-        )
+        estimator = estimator_cls(sparse_bound=len(beta) // 2, solver=miqp_solver)
     else:
-        estimator = estimator_cls(no_groups, alpha=2.0, solver=miqp_solver)
+        estimator = estimator_cls(alpha=2.0, solver=miqp_solver)
 
     estimator.fit(X, y)
     for coef, active in zip(estimator.coef_, estimator._z0.value):
@@ -106,13 +99,10 @@ def test_singleton_hierarchy(estimator_cls, random_model, miqp_solver, rng):
     (idx,) = beta.nonzero()
 
     # ignore groups, single covariate hierarchy
-    no_groups = np.arange(len(beta))
     if hasattr(estimator_cls, "sparse_bound"):
-        estimator = estimator_cls(
-            no_groups, sparse_bound=len(beta) // 2, solver=miqp_solver
-        )
+        estimator = estimator_cls(sparse_bound=len(beta) // 2, solver=miqp_solver)
     else:
-        estimator = estimator_cls(no_groups, alpha=2.0, solver=miqp_solver)
+        estimator = estimator_cls(alpha=2.0, solver=miqp_solver)
 
     fully_chained = [[len(beta) - 1]] + [[i] for i in range(0, len(beta) - 1)]
     estimator.hierarchy = fully_chained
