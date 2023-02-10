@@ -74,7 +74,7 @@ class BestSubsetSelection(MIQP_L0):
                 cvxpy backend solver to use. Supported solvers are:
                 ECOS, ECOS_BB, CVXOPT, SCS, GUROBI, Elemental.
                 GLPK and GLPK_MI (via CVXOPT GLPK interface)
-            solver_options:
+            solver_options (dict):
                 dictionary of keyword arguments passed to cvxpy solve.
                 See docs in CVXEstimator for more information.
         """
@@ -175,7 +175,7 @@ class RidgedBestSubsetSelection(TikhonovMixin, BestSubsetSelection):
                 cvxpy backend solver to use. Supported solvers are:
                 ECOS, ECOS_BB, CVXOPT, SCS, GUROBI, Elemental.
                 GLPK and GLPK_MI (via CVXOPT GLPK interface)
-            solver_options:
+            solver_options (dict):
                 dictionary of keyword arguments passed to cvxpy solve.
                 See docs in CVXEstimator for more information.
         """

@@ -90,7 +90,7 @@ class AdaptiveLasso(Lasso):
                 cvxpy backend solver to use. Supported solvers are:
                 ECOS, ECOS_BB, CVXOPT, SCS, GUROBI, Elemental.
                 GLPK and GLPK_MI (via CVXOPT GLPK interface)
-            solver_options:
+            solver_options (dict):
                 dictionary of keyword arguments passed to cvxpy solve.
                 See docs in CVXEstimator for more information.
         """
@@ -215,7 +215,7 @@ class AdaptiveGroupLasso(AdaptiveLasso, GroupLasso):
                 cvxpy backend solver to use. Supported solvers are:
                 ECOS, ECOS_BB, CVXOPT, SCS, GUROBI, Elemental.
                 GLPK and GLPK_MI (via CVXOPT GLPK interface)
-            solver_options:
+            solver_options (dict):
                 dictionary of keyword arguments passed to cvxpy solve.
                 See docs in CVXEstimator for more information.
         """
@@ -331,7 +331,7 @@ class AdaptiveOverlapGroupLasso(OverlapGroupLasso, AdaptiveGroupLasso):
                 cvxpy backend solver to use. Supported solvers are:
                 ECOS, ECOS_BB, CVXOPT, SCS, GUROBI, Elemental.
                 GLPK and GLPK_MI (via CVXOPT GLPK interface)
-            solver_options:
+            solver_options (dict):
                 dictionary of keyword arguments passed to cvxpy solve.
                 See docs in CVXEstimator for more information.
         """
@@ -448,7 +448,7 @@ class AdaptiveSparseGroupLasso(AdaptiveLasso, SparseGroupLasso):
                 cvxpy backend solver to use. Supported solvers are:
                 ECOS, ECOS_BB, CVXOPT, SCS, GUROBI, Elemental.
                 GLPK and GLPK_MI (via CVXOPT GLPK interface)
-            solver_options:
+            solver_options (dict):
                 dictionary of keyword arguments passed to cvxpy solve.
                 See docs in CVXEstimator for more information.
         """
@@ -586,7 +586,7 @@ class AdaptiveRidgedGroupLasso(AdaptiveGroupLasso, RidgedGroupLasso):
                 cvxpy backend solver to use. Supported solvers are:
                 ECOS, ECOS_BB, CVXOPT, SCS, GUROBI, Elemental.
                 GLPK and GLPK_MI (via CVXOPT GLPK interface)
-            solver_options:
+            solver_options (dict):
                 dictionary of keyword arguments passed to cvxpy solve.
                 See docs in CVXEstimator for more information.
         """

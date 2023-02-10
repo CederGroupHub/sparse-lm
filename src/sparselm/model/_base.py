@@ -57,7 +57,7 @@ class CVXEstimator(RegressorMixin, LinearModel, metaclass=ABCMeta):
                 cvxpy backend solver to use. Supported solvers are:
                 ECOS, ECOS_BB, CVXOPT, SCS, GUROBI, Elemental.
                 GLPK and GLPK_MI (via CVXOPT GLPK interface)
-            solver_options:
+            solver_options (dict):
                 dictionary of keyword arguments passed to cvxpy solve.
                 See docs linked above for more information.
         """
