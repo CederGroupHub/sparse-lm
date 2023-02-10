@@ -147,7 +147,9 @@ class AdaptiveLasso(Lasso):
         )
         for _ in range(self.max_iter - 1):
             self._update_weights(self.beta_.value)
-            self.problem.solve(solver=self.solver, warm_start=True, **self.solver_options)
+            self.problem.solve(
+                solver=self.solver, warm_start=True, **self.solver_options
+            )
             if self._weights_converged():
                 break
         return self.beta_.value
