@@ -20,11 +20,12 @@ or run with n_jobs=1 (but that may take a while to solve)
 
 __author__ = "Luis Barroso-Luque"
 
-from typing import Callable
-from numpy.typing import ArrayLike
+import warnings
 
 import cvxpy as cp
 import numpy as np
+from numpy.typing import ArrayLike
+from sklearn.utils.validation import check_scalar
 
 from ._lasso import (
     GroupLasso,
@@ -111,6 +112,17 @@ class AdaptiveLasso(Lasso):
 
     def _validate_params(self, X: ArrayLike, y: ArrayLike):
         super()._validate_params(X, y)
+        check_scalar(self.max_iter, "max_iter", int, min_val=1)
+        check_scalar(self.eps, "eps", float)
+        check_scalar(self.tol, "tol", float)
+
+        if self.max_iter == 1:
+            warnings.warn(
+                "max_iter is set to 1. It should ideally be set > 1, otherwise reconsider "
+                "using a non-adaptive estimator",
+                UserWarning,
+            )
+
         if self.update_function is None:
             self.update_function = lambda beta, eps: 1.0 / (abs(beta) + eps)
 
@@ -354,6 +366,17 @@ class AdaptiveOverlapGroupLasso(OverlapGroupLasso, AdaptiveGroupLasso):
 
     def _validate_params(self, X, y):
         # call directly since this has a diamond inheritance
+        check_scalar(self.max_iter, "max_iter", int, min_val=1)
+        check_scalar(self.eps, "eps", float)
+        check_scalar(self.tol, "tol", float)
+
+        if self.max_iter == 1:
+            warnings.warn(
+                "max_iter is set to 1. It should ideally be set > 1, otherwise reconsider "
+                "using a non-adaptive estimator",
+                UserWarning,
+            )
+
         if self.update_function is None:
             self.update_function = lambda beta, eps: 1.0 / (abs(beta) + eps)
 
