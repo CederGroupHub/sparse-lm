@@ -324,14 +324,14 @@ class OverlapGroupLasso(GroupLasso):
         """
         X_ext = X[:, self.beta_indices]
         self.beta_ = cp.Variable(X_ext.shape[1])
-        self.objective = self._gen_objective(X_ext, y)
-        self.constraints = self._gen_constraints(X_ext, y)
-        self.problem = cp.Problem(cp.Minimize(self.objective), self.constraints)
+        self.objective_ = self._gen_objective(X_ext, y)
+        self.constraints_ = self._gen_constraints(X_ext, y)
+        self.problem_ = cp.Problem(cp.Minimize(self.objective_), self.constraints_)
 
-    def _solve(self, X, y, *args, **kwargs):
+    def _solve(self, X, y, solver_options, *args, **kwargs):
         """Solve the cvxpy problem."""
-        self.problem.solve(
-            solver=self.solver, warm_start=self.warm_start, **self.solver_options
+        self.problem_.solve(
+            solver=self.solver, warm_start=self.warm_start, **solver_options
         )
         beta = np.array(
             [sum(self.beta_.value[self.beta_indices == i]) for i in range(X.shape[1])]

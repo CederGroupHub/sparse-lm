@@ -133,7 +133,7 @@ class AdaptiveLasso(Lasso):
         return cp.norm1(cp.multiply(self._weights, self.beta_))
 
     def _update_weights(self, beta):
-        if beta is None and self.problem.value == -np.inf:
+        if beta is None and self.problem_.value == -np.inf:
             raise RuntimeError(f"{self.problem} is infeasible.")
         self._previous_weights = self._weights.value
         self._weights.value = self.alpha * self.update_function(abs(beta), self.eps)
@@ -141,14 +141,14 @@ class AdaptiveLasso(Lasso):
     def _weights_converged(self):
         return np.linalg.norm(self._weights.value - self._previous_weights) <= self.tol
 
-    def _solve(self, X, y, *args, **kwargs):
-        self.problem.solve(
-            solver=self.solver, warm_start=self.warm_start, **self.solver_options
+    def _solve(self, X, y, solver_options, *args, **kwargs):
+        self.problem_.solve(
+            solver=self.solver, warm_start=self.warm_start, **solver_options
         )
         for _ in range(self.max_iter - 1):
             self._update_weights(self.beta_.value)
-            self.problem.solve(
-                solver=self.solver, warm_start=True, **self.solver_options
+            self.problem_.solve(
+                solver=self.solver, warm_start=True, **solver_options
             )
             if self._weights_converged():
                 break
@@ -386,9 +386,9 @@ class AdaptiveOverlapGroupLasso(OverlapGroupLasso, AdaptiveGroupLasso):
     def _gen_objective(self, X, y):
         return AdaptiveGroupLasso._gen_objective(self, X, y)
 
-    def _solve(self, X, y, *args, **kwargs):
+    def _solve(self, X, y, solver_options, *args, **kwargs):
         beta = AdaptiveGroupLasso._solve(
-            self, X[:, self.beta_indices], y, *args, **kwargs
+            self, X[:, self.beta_indices], y, solver_options, *args, **kwargs
         )
         beta = np.array([sum(beta[self.beta_indices == i]) for i in range(X.shape[1])])
         return beta

@@ -12,6 +12,7 @@ import cvxpy as cp
 import numpy as np
 from numpy.typing import ArrayLike
 from sklearn.base import RegressorMixin
+
 from sklearn.linear_model._base import (
     LinearModel,
     _check_sample_weight,
@@ -68,28 +69,28 @@ class CVXEstimator(RegressorMixin, LinearModel, metaclass=ABCMeta):
         self.solver = solver
         self.solver_options = solver_options
 
-    @cached_property
-    def problem(self):
+    @cached_property  # TODO remove these and simple use hasattr and set them as attrs
+    def problem_(self):
         """Cache the cvxpy Problem or return None if not initialized."""
         return None
 
     @cached_property
-    def objective(self):
+    def objective_(self):
         """Cache the cvxpy Objective or return None if not initialized."""
         return None
 
     @cached_property
-    def constraints(self):
+    def constraints_(self):
         """Cache the cvxpy Constraints or return None if not initialized."""
         return None
 
     @cached_property
-    def cached_X(self):
+    def cached_X_(self):
         """Cache feature matrix for warm starts."""
         return None
 
     @cached_property
-    def cached_y(self):
+    def cached_y_(self):
         """Cache target vector for warm starts."""
         return None
 
@@ -121,7 +122,7 @@ class CVXEstimator(RegressorMixin, LinearModel, metaclass=ABCMeta):
             instance of self
         """
         X, y = self._validate_data(
-            X, y, accept_sparse=False, y_numeric=True, multi_output=True
+            X, y, accept_sparse=False, y_numeric=True, multi_output=False
         )
 
         if sample_weight is not None:
@@ -140,21 +141,25 @@ class CVXEstimator(RegressorMixin, LinearModel, metaclass=ABCMeta):
 
         self._validate_params(X, y)
 
-        if self.problem is None or self.warm_start is False:
+        if self.problem_ is None or self.warm_start is False:
             self._initialize_problem(X, y)
 
         if self.warm_start is True:
             # cache training data
-            if self.cached_X is None:
+            if self.cached_X_ is None:
                 self.cached_X = X
-            if self.cached_y is None:
+            if self.cached_y_ is None:
                 self.cached_y = y
 
             # check if input data has changed and force reset accordingly
-            if not np.array_equal(self.cached_X, X) or np.array_equal(self.cached_y, y):
+            if not np.array_equal(self.cached_X_, X) or np.array_equal(self.cached_y_, y):
                 self._initialize_problem(X, y)
 
-        self.coef_ = self._solve(X, y, *args, **kwargs)
+        solver_options = self.solver_options if self.solver_options is not None else {}
+        if not isinstance(solver_options, dict):
+            raise TypeError("solver_options must be a dictionary")
+
+        self.coef_ = self._solve(X, y, solver_options, *args, **kwargs)
         self._set_intercept(X_offset, y_offset, X_scale)
 
         # return self for chaining fit and predict calls
@@ -165,10 +170,7 @@ class CVXEstimator(RegressorMixin, LinearModel, metaclass=ABCMeta):
 
         Implement this in an estimator to check for valid hyper parameters.
         """
-        if self.solver_options is None:
-            self.solver_options = {}
-        elif not isinstance(self.solver_options, dict):
-            raise TypeError("solver_options must be a dictionary")
+
 
     @abstractmethod
     def _gen_objective(self, X: ArrayLike, y: ArrayLike):
@@ -211,14 +213,14 @@ class CVXEstimator(RegressorMixin, LinearModel, metaclass=ABCMeta):
                 Target vector
         """
         self.beta_ = cp.Variable(X.shape[1])
-        self.objective = self._gen_objective(X, y)
-        self.constraints = self._gen_constraints(X, y)
-        self.problem = cp.Problem(cp.Minimize(self.objective), self.constraints)
+        self.objective_ = self._gen_objective(X, y)
+        self.constraints_ = self._gen_constraints(X, y)
+        self.problem_ = cp.Problem(cp.Minimize(self.objective_), self.constraints_)
 
-    def _solve(self, X: ArrayLike, y: ArrayLike, *args, **kwargs):
+    def _solve(self, X: ArrayLike, y: ArrayLike, solver_options: dict, *args, **kwargs):
         """Solve the cvxpy problem."""
-        self.problem.solve(
-            solver=self.solver, warm_start=self.warm_start, **self.solver_options
+        self.problem_.solve(
+            solver=self.solver, warm_start=self.warm_start, **solver_options
         )
         return self.beta_.value
 
