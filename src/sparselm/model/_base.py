@@ -191,6 +191,7 @@ class CVXEstimator(RegressorMixin, LinearModel, metaclass=ABCMeta):
                 Target vector
         """
         self.beta_ = cp.Variable(X.shape[1])
+        # tODO add _gen_parameters here and maybe save all cvxpy objects in a dict/named tuple
         self.objective_ = self._gen_objective(X, y)
         self.constraints_ = self._gen_constraints(X, y)
         self.problem_ = cp.Problem(cp.Minimize(self.objective_), self.constraints_)

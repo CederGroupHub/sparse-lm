@@ -195,20 +195,20 @@ def test_adaptive_weights(estimator_cls, random_model_with_groups, solver, rng):
     else:
         _ = estimator._initialize_problem(X, y)
 
-    if isinstance(estimator._weights, tuple):
+    if isinstance(estimator.weights_, tuple):
         weights = [
-            estimator._weights[0].value.copy(),
-            estimator._weights[1].value.copy(),
+            estimator.weights_[0].value.copy(),
+            estimator.weights_[1].value.copy(),
         ]
     else:
-        weights = [estimator._weights.value.copy()]
+        weights = [estimator.weights_.value.copy()]
 
     estimator.fit(X, y)
 
-    if isinstance(estimator._weights, tuple):
-        new_weights = [estimator._weights[0].value, estimator._weights[1].value]
+    if isinstance(estimator.weights_, tuple):
+        new_weights = [estimator.weights_[0].value, estimator.weights_[1].value]
     else:
-        new_weights = [estimator._weights.value]
+        new_weights = [estimator.weights_.value]
 
     # simply check that the weights are updated.
     # TODO a better check would be to check that weights for active groups/coefs
@@ -267,23 +267,23 @@ def test_set_parameters(estimator_cls, random_model_with_groups, rng):
 
     if hasattr(estimator, "l1_ratio"):
         # default l1_ratio is 0.5
-        assert estimator._lambda1.value == 0.5 * 0.5
-        assert estimator._lambda2.value == 0.5 * 0.5
+        assert estimator.lambda1_.value == 0.5 * 0.5
+        assert estimator.lambda2_.value == 0.5 * 0.5
 
         estimator.l1_ratio = 0.25
         assert estimator.l1_ratio == 0.25
-        assert estimator._lambda1.value == 0.25 * 0.5
-        assert estimator._lambda2.value == 0.75 * 0.5
+        assert estimator.lambda1_.value == 0.25 * 0.5
+        assert estimator.lambda2_.value == 0.75 * 0.5
 
     if hasattr(estimator, "delta"):
         estimator.delta = 4.0
         npt.assert_array_equal(estimator.delta, 4.0 * np.ones(len(np.unique(groups))))
         npt.assert_array_equal(
-            estimator._delta.value, 4.0 * np.ones(len(np.unique(groups)))
+            estimator.delta_.value, 4.0 * np.ones(len(np.unique(groups)))
         )
 
         estimator.delta = 3.0 * np.ones(len(np.unique(groups)))
         npt.assert_array_equal(estimator.delta, 3.0 * np.ones(len(np.unique(groups))))
         npt.assert_array_equal(
-            estimator._delta.value, 3.0 * np.ones(len(np.unique(groups)))
+            estimator.delta_.value, 3.0 * np.ones(len(np.unique(groups)))
         )

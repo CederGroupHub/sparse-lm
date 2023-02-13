@@ -81,12 +81,16 @@ class Lasso(CVXEstimator):
         super()._validate_params(X, y)
         check_scalar(self.alpha, "alpha", float, min_val=0.0)
 
-    def _gen_regularization(self, X: ArrayLike):
+    def _gen_parameters(self):
+        """Generate cvxpy parameters."""
         if not hasattr(self, "alpha_"):
             self.alpha_ = cp.Parameter(nonneg=True, value=self.alpha)
         else:
             self.alpha_.value = self.alpha
 
+    def _gen_regularization(self, X: ArrayLike):
+        """Generate regularization term."""
+        self._gen_parameters()
         return self.alpha_ * cp.norm1(self.beta_)
 
     def _gen_objective(self, X, y):
@@ -160,8 +164,6 @@ class GroupLasso(Lasso):
         self.groups = groups
         self.standardize = standardize
         self.group_weights = group_weights
-        self._group_masks = None  # set this in validate params
-        self._group_norms = None  # save this for adaptive estimators
 
         super().__init__(
             alpha=alpha,
@@ -178,21 +180,23 @@ class GroupLasso(Lasso):
         super()._validate_params(X, y)
         self.groups = _check_groups(self.groups, X.shape[1])
         self.group_weights = _check_group_weights(self.group_weights, self.groups)
-        self._group_masks = [self.groups == i for i in np.sort(np.unique(self.groups))]
 
     def _gen_group_norms(self, X):
+        # TODO remove keeping this as an attribute and simply pass/create it if necessary
+        self.group_masks_ = [self.groups == i for i in np.sort(np.unique(self.groups))]
         if self.standardize:
             grp_norms = cp.hstack(
-                [cp.norm2(X[:, mask] @ self.beta_[mask]) for mask in self._group_masks]
+                [cp.norm2(X[:, mask] @ self.beta_[mask]) for mask in self.group_masks_]
             )
         else:
             grp_norms = cp.hstack(
-                [cp.norm2(self.beta_[mask]) for mask in self._group_masks]
+                [cp.norm2(self.beta_[mask]) for mask in self.group_masks_]
             )
-        self._group_norms = grp_norms
+        self.group_norms_ = grp_norms
         return grp_norms
 
     def _gen_regularization(self, X):
+        self._gen_parameters()
         return self.alpha_ * (self.group_weights @ self._gen_group_norms(X))
 
 
@@ -265,7 +269,6 @@ class OverlapGroupLasso(GroupLasso):
                 See docs in CVXEstimator for more information.
         """
         self.group_list = group_list
-        self.beta_indices = None
 
         super().__init__(
             groups=None,
@@ -283,7 +286,7 @@ class OverlapGroupLasso(GroupLasso):
     def _validate_params(self, X, y):
         """Validate group parameters."""
         Lasso._validate_params(self, X, y)
-        check_scalar(self.alpha_.value, "alpha", float, min_val=0.0)
+        check_scalar(self.alpha, "alpha", float, min_val=0.0)
         if len(self.group_list) != X.shape[1]:
             raise ValueError(
                 "The length of the group list must be the same as the number of features."
@@ -305,8 +308,7 @@ class OverlapGroupLasso(GroupLasso):
         )
         self.groups = _check_groups(extended_groups, len(extended_groups))
         self.group_weights = _check_group_weights(self.group_weights, self.groups)
-        self._group_masks = [self.groups == i for i in group_ids]
-        self.beta_indices = np.concatenate(beta_indices)
+        self.ext_coef_indices_ = np.concatenate(beta_indices)
 
     def _initialize_problem(self, X: ArrayLike, y: ArrayLike):
         """Initialize cvxpy problem from the generated objective function.
@@ -317,7 +319,7 @@ class OverlapGroupLasso(GroupLasso):
             y (ArrayLike):
                 Target vector
         """
-        X_ext = X[:, self.beta_indices]
+        X_ext = X[:, self.ext_coef_indices_]
         self.beta_ = cp.Variable(X_ext.shape[1])
         self.objective_ = self._gen_objective(X_ext, y)
         self.constraints_ = self._gen_constraints(X_ext, y)
@@ -329,7 +331,7 @@ class OverlapGroupLasso(GroupLasso):
             solver=self.solver, warm_start=self.warm_start, **solver_options
         )
         beta = np.array(
-            [sum(self.beta_.value[self.beta_indices == i]) for i in range(X.shape[1])]
+            [sum(self.beta_.value[self.ext_coef_indices_ == i]) for i in range(X.shape[1])]
         )
         return beta
 
@@ -412,37 +414,15 @@ class SparseGroupLasso(GroupLasso):
             solver_options=solver_options,
             **kwargs,
         )
-
-        self._lambda1 = cp.Parameter(nonneg=True, value=l1_ratio * alpha)
-        self._lambda2 = cp.Parameter(nonneg=True, value=(1 - l1_ratio) * alpha)
-        # save exact value so sklearn clone is happy dappy
-        self._l1_ratio = l1_ratio
-
-    #@alpha.setter
-    #def alpha(self, val):
-    #    """Set hyperparameter values."""
-    #    self.alpha_.value = val
-    #    self._lambda1.value = self.l1_ratio * val
-    #    self._lambda2.value = (1 - self.l1_ratio) * val
-
-    @property
-    def l1_ratio(self):
-        """Get l1 ratio."""
-        return self._l1_ratio
-
-    @l1_ratio.setter
-    def l1_ratio(self, val):
-        """Set hyper-parameter values."""
-        if not 0 <= val <= 1:
-            raise ValueError("l1_ratio must be between 0 and 1.")
-        self._l1_ratio = val
-        self._lambda1.value = val * self.alpha
-        self._lambda2.value = (1 - val) * self.alpha
+        self.l1_ratio = l1_ratio
+        self.lambda1_ = cp.Parameter(nonneg=True, value=l1_ratio * alpha)
+        self.lambda2_ = cp.Parameter(nonneg=True, value=(1 - l1_ratio) * alpha)
 
     def _validate_params(self, X, y):
         """Validate parameters."""
         super()._validate_params(X, y)
         check_scalar(self.l1_ratio, "l1_ratio", float, min_val=0, max_val=1)
+
         if self.l1_ratio == 0.0:
             warnings.warn(
                 "It is more efficient to use GroupLasso directly than SparseGroupLasso with l1_ratio=0",
@@ -454,10 +434,22 @@ class SparseGroupLasso(GroupLasso):
                 UserWarning,
             )
 
+    def _gen_parameters(self):
+        """Generate parameters."""
+        if not hasattr(self, "lambda1_"):
+            self.lambda1_ = cp.Parameter(nonneg=True, value=self.l1_ratio * self.alpha)
+        else:
+            self.lambda1_.value = self.l1_ratio * self.alpha
+
+        if not hasattr(self, "lambda2_"):
+            self.lambda2_ = cp.Parameter(nonneg=True, value=(1 - self.l1_ratio) * self.alpha)
+        else:
+            self.lambda2_.value = (1 - self.l1_ratio) * self.alpha
+
     def _gen_regularization(self, X):
         grp_norms = super()._gen_group_norms(X)
         l1_reg = cp.norm1(self.beta_)
-        reg = self._lambda1 * l1_reg + self._lambda2 * (self.group_weights @ grp_norms)
+        reg = self.lambda1_ * l1_reg + self.lambda2_ * (self.group_weights @ grp_norms)
         return reg
 
 
@@ -542,49 +534,54 @@ class RidgedGroupLasso(GroupLasso):
             **kwargs,
         )
 
-        self._delta = cp.Parameter(shape=(len(np.unique(groups)),), nonneg=True)
         self.delta = delta
 
-    @property
-    def delta(self):
-        """Get ridge regularization vector."""
-        return self._delta.value
+    def _gen_parameters(self):
+        """Generate parameters."""
+        super()._gen_parameters()
 
-    @delta.setter
-    def delta(self, val):
-        """Set ridge regularization vector."""
-        if isinstance(val, float):
-            self._delta.value = val * np.ones(self._delta.shape[0])
+        n_groups = len(np.unique(self.groups))
+        if isinstance(self.delta, float):
+            delta = self.delta * np.ones(n_groups)
         else:
-            self._delta.value = val
+            delta = self.delta
+
+        if not hasattr(self, "delta_"):
+            self.delta_ = cp.Parameter(shape=(n_groups,), nonneg=True, value=delta)
+        else:
+            self.delta_.value = delta
 
     def _gen_group_norms(self, X):
+        # TODO remove this, see above TODO
+        self.group_masks_ = [self.groups == i for i in np.sort(np.unique(self.groups))]
+
         if self.standardize:
             grp_norms = cp.hstack(
                 [
                     cp.norm2(
                         sqrtm(
                             X[:, mask].T @ X[:, mask]
-                            + self._delta.value[i] ** 0.5 * np.eye(sum(mask))
+                            + self.delta_.value[i] ** 0.5 * np.eye(sum(mask))
                         )
                         @ self.beta_[mask]
                     )
-                    for i, mask in enumerate(self._group_masks)
+                    for i, mask in enumerate(self.group_masks_)
                 ]
             )
         else:
             grp_norms = cp.hstack(
-                [cp.norm2(self.beta_[mask]) for mask in self._group_masks]
+                [cp.norm2(self.beta_[mask]) for mask in self.group_masks_]
             )
 
         self._group_norms = grp_norms.T
         return grp_norms
 
     def _gen_regularization(self, X):
+        self._gen_parameters()
         grp_norms = self._gen_group_norms(X)
         ridge = cp.hstack(
-            [cp.sum_squares(self.beta_[mask]) for mask in self._group_masks]
+            [cp.sum_squares(self.beta_[mask]) for mask in self.group_masks_]
         )
-        reg = self.alpha_ * self.group_weights @ grp_norms + 0.5 * self._delta @ ridge
+        reg = self.alpha_ * self.group_weights @ grp_norms + 0.5 * self.delta_ @ ridge
 
         return reg
