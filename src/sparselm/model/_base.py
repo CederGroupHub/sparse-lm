@@ -12,7 +12,6 @@ import cvxpy as cp
 import numpy as np
 from numpy.typing import ArrayLike
 from sklearn.base import RegressorMixin
-
 from sklearn.linear_model._base import (
     LinearModel,
     _check_sample_weight,
@@ -69,31 +68,6 @@ class CVXEstimator(RegressorMixin, LinearModel, metaclass=ABCMeta):
         self.solver = solver
         self.solver_options = solver_options
 
-    @cached_property  # TODO remove these and simple use hasattr and set them as attrs
-    def problem_(self):
-        """Cache the cvxpy Problem or return None if not initialized."""
-        return None
-
-    @cached_property
-    def objective_(self):
-        """Cache the cvxpy Objective or return None if not initialized."""
-        return None
-
-    @cached_property
-    def constraints_(self):
-        """Cache the cvxpy Constraints or return None if not initialized."""
-        return None
-
-    @cached_property
-    def cached_X_(self):
-        """Cache feature matrix for warm starts."""
-        return None
-
-    @cached_property
-    def cached_y_(self):
-        """Cache target vector for warm starts."""
-        return None
-
     def fit(
         self,
         X: ArrayLike,
@@ -141,18 +115,20 @@ class CVXEstimator(RegressorMixin, LinearModel, metaclass=ABCMeta):
 
         self._validate_params(X, y)
 
-        if self.problem_ is None or self.warm_start is False:
+        if not hasattr(self, "problem_") or self.warm_start is False:
             self._initialize_problem(X, y)
 
         if self.warm_start is True:
             # cache training data
-            if self.cached_X_ is None:
+            if not hasattr(self, "cached_X_"):
                 self.cached_X = X
-            if self.cached_y_ is None:
+            if not hasattr(self, "cached_y_"):
                 self.cached_y = y
 
             # check if input data has changed and force reset accordingly
-            if not np.array_equal(self.cached_X_, X) or np.array_equal(self.cached_y_, y):
+            if not np.array_equal(self.cached_X_, X) or not np.array_equal(
+                self.cached_y_, y
+            ):
                 self._initialize_problem(X, y)
 
         solver_options = self.solver_options if self.solver_options is not None else {}
@@ -170,7 +146,6 @@ class CVXEstimator(RegressorMixin, LinearModel, metaclass=ABCMeta):
 
         Implement this in an estimator to check for valid hyper parameters.
         """
-
 
     @abstractmethod
     def _gen_objective(self, X: ArrayLike, y: ArrayLike):
