@@ -263,7 +263,7 @@ def test_set_parameters(estimator_cls, random_model_with_groups, rng):
 
     estimator.alpha = 0.5
     assert estimator.alpha == 0.5
-    assert estimator._alpha.value == 0.5
+    assert estimator.alpha_.value == 0.5
 
     if hasattr(estimator, "l1_ratio"):
         # default l1_ratio is 0.5

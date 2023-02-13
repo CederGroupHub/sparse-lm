@@ -67,7 +67,7 @@ class Lasso(CVXEstimator):
                 dictionary of keyword arguments passed to cvxpy solve.
                 See docs in CVXEstimator for more information.
         """
-        self._alpha = cp.Parameter(value=alpha, nonneg=True)
+        self.alpha = alpha
         super().__init__(
             fit_intercept=fit_intercept,
             copy_X=copy_X,
@@ -76,23 +76,18 @@ class Lasso(CVXEstimator):
             solver_options=solver_options,
         )
 
-    @property
-    def alpha(self):
-        """Get alpha hyperparameter value."""
-        return self._alpha.value
-
-    @alpha.setter
-    def alpha(self, val):
-        """Set alpha hyperparameter value."""
-        self._alpha.value = val
-
     def _validate_params(self, X: ArrayLike, y: ArrayLike):
         """Validate parameters."""
         super()._validate_params(X, y)
-        check_scalar(self._alpha.value, "alpha", float, min_val=0.0)
+        check_scalar(self.alpha, "alpha", float, min_val=0.0)
 
     def _gen_regularization(self, X: ArrayLike):
-        return self._alpha * cp.norm1(self.beta_)
+        if not hasattr(self, "alpha_"):
+            self.alpha_ = cp.Parameter(nonneg=True, value=self.alpha)
+        else:
+            self.alpha_.value = self.alpha
+
+        return self.alpha_ * cp.norm1(self.beta_)
 
     def _gen_objective(self, X, y):
         # can also use cp.norm2(X @ self.beta_ - y)**2 not sure whats better
@@ -198,7 +193,7 @@ class GroupLasso(Lasso):
         return grp_norms
 
     def _gen_regularization(self, X):
-        return self._alpha * (self.group_weights @ self._gen_group_norms(X))
+        return self.alpha_ * (self.group_weights @ self._gen_group_norms(X))
 
 
 # TODO this implementation is not efficient, reimplement.
@@ -288,7 +283,7 @@ class OverlapGroupLasso(GroupLasso):
     def _validate_params(self, X, y):
         """Validate group parameters."""
         Lasso._validate_params(self, X, y)
-        check_scalar(self._alpha.value, "alpha", float, min_val=0.0)
+        check_scalar(self.alpha_.value, "alpha", float, min_val=0.0)
         if len(self.group_list) != X.shape[1]:
             raise ValueError(
                 "The length of the group list must be the same as the number of features."
@@ -423,12 +418,12 @@ class SparseGroupLasso(GroupLasso):
         # save exact value so sklearn clone is happy dappy
         self._l1_ratio = l1_ratio
 
-    @Lasso.alpha.setter
-    def alpha(self, val):
-        """Set hyperparameter values."""
-        self._alpha.value = val
-        self._lambda1.value = self.l1_ratio * val
-        self._lambda2.value = (1 - self.l1_ratio) * val
+    #@alpha.setter
+    #def alpha(self, val):
+    #    """Set hyperparameter values."""
+    #    self.alpha_.value = val
+    #    self._lambda1.value = self.l1_ratio * val
+    #    self._lambda2.value = (1 - self.l1_ratio) * val
 
     @property
     def l1_ratio(self):
@@ -590,6 +585,6 @@ class RidgedGroupLasso(GroupLasso):
         ridge = cp.hstack(
             [cp.sum_squares(self.beta_[mask]) for mask in self._group_masks]
         )
-        reg = self._alpha * self.group_weights @ grp_norms + 0.5 * self._delta @ ridge
+        reg = self.alpha_ * self.group_weights @ grp_norms + 0.5 * self._delta @ ridge
 
         return reg

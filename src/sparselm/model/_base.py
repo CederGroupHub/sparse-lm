@@ -101,6 +101,8 @@ class CVXEstimator(RegressorMixin, LinearModel, metaclass=ABCMeta):
 
         if sample_weight is not None:
             sample_weight = _check_sample_weight(sample_weight, X, dtype=X.dtype)
+            # rescale sample_weight to sum to number of samples
+            sample_weight = sample_weight * (X.shape[0] / np.sum(sample_weight))
 
         X, y, X_offset, y_offset, X_scale = _preprocess_data(
             X,
@@ -146,6 +148,7 @@ class CVXEstimator(RegressorMixin, LinearModel, metaclass=ABCMeta):
 
         Implement this in an estimator to check for valid hyper parameters.
         """
+        return
 
     @abstractmethod
     def _gen_objective(self, X: ArrayLike, y: ArrayLike):
