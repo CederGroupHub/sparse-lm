@@ -124,10 +124,12 @@ class RegularizedL0(MIQP_L0):
         """Set alpha hyperparameter value."""
         self._alpha.value = val
 
-    def _gen_objective(self, X, y):
+    def _generate_objective(self, X, y):
         """Generate the quadratic form and l0 regularization portion of objective."""
         c0 = 2 * X.shape[0]  # keeps hyperparameter scale independent
-        objective = super()._gen_objective(X, y) + c0 * self._alpha * cp.sum(self._z0)
+        objective = super()._generate_objective(X, y) + c0 * self._alpha * cp.sum(
+            self._z0
+        )
         return objective
 
 
@@ -218,9 +220,9 @@ class MixedL0(RegularizedL0, metaclass=ABCMeta):
         self._eta.val = val
 
     @abstractmethod
-    def _gen_objective(self, X, y):
+    def _generate_objective(self, X, y):
         """Generate optimization objective."""
-        return super()._gen_objective(X, y)
+        return super()._generate_objective(X, y)
 
 
 class L1L0(MixedL0):
@@ -319,18 +321,20 @@ class L1L0(MixedL0):
         )
         self._z1 = None
 
-    def _gen_constraints(self, X, y):
+    def _generate_constraints(self, X, y):
         """Generate the constraints used to solve l1l0 regularization."""
-        constraints = super()._gen_constraints(X, y)
+        constraints = super()._generate_constraints(X, y)
         # L1 constraints (why not do an l1 norm in the objective instead?)
         constraints += [self._z1 >= self.beta_, self._z1 >= -1.0 * self.beta_]
         return constraints
 
-    def _gen_objective(self, X, y):
+    def _generate_objective(self, X, y):
         """Generate the objective function used in l1l0 regression model."""
         self._z1 = cp.Variable(X.shape[1])
         c0 = 2 * X.shape[0]  # keeps hyperparameter scale independent
-        objective = super()._gen_objective(X, y) + c0 * self._eta * cp.sum(self._z1)
+        objective = super()._generate_objective(X, y) + c0 * self._eta * cp.sum(
+            self._z1
+        )
         return objective
 
 

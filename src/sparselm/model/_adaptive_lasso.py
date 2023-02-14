@@ -126,8 +126,8 @@ class AdaptiveLasso(Lasso):
         if self.update_function is None:
             self.update_function = lambda beta, eps: 1.0 / (abs(beta) + eps)
 
-    def _gen_parameters(self):
-        super()._gen_parameters()
+    def _generate_params(self):
+        super()._generate_params()
         if not hasattr(self, "weights_"):
             self.weights_ = cp.Parameter(
                 shape=self.beta_.shape, nonneg=True, value=np.ones(self.beta_.shape)
@@ -253,8 +253,8 @@ class AdaptiveGroupLasso(AdaptiveLasso, GroupLasso):
             **kwargs,
         )
 
-    def _gen_parameters(self):
-        super()._gen_parameters()
+    def _generate_params(self):
+        super()._generate_params()
         self.weights_ = cp.Parameter(
             shape=len(self.group_masks_),
             nonneg=True,
@@ -394,8 +394,8 @@ class AdaptiveOverlapGroupLasso(OverlapGroupLasso, AdaptiveGroupLasso):
 
         OverlapGroupLasso._validate_params(self, X, y)
 
-    def _gen_objective(self, X, y):
-        return AdaptiveGroupLasso._gen_objective(self, X, y)
+    def _generate_objective(self, X, y):
+        return AdaptiveGroupLasso._generate_objective(self, X, y)
 
     def _solve(self, X, y, solver_options, *args, **kwargs):
         beta = AdaptiveGroupLasso._solve(
@@ -648,7 +648,7 @@ class AdaptiveRidgedGroupLasso(AdaptiveGroupLasso, RidgedGroupLasso):
         return RidgedGroupLasso._gen_group_norms(self, X)
 
     def _gen_regularization(self, X):
-        self._gen_parameters()
+        self._generate_params()
         reg = AdaptiveGroupLasso._gen_regularization(self, X)
         ridge = cp.hstack(
             [cp.sum_squares(self.beta_[mask]) for mask in self.group_masks_]

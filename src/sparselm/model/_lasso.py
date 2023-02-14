@@ -13,6 +13,7 @@ optimization problem.
 __author__ = "Luis Barroso-Luque, Fengyu Xie"
 
 import warnings
+from typing import NamedTuple, Optional
 
 import cvxpy as cp
 import numpy as np
@@ -81,19 +82,19 @@ class Lasso(CVXEstimator):
         super()._validate_params(X, y)
         check_scalar(self.alpha, "alpha", float, min_val=0.0)
 
-    def _gen_parameters(self):
+    def _generate_params(self, X: ArrayLike, y: ArrayLike) -> Optional[NamedTuple]:
         """Generate cvxpy parameters."""
-        if not hasattr(self, "alpha_"):
+        if hasattr(self, "alpha_"):
             self.alpha_ = cp.Parameter(nonneg=True, value=self.alpha)
         else:
             self.alpha_.value = self.alpha
 
     def _gen_regularization(self, X: ArrayLike):
         """Generate regularization term."""
-        self._gen_parameters()
+        self._generate_params()
         return self.alpha_ * cp.norm1(self.beta_)
 
-    def _gen_objective(self, X, y):
+    def _generate_objective(self, X, y):
         # can also use cp.norm2(X @ self.beta_ - y)**2 not sure whats better
         reg = self._gen_regularization(X)
         objective = 1 / (2 * X.shape[0]) * cp.sum_squares(X @ self.beta_ - y) + reg
@@ -196,7 +197,7 @@ class GroupLasso(Lasso):
         return grp_norms
 
     def _gen_regularization(self, X):
-        self._gen_parameters()
+        self._generate_params()
         return self.alpha_ * (self.group_weights @ self._gen_group_norms(X))
 
 
@@ -321,8 +322,8 @@ class OverlapGroupLasso(GroupLasso):
         """
         X_ext = X[:, self.ext_coef_indices_]
         self.beta_ = cp.Variable(X_ext.shape[1])
-        self.objective_ = self._gen_objective(X_ext, y)
-        self.constraints_ = self._gen_constraints(X_ext, y)
+        self.objective_ = self._generate_objective(X_ext, y)
+        self.constraints_ = self._generate_constraints(X_ext, y)
         self.problem_ = cp.Problem(cp.Minimize(self.objective_), self.constraints_)
 
     def _solve(self, X, y, solver_options, *args, **kwargs):
@@ -437,7 +438,7 @@ class SparseGroupLasso(GroupLasso):
                 UserWarning,
             )
 
-    def _gen_parameters(self):
+    def _generate_params(self):
         """Generate parameters."""
         if not hasattr(self, "lambda1_"):
             self.lambda1_ = cp.Parameter(nonneg=True, value=self.l1_ratio * self.alpha)
@@ -541,9 +542,9 @@ class RidgedGroupLasso(GroupLasso):
 
         self.delta = delta
 
-    def _gen_parameters(self):
+    def _generate_params(self):
         """Generate parameters."""
-        super()._gen_parameters()
+        super()._generate_params()
 
         n_groups = len(np.unique(self.groups))
         if isinstance(self.delta, float):
@@ -582,7 +583,7 @@ class RidgedGroupLasso(GroupLasso):
         return grp_norms
 
     def _gen_regularization(self, X):
-        self._gen_parameters()
+        self._generate_params()
         grp_norms = self._gen_group_norms(X)
         ridge = cp.hstack(
             [cp.sum_squares(self.beta_[mask]) for mask in self.group_masks_]

@@ -106,10 +106,10 @@ class BestSubsetSelection(MIQP_L0):
             raise ValueError("sparse_bound must be > 0")
         self._bound.value = val
 
-    def _gen_constraints(self, X, y):
+    def _generate_constraints(self, X, y):
         """Generate the constraints used to solve l0 regularization."""
         constraints = [cp.sum(self._z0) <= self._bound]
-        constraints += super()._gen_constraints(X, y)
+        constraints += super()._generate_constraints(X, y)
         return constraints
 
 

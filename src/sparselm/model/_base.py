@@ -141,7 +141,7 @@ class CVXEstimator(RegressorMixin, LinearModel, metaclass=ABCMeta):
 
         self._validate_params(X, y)
 
-        if not hasattr(self, "problem_") or self.warm_start is False:
+        if not hasattr(self, "canonicals_") or self.warm_start is False:
             self._initialize_problem(X, y)
 
         if self.warm_start is True:
@@ -175,7 +175,7 @@ class CVXEstimator(RegressorMixin, LinearModel, metaclass=ABCMeta):
         return
 
     @abstractmethod
-    def _gen_objective(
+    def _generate_objective(
         self,
         X: ArrayLike,
         y: ArrayLike,
@@ -199,7 +199,7 @@ class CVXEstimator(RegressorMixin, LinearModel, metaclass=ABCMeta):
         """
         return
 
-    def _gen_parameters(self, X: ArrayLike, y: ArrayLike) -> Optional[NamedTuple]:
+    def _generate_params(self, X: ArrayLike, y: ArrayLike) -> Optional[NamedTuple]:
         """Return the named tuple of cvxpy parameters for optimization problem.
 
         Args:
@@ -213,7 +213,7 @@ class CVXEstimator(RegressorMixin, LinearModel, metaclass=ABCMeta):
         """
         return None
 
-    def _gen_constraints(
+    def _generate_constraints(
         self, X: ArrayLike, y: ArrayLike, parameters
     ) -> list[cp.constraints]:
         """Generate constraints for optimization problem.
@@ -241,9 +241,9 @@ class CVXEstimator(RegressorMixin, LinearModel, metaclass=ABCMeta):
                 Target vector
         """
         beta = cp.Variable(X.shape[1])
-        parameters = self._gen_parameters(X, y)
-        objective = self._gen_objective(X, y, beta, parameters)
-        constraints = self._gen_constraints(X, y, parameters)
+        parameters = self._generate_params(X, y)
+        objective = self._generate_objective(X, y, beta, parameters)
+        constraints = self._generate_constraints(X, y, parameters)
         problem = cp.Problem(cp.Minimize(objective), constraints)
         self.canonicals_ = CVXCanonicals(
             problem=problem,

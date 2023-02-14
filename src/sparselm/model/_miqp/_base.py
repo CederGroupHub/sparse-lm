@@ -109,7 +109,7 @@ class MIQP_L0(CVXEstimator, metaclass=ABCMeta):
         self._group_masks = [self.groups == i for i in np.sort(np.unique(self.groups))]
         self._z0 = cp.Variable(len(self._group_masks), boolean=True)
 
-    def _gen_objective(self, X, y):
+    def _generate_objective(self, X, y):
         """Generate the quadratic form portion of objective."""
         # psd_wrap will ignore cvxpy PSD checks, without it errors will
         # likely be raised since correlation matrices are usually very
@@ -119,7 +119,7 @@ class MIQP_L0(CVXEstimator, metaclass=ABCMeta):
         # objective = cp.sum_squares(X @ self.beta_ - y)
         return objective
 
-    def _gen_constraints(self, X, y):
+    def _generate_constraints(self, X, y):
         """Generate the constraints used to solve l0 regularization."""
         constraints = []
         for i, mask in enumerate(self._group_masks):
