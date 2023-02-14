@@ -23,7 +23,7 @@ from scipy.linalg import sqrtm
 from sklearn.utils.validation import check_scalar
 
 from .._utils.validation import _check_group_weights, _check_groups
-from ._base import CVXEstimator
+from ._base import CVXCanonicals, CVXEstimator
 
 
 class Lasso(CVXEstimator):
@@ -193,8 +193,14 @@ class GroupLasso(Lasso):
     def _validate_params(self, X: ArrayLike, y: ArrayLike) -> None:
         """Validate group parameters."""
         super()._validate_params(X, y)
+        if self.groups is None:
+            warnings.warn(
+                "groups has not been supplied such that the problem reduces to"
+                " a simple Lasso. You should consider using that instead.",
+                UserWarning,
+            )
         _check_groups(self.groups, X.shape[1])
-        _check_group_weights(self.group_weights, self.groups)
+        _check_group_weights(self.group_weights, X.shape[1])
 
     def _set_param_values(self) -> None:
         super()._set_param_values()
@@ -206,23 +212,33 @@ class GroupLasso(Lasso):
     def _generate_params(self, X: ArrayLike, y: ArrayLike) -> Optional[SimpleNamespace]:
         parameters = super()._generate_params(X, y)
         n_groups = X.shape[1] if self.groups is None else len(np.unique(self.groups))
-        group_weights = np.ones(n_groups) if self.group_weights is None else self.group_weights
+        group_weights = (
+            np.ones(n_groups) if self.group_weights is None else self.group_weights
+        )
         parameters.group_weights = group_weights
         return parameters
+
+    @staticmethod
+    def _generate_group_norms(
+        X: ArrayLike, groups: ArrayLike, beta: cp.Parameter, standardize: bool
+    ) -> cp.Expression:
+        """Generate cp.Expression of group norms."""
+        group_masks = [groups == i for i in np.sort(np.unique(groups))]
+
+        if standardize:
+            group_norms = cp.hstack(
+                [cp.norm2(X[:, mask] @ beta[mask]) for mask in group_masks]
+            )
+        else:
+            group_norms = cp.hstack([cp.norm2(beta[mask]) for mask in group_masks])
+        return group_norms
 
     def _generate_auxiliaries(
         self, X: ArrayLike, y: ArrayLike, beta: cp.Variable, parameters: SimpleNamespace
     ) -> Optional[SimpleNamespace]:
         """Generate auxiliary cp.Expression for group norms"""
         groups = np.arange(X.shape[1]) if self.groups is None else self.groups
-        group_masks = [groups == i for i in np.sort(np.unique(groups))]
-
-        if self.standardize:
-            group_norms = cp.hstack(
-                [cp.norm2(X[:, mask] @ beta[mask]) for mask in group_masks]
-            )
-        else:
-            group_norms = cp.hstack([cp.norm2(beta[mask]) for mask in group_masks])
+        group_norms = self._generate_group_norms(X, groups, beta, self.standardize)
         return SimpleNamespace(group_norms=group_norms)
 
     def _generate_regularization(
@@ -251,7 +267,7 @@ class OverlapGroupLasso(GroupLasso):
 
     def __init__(
         self,
-        group_list,
+        group_list=None,
         alpha=1.0,
         group_weights=None,
         standardize=False,
@@ -318,18 +334,61 @@ class OverlapGroupLasso(GroupLasso):
             **kwargs,
         )
 
-    def _validate_params(self, X, y):
+    def _validate_params(self, X: ArrayLike, y: ArrayLike) -> None:
         """Validate group parameters."""
         Lasso._validate_params(self, X, y)
-        check_scalar(self.alpha, "alpha", float, min_val=0.0)
-        if len(self.group_list) != X.shape[1]:
-            raise ValueError(
-                "The length of the group list must be the same as the number of features."
-            )
 
-        group_ids = np.sort(np.unique([gid for grp in self.group_list for gid in grp]))
+        if self.group_list is not None:
+            if len(self.group_list) != X.shape[1]:
+                raise ValueError(
+                    "The length of the group list must be the same as the number of features."
+                )
+
+            n_groups = len(np.unique([gid for grp in self.group_list for gid in grp]))
+        else:
+            warnings.warn(
+                "No group list has been supplied such that the problem reduces to"
+                " a simple Lasso. You should consider using that instead.",
+                UserWarning,
+            )
+            n_groups = X.shape[1]
+
+        _check_group_weights(self.group_weights, n_groups)
+
+    def _generate_params(self, X: ArrayLike, y: ArrayLike) -> Optional[SimpleNamespace]:
+        parameters = super()._generate_params(X, y)
+
+        if self.group_list is None:
+            n_groups = X.shape[1]
+        else:
+            n_groups = len(np.unique([gid for grp in self.group_list for gid in grp]))
+
+        group_weights = (
+            np.ones(n_groups) if self.group_weights is None else self.group_weights
+        )
+        parameters.group_weights = group_weights
+        return parameters
+
+    def _initialize_problem(self, X: ArrayLike, y: ArrayLike):
+        """Initialize cvxpy problem from the generated objective function.
+
+        Args:
+            X (ArrayLike):
+                Covariate/Feature matrix
+            y (ArrayLike):
+                Target vector
+        """
+
+        # need to generate the auxiliaries here since the problem data is "augmented"
+        # based on them
+        if self.group_list is None:
+            group_list = [[i] for i in range(X.shape[1])]
+        else:
+            group_list = self.group_list
+
+        group_ids = np.sort(np.unique([gid for grp in group_list for gid in grp]))
         beta_indices = [
-            [i for i, grp in enumerate(self.group_list) if grp_id in grp]
+            [i for i, grp in enumerate(group_list) if grp_id in grp]
             for grp_id in group_ids
         ]
         extended_groups = np.concatenate(
@@ -341,33 +400,42 @@ class OverlapGroupLasso(GroupLasso):
                 for i, g in enumerate(beta_indices)
             ]
         )
-        self.groups = _check_groups(extended_groups, len(extended_groups))
-        self.group_weights = _check_group_weights(self.group_weights, self.groups)
-        self.ext_coef_indices_ = np.concatenate(beta_indices)
+        beta_indices = np.concatenate(beta_indices)
 
-    def _initialize_problem(self, X: ArrayLike, y: ArrayLike):
-        """Initialize cvxpy problem from the generated objective function.
+        X_ext = X[:, beta_indices]
+        beta = cp.Variable(X_ext.shape[1])
+        group_norms = self._generate_group_norms(
+            X_ext, extended_groups, beta, self.standardize
+        )
+        auxiliaries = SimpleNamespace(
+            group_norms=group_norms, extended_coef_indices=beta_indices
+        )
 
-        Args:
-            X (ArrayLike):
-                Covariate/Feature matrix
-            y (ArrayLike):
-                Target vector
-        """
-        X_ext = X[:, self.ext_coef_indices_]
-        self.beta_ = cp.Variable(X_ext.shape[1])
-        self.objective_ = self._generate_objective(X_ext, y)
-        self.constraints_ = self._generate_constraints(X_ext, y)
-        self.problem_ = cp.Problem(cp.Minimize(self.objective_), self.constraints_)
+        parameters = self._generate_params(X, y)
+        objective = self._generate_objective(X, y, beta, parameters, auxiliaries)
+        constraints = self._generate_constraints(X, y, parameters, auxiliaries)
+        problem = cp.Problem(cp.Minimize(objective), constraints)
+        self.canonicals_ = CVXCanonicals(
+            problem=problem,
+            objective=objective,
+            beta=beta,
+            parameters=parameters,
+            auxiliaries=auxiliaries,
+            constraints=constraints,
+        )
 
     def _solve(self, X, y, solver_options, *args, **kwargs):
         """Solve the cvxpy problem."""
-        self.problem_.solve(
+        self.canonicals_.problem.solve(
             solver=self.solver, warm_start=self.warm_start, **solver_options
         )
         beta = np.array(
             [
-                sum(self.beta_.value[self.ext_coef_indices_ == i])
+                sum(
+                    self.canonicals_.beta.value[
+                        self.canonicals_.auxiliaries.extended_coef_indices == i
+                    ]
+                )
                 for i in range(X.shape[1])
             ]
         )

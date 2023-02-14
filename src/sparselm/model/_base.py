@@ -228,7 +228,7 @@ class CVXEstimator(RegressorMixin, LinearModel, metaclass=ABCMeta):
         y: ArrayLike,
         beta: cp.Variable,
         parameters: Optional[SimpleNamespace] = None,
-        auxiliaries: Optional[SimpleNamespace] = None
+        auxiliaries: Optional[SimpleNamespace] = None,
     ) -> cp.Expression:
         """Define the cvxpy objective function represeting regression model.
 
@@ -254,7 +254,7 @@ class CVXEstimator(RegressorMixin, LinearModel, metaclass=ABCMeta):
         X: ArrayLike,
         y: ArrayLike,
         parameters: Optional[SimpleNamespace] = None,
-        auxiliaries: Optional[SimpleNamespace] = None
+        auxiliaries: Optional[SimpleNamespace] = None,
     ) -> list[cp.constraints]:
         """Generate constraints for optimization problem.
 

@@ -31,19 +31,18 @@ def _check_groups(groups, n_features):
         )
 
 
-def _check_group_weights(group_weights, groups):
+def _check_group_weights(group_weights, n_groups):
     """Check that group weights are 1D and of the correct length.
 
     Args:
         group_weights (list or ndarray):
             List of group weights
-        groups (list or ndarray):
-            List of group labels
+        n_groups (int):
+            Number of groups
 
     Returns:
         ndarray: group weights as a 1D ndarray
     """
-    group_ids = np.sort(np.unique(groups))
 
     if group_weights is None:
         return
@@ -52,7 +51,7 @@ def _check_group_weights(group_weights, groups):
         raise TypeError("group_weights must be a list or ndarray")
 
     group_weights = np.asarray(group_weights)
-    if len(group_weights) != len(group_ids):
+    if len(group_weights) != n_groups:
         raise ValueError(
-            f"group_weights must be the same length as the number of groups {len(group_weights)} != {len(group_ids)}"
+            f"group_weights must be the same length as the number of groups {len(group_weights)} != {n_groups}"
         )
