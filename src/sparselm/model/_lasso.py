@@ -193,14 +193,30 @@ class GroupLasso(Lasso):
     def _validate_params(self, X: ArrayLike, y: ArrayLike) -> None:
         """Validate group parameters."""
         super()._validate_params(X, y)
-        self.groups = _check_groups(self.groups, X.shape[1])
-        self.group_weights = _check_group_weights(self.group_weights, self.groups)
+        _check_groups(self.groups, X.shape[1])
+        _check_group_weights(self.group_weights, self.groups)
+
+    def _set_param_values(self) -> None:
+        super()._set_param_values()
+        self.canonicals_.parameters.alpha.value = self.alpha
+
+        if self.group_weights is not None:
+            self.canonicals_.parameters.group_weights = self.group_weights
+
+    def _generate_params(self, X: ArrayLike, y: ArrayLike) -> Optional[SimpleNamespace]:
+        parameters = super()._generate_params(X, y)
+        n_groups = X.shape[1] if self.groups is None else len(np.unique(self.groups))
+        group_weights = np.ones(n_groups) if self.group_weights is None else self.group_weights
+        parameters.group_weights = group_weights
+        return parameters
 
     def _generate_auxiliaries(
         self, X: ArrayLike, y: ArrayLike, beta: cp.Variable, parameters: SimpleNamespace
     ) -> Optional[SimpleNamespace]:
         """Generate auxiliary cp.Expression for group norms"""
-        group_masks = [self.groups == i for i in np.sort(np.unique(self.groups))]
+        groups = np.arange(X.shape[1]) if self.groups is None else self.groups
+        group_masks = [groups == i for i in np.sort(np.unique(groups))]
+
         if self.standardize:
             group_norms = cp.hstack(
                 [cp.norm2(X[:, mask] @ beta[mask]) for mask in group_masks]
@@ -216,7 +232,7 @@ class GroupLasso(Lasso):
         parameters: SimpleNamespace,
         auxiliaries: Optional[SimpleNamespace] = None,
     ):
-        return parameters.alpha * (self.group_weights @ auxiliaries.group_norms)
+        return parameters.alpha * (parameters.group_weights @ auxiliaries.group_norms)
 
 
 # TODO this implementation is not efficient, reimplement.

@@ -16,7 +16,7 @@ def _check_groups(groups, n_features):
         ndarray: groups as a 1D ndarray
     """
     if groups is None:
-        groups = np.arange(n_features)
+        return
 
     if not isinstance(groups, (list, np.ndarray)):
         raise TypeError("groups must be a list or ndarray")
@@ -29,7 +29,6 @@ def _check_groups(groups, n_features):
         raise ValueError(
             f"groups must be the same length as the number of features {n_features}"
         )
-    return groups
 
 
 def _check_group_weights(group_weights, groups):
@@ -47,7 +46,7 @@ def _check_group_weights(group_weights, groups):
     group_ids = np.sort(np.unique(groups))
 
     if group_weights is None:
-        group_weights = np.sqrt([sum(groups == i) for i in group_ids])
+        return
 
     if not isinstance(group_weights, (list, np.ndarray)):
         raise TypeError("group_weights must be a list or ndarray")
@@ -57,4 +56,3 @@ def _check_group_weights(group_weights, groups):
         raise ValueError(
             f"group_weights must be the same length as the number of groups {len(group_weights)} != {len(group_ids)}"
         )
-    return group_weights

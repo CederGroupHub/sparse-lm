@@ -31,9 +31,9 @@ class CVXCanonicals(NamedTuple):
             Objective function.
         beta (cp.Variable):
             Variable to be optimized (corresponds to the estimated coef_ attribute).
-        parameters (SimpleNamespace of cp.Parameter):
-            SimpleNamespace with named cp.Parameter objects. The namespace should be defined
-            by the estimator generating it.
+        parameters (SimpleNamespace of cp.Parameter or ArrayLike):
+            SimpleNamespace with named cp.Parameter objects or ArrayLike of parameters.
+            The namespace should be defined by the estimator generating it.
         auxiliaries (SimpleNamespace of cp.Variable or cp.Expression):
             SimpleNamespace with auxiliary cp.Variable or cp.Expression objects.
             The namespace should be defined by the estimator generating it.
