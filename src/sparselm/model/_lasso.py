@@ -521,8 +521,6 @@ class SparseGroupLasso(GroupLasso):
             **kwargs,
         )
         self.l1_ratio = l1_ratio
-        self.lambda1_ = cp.Parameter(nonneg=True, value=l1_ratio * alpha)
-        self.lambda2_ = cp.Parameter(nonneg=True, value=(1 - l1_ratio) * alpha)
 
     def _validate_params(self, X, y):
         """Validate parameters."""
@@ -540,25 +538,28 @@ class SparseGroupLasso(GroupLasso):
                 UserWarning,
             )
 
-    def _generate_params(self):
+    def _generate_params(self, X: ArrayLike, y: ArrayLike) -> Optional[SimpleNamespace]:
         """Generate parameters."""
-        if not hasattr(self, "lambda1_"):
-            self.lambda1_ = cp.Parameter(nonneg=True, value=self.l1_ratio * self.alpha)
-        else:
-            self.lambda1_.value = self.l1_ratio * self.alpha
+        parameters = super()._generate_params(X, y)
+        del parameters.alpha  # hacky but we don't need this
+        parameters.lambda1 = cp.Parameter(nonneg=True, value=self.l1_ratio * self.alpha)
+        parameters.lambda2 = cp.Parameter(
+            nonneg=True, value=(1 - self.l1_ratio) * self.alpha
+        )
+        return parameters
 
-        if not hasattr(self, "lambda2_"):
-            self.lambda2_ = cp.Parameter(
-                nonneg=True, value=(1 - self.l1_ratio) * self.alpha
-            )
-        else:
-            self.lambda2_.value = (1 - self.l1_ratio) * self.alpha
-
-    def _generate_regularization(self, X):
-        grp_norms = super()._generate_auxiliaries(X)
-        l1_reg = cp.norm1(self.beta_)
-        reg = self.lambda1_ * l1_reg + self.lambda2_ * (self.group_weights @ grp_norms)
-        return reg
+    def _generate_regularization(
+        self,
+        X: ArrayLike,
+        beta: cp.Variable,
+        parameters: SimpleNamespace,
+        auxiliaries: Optional[SimpleNamespace] = None,
+    ):
+        group_regularization = parameters.lambda2 * (
+            parameters.group_weights @ auxiliaries.group_norms
+        )
+        l1_regularization = parameters.lambda1 * cp.norm1(beta)
+        return group_regularization + l1_regularization
 
 
 class RidgedGroupLasso(GroupLasso):
