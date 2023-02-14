@@ -13,8 +13,8 @@ optimization problem.
 __author__ = "Luis Barroso-Luque, Fengyu Xie"
 
 import warnings
-from typing import NamedTuple, Optional
 from types import SimpleNamespace
+from typing import Optional
 
 import cvxpy as cp
 import numpy as np
@@ -83,19 +83,28 @@ class Lasso(CVXEstimator):
         super()._validate_params(X, y)
         check_scalar(self.alpha, "alpha", float, min_val=0.0)
 
-    def _generate_params(self, X: ArrayLike, y: ArrayLike) -> Optional[SimpleNamespace]:
-        """Generate cvxpy parameters."""
-        return SimpleNamespace(alpha=cp.Parameter(nonneg=True, value=self.alpha))
-
     def _set_param_values(self):
         """Set parameter values."""
         self.canonicals_.parameters.alpha.value = self.alpha
 
-    def _generate_regularization(self, X: ArrayLike, beta: cp.Variable, parameters: SimpleNamespace):
+    def _generate_params(self, X: ArrayLike, y: ArrayLike) -> Optional[SimpleNamespace]:
+        """Generate cvxpy parameters."""
+        return SimpleNamespace(alpha=cp.Parameter(nonneg=True, value=self.alpha))
+
+    def _generate_regularization(
+        self, X: ArrayLike, beta: cp.Variable, parameters: SimpleNamespace
+    ) -> cp.Expression:
         """Generate regularization term."""
         return parameters.alpha * cp.norm1(beta)
 
-    def _generate_objective(self, X, y, beta, parameters):
+    def _generate_objective(
+        self,
+        X: ArrayLike,
+        y: ArrayLike,
+        beta: cp.Variable,
+        aux_variables: Optional[SimpleNamespace] = None,
+        parameters: Optional[SimpleNamespace] = None,
+    ) -> cp.Expression:
         # can also use cp.norm2(X @ beta - y)**2 not sure whats better
         reg = self._generate_regularization(X, beta, parameters)
         objective = 1 / (2 * X.shape[0]) * cp.sum_squares(X @ beta - y) + reg
@@ -183,23 +192,22 @@ class GroupLasso(Lasso):
         self.groups = _check_groups(self.groups, X.shape[1])
         self.group_weights = _check_group_weights(self.group_weights, self.groups)
 
-    def _gen_group_norms(self, X):
+    def _gen_group_norms(self, X, beta):
         # TODO remove keeping this as an attribute and simply pass/create it if necessary
-        self.group_masks_ = [self.groups == i for i in np.sort(np.unique(self.groups))]
+        group_masks = [self.groups == i for i in np.sort(np.unique(self.groups))]
         if self.standardize:
             grp_norms = cp.hstack(
-                [cp.norm2(X[:, mask] @ self.beta_[mask]) for mask in self.group_masks_]
+                [cp.norm2(X[:, mask] @ beta[mask]) for mask in group_masks]
             )
         else:
-            grp_norms = cp.hstack(
-                [cp.norm2(self.beta_[mask]) for mask in self.group_masks_]
-            )
-        self.group_norms_ = grp_norms
+            grp_norms = cp.hstack([cp.norm2(beta[mask]) for mask in group_masks])
+        # self.group_norms_ = grp_norms
         return grp_norms
 
-    def _generate_regularization(self, X):
-        self._generate_params()
-        return self.alpha_ * (self.group_weights @ self._gen_group_norms(X))
+    def _generate_regularization(
+        self, X: ArrayLike, beta: cp.Variable, parameters: SimpleNamespace
+    ):
+        return parameters.alpha * (self.group_weights @ self._gen_group_norms(X))
 
 
 # TODO this implementation is not efficient, reimplement.

@@ -6,8 +6,8 @@ The classes make use of and follow the scikit-learn API.
 __author__ = "Luis Barroso-Luque, Fengyu Xie"
 
 from abc import ABCMeta, abstractmethod
-from typing import NamedTuple, Optional
 from types import SimpleNamespace
+from typing import NamedTuple, Optional
 
 import cvxpy as cp
 import numpy as np
@@ -31,18 +31,22 @@ class CVXCanonicals(NamedTuple):
             Objective function.
         beta (cp.Variable):
             Variable to be optimized (corresponds to the estimated coef_ attribute).
-        constraints (list of cp.Constaint):
-            List of constraints.
-        parameters (NamedTuple of cp.Parameter):
+        aux_variables (SimpleNamespace of cp.Variable):
+            NamedTuple with auxiliary cp.Variable objects. The NamedTuple should be
+            defined by the estimator generating it.
+        parameters (SimpleNamespace of cp.Parameter):
             NamedTuple with named cp.Parameter objects. The NamedTuple should be
             defined by the estimator generating it.
+        constraints (list of cp.Constaint):
+            List of constraints.
     """
 
     problem: cp.Problem
     objective: cp.Expression
     beta: cp.Variable
-    constraints: Optional[list[cp.Expression]]
+    aux_variables: Optional[SimpleNamespace]
     parameters: Optional[SimpleNamespace]
+    constraints: Optional[list[cp.Expression]]
 
 
 class CVXEstimator(RegressorMixin, LinearModel, metaclass=ABCMeta):
@@ -171,35 +175,14 @@ class CVXEstimator(RegressorMixin, LinearModel, metaclass=ABCMeta):
         return self
 
     def _validate_params(self, X: ArrayLike, y: ArrayLike):
-        """Validate hyper parameters.
+        """Validate hyper-parameters.
 
-        Implement this in an estimator to check for valid hyper parameters.
+        Implement this in an estimator to check for valid hyper-parameters.
         """
         return
 
-    @abstractmethod
-    def _generate_objective(
-        self,
-        X: ArrayLike,
-        y: ArrayLike,
-        beta: cp.Variable,
-        parameters: Optional[NamedTuple] = None,
-    ) -> cp.Expression:
-        """Define the cvxpy objective function represeting regression model.
-
-        The objective must be stated for a minimization problem.
-
-        Args:
-            X (ArrayLike):
-                Covariate/Feature matrix
-            y (ArrayLike):
-                Target vector
-            parameters (NamedTuple): optional
-                Named tuple of cvxpy parameters.
-
-        Returns:
-            cvpx Expression
-        """
+    def _set_param_values(self):
+        """Set the values of cvxpy parameters from param attributes for warm starts."""
         return
 
     def _generate_params(self, X: ArrayLike, y: ArrayLike) -> Optional[SimpleNamespace]:
@@ -218,12 +201,60 @@ class CVXEstimator(RegressorMixin, LinearModel, metaclass=ABCMeta):
         """
         return None
 
-    def _set_param_values(self):
-        """Set the values of cvxpy parameters from param attributes for warm starts."""
+    def _generate_aux_variables(
+        self, X: ArrayLike, y: ArrayLike, beta: cp.Variable, parameters: SimpleNamespace
+    ) -> Optional[SimpleNamespace]:
+        """Generate any auxiliary variables necessary in defining the objective
+
+        Args:
+            X (ArrayLike):
+                Covariate/Feature matrix
+            y (ArrayLike):
+                Target vector
+            beta (cp.Variable):
+                cp.Variable representing the estimated coefs_
+            parameters (SimpleNamespace):
+                SimpleNamespace of cvxpy parameters.
+
+        Returns:
+            SimpleNamespace of cp.Variable for auxiliary variables
+        """
+        return None
+
+    @abstractmethod
+    def _generate_objective(
+        self,
+        X: ArrayLike,
+        y: ArrayLike,
+        beta: cp.Variable,
+        aux_variables: Optional[SimpleNamespace] = None,
+        parameters: Optional[SimpleNamespace] = None,
+    ) -> cp.Expression:
+        """Define the cvxpy objective function represeting regression model.
+
+        The objective must be stated for a minimization problem.
+
+        Args:
+            X (ArrayLike):
+                Covariate/Feature matrix
+            y (ArrayLike):
+                Target vector
+            aux_variables (SimpleNamespace): optional
+                SimpleNamespace with auxiliary cp.Variable objects
+            parameters (SimpleNamespace): optional
+                SimpleNamespace with cp.Parameter objects
+
+        Returns:
+            cvpx Expression
+        """
         return
 
     def _generate_constraints(
-        self, X: ArrayLike, y: ArrayLike, parameters
+        self,
+        X: ArrayLike,
+        y: ArrayLike,
+        aux_variables: Optional[SimpleNamespace] = None,
+        parameters: Optional[SimpleNamespace] = None,
     ) -> list[cp.constraints]:
         """Generate constraints for optimization problem.
 
@@ -232,8 +263,10 @@ class CVXEstimator(RegressorMixin, LinearModel, metaclass=ABCMeta):
                 Covariate/Feature matrix
             y (ArrayLike):
                 Target vector
-            parameters (NamedTuple):
-                Named tuple of cvxpy parameters.
+            aux_variables (SimpleNamespace): optional
+                SimpleNamespace with auxiliary cp.Variable objects
+            parameters (SimpleNamespace): optional
+                SimpleNamespace with cp.Parameter objects
 
         Returns:
             list of cvpx constraints
@@ -251,15 +284,17 @@ class CVXEstimator(RegressorMixin, LinearModel, metaclass=ABCMeta):
         """
         beta = cp.Variable(X.shape[1])
         parameters = self._generate_params(X, y)
-        objective = self._generate_objective(X, y, beta, parameters)
-        constraints = self._generate_constraints(X, y, parameters)
+        aux_variables = self._generate_aux_variables(X, y, beta, parameters)
+        objective = self._generate_objective(X, y, beta, aux_variables, parameters)
+        constraints = self._generate_constraints(X, y, aux_variables, parameters)
         problem = cp.Problem(cp.Minimize(objective), constraints)
         self.canonicals_ = CVXCanonicals(
             problem=problem,
             objective=objective,
             beta=beta,
-            constraints=constraints,
+            aux_variables=aux_variables,
             parameters=parameters,
+            constraints=constraints,
         )
 
     def _solve(self, X: ArrayLike, y: ArrayLike, solver_options: dict, *args, **kwargs):
