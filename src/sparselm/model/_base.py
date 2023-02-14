@@ -148,9 +148,9 @@ class CVXEstimator(RegressorMixin, LinearModel, metaclass=ABCMeta):
         if self.warm_start is True:
             # cache training data
             if not hasattr(self, "cached_X_"):
-                self.cached_X = X
+                self.cached_X_ = X
             if not hasattr(self, "cached_y_"):
-                self.cached_y = y
+                self.cached_y_ = y
 
             # check if input data has changed and force reset accordingly
             if not np.array_equal(self.cached_X_, X) or not np.array_equal(
