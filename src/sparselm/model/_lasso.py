@@ -14,6 +14,7 @@ __author__ = "Luis Barroso-Luque, Fengyu Xie"
 
 import warnings
 from typing import NamedTuple, Optional
+from types import SimpleNamespace
 
 import cvxpy as cp
 import numpy as np
@@ -82,22 +83,18 @@ class Lasso(CVXEstimator):
         super()._validate_params(X, y)
         check_scalar(self.alpha, "alpha", float, min_val=0.0)
 
-    def _generate_params(self, X: ArrayLike, y: ArrayLike) -> Optional[NamedTuple]:
+    def _generate_params(self, X: ArrayLike, y: ArrayLike) -> Optional[SimpleNamespace]:
         """Generate cvxpy parameters."""
-        if hasattr(self, "alpha_"):
-            self.alpha_ = cp.Parameter(nonneg=True, value=self.alpha)
-        else:
-            self.alpha_.value = self.alpha
+        return SimpleNamespace(alpha=cp.Parameter(nonneg=True, value=self.alpha))
 
-    def _gen_regularization(self, X: ArrayLike):
+    def _generate_regularization(self, X: ArrayLike, beta: cp.Variable, parameters: SimpleNamespace):
         """Generate regularization term."""
-        self._generate_params()
-        return self.alpha_ * cp.norm1(self.beta_)
+        return parameters.alpha * cp.norm1(beta)
 
-    def _generate_objective(self, X, y):
-        # can also use cp.norm2(X @ self.beta_ - y)**2 not sure whats better
-        reg = self._gen_regularization(X)
-        objective = 1 / (2 * X.shape[0]) * cp.sum_squares(X @ self.beta_ - y) + reg
+    def _generate_objective(self, X, y, beta, parameters):
+        # can also use cp.norm2(X @ beta - y)**2 not sure whats better
+        reg = self._generate_regularization(X, beta, parameters)
+        objective = 1 / (2 * X.shape[0]) * cp.sum_squares(X @ beta - y) + reg
         return objective
 
 
@@ -196,7 +193,7 @@ class GroupLasso(Lasso):
         self.group_norms_ = grp_norms
         return grp_norms
 
-    def _gen_regularization(self, X):
+    def _generate_regularization(self, X):
         self._generate_params()
         return self.alpha_ * (self.group_weights @ self._gen_group_norms(X))
 
@@ -452,7 +449,7 @@ class SparseGroupLasso(GroupLasso):
         else:
             self.lambda2_.value = (1 - self.l1_ratio) * self.alpha
 
-    def _gen_regularization(self, X):
+    def _generate_regularization(self, X):
         grp_norms = super()._gen_group_norms(X)
         l1_reg = cp.norm1(self.beta_)
         reg = self.lambda1_ * l1_reg + self.lambda2_ * (self.group_weights @ grp_norms)
@@ -582,7 +579,7 @@ class RidgedGroupLasso(GroupLasso):
         self._group_norms = grp_norms.T
         return grp_norms
 
-    def _gen_regularization(self, X):
+    def _generate_regularization(self, X):
         self._generate_params()
         grp_norms = self._gen_group_norms(X)
         ridge = cp.hstack(

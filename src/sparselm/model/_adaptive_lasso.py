@@ -133,8 +133,8 @@ class AdaptiveLasso(Lasso):
                 shape=self.beta_.shape, nonneg=True, value=np.ones(self.beta_.shape)
             )
 
-    def _gen_regularization(self, X):
-        self._gen_regularization(X)
+    def _generate_regularization(self, X):
+        self._generate_regularization(X)
         return cp.norm1(cp.multiply(self.weights_, self.beta_))
 
     def _update_weights(self, beta):
@@ -261,7 +261,7 @@ class AdaptiveGroupLasso(AdaptiveLasso, GroupLasso):
             value=np.ones(len(self.group_masks_)),
         )
 
-    def _gen_regularization(self, X):
+    def _generate_regularization(self, X):
         grp_norms = self._gen_group_norms(X)
         self.weights_ = cp.Parameter(
             shape=len(self.group_masks_),
@@ -507,7 +507,7 @@ class AdaptiveSparseGroupLasso(AdaptiveLasso, SparseGroupLasso):
             solver_options=solver_options,
         )
 
-    def _gen_regularization(self, X):
+    def _generate_regularization(self, X):
         grp_norms = self._gen_group_norms(X)
         self._weights = (
             cp.Parameter(
@@ -647,9 +647,9 @@ class AdaptiveRidgedGroupLasso(AdaptiveGroupLasso, RidgedGroupLasso):
     def _gen_group_norms(self, X):
         return RidgedGroupLasso._gen_group_norms(self, X)
 
-    def _gen_regularization(self, X):
+    def _generate_regularization(self, X):
         self._generate_params()
-        reg = AdaptiveGroupLasso._gen_regularization(self, X)
+        reg = AdaptiveGroupLasso._generate_regularization(self, X)
         ridge = cp.hstack(
             [cp.sum_squares(self.beta_[mask]) for mask in self.group_masks_]
         )

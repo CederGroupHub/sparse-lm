@@ -7,6 +7,7 @@ __author__ = "Luis Barroso-Luque, Fengyu Xie"
 
 from abc import ABCMeta, abstractmethod
 from typing import NamedTuple, Optional
+from types import SimpleNamespace
 
 import cvxpy as cp
 import numpy as np
@@ -41,7 +42,7 @@ class CVXCanonicals(NamedTuple):
     objective: cp.Expression
     beta: cp.Variable
     constraints: Optional[list[cp.Expression]]
-    parameters: Optional[NamedTuple]
+    parameters: Optional[SimpleNamespace]
 
 
 class CVXEstimator(RegressorMixin, LinearModel, metaclass=ABCMeta):
@@ -199,7 +200,7 @@ class CVXEstimator(RegressorMixin, LinearModel, metaclass=ABCMeta):
         """
         return
 
-    def _generate_params(self, X: ArrayLike, y: ArrayLike) -> Optional[NamedTuple]:
+    def _generate_params(self, X: ArrayLike, y: ArrayLike) -> Optional[SimpleNamespace]:
         """Return the named tuple of cvxpy parameters for optimization problem.
 
         Args:
@@ -278,7 +279,7 @@ class TikhonovMixin:
         else:
             tikhonov_w = np.eye(X.shape[1])
 
-        objective = super()._gen_objective(X, y) + c0 * self._eta * cp.sum_squares(
+        objective = super()._generate_objective(X, y) + c0 * self._eta * cp.sum_squares(
             tikhonov_w @ self.beta_
         )
 
