@@ -256,7 +256,9 @@ class AdaptiveGroupLasso(AdaptiveLasso, GroupLasso):
     def _gen_parameters(self):
         super()._gen_parameters()
         self.weights_ = cp.Parameter(
-            shape=len(self.group_masks_), nonneg=True, value=np.ones(len(self.group_masks_))
+            shape=len(self.group_masks_),
+            nonneg=True,
+            value=np.ones(len(self.group_masks_)),
         )
 
     def _gen_regularization(self, X):
@@ -399,7 +401,9 @@ class AdaptiveOverlapGroupLasso(OverlapGroupLasso, AdaptiveGroupLasso):
         beta = AdaptiveGroupLasso._solve(
             self, X[:, self.ext_coef_indices_], y, solver_options, *args, **kwargs
         )
-        beta = np.array([sum(beta[self.ext_coef_indices_ == i]) for i in range(X.shape[1])])
+        beta = np.array(
+            [sum(beta[self.ext_coef_indices_ == i]) for i in range(X.shape[1])]
+        )
         return beta
 
 
@@ -525,7 +529,7 @@ class AdaptiveSparseGroupLasso(AdaptiveLasso, SparseGroupLasso):
         self._previous_weights = [self._weights[0].value, self._weights[1].value]
         self._weights[0].value = self.lambda1_.value / (abs(beta) + self.eps)
         self._weights[1].value = (
-                                         self.lambda2_.value * self.group_weights
+            self.lambda2_.value * self.group_weights
         ) * self.update_function(self.group_norms_.value, self.eps)
 
     def _weights_converged(self):

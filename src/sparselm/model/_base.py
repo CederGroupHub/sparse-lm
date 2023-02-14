@@ -6,7 +6,7 @@ The classes make use of and follow the scikit-learn API.
 __author__ = "Luis Barroso-Luque, Fengyu Xie"
 
 from abc import ABCMeta, abstractmethod
-from functools import cached_property
+from typing import NamedTuple, Optional
 
 import cvxpy as cp
 import numpy as np
@@ -18,6 +18,30 @@ from sklearn.linear_model._base import (
     _preprocess_data,
     _rescale_data,
 )
+
+
+class CVXCanonicals(NamedTuple):
+    """CVXpy Canonical objects representing the underlying optimization problem.
+
+    Attributes:
+        objective (cp.Problem):
+            Objective function.
+        objective (cp.Expression):
+            Objective function.
+        beta (cp.Variable):
+            Variable to be optimized (corresponds to the estimated coef_ attribute).
+        constraints (list of cp.Constaint):
+            List of constraints.
+        parameters (NamedTuple of cp.Parameter):
+            NamedTuple with named cp.Parameter objects. The NamedTuple should be
+            defined by the estimator generating it.
+    """
+
+    problem: cp.Problem
+    objective: cp.Expression
+    beta: cp.Variable
+    constraints: Optional[list[cp.Expression]]
+    parameters: Optional[NamedTuple]
 
 
 class CVXEstimator(RegressorMixin, LinearModel, metaclass=ABCMeta):
@@ -151,7 +175,13 @@ class CVXEstimator(RegressorMixin, LinearModel, metaclass=ABCMeta):
         return
 
     @abstractmethod
-    def _gen_objective(self, X: ArrayLike, y: ArrayLike):
+    def _gen_objective(
+        self,
+        X: ArrayLike,
+        y: ArrayLike,
+        beta: cp.Variable,
+        parameters: Optional[NamedTuple] = None,
+    ) -> cp.Expression:
         """Define the cvxpy objective function represeting regression model.
 
         The objective must be stated for a minimization problem.
@@ -161,13 +191,31 @@ class CVXEstimator(RegressorMixin, LinearModel, metaclass=ABCMeta):
                 Covariate/Feature matrix
             y (ArrayLike):
                 Target vector
+            parameters (NamedTuple): optional
+                Named tuple of cvxpy parameters.
 
         Returns:
             cvpx Expression
         """
+        return
+
+    def _gen_parameters(self, X: ArrayLike, y: ArrayLike) -> Optional[NamedTuple]:
+        """Return the named tuple of cvxpy parameters for optimization problem.
+
+        Args:
+            X (ArrayLike):
+                Covariate/Feature matrix
+            y (ArrayLike):
+                Target vector
+
+        Returns:
+            NamedTuple of cvxpy parameters
+        """
         return None
 
-    def _gen_constraints(self, X: ArrayLike, y: ArrayLike):
+    def _gen_constraints(
+        self, X: ArrayLike, y: ArrayLike, parameters
+    ) -> list[cp.constraints]:
         """Generate constraints for optimization problem.
 
         Args:
@@ -175,6 +223,8 @@ class CVXEstimator(RegressorMixin, LinearModel, metaclass=ABCMeta):
                 Covariate/Feature matrix
             y (ArrayLike):
                 Target vector
+            parameters (NamedTuple):
+                Named tuple of cvxpy parameters.
 
         Returns:
             list of cvpx constraints
@@ -190,18 +240,25 @@ class CVXEstimator(RegressorMixin, LinearModel, metaclass=ABCMeta):
             y (ArrayLike):
                 Target vector
         """
-        self.beta_ = cp.Variable(X.shape[1])
-        # tODO add _gen_parameters here and maybe save all cvxpy objects in a dict/named tuple
-        self.objective_ = self._gen_objective(X, y)
-        self.constraints_ = self._gen_constraints(X, y)
-        self.problem_ = cp.Problem(cp.Minimize(self.objective_), self.constraints_)
+        beta = cp.Variable(X.shape[1])
+        parameters = self._gen_parameters(X, y)
+        objective = self._gen_objective(X, y, beta, parameters)
+        constraints = self._gen_constraints(X, y, parameters)
+        problem = cp.Problem(cp.Minimize(objective), constraints)
+        self.canonicals_ = CVXCanonicals(
+            problem=problem,
+            objective=objective,
+            beta=beta,
+            constraints=constraints,
+            parameters=parameters,
+        )
 
     def _solve(self, X: ArrayLike, y: ArrayLike, solver_options: dict, *args, **kwargs):
         """Solve the cvxpy problem."""
-        self.problem_.solve(
+        self.canonicals_.problem.solve(
             solver=self.solver, warm_start=self.warm_start, **solver_options
         )
-        return self.beta_.value
+        return self.canonicals_.beta.value
 
 
 class TikhonovMixin:

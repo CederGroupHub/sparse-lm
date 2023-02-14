@@ -331,7 +331,10 @@ class OverlapGroupLasso(GroupLasso):
             solver=self.solver, warm_start=self.warm_start, **solver_options
         )
         beta = np.array(
-            [sum(self.beta_.value[self.ext_coef_indices_ == i]) for i in range(X.shape[1])]
+            [
+                sum(self.beta_.value[self.ext_coef_indices_ == i])
+                for i in range(X.shape[1])
+            ]
         )
         return beta
 
@@ -442,7 +445,9 @@ class SparseGroupLasso(GroupLasso):
             self.lambda1_.value = self.l1_ratio * self.alpha
 
         if not hasattr(self, "lambda2_"):
-            self.lambda2_ = cp.Parameter(nonneg=True, value=(1 - self.l1_ratio) * self.alpha)
+            self.lambda2_ = cp.Parameter(
+                nonneg=True, value=(1 - self.l1_ratio) * self.alpha
+            )
         else:
             self.lambda2_.value = (1 - self.l1_ratio) * self.alpha
 
