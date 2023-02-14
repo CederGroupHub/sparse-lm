@@ -92,8 +92,11 @@ class Lasso(CVXEstimator):
         return SimpleNamespace(alpha=cp.Parameter(nonneg=True, value=self.alpha))
 
     def _generate_regularization(
-        self, X: ArrayLike, beta: cp.Variable, parameters: SimpleNamespace,
-            auxiliaries: Optional[SimpleNamespace] = None,
+        self,
+        X: ArrayLike,
+        beta: cp.Variable,
+        parameters: SimpleNamespace,
+        auxiliaries: Optional[SimpleNamespace] = None,
     ) -> cp.Expression:
         """Generate regularization term."""
         return parameters.alpha * cp.norm1(beta)
@@ -103,11 +106,11 @@ class Lasso(CVXEstimator):
         X: ArrayLike,
         y: ArrayLike,
         beta: cp.Variable,
-        auxiliaries: Optional[SimpleNamespace] = None,
         parameters: Optional[SimpleNamespace] = None,
+        auxiliaries: Optional[SimpleNamespace] = None,
     ) -> cp.Expression:
         # can also use cp.norm2(X @ beta - y)**2 not sure whats better
-        reg = self._generate_regularization(X, beta, parameters)
+        reg = self._generate_regularization(X, beta, parameters, auxiliaries)
         objective = 1 / (2 * X.shape[0]) * cp.sum_squares(X @ beta - y) + reg
         return objective
 
@@ -194,7 +197,7 @@ class GroupLasso(Lasso):
         self.group_weights = _check_group_weights(self.group_weights, self.groups)
 
     def _generate_auxiliaries(
-            self, X: ArrayLike, y: ArrayLike, beta: cp.Variable, parameters: SimpleNamespace
+        self, X: ArrayLike, y: ArrayLike, beta: cp.Variable, parameters: SimpleNamespace
     ) -> Optional[SimpleNamespace]:
         """Generate auxiliary cp.Expression for group norms"""
         group_masks = [self.groups == i for i in np.sort(np.unique(self.groups))]
@@ -207,8 +210,11 @@ class GroupLasso(Lasso):
         return SimpleNamespace(group_norms=group_norms)
 
     def _generate_regularization(
-            self, X: ArrayLike, beta: cp.Variable, parameters: SimpleNamespace,
-            auxiliaries: Optional[SimpleNamespace] = None,
+        self,
+        X: ArrayLike,
+        beta: cp.Variable,
+        parameters: SimpleNamespace,
+        auxiliaries: Optional[SimpleNamespace] = None,
     ):
         return parameters.alpha * (self.group_weights @ auxiliaries.group_norms)
 

@@ -31,12 +31,12 @@ class CVXCanonicals(NamedTuple):
             Objective function.
         beta (cp.Variable):
             Variable to be optimized (corresponds to the estimated coef_ attribute).
-        auxiliaries (SimpleNamespace of cp.Variable or cp.Expression):
-            SimpleNamespace with auxiliary cp.Variable or cp.Expression objects.
-            The namespace should be defined by the estimator generating it.
         parameters (SimpleNamespace of cp.Parameter):
             SimpleNamespace with named cp.Parameter objects. The namespace should be defined
             by the estimator generating it.
+        auxiliaries (SimpleNamespace of cp.Variable or cp.Expression):
+            SimpleNamespace with auxiliary cp.Variable or cp.Expression objects.
+            The namespace should be defined by the estimator generating it.
         constraints (list of cp.Constaint):
             List of constraints.
     """
@@ -44,8 +44,8 @@ class CVXCanonicals(NamedTuple):
     problem: cp.Problem
     objective: cp.Expression
     beta: cp.Variable
-    auxiliaries: Optional[SimpleNamespace]
     parameters: Optional[SimpleNamespace]
+    auxiliaries: Optional[SimpleNamespace]
     constraints: Optional[list[cp.Expression]]
 
 
@@ -227,8 +227,8 @@ class CVXEstimator(RegressorMixin, LinearModel, metaclass=ABCMeta):
         X: ArrayLike,
         y: ArrayLike,
         beta: cp.Variable,
-        auxiliaries: Optional[SimpleNamespace] = None,
         parameters: Optional[SimpleNamespace] = None,
+        auxiliaries: Optional[SimpleNamespace] = None
     ) -> cp.Expression:
         """Define the cvxpy objective function represeting regression model.
 
@@ -239,10 +239,10 @@ class CVXEstimator(RegressorMixin, LinearModel, metaclass=ABCMeta):
                 Covariate/Feature matrix
             y (ArrayLike):
                 Target vector
-            auxiliaries (SimpleNamespace): optional
-                SimpleNamespace with auxiliary cvxpy objects
             parameters (SimpleNamespace): optional
                 SimpleNamespace with cp.Parameter objects
+            auxiliaries (SimpleNamespace): optional
+                SimpleNamespace with auxiliary cvxpy objects
 
         Returns:
             cvpx Expression
@@ -253,8 +253,8 @@ class CVXEstimator(RegressorMixin, LinearModel, metaclass=ABCMeta):
         self,
         X: ArrayLike,
         y: ArrayLike,
-        auxiliaries: Optional[SimpleNamespace] = None,
         parameters: Optional[SimpleNamespace] = None,
+        auxiliaries: Optional[SimpleNamespace] = None
     ) -> list[cp.constraints]:
         """Generate constraints for optimization problem.
 
@@ -263,10 +263,10 @@ class CVXEstimator(RegressorMixin, LinearModel, metaclass=ABCMeta):
                 Covariate/Feature matrix
             y (ArrayLike):
                 Target vector
-            auxiliaries (SimpleNamespace): optional
-                SimpleNamespace with auxiliary cvxpy objects
             parameters (SimpleNamespace): optional
                 SimpleNamespace with cp.Parameter objects
+            auxiliaries (SimpleNamespace): optional
+                SimpleNamespace with auxiliary cvxpy objects
 
         Returns:
             list of cvpx constraints
@@ -285,15 +285,15 @@ class CVXEstimator(RegressorMixin, LinearModel, metaclass=ABCMeta):
         beta = cp.Variable(X.shape[1])
         parameters = self._generate_params(X, y)
         auxiliaries = self._generate_auxiliaries(X, y, beta, parameters)
-        objective = self._generate_objective(X, y, beta, auxiliaries, parameters)
-        constraints = self._generate_constraints(X, y, auxiliaries, parameters)
+        objective = self._generate_objective(X, y, beta, parameters, auxiliaries)
+        constraints = self._generate_constraints(X, y, parameters, auxiliaries)
         problem = cp.Problem(cp.Minimize(objective), constraints)
         self.canonicals_ = CVXCanonicals(
             problem=problem,
             objective=objective,
             beta=beta,
-            auxiliaries=auxiliaries,
             parameters=parameters,
+            auxiliaries=auxiliaries,
             constraints=constraints,
         )
 
