@@ -205,7 +205,6 @@ class GroupLasso(Lasso):
     def _set_param_values(self) -> None:
         super()._set_param_values()
         self.canonicals_.parameters.alpha.value = self.alpha
-
         if self.group_weights is not None:
             self.canonicals_.parameters.group_weights = self.group_weights
 
@@ -220,11 +219,14 @@ class GroupLasso(Lasso):
 
     @staticmethod
     def _generate_group_norms(
-        X: ArrayLike, groups: ArrayLike, beta: cp.Parameter, standardize: bool
+        X: ArrayLike,
+        groups: ArrayLike,
+        beta: cp.Variable,
+        standardize: bool,
+        parameters: Optional[SimpleNamespace] = None,
     ) -> cp.Expression:
         """Generate cp.Expression of group norms."""
         group_masks = [groups == i for i in np.sort(np.unique(groups))]
-
         if standardize:
             group_norms = cp.hstack(
                 [cp.norm2(X[:, mask] @ beta[mask]) for mask in group_masks]
@@ -238,7 +240,9 @@ class GroupLasso(Lasso):
     ) -> Optional[SimpleNamespace]:
         """Generate auxiliary cp.Expression for group norms"""
         groups = np.arange(X.shape[1]) if self.groups is None else self.groups
-        group_norms = self._generate_group_norms(X, groups, beta, self.standardize)
+        group_norms = self._generate_group_norms(
+            X, groups, beta, self.standardize, parameters
+        )
         return SimpleNamespace(group_norms=group_norms)
 
     def _generate_regularization(
@@ -404,14 +408,13 @@ class OverlapGroupLasso(GroupLasso):
 
         X_ext = X[:, beta_indices]
         beta = cp.Variable(X_ext.shape[1])
+        parameters = self._generate_params(X, y)
         group_norms = self._generate_group_norms(
             X_ext, extended_groups, beta, self.standardize
         )
         auxiliaries = SimpleNamespace(
             group_norms=group_norms, extended_coef_indices=beta_indices
         )
-
-        parameters = self._generate_params(X, y)
         objective = self._generate_objective(X, y, beta, parameters, auxiliaries)
         constraints = self._generate_constraints(X, y, parameters, auxiliaries)
         problem = cp.Problem(cp.Minimize(objective), constraints)
@@ -645,52 +648,83 @@ class RidgedGroupLasso(GroupLasso):
 
         self.delta = delta
 
-    def _generate_params(self):
-        """Generate parameters."""
-        super()._generate_params()
+    def _validate_params(self, X: ArrayLike, y: ArrayLike) -> None:
+        """Validate group parameters and delta."""
+        super()._validate_params(X, y)
+        check_scalar(self.delta, "delta", float)
 
-        n_groups = len(np.unique(self.groups))
+        n_groups = (
+            len(np.unique(self.groups)) if self.groups is not None else X.shape[1]
+        )
+        if isinstance(self.delta, np.ndarray):
+            if len(self.delta) != len(n_groups):
+                raise ValueError(
+                    f"delta must be a scalar or an array of lenght equal to the number of groups {n_groups}."
+                )
+
+    def _set_param_values(self) -> None:
+        super()._set_param_values()
         if isinstance(self.delta, float):
+            n_groups = self.canonicals_.parameters.delta.value_.shape[0]
             delta = self.delta * np.ones(n_groups)
         else:
             delta = self.delta
+        self.canonicals_.parameters.delta.value = delta
 
-        if not hasattr(self, "delta_"):
-            self.delta_ = cp.Parameter(shape=(n_groups,), nonneg=True, value=delta)
-        else:
-            self.delta_.value = delta
+    def _generate_params(self, X: ArrayLike, y: ArrayLike) -> Optional[SimpleNamespace]:
+        """Generate parameters."""
+        parameters = super()._generate_params(X, y)
+        n_groups = (
+            len(np.unique(self.groups)) if self.groups is not None else X.shape[1]
+        )
+        delta = (
+            self.delta * np.ones(n_groups)
+            if isinstance(self.delta, float)
+            else self.delta
+        )
+        parameters.delta = cp.Parameter(shape=(n_groups,), nonneg=True, value=delta)
+        return parameters
 
-    def _generate_auxiliaries(self, X):
-        # TODO remove this, see above TODO
-        self.group_masks_ = [self.groups == i for i in np.sort(np.unique(self.groups))]
-
-        if self.standardize:
-            grp_norms = cp.hstack(
+    @staticmethod
+    def _generate_group_norms(
+        X: ArrayLike,
+        groups: ArrayLike,
+        beta: cp.Variable,
+        standardize: bool,
+        parameters: Optional[SimpleNamespace] = None,
+    ) -> cp.Expression:
+        group_masks = [groups == i for i in np.sort(np.unique(groups))]
+        if standardize:
+            group_norms = cp.hstack(
                 [
                     cp.norm2(
                         sqrtm(
                             X[:, mask].T @ X[:, mask]
-                            + self.delta_.value[i] ** 0.5 * np.eye(sum(mask))
+                            + parameters.delta.value[i] ** 0.5 * np.eye(sum(mask))
                         )
-                        @ self.beta_[mask]
+                        @ beta[mask]
                     )
-                    for i, mask in enumerate(self.group_masks_)
+                    for i, mask in enumerate(group_masks)
                 ]
             )
         else:
-            grp_norms = cp.hstack(
-                [cp.norm2(self.beta_[mask]) for mask in self.group_masks_]
-            )
+            group_norms = cp.hstack([cp.norm2(beta[mask]) for mask in group_masks])
+        # self._group_norms = grp_norms.T
+        return group_norms
 
-        self._group_norms = grp_norms.T
-        return grp_norms
-
-    def _generate_regularization(self, X):
-        self._generate_params()
-        grp_norms = self._generate_auxiliaries(X)
-        ridge = cp.hstack(
-            [cp.sum_squares(self.beta_[mask]) for mask in self.group_masks_]
+    def _generate_regularization(
+        self,
+        X: ArrayLike,
+        beta: cp.Variable,
+        parameters: SimpleNamespace,
+        auxiliaries: Optional[SimpleNamespace] = None,
+    ):
+        # repetitive code...
+        groups = np.arange(X.shape[1]) if self.groups is None else self.groups
+        group_masks = [groups == i for i in np.sort(np.unique(groups))]
+        ridge = cp.hstack([cp.sum_squares(beta[mask]) for mask in group_masks])
+        group_regularization = (
+            parameters.alpha * parameters.group_weights @ auxiliaries.group_norms
         )
-        reg = self.alpha_ * self.group_weights @ grp_norms + 0.5 * self.delta_ @ ridge
-
-        return reg
+        ridge_regularization = 0.5 * parameters.delta @ ridge
+        return group_regularization + ridge_regularization
