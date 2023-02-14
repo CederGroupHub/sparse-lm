@@ -157,6 +157,8 @@ class CVXEstimator(RegressorMixin, LinearModel, metaclass=ABCMeta):
                 self.cached_y_, y
             ):
                 self._initialize_problem(X, y)
+            else:
+                self._set_param_values()  # set parameter values
 
         solver_options = self.solver_options if self.solver_options is not None else {}
         if not isinstance(solver_options, dict):
@@ -203,6 +205,8 @@ class CVXEstimator(RegressorMixin, LinearModel, metaclass=ABCMeta):
     def _generate_params(self, X: ArrayLike, y: ArrayLike) -> Optional[SimpleNamespace]:
         """Return the named tuple of cvxpy parameters for optimization problem.
 
+        The cvxpy Parameters must be given values when generating.
+
         Args:
             X (ArrayLike):
                 Covariate/Feature matrix
@@ -213,6 +217,10 @@ class CVXEstimator(RegressorMixin, LinearModel, metaclass=ABCMeta):
             NamedTuple of cvxpy parameters
         """
         return None
+
+    def _set_param_values(self):
+        """Set the values of cvxpy parameters from param attributes for warm starts."""
+        return
 
     def _generate_constraints(
         self, X: ArrayLike, y: ArrayLike, parameters

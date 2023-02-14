@@ -87,6 +87,10 @@ class Lasso(CVXEstimator):
         """Generate cvxpy parameters."""
         return SimpleNamespace(alpha=cp.Parameter(nonneg=True, value=self.alpha))
 
+    def _set_param_values(self):
+        """Set parameter values."""
+        self.canonicals_.parameters.alpha.value = self.alpha
+
     def _generate_regularization(self, X: ArrayLike, beta: cp.Variable, parameters: SimpleNamespace):
         """Generate regularization term."""
         return parameters.alpha * cp.norm1(beta)
