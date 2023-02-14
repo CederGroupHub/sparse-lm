@@ -262,7 +262,7 @@ class AdaptiveGroupLasso(AdaptiveLasso, GroupLasso):
         )
 
     def _generate_regularization(self, X):
-        grp_norms = self._gen_group_norms(X)
+        grp_norms = self._generate_aux_variables(X)
         self.weights_ = cp.Parameter(
             shape=len(self.group_masks_),
             nonneg=True,
@@ -508,7 +508,7 @@ class AdaptiveSparseGroupLasso(AdaptiveLasso, SparseGroupLasso):
         )
 
     def _generate_regularization(self, X):
-        grp_norms = self._gen_group_norms(X)
+        grp_norms = self._generate_aux_variables(X)
         self._weights = (
             cp.Parameter(
                 shape=X.shape[1],
@@ -644,8 +644,8 @@ class AdaptiveRidgedGroupLasso(AdaptiveGroupLasso, RidgedGroupLasso):
             solver_options=solver_options,
         )
 
-    def _gen_group_norms(self, X):
-        return RidgedGroupLasso._gen_group_norms(self, X)
+    def _generate_aux_variables(self, X):
+        return RidgedGroupLasso._generate_aux_variables(self, X)
 
     def _generate_regularization(self, X):
         self._generate_params()

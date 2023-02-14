@@ -31,12 +31,12 @@ class CVXCanonicals(NamedTuple):
             Objective function.
         beta (cp.Variable):
             Variable to be optimized (corresponds to the estimated coef_ attribute).
-        aux_variables (SimpleNamespace of cp.Variable):
-            NamedTuple with auxiliary cp.Variable objects. The NamedTuple should be
-            defined by the estimator generating it.
+        auxiliaries (SimpleNamespace of cp.Variable or cp.Expression):
+            SimpleNamespace with auxiliary cp.Variable or cp.Expression objects.
+            The namespace should be defined by the estimator generating it.
         parameters (SimpleNamespace of cp.Parameter):
-            NamedTuple with named cp.Parameter objects. The NamedTuple should be
-            defined by the estimator generating it.
+            SimpleNamespace with named cp.Parameter objects. The namespace should be defined
+            by the estimator generating it.
         constraints (list of cp.Constaint):
             List of constraints.
     """
@@ -44,7 +44,7 @@ class CVXCanonicals(NamedTuple):
     problem: cp.Problem
     objective: cp.Expression
     beta: cp.Variable
-    aux_variables: Optional[SimpleNamespace]
+    auxiliaries: Optional[SimpleNamespace]
     parameters: Optional[SimpleNamespace]
     constraints: Optional[list[cp.Expression]]
 
@@ -174,14 +174,14 @@ class CVXEstimator(RegressorMixin, LinearModel, metaclass=ABCMeta):
         # return self for chaining fit and predict calls
         return self
 
-    def _validate_params(self, X: ArrayLike, y: ArrayLike):
+    def _validate_params(self, X: ArrayLike, y: ArrayLike) -> None:
         """Validate hyper-parameters.
 
         Implement this in an estimator to check for valid hyper-parameters.
         """
         return
 
-    def _set_param_values(self):
+    def _set_param_values(self) -> None:
         """Set the values of cvxpy parameters from param attributes for warm starts."""
         return
 
@@ -201,10 +201,10 @@ class CVXEstimator(RegressorMixin, LinearModel, metaclass=ABCMeta):
         """
         return None
 
-    def _generate_aux_variables(
+    def _generate_auxiliaries(
         self, X: ArrayLike, y: ArrayLike, beta: cp.Variable, parameters: SimpleNamespace
     ) -> Optional[SimpleNamespace]:
-        """Generate any auxiliary variables necessary in defining the objective
+        """Generate any auxiliary variables or expressions necessary in defining the objective.
 
         Args:
             X (ArrayLike):
@@ -227,7 +227,7 @@ class CVXEstimator(RegressorMixin, LinearModel, metaclass=ABCMeta):
         X: ArrayLike,
         y: ArrayLike,
         beta: cp.Variable,
-        aux_variables: Optional[SimpleNamespace] = None,
+        auxiliaries: Optional[SimpleNamespace] = None,
         parameters: Optional[SimpleNamespace] = None,
     ) -> cp.Expression:
         """Define the cvxpy objective function represeting regression model.
@@ -239,8 +239,8 @@ class CVXEstimator(RegressorMixin, LinearModel, metaclass=ABCMeta):
                 Covariate/Feature matrix
             y (ArrayLike):
                 Target vector
-            aux_variables (SimpleNamespace): optional
-                SimpleNamespace with auxiliary cp.Variable objects
+            auxiliaries (SimpleNamespace): optional
+                SimpleNamespace with auxiliary cvxpy objects
             parameters (SimpleNamespace): optional
                 SimpleNamespace with cp.Parameter objects
 
@@ -253,7 +253,7 @@ class CVXEstimator(RegressorMixin, LinearModel, metaclass=ABCMeta):
         self,
         X: ArrayLike,
         y: ArrayLike,
-        aux_variables: Optional[SimpleNamespace] = None,
+        auxiliaries: Optional[SimpleNamespace] = None,
         parameters: Optional[SimpleNamespace] = None,
     ) -> list[cp.constraints]:
         """Generate constraints for optimization problem.
@@ -263,8 +263,8 @@ class CVXEstimator(RegressorMixin, LinearModel, metaclass=ABCMeta):
                 Covariate/Feature matrix
             y (ArrayLike):
                 Target vector
-            aux_variables (SimpleNamespace): optional
-                SimpleNamespace with auxiliary cp.Variable objects
+            auxiliaries (SimpleNamespace): optional
+                SimpleNamespace with auxiliary cvxpy objects
             parameters (SimpleNamespace): optional
                 SimpleNamespace with cp.Parameter objects
 
@@ -284,15 +284,15 @@ class CVXEstimator(RegressorMixin, LinearModel, metaclass=ABCMeta):
         """
         beta = cp.Variable(X.shape[1])
         parameters = self._generate_params(X, y)
-        aux_variables = self._generate_aux_variables(X, y, beta, parameters)
-        objective = self._generate_objective(X, y, beta, aux_variables, parameters)
-        constraints = self._generate_constraints(X, y, aux_variables, parameters)
+        auxiliaries = self._generate_auxiliaries(X, y, beta, parameters)
+        objective = self._generate_objective(X, y, beta, auxiliaries, parameters)
+        constraints = self._generate_constraints(X, y, auxiliaries, parameters)
         problem = cp.Problem(cp.Minimize(objective), constraints)
         self.canonicals_ = CVXCanonicals(
             problem=problem,
             objective=objective,
             beta=beta,
-            aux_variables=aux_variables,
+            auxiliaries=auxiliaries,
             parameters=parameters,
             constraints=constraints,
         )

@@ -78,12 +78,12 @@ class Lasso(CVXEstimator):
             solver_options=solver_options,
         )
 
-    def _validate_params(self, X: ArrayLike, y: ArrayLike):
+    def _validate_params(self, X: ArrayLike, y: ArrayLike) -> None:
         """Validate parameters."""
         super()._validate_params(X, y)
         check_scalar(self.alpha, "alpha", float, min_val=0.0)
 
-    def _set_param_values(self):
+    def _set_param_values(self) -> None:
         """Set parameter values."""
         self.canonicals_.parameters.alpha.value = self.alpha
 
@@ -92,7 +92,8 @@ class Lasso(CVXEstimator):
         return SimpleNamespace(alpha=cp.Parameter(nonneg=True, value=self.alpha))
 
     def _generate_regularization(
-        self, X: ArrayLike, beta: cp.Variable, parameters: SimpleNamespace
+        self, X: ArrayLike, beta: cp.Variable, parameters: SimpleNamespace,
+            auxiliaries: Optional[SimpleNamespace] = None,
     ) -> cp.Expression:
         """Generate regularization term."""
         return parameters.alpha * cp.norm1(beta)
@@ -102,7 +103,7 @@ class Lasso(CVXEstimator):
         X: ArrayLike,
         y: ArrayLike,
         beta: cp.Variable,
-        aux_variables: Optional[SimpleNamespace] = None,
+        auxiliaries: Optional[SimpleNamespace] = None,
         parameters: Optional[SimpleNamespace] = None,
     ) -> cp.Expression:
         # can also use cp.norm2(X @ beta - y)**2 not sure whats better
@@ -186,28 +187,30 @@ class GroupLasso(Lasso):
             **kwargs,
         )
 
-    def _validate_params(self, X, y):
+    def _validate_params(self, X: ArrayLike, y: ArrayLike) -> None:
         """Validate group parameters."""
         super()._validate_params(X, y)
         self.groups = _check_groups(self.groups, X.shape[1])
         self.group_weights = _check_group_weights(self.group_weights, self.groups)
 
-    def _gen_group_norms(self, X, beta):
-        # TODO remove keeping this as an attribute and simply pass/create it if necessary
+    def _generate_auxiliaries(
+            self, X: ArrayLike, y: ArrayLike, beta: cp.Variable, parameters: SimpleNamespace
+    ) -> Optional[SimpleNamespace]:
+        """Generate auxiliary cp.Expression for group norms"""
         group_masks = [self.groups == i for i in np.sort(np.unique(self.groups))]
         if self.standardize:
-            grp_norms = cp.hstack(
+            group_norms = cp.hstack(
                 [cp.norm2(X[:, mask] @ beta[mask]) for mask in group_masks]
             )
         else:
-            grp_norms = cp.hstack([cp.norm2(beta[mask]) for mask in group_masks])
-        # self.group_norms_ = grp_norms
-        return grp_norms
+            group_norms = cp.hstack([cp.norm2(beta[mask]) for mask in group_masks])
+        return SimpleNamespace(group_norms=group_norms)
 
     def _generate_regularization(
-        self, X: ArrayLike, beta: cp.Variable, parameters: SimpleNamespace
+            self, X: ArrayLike, beta: cp.Variable, parameters: SimpleNamespace,
+            auxiliaries: Optional[SimpleNamespace] = None,
     ):
-        return parameters.alpha * (self.group_weights @ self._gen_group_norms(X))
+        return parameters.alpha * (self.group_weights @ auxiliaries.group_norms)
 
 
 # TODO this implementation is not efficient, reimplement.
@@ -462,7 +465,7 @@ class SparseGroupLasso(GroupLasso):
             self.lambda2_.value = (1 - self.l1_ratio) * self.alpha
 
     def _generate_regularization(self, X):
-        grp_norms = super()._gen_group_norms(X)
+        grp_norms = super()._generate_auxiliaries(X)
         l1_reg = cp.norm1(self.beta_)
         reg = self.lambda1_ * l1_reg + self.lambda2_ * (self.group_weights @ grp_norms)
         return reg
@@ -566,7 +569,7 @@ class RidgedGroupLasso(GroupLasso):
         else:
             self.delta_.value = delta
 
-    def _gen_group_norms(self, X):
+    def _generate_auxiliaries(self, X):
         # TODO remove this, see above TODO
         self.group_masks_ = [self.groups == i for i in np.sort(np.unique(self.groups))]
 
@@ -593,7 +596,7 @@ class RidgedGroupLasso(GroupLasso):
 
     def _generate_regularization(self, X):
         self._generate_params()
-        grp_norms = self._gen_group_norms(X)
+        grp_norms = self._generate_auxiliaries(X)
         ridge = cp.hstack(
             [cp.sum_squares(self.beta_[mask]) for mask in self.group_masks_]
         )
