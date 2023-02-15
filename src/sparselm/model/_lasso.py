@@ -541,10 +541,16 @@ class SparseGroupLasso(GroupLasso):
                 UserWarning,
             )
 
+    def _set_param_values(self) -> None:
+        super()._set_param_values()
+        self.canonicals_.parameters.lambda1.value = self.l1_ratio * self.alpha
+        self.canonicals_.parameters.lambda2.value = (1 - self.l1_ratio) * self.alpha
+
     def _generate_params(self, X: ArrayLike, y: ArrayLike) -> Optional[SimpleNamespace]:
         """Generate parameters."""
         parameters = super()._generate_params(X, y)
-        del parameters.alpha  # hacky but we don't need this
+        # del parameters.alpha  # hacky but we don't need this
+        parameters.l1_ratio = self.l1_ratio  # save simply for infomation
         parameters.lambda1 = cp.Parameter(nonneg=True, value=self.l1_ratio * self.alpha)
         parameters.lambda2 = cp.Parameter(
             nonneg=True, value=(1 - self.l1_ratio) * self.alpha
@@ -665,7 +671,7 @@ class RidgedGroupLasso(GroupLasso):
     def _set_param_values(self) -> None:
         super()._set_param_values()
         if isinstance(self.delta, float):
-            n_groups = self.canonicals_.parameters.delta.value_.shape[0]
+            n_groups = self.canonicals_.parameters.delta.value.shape[0]
             delta = self.delta * np.ones(n_groups)
         else:
             delta = self.delta
