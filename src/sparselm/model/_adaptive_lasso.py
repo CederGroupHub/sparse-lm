@@ -21,6 +21,8 @@ or run with n_jobs=1 (but that may take a while to solve)
 __author__ = "Luis Barroso-Luque"
 
 import warnings
+from types import SimpleNamespace
+from typing import Optional
 
 import cvxpy as cp
 import numpy as np
@@ -58,7 +60,7 @@ class AdaptiveLasso(Lasso):
         update_function=None,
         fit_intercept=False,
         copy_X=True,
-        warm_start=False,
+        warm_start=True,
         solver=None,
         solver_options=None,
         **kwargs,
@@ -108,9 +110,8 @@ class AdaptiveLasso(Lasso):
         self.max_iter = max_iter
         self.eps = eps
         self.update_function = update_function
-        self.weights_, self._previous_weights = None, None
 
-    def _validate_params(self, X: ArrayLike, y: ArrayLike):
+    def _validate_params(self, X: ArrayLike, y: ArrayLike) -> None:
         super()._validate_params(X, y)
         check_scalar(self.max_iter, "max_iter", int, min_val=1)
         check_scalar(self.eps, "eps", float)
@@ -118,44 +119,77 @@ class AdaptiveLasso(Lasso):
 
         if self.max_iter == 1:
             warnings.warn(
-                "max_iter is set to 1. It should ideally be set > 1, otherwise reconsider "
+                "max_iter is set to 1. It should ideally be set > 1, otherwise consider "
                 "using a non-adaptive estimator",
                 UserWarning,
             )
 
-        if self.update_function is None:
-            self.update_function = lambda beta, eps: 1.0 / (abs(beta) + eps)
+        if self.update_function is not None:
+            if not callable(self.update_function):
+                raise ValueError("update_function must be callable.")
 
-    def _generate_params(self):
-        super()._generate_params()
-        if not hasattr(self, "weights_"):
-            self.weights_ = cp.Parameter(
-                shape=self.beta_.shape, nonneg=True, value=np.ones(self.beta_.shape)
-            )
-
-    def _generate_regularization(self, X):
-        self._generate_regularization(X)
-        return cp.norm1(cp.multiply(self.weights_, self.beta_))
-
-    def _update_weights(self, beta):
-        if beta is None and self.problem_.value == -np.inf:
-            raise RuntimeError(f"{self.problem} is infeasible.")
-        self._previous_weights = self.weights_.value
-        self.weights_.value = self.alpha * self.update_function(abs(beta), self.eps)
-
-    def _weights_converged(self):
-        return np.linalg.norm(self.weights_.value - self._previous_weights) <= self.tol
-
-    def _solve(self, X, y, solver_options, *args, **kwargs):
-        self.problem_.solve(
-            solver=self.solver, warm_start=self.warm_start, **solver_options
+    def _set_param_values(self) -> None:
+        """Set parameter values."""
+        length = len(self.canonicals_.parameters.adaptive_weights.value)
+        self.canonicals_.parameters.adaptive_weights.value = self.alpha * np.ones(
+            length
         )
-        for _ in range(self.max_iter - 1):
-            self._update_weights(self.beta_.value)
-            self.problem_.solve(solver=self.solver, warm_start=True, **solver_options)
-            if self._weights_converged():
+
+    def _generate_params(self, X: ArrayLike, y: ArrayLike) -> Optional[SimpleNamespace]:
+        """Generate parameters for the problem."""
+        parameters = super()._generate_params(X, y)
+        parameters.adaptive_weights = cp.Parameter(
+            shape=X.shape[1], nonneg=True, value=self.alpha * np.ones(X.shape[1])
+        )
+        return parameters
+
+    def _generate_regularization(
+        self,
+        X: ArrayLike,
+        beta: cp.Variable,
+        parameters: SimpleNamespace,
+        auxiliaries: Optional[SimpleNamespace] = None,
+    ) -> cp.Expression:
+        """Generate regularization term."""
+        return cp.norm1(cp.multiply(parameters.adaptive_weights, beta))
+
+    def _update_weights(self, weights: cp.Parameter, beta: ArrayLike) -> None:
+        """Update the adaptive weights."""
+        if self.update_function is None:
+            weights.value = self.alpha * 1.0 / (abs(beta) + self.eps)
+        else:
+            weights.value = self.alpha * self.update_function(abs(beta), self.eps)
+
+    def _solve(self, X: ArrayLike, y: ArrayLike, solver_options: dict, *args, **kwargs):
+        """Solve Lasso problem iteratively adaptive weights."""
+        previous_weights = np.zeros_like(
+            self.canonicals_.parameters.adaptive_weights.value
+        )
+        for i in range(self.max_iter):
+            if (
+                self.canonicals_.beta.value is None
+                and self.canonicals_.problem.value == -np.inf
+            ):
+                raise RuntimeError(f"{self.canonicals_.problem} is infeasible.")
+            self.canonicals_.problem.solve(
+                solver=self.solver, warm_start=self.warm_start, **solver_options
+            )
+            self.n_iter_ = i  # save number of iterations for sklearn
+            self._update_weights(
+                self.canonicals_.parameters.adaptive_weights,
+                self.canonicals_.beta.value,
+            )
+            # check convergence
+            if (
+                np.linalg.norm(
+                    self.canonicals_.parameters.adaptive_weights.value
+                    - previous_weights
+                )
+                <= self.tol
+            ):
                 break
-        return self.beta_.value
+            previous_weights[:] = self.canonicals_.parameters.adaptive_weights.value
+        return self.canonicals_.beta.value
 
 
 class AdaptiveGroupLasso(AdaptiveLasso, GroupLasso):
