@@ -158,7 +158,19 @@ class AdaptiveLasso(Lasso):
             return lambda beta, eps: self.alpha / (abs(beta) + eps)
         return self.update_function
 
-    def _update_weights(
+    @staticmethod
+    def _get_weights_value(parameters: SimpleNamespace):
+        """Simply return a copy of the value of adaptive weights."""
+        return parameters.adaptive_weights.value.copy()
+
+    def _check_convergence(
+        self, parameters: SimpleNamespace, previous_weights: ArrayLike
+    ):
+        """Check if weights have converged to set tolerance."""
+        current_weights = parameters.adaptive_weights.value
+        return np.linalg.norm(current_weights - previous_weights) <= self.tol
+
+    def _iterative_update(
         self,
         beta: ArrayLike,
         parameters: SimpleNamespace,
@@ -170,9 +182,7 @@ class AdaptiveLasso(Lasso):
 
     def _solve(self, X: ArrayLike, y: ArrayLike, solver_options: dict, *args, **kwargs):
         """Solve Lasso problem iteratively adaptive weights."""
-        previous_weights = np.zeros_like(
-            self.canonicals_.parameters.adaptive_weights.value
-        )
+        previous_weights = self._get_weights_value(self.canonicals_.parameters)
         for i in range(self.max_iter):
             if (
                 self.canonicals_.beta.value is None
@@ -182,22 +192,16 @@ class AdaptiveLasso(Lasso):
             self.canonicals_.problem.solve(
                 solver=self.solver, warm_start=self.warm_start, **solver_options
             )
-            self.n_iter_ = i  # save number of iterations for sklearn
-            self._update_weights(
+            self.n_iter_ = i + 1  # save number of iterations for sklearn
+            self._iterative_update(
                 self.canonicals_.beta.value,
                 self.canonicals_.parameters,
                 self.canonicals_.auxiliaries,
             )
             # check convergence
-            if (
-                np.linalg.norm(
-                    self.canonicals_.parameters.adaptive_weights.value
-                    - previous_weights
-                )
-                <= self.tol
-            ):
+            if self._check_convergence(self.canonicals_.parameters, previous_weights):
                 break
-            previous_weights[:] = self.canonicals_.parameters.adaptive_weights.value
+            previous_weights = self._get_weights_value(self.canonicals_.parameters)
         return self.canonicals_.beta.value
 
 
@@ -316,7 +320,7 @@ class AdaptiveGroupLasso(AdaptiveLasso, GroupLasso):
     ):
         return parameters.adaptive_weights @ auxiliaries.group_norms
 
-    def _update_weights(
+    def _iterative_update(
         self,
         beta: ArrayLike,
         parameters: SimpleNamespace,
@@ -548,6 +552,19 @@ class AdaptiveSparseGroupLasso(AdaptiveLasso, SparseGroupLasso):
             solver_options=solver_options,
         )
 
+    def _set_param_values(self) -> None:
+        super()._set_param_values()
+        group_weights = self.canonicals_.parameters.adaptive_group_weights.value
+        group_weights = self.canonicals_.parameters.lambda1.value * np.ones_like(
+            group_weights
+        )
+        self.canonicals_.parameters.adaptive_group_weights.value = group_weights
+        coef_weights = self.canonicals_.parameters.adaptive_coef_weights.value
+        coef_weights = self.canonicals_.parameters.lambda1.value * np.ones_like(
+            coef_weights
+        )
+        self.canonicals_.parameters.adaptive_group_weights.value = coef_weights
+
     def _generate_params(self, X: ArrayLike, y: ArrayLike) -> Optional[SimpleNamespace]:
         # skip AdaptiveLasso in super
         parameters = super(AdaptiveLasso, self)._generate_params(X, y)
@@ -575,26 +592,49 @@ class AdaptiveSparseGroupLasso(AdaptiveLasso, SparseGroupLasso):
             parameters.adaptive_group_weights @ auxiliaries.group_norms
         )
         l1_regularization = cp.norm1(
-            cp.multiply(parameters.adaptive_coef_weigths, beta)
+            cp.multiply(parameters.adaptive_coef_weights, beta)
         )
         return group_regularization + l1_regularization
 
-    def _update_weights(self, beta):
-        self._weights[0].value = self.lambda1_.value / (abs(beta) + self.eps)
-        self._weights[1].value = self.lambda2_.value * cp.multiply(
-            self.group_weights, self.update_function(self.group_norms_.value, self.eps)
+    @staticmethod
+    def _get_weights_value(parameters: SimpleNamespace):
+        """Simply return a copy of the value of adaptive weights."""
+        # does concatenate copy?
+        concat_weights = np.concatenate(
+            (
+                parameters.adaptive_group_weights.value.copy(),
+                parameters.adaptive_coef_weights.value.copy(),
+            )
         )
+        return concat_weights
 
-    def _weights_converged(self):
-        l1_converged = (
-            np.linalg.norm(self._weights[0].value - self._previous_weights[0])
-            <= self.tol
+    def _check_convergence(
+        self, parameters: SimpleNamespace, previous_weights: ArrayLike
+    ):
+        """Check if weights have converged to set tolerance."""
+        # This will technically check the norm of the concatenation instead of the sum
+        # of the norm of each weight vector, so it's a bit of tighter tolerance.
+        current_weights = np.concatenate(
+            (
+                parameters.adaptive_group_weights.value,
+                parameters.adaptive_coef_weights.value,
+            )
         )
-        group_converged = (
-            np.linalg.norm(self._weights[1].value - self._previous_weights[1])
-            <= self.tol
-        )
-        return l1_converged and group_converged
+        return np.linalg.norm(current_weights - previous_weights) <= self.tol
+
+    def _iterative_update(
+        self,
+        beta: ArrayLike,
+        parameters: SimpleNamespace,
+        auxiliaries: Optional[SimpleNamespace] = None,
+    ) -> None:
+        update = self._get_update_function()
+        parameters.adaptive_coef_weights.value = (
+            self.canonicals_.parameters.lambda1.value * parameters.group_weights
+        ) * update(auxiliaries.group_norms.value, self.eps)
+        parameters.adaptive_group_weights.value = (
+            self.canonicals_.parameters.lambda2.value * parameters.group_weights
+        ) * update(auxiliaries.group_norms.value, self.eps)
 
 
 class AdaptiveRidgedGroupLasso(AdaptiveGroupLasso, RidgedGroupLasso):
