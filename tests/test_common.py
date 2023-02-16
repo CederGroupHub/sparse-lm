@@ -7,6 +7,7 @@ from inspect import getmembers, isclass, signature
 
 import numpy as np
 import pytest
+from sklearn.utils.estimator_checks import check_estimator
 
 import sparselm.model as spm
 
@@ -48,3 +49,40 @@ def test_general_fit(estimator_cls, random_model, rng):
     assert len(estimator.coef_) == len(beta)
     assert len(estimator.predict(X)) == len(y)
     assert estimator.intercept_ != 0.0
+
+
+from sparselm.model import (
+    AdaptiveGroupLasso,
+    AdaptiveLasso,
+    AdaptiveOverlapGroupLasso,
+    AdaptiveSparseGroupLasso,
+    GroupLasso,
+    Lasso,
+    OrdinaryLeastSquares,
+    OverlapGroupLasso,
+    RidgedGroupLasso,
+    SparseGroupLasso,
+)
+
+compliant_estimators = [
+    OrdinaryLeastSquares,
+    Lasso,
+    GroupLasso,
+    OverlapGroupLasso,
+    SparseGroupLasso,
+    RidgedGroupLasso,
+    AdaptiveLasso,
+    AdaptiveGroupLasso,
+    AdaptiveOverlapGroupLasso,
+    AdaptiveSparseGroupLasso,
+]
+
+
+@pytest.fixture(params=compliant_estimators)
+def estimator(request):
+    return request.param(fit_intercept=True, solver="ECOS")
+
+
+def test_sklearn_compatible(estimator):
+    """Test sklearn compatibility with no parameter inputs."""
+    check_estimator(estimator)
