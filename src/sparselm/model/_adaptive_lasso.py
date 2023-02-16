@@ -153,7 +153,7 @@ class AdaptiveLasso(Lasso):
         """Generate regularization term."""
         return cp.norm1(cp.multiply(parameters.adaptive_weights, beta))
 
-    def _update_weights(self, weights: cp.Parameter, beta: ArrayLike) -> None:
+    def _update_weights(self, weights: cp.Parameter, beta: ArrayLike, parameters: Optional[SimpleNamespace] = None) -> None:
         """Update the adaptive weights."""
         if self.update_function is None:
             weights.value = self.alpha * 1.0 / (abs(beta) + self.eps)
@@ -178,6 +178,7 @@ class AdaptiveLasso(Lasso):
             self._update_weights(
                 self.canonicals_.parameters.adaptive_weights,
                 self.canonicals_.beta.value,
+                self.canonicals_.parameters
             )
             # check convergence
             if (
@@ -206,7 +207,7 @@ class AdaptiveGroupLasso(AdaptiveLasso, GroupLasso):
 
     def __init__(
         self,
-        groups,
+        groups=None,
         alpha=1.0,
         group_weights=None,
         max_iter=5,
@@ -287,28 +288,28 @@ class AdaptiveGroupLasso(AdaptiveLasso, GroupLasso):
             **kwargs,
         )
 
-    def _generate_params(self):
-        super()._generate_params()
-        self.weights_ = cp.Parameter(
-            shape=len(self.group_masks_),
+    def _generate_params(self, X: ArrayLike, y: ArrayLike) -> Optional[SimpleNamespace]:
+        parameters = super(GroupLasso, self)._generate_params(X, y)
+        n_groups = X.shape[1] if self.groups is None else len(self.groups)
+        parameters.adaptive_weights = cp.Parameter(
+            shape=n_groups,
             nonneg=True,
-            value=np.ones(len(self.group_masks_)),
+            value=self.alpha * np.ones(n_groups),
         )
+        return parameters
 
-    def _generate_regularization(self, X):
-        grp_norms = self._generate_aux_variables(X)
-        self.weights_ = cp.Parameter(
-            shape=len(self.group_masks_),
-            nonneg=True,
-            value=self.alpha * self.group_weights,
-        )
-        return self.weights_ @ grp_norms
+    def _generate_regularization(
+        self,
+        X: ArrayLike,
+        beta: cp.Variable,
+        parameters: SimpleNamespace,
+        auxiliaries: Optional[SimpleNamespace] = None,
+    ):
+        return parameters.adaptive_weights @ auxiliaries.group_norms
 
-    def _update_weights(self, beta):
-        self._previous_weights = self.weights_.value
-        self.weights_.value = (self.alpha * self.group_weights) * self.update_function(
-            self.group_norms_.value, self.eps
-        )
+    def _update_weights(self, weights: cp.Parameter, beta: ArrayLike, parameters: Optional[SimpleNamespace] = None) -> None:
+        super()._update_weights(weights, beta, parameters)
+        weights *= parameters.group_weights
 
 
 class AdaptiveOverlapGroupLasso(OverlapGroupLasso, AdaptiveGroupLasso):
