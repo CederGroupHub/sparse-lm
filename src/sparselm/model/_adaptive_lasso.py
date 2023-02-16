@@ -138,7 +138,6 @@ class AdaptiveLasso(Lasso):
     def _generate_params(self, X: ArrayLike, y: ArrayLike) -> Optional[SimpleNamespace]:
         """Generate parameters for the problem."""
         parameters = super()._generate_params(X, y)
-        print("Should not call!")
         parameters.adaptive_weights = cp.Parameter(
             shape=X.shape[1], nonneg=True, value=self.alpha * np.ones(X.shape[1])
         )
@@ -154,12 +153,20 @@ class AdaptiveLasso(Lasso):
         """Generate regularization term."""
         return cp.norm1(cp.multiply(parameters.adaptive_weights, beta))
 
-    def _update_weights(self, beta: ArrayLike, parameters: SimpleNamespace) -> None:
-        """Update the adaptive weights."""
+    def _get_update_function(self):
         if self.update_function is None:
-            parameters.adaptive_weights.value = self.alpha / (abs(beta) + self.eps)
-        else:
-            parameters.adaptive_weights.value = self.alpha * self.update_function(abs(beta), self.eps)
+            return lambda beta, eps: self.alpha / (abs(beta) + eps)
+        return self.update_function
+
+    def _update_weights(
+        self,
+        beta: ArrayLike,
+        parameters: SimpleNamespace,
+        auxiliaries: Optional[SimpleNamespace] = None,
+    ) -> None:
+        """Update the adaptive weights."""
+        update = self._get_update_function()
+        parameters.adaptive_weights.value = self.alpha * update(beta, self.eps)
 
     def _solve(self, X: ArrayLike, y: ArrayLike, solver_options: dict, *args, **kwargs):
         """Solve Lasso problem iteratively adaptive weights."""
@@ -178,7 +185,8 @@ class AdaptiveLasso(Lasso):
             self.n_iter_ = i  # save number of iterations for sklearn
             self._update_weights(
                 self.canonicals_.beta.value,
-                self.canonicals_.parameters
+                self.canonicals_.parameters,
+                self.canonicals_.auxiliaries,
             )
             # check convergence
             if (
@@ -308,9 +316,16 @@ class AdaptiveGroupLasso(AdaptiveLasso, GroupLasso):
     ):
         return parameters.adaptive_weights @ auxiliaries.group_norms
 
-    def _update_weights(self, beta: ArrayLike, parameters: Optional[SimpleNamespace] = None) -> None:
-        super()._update_weights(beta, parameters)
-        parameters.adaptive_weights.value *= parameters.group_weights
+    def _update_weights(
+        self,
+        beta: ArrayLike,
+        parameters: SimpleNamespace,
+        auxiliaries: Optional[SimpleNamespace] = None,
+    ) -> None:
+        update = self._get_update_function()
+        parameters.adaptive_weights.value = (
+            self.alpha * parameters.group_weights
+        ) * update(auxiliaries.group_norms.value, self.eps)
 
 
 class AdaptiveOverlapGroupLasso(OverlapGroupLasso, AdaptiveGroupLasso):
@@ -420,16 +435,16 @@ class AdaptiveOverlapGroupLasso(OverlapGroupLasso, AdaptiveGroupLasso):
         parameters: Optional[SimpleNamespace] = None,
         auxiliaries: Optional[SimpleNamespace] = None,
     ) -> cp.Expression:
-        return AdaptiveGroupLasso._generate_objective(self, X, y, beta, parameters, auxiliaries)
+        return AdaptiveGroupLasso._generate_objective(
+            self, X, y, beta, parameters, auxiliaries
+        )
 
-    def _solve(self,  X: ArrayLike, y: ArrayLike, solver_options: dict, *args, **kwargs):
+    def _solve(self, X: ArrayLike, y: ArrayLike, solver_options: dict, *args, **kwargs):
         extended_indices = self.canonicals_.auxiliaries.extended_coef_indices
         beta = AdaptiveGroupLasso._solve(
             self, X[:, extended_indices], y, solver_options, *args, **kwargs
         )
-        beta = np.array(
-            [sum(beta[extended_indices == i]) for i in range(X.shape[1])]
-        )
+        beta = np.array([sum(beta[extended_indices == i]) for i in range(X.shape[1])])
         return beta
 
 
@@ -534,36 +549,41 @@ class AdaptiveSparseGroupLasso(AdaptiveLasso, SparseGroupLasso):
         )
 
     def _generate_params(self, X: ArrayLike, y: ArrayLike) -> Optional[SimpleNamespace]:
-        parameters = super(SparseGroupLasso, self)._generate_params(X, y)
+        # skip AdaptiveLasso in super
+        parameters = super(AdaptiveLasso, self)._generate_params(X, y)
         n_groups = X.shape[1] if self.groups is None else len(self.groups)
+        parameters.adaptive_coef_weights = cp.Parameter(
+            shape=X.shape[1],
+            nonneg=True,
+            value=parameters.lambda1.value * np.ones(X.shape[1]),
+        )
         parameters.adaptive_group_weights = cp.Parameter(
             shape=n_groups,
             nonneg=True,
-            value=self.alpha * np.ones(n_groups),
+            value=parameters.lambda2.value * np.ones(n_groups),
         )
+        return parameters
 
-    def _generate_regularization(self, X):
-        grp_norms = self._generate_aux_variables(X)
-        self._weights = (
-            cp.Parameter(
-                shape=X.shape[1],
-                nonneg=True,
-                value=self.lambda1_.value * np.ones(X.shape[1]),
-            ),
-            cp.Parameter(
-                shape=(len(self.group_masks_),),
-                nonneg=True,
-                value=self.lambda2_.value * self.group_weights,
-            ),
+    def _generate_regularization(
+        self,
+        X: ArrayLike,
+        beta: cp.Variable,
+        parameters: SimpleNamespace,
+        auxiliaries: Optional[SimpleNamespace] = None,
+    ):
+        group_regularization = (
+            parameters.adaptive_group_weights @ auxiliaries.group_norms
         )
-        l1_reg = cp.norm1(cp.multiply(self._weights[0], self.beta_))
-        grp_reg = self._weights[1] @ grp_norms
-        return l1_reg + grp_reg
+        l1_regularization = cp.norm1(
+            cp.multiply(parameters.adaptive_coef_weigths, beta)
+        )
+        return group_regularization + l1_regularization
 
     def _update_weights(self, beta):
-        self._previous_weights = [self._weights[0].value, self._weights[1].value]
         self._weights[0].value = self.lambda1_.value / (abs(beta) + self.eps)
-        self._weights[1].value = self.lambda2_.value * cp.multiply(self.group_weights, self.update_function(self.group_norms_.value, self.eps))
+        self._weights[1].value = self.lambda2_.value * cp.multiply(
+            self.group_weights, self.update_function(self.group_norms_.value, self.eps)
+        )
 
     def _weights_converged(self):
         l1_converged = (
