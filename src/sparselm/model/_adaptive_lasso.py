@@ -303,7 +303,7 @@ class AdaptiveGroupLasso(AdaptiveLasso, GroupLasso):
     def _generate_params(self, X: ArrayLike, y: ArrayLike) -> Optional[SimpleNamespace]:
         # skip AdaptiveLasso in super
         parameters = super(AdaptiveLasso, self)._generate_params(X, y)
-        n_groups = X.shape[1] if self.groups is None else len(self.groups)
+        n_groups = X.shape[1] if self.groups is None else len(np.unique(self.groups))
         parameters.adaptive_weights = cp.Parameter(
             shape=n_groups,
             nonneg=True,
@@ -568,7 +568,7 @@ class AdaptiveSparseGroupLasso(AdaptiveLasso, SparseGroupLasso):
     def _generate_params(self, X: ArrayLike, y: ArrayLike) -> Optional[SimpleNamespace]:
         # skip AdaptiveLasso in super
         parameters = super(AdaptiveLasso, self)._generate_params(X, y)
-        n_groups = X.shape[1] if self.groups is None else len(self.groups)
+        n_groups = X.shape[1] if self.groups is None else len(np.unique(self.groups))
         parameters.adaptive_coef_weights = cp.Parameter(
             shape=X.shape[1],
             nonneg=True,
@@ -630,8 +630,8 @@ class AdaptiveSparseGroupLasso(AdaptiveLasso, SparseGroupLasso):
     ) -> None:
         update = self._get_update_function()
         parameters.adaptive_coef_weights.value = (
-            self.canonicals_.parameters.lambda1.value * parameters.group_weights
-        ) * update(auxiliaries.group_norms.value, self.eps)
+            self.canonicals_.parameters.lambda1.value * update(beta, self.eps)
+        )
         parameters.adaptive_group_weights.value = (
             self.canonicals_.parameters.lambda2.value * parameters.group_weights
         ) * update(auxiliaries.group_norms.value, self.eps)
