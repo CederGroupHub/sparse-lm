@@ -340,7 +340,8 @@ class OverlapGroupLasso(GroupLasso):
 
     def _validate_params(self, X: ArrayLike, y: ArrayLike) -> None:
         """Validate group parameters."""
-        Lasso._validate_params(self, X, y)
+        # skip group lasso validation
+        super(GroupLasso, self)._validate_params(X, y)
 
         if self.group_list is not None:
             if len(self.group_list) != X.shape[1]:

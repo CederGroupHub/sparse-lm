@@ -138,6 +138,7 @@ class AdaptiveLasso(Lasso):
     def _generate_params(self, X: ArrayLike, y: ArrayLike) -> Optional[SimpleNamespace]:
         """Generate parameters for the problem."""
         parameters = super()._generate_params(X, y)
+        print("Should not call!")
         parameters.adaptive_weights = cp.Parameter(
             shape=X.shape[1], nonneg=True, value=self.alpha * np.ones(X.shape[1])
         )
@@ -288,7 +289,8 @@ class AdaptiveGroupLasso(AdaptiveLasso, GroupLasso):
         )
 
     def _generate_params(self, X: ArrayLike, y: ArrayLike) -> Optional[SimpleNamespace]:
-        parameters = super(GroupLasso, self)._generate_params(X, y)
+        # skip AdaptiveLasso in super
+        parameters = super(AdaptiveLasso, self)._generate_params(X, y)
         n_groups = X.shape[1] if self.groups is None else len(self.groups)
         parameters.adaptive_weights = cp.Parameter(
             shape=n_groups,
@@ -410,20 +412,6 @@ class AdaptiveOverlapGroupLasso(OverlapGroupLasso, AdaptiveGroupLasso):
             solver_options=solver_options,
         )
 
-    def _validate_params(self, X, y):
-        # call directly since this has a diamond inheritance
-        OverlapGroupLasso._validate_params(self, X, y)
-        check_scalar(self.max_iter, "max_iter", int, min_val=1)
-        check_scalar(self.eps, "eps", float)
-        check_scalar(self.tol, "tol", float)
-
-        if self.max_iter == 1:
-            warnings.warn(
-                "max_iter is set to 1. It should ideally be set > 1, otherwise reconsider "
-                "using a non-adaptive estimator",
-                UserWarning,
-            )
-
     def _generate_objective(
         self,
         X: ArrayLike,
@@ -543,6 +531,15 @@ class AdaptiveSparseGroupLasso(AdaptiveLasso, SparseGroupLasso):
             warm_start=warm_start,
             solver=solver,
             solver_options=solver_options,
+        )
+
+    def _generate_params(self, X: ArrayLike, y: ArrayLike) -> Optional[SimpleNamespace]:
+        parameters = super(SparseGroupLasso, self)._generate_params(X, y)
+        n_groups = X.shape[1] if self.groups is None else len(self.groups)
+        parameters.adaptive_group_weights = cp.Parameter(
+            shape=n_groups,
+            nonneg=True,
+            value=self.alpha * np.ones(n_groups),
         )
 
     def _generate_regularization(self, X):
