@@ -215,7 +215,7 @@ class MixedL0(RegularizedL0, metaclass=ABCMeta):
     @eta.setter
     def eta(self, val):
         """Set eta hyperparameter values."""
-        self._eta.val = val
+        self._eta.value = val
 
     @abstractmethod
     def _gen_objective(self, X, y):

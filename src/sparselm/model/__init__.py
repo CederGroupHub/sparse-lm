@@ -1,5 +1,4 @@
 """Classes implementing generalized linear regression estimators."""
-
 from ._adaptive_lasso import (
     AdaptiveGroupLasso,
     AdaptiveLasso,
@@ -7,6 +6,7 @@ from ._adaptive_lasso import (
     AdaptiveRidgedGroupLasso,
     AdaptiveSparseGroupLasso,
 )
+from ._composite import CompositeEstimator
 from ._lasso import (
     GroupLasso,
     Lasso,
@@ -24,6 +24,7 @@ from ._miqp import (
 from ._ols import OrdinaryLeastSquares
 
 __all__ = [
+    "CompositeEstimator",
     "OrdinaryLeastSquares",
     "Lasso",
     "BestSubsetSelection",
