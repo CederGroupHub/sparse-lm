@@ -95,12 +95,16 @@ def random_model_with_groups(random_model, rng, request):
     coef_mask = abs(beta) > 0
     n_groups = request.param
     n_active_groups = n_groups // 3 + 1
-    active_group_inds = rng.choice(range(n_groups), size=n_active_groups, replace=False)
+    active_group_inds = rng.choice(
+        range(n_groups), size=n_active_groups, replace=False
+    )
     inactive_group_inds = np.setdiff1d(range(n_groups), active_group_inds)
 
     groups = np.zeros(len(beta), dtype=int)
     for i, c in enumerate(coef_mask):
         groups[i] = (
-            rng.choice(active_group_inds) if c else rng.choice(inactive_group_inds)
+            rng.choice(active_group_inds)
+            if c
+            else rng.choice(inactive_group_inds)
         )
     return X, y, beta, groups

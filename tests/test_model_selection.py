@@ -85,9 +85,14 @@ def grid_search(estimator, param_grid, request):
 @pytest.fixture(scope="module", params=ALL_CRITERION)
 def line_search(estimator, param_grid, request):
     # Multi-grids not supported in line search mode.
-    param_grid_lines = sorted((key, values) for key, values in param_grid[0].items())
+    param_grid_lines = sorted(
+        (key, values) for key, values in param_grid[0].items()
+    )
     line_searcher = LineSearchCV(
-        estimator, param_grid_lines, opt_selection_method=request.param, n_iter=3
+        estimator,
+        param_grid_lines,
+        opt_selection_method=request.param,
+        n_iter=3,
     )
     return line_searcher
 
