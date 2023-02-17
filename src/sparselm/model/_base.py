@@ -226,3 +226,77 @@ class TikhonovMixin:
         )
 
         return objective
+
+
+class CompositeEstimator(CVXEstimator):
+    """A composite estimator used to do piece-wise fitting.
+
+    The first estimator in the composite will be used to fit
+    certain features (a piece of the feature matrix, called scope)
+    to the target vector, and the residuals are fitted to the rest
+    of features by using the next estimators in the composite.
+    """
+
+    def __init__(
+        self,
+        fit_intercept: bool = False,
+        copy_X: bool = True,
+        warm_start: bool = False,
+        solver: str = None,
+        solver_options: dict = None,
+    ):
+        """Initialize estimator.
+
+        Args:
+            fit_intercept (bool):
+                Whether the intercept should be estimated or not.
+                If False, the data is assumed to be already centered.
+            copy_X (bool):
+                If True, X will be copied; else, it may be overwritten.
+            warm_start (bool):
+                When set to True, reuse the solution of the previous call to
+                fit as initialization, otherwise, just erase the previous
+                solution.
+            solver (str):
+                cvxpy backend solver to use. Supported solvers are:
+                ECOS, ECOS_BB, CVXOPT, SCS, GUROBI, Elemental.
+                GLPK and GLPK_MI (via CVXOPT GLPK interface)
+            solver_options:
+                dictionary of keyword arguments passed to cvxpy solve.
+                See docs linked above for more information.
+        """
+        super().__init__(
+            fit_intercept=fit_intercept,
+            copy_X=copy_X,
+            warm_start=warm_start,
+            solver=solver,
+            solver_options=solver_options,
+        )
+        self._estimators = []
+
+    # TODO: overwrite sklearn BaseEstimator methods when
+    #  necessary.
+    def set_params(self, **params):
+        """Set parameters for each estimator in the composite.
+
+        This will be called when model selection optimizes
+        all hyperparameters.
+        Args:
+            params: A Dictionary of parameters. Each parameter
+            name must end with an underscore and a number to specify
+            on which estimator in the composite the parameter is
+            going to be set.
+        """
+
+    def add_estimator(self, estimator, scope):
+        """Add an estimator to the composite.
+
+        Args:
+            estimator(CVXEstimator):
+                An estimator. If the given estimator requires groups or
+                hierarchy, the groups and hierarchy must be adjusted
+            scope(ArrayLike[int]):
+                The scope of the estimator, which are the indices of features
+                in the feature matrix, so that the given estimator will be
+                used to fit features[:, scope] on feature.
+        """
