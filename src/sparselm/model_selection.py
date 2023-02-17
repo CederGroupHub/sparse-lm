@@ -627,9 +627,10 @@ class LineSearchCV(BaseSearchCV):
             )
 
         # Set a proper value for this, not too large or too small.
-        self.n_iter = (
-            n_iter if (n_iter is not None and n_iter > 0) else 2 * self.n_params
-        )
+        if n_iter is not None and n_iter > 0:
+            self.n_iter = n_iter
+        else:
+            self.n_iter = 2 * self.n_params
 
         # Stores GridSearch object at each iteration
         self._history = []
