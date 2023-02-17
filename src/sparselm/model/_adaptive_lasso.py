@@ -54,7 +54,7 @@ class AdaptiveLasso(Lasso):
     def __init__(
         self,
         alpha=1.0,
-        max_iter=5,
+        max_iter=3,
         eps=1e-6,
         tol=1e-10,
         update_function=None,
@@ -222,7 +222,7 @@ class AdaptiveGroupLasso(AdaptiveLasso, GroupLasso):
         groups=None,
         alpha=1.0,
         group_weights=None,
-        max_iter=5,
+        max_iter=3,
         eps=1e-6,
         tol=1e-10,
         update_function=None,
@@ -350,7 +350,7 @@ class AdaptiveOverlapGroupLasso(OverlapGroupLasso, AdaptiveGroupLasso):
         group_list=None,
         alpha=1.0,
         group_weights=None,
-        max_iter=5,
+        max_iter=3,
         eps=1e-6,
         tol=1e-10,
         update_function=None,
@@ -473,7 +473,7 @@ class AdaptiveSparseGroupLasso(AdaptiveLasso, SparseGroupLasso):
         l1_ratio=0.5,
         alpha=1.0,
         group_weights=None,
-        max_iter=5,
+        max_iter=3,
         eps=1e-6,
         tol=1e-10,
         update_function=None,
@@ -663,7 +663,7 @@ class AdaptiveRidgedGroupLasso(AdaptiveGroupLasso, RidgedGroupLasso):
         alpha=1.0,
         delta=1.0,
         group_weights=None,
-        max_iter=5,
+        max_iter=3,
         eps=1e-6,
         tol=1e-10,
         update_function=None,
@@ -737,13 +737,22 @@ class AdaptiveRidgedGroupLasso(AdaptiveGroupLasso, RidgedGroupLasso):
             solver_options=solver_options,
         )
 
-    def _generate_aux_variables(self, X):
-        return RidgedGroupLasso._generate_aux_variables(self, X)
+    def _generate_params(self, X: ArrayLike, y: ArrayLike) -> Optional[SimpleNamespace]:
+        return super()._generate_params(X, y)
 
-    def _generate_regularization(self, X):
-        self._generate_params()
-        reg = AdaptiveGroupLasso._generate_regularization(self, X)
-        ridge = cp.hstack(
-            [cp.sum_squares(self.beta_[mask]) for mask in self.group_masks_]
+    def _generate_regularization(
+        self,
+        X: ArrayLike,
+        beta: cp.Variable,
+        parameters: SimpleNamespace,
+        auxiliaries: Optional[SimpleNamespace] = None,
+    ):
+        group_regularization = AdaptiveGroupLasso._generate_regularization(
+            self, X, beta, parameters, auxiliaries
         )
-        return reg + 0.5 * self.delta_ @ ridge
+        # repetitive code...
+        groups = np.arange(X.shape[1]) if self.groups is None else self.groups
+        group_masks = [groups == i for i in np.sort(np.unique(groups))]
+        ridge = cp.hstack([cp.sum_squares(beta[mask]) for mask in group_masks])
+        ridge_regularization = 0.5 * parameters.delta @ ridge
+        return group_regularization + ridge_regularization

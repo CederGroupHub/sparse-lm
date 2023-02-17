@@ -62,6 +62,7 @@ from sparselm.model import (
     OverlapGroupLasso,
     RidgedGroupLasso,
     SparseGroupLasso,
+AdaptiveRidgedGroupLasso
 )
 
 compliant_estimators = [
@@ -75,6 +76,7 @@ compliant_estimators = [
     AdaptiveGroupLasso,
     AdaptiveOverlapGroupLasso,
     AdaptiveSparseGroupLasso,
+    AdaptiveRidgedGroupLasso
 ]
 
 
