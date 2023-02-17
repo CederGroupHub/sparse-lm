@@ -1,5 +1,4 @@
-"""Composite estimator for piece-wise fitting.
-"""
+"""Composite estimator for piece-wise fitting."""
 
 __author__ = "Fengyu Xie"
 
