@@ -2,7 +2,6 @@
 
 __author__ = "Fengyu Xie"
 
-import re
 from itertools import chain
 
 import numpy as np
@@ -11,25 +10,26 @@ from sklearn.base import RegressorMixin
 from sklearn.linear_model._base import LinearModel
 
 
-class CompositeEstimator(RegressorMixin, LinearModel):
-    """A composite estimator used to do piece-wise fitting.
+class StepwiseEstimator(RegressorMixin, LinearModel):
+    """A composite estimator used to do stepwise fitting.
 
     The first estimator in the composite will be used to fit
-    certain features (a piece of the feature matrix, called scope)
-    to the target vector, and the residuals are fitted to the rest
+    certain features (a piece of the feature matrix) to the
+    target vector, and the residuals are fitted to the rest
     of features by using the next estimators in the composite.
     """
 
-    def __init__(self, estimators, estimator_scopes):
+    def __init__(self, steps, estimator_feature_indices):
         """Initialize estimator.
 
         Args:
-            estimators(list[CVXEstimator]):
-                A list of CVXEstimators to add. CompositeEstimator
-                cannot be a member of CompositeEstimator.
-                An estimator will fit the residuals leftover by
-                the previous estimator fits in the list.
-            estimator_scopes(list[list[int]]):
+            steps(list[(str, CVXEstimator)]):
+                A list of step names and the CVXEstimators to use
+                for each step. CompositeEstimator cannot be used as
+                a member of CompositeEstimator.
+                An estimator will fit the residuals of the previous
+                estimator fits in the list.
+            estimator_feature_indices(list[list[int]]):
                 Scope of each estimator, which means the indices of
                 features in the scope (features[:, scope]) will be
                 fitted to the residual using the corresponding estimator.
@@ -46,25 +46,25 @@ class CompositeEstimator(RegressorMixin, LinearModel):
                    with correct hierarchy, groups and other parameters before
                    wrapping them up with the composite!
         """
-        if len(estimators) != len(estimator_scopes):
-            raise ValueError("Must specify a scope for each estimator!")
-        full_scope = sorted(set(chain(*estimator_scopes)))
-        if full_scope != sorted(chain(*estimator_scopes)) or full_scope != list(
-            range(len(full_scope))
-        ):
+        if len(steps) != len(estimator_feature_indices):
+            raise ValueError("Must specify a list of feature indices" " for each step!")
+        full_scope = sorted(set(chain(*estimator_feature_indices)))
+        if full_scope != sorted(
+            chain(*estimator_feature_indices)
+        ) or full_scope != list(range(len(full_scope))):
             raise ValueError(
-                f"Estimator scopes: {estimator_scopes}"
-                f" overlapped or not continuous!"
+                f"Estimator feature indices: {estimator_feature_indices}"
+                f" can not overlap and must be continuous!"
             )
-        for estimator in estimators:
-            if isinstance(estimator, CompositeEstimator):
+        for step_name, estimator in steps:
+            if isinstance(estimator, StepwiseEstimator):
                 raise ValueError(
-                    "Cannot add a CompositeEstimator into a" " CompositeEstimator!"
+                    "Cannot add a StepwiseEstimator into a" " CompositeEstimator!"
                 )
 
-        self._estimators = estimators
-        self._estimator_scopes = [
-            np.array(scope, dtype=int).tolist() for scope in estimator_scopes
+        self._step_names, self._estimators = tuple(zip(*steps))
+        self._estimator_feature_indices = [
+            np.array(scope, dtype=int).tolist() for scope in estimator_feature_indices
         ]
         self._full_scope = full_scope
         # Only the first estimator is allowed to fit intercept.
@@ -77,10 +77,18 @@ class CompositeEstimator(RegressorMixin, LinearModel):
         """Get parameter names for all estimators in the composite."""
         all_params = [estimator._get_param_names() for estimator in self._estimators]
         all_names = []
-        for est_id, names in enumerate(all_params):
+        for step_name, names in zip(self._step_names, all_params):
             for name in names:
-                all_names.append(name + f"_{est_id}")
+                all_names.append(step_name + "__" + name)
         return all_names
+
+    def _get_step_param_name(self, name):
+        # Must contain at least 1 double underscores.
+        splitted = name.split("__")
+        step_name = splitted[0]
+        step_ind = self._step_names.index(step_name)
+        param_name = "__".join(splitted[1:])
+        return step_ind, param_name
 
     def get_params(self, deep=True):
         """Get parameters of all estimators in the composite.
@@ -94,8 +102,8 @@ class CompositeEstimator(RegressorMixin, LinearModel):
         out = dict()
         est_params = [estimator.get_params(deep=deep) for estimator in self._estimators]
         for name in self._get_param_names():
-            real_name, est_ind = re.match(r"(.*)_(\d+)$", name).groups()
-            out[name] = est_params[int(est_ind)].get(real_name)
+            step_ind, param_name = self._get_step_param_name(name)
+            out[name] = est_params[step_ind].get(param_name)
         return out
 
     def set_params(self, **params):
@@ -116,8 +124,8 @@ class CompositeEstimator(RegressorMixin, LinearModel):
 
         params_for_estimators = [{} for _ in range(len(self._estimators))]
         for name, value in params.items():
-            real_name, est_ind = re.match(r"(.*)_(\d+)$", name).groups()
-            params_for_estimators[int(est_ind)][real_name] = value
+            step_ind, real_name = self._get_step_param_name(name)
+            params_for_estimators[step_ind][real_name] = value
         for estimator_params, estimator in zip(params_for_estimators, self._estimators):
             estimator.set_params(**estimator_params)
 
@@ -150,7 +158,7 @@ class CompositeEstimator(RegressorMixin, LinearModel):
         Returns:
             instance of self
         """
-        # Check scope overlap.
+        # Check feature indices overlap.
         X = np.asarray(X)
         y = np.asarray(y)
         if sample_weight is not None:
@@ -159,13 +167,13 @@ class CompositeEstimator(RegressorMixin, LinearModel):
 
         if self._full_scope != list(range(X.shape[1])):
             raise ValueError(
-                f"Full scope: {self._full_scope} does not cover"
+                f"All estimator indices: {self._full_scope} does not cover"
                 f" all {X.shape[1]} features!"
             )
 
         self.coef_ = np.empty(X.shape[1])
         self.coef_.fill(np.nan)
-        for estimator, scope in zip(self._estimators, self._estimator_scopes):
+        for estimator, scope in zip(self._estimators, self._estimator_feature_indices):
             estimator.fit(X[:, scope], residuals, sample_weight, *args, **kwargs)
             self.coef_[scope] = estimator.coef_.copy()
             residuals = residuals - estimator.predict(X[:, scope])

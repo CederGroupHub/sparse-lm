@@ -3,7 +3,7 @@ import numpy as np
 import numpy.testing as npt
 import pytest
 
-from sparselm.model import L2L0, CompositeEstimator, Lasso
+from sparselm.model import L2L0, Lasso, StepwiseEstimator
 
 
 def test_make_composite():
@@ -11,58 +11,60 @@ def test_make_composite():
     lasso1 = Lasso(fit_intercept=True, alpha=1.0)
     lasso2 = Lasso(fit_intercept=True, alpha=2.0)
     l2l0 = L2L0(groups=[0, 0, 1, 2], alpha=0.1, eta=4.0)
+    steps = [("lasso1", lasso1), ("lasso2", lasso2), ("l2l0", l2l0)]
 
     # Not enough scopes
     scope1 = [0, 1, 8]
     scope2 = [2, 3]
     with pytest.raises(ValueError):
-        _ = CompositeEstimator([lasso1, lasso2, l2l0], [scope1, scope2])
+        _ = StepwiseEstimator(steps, [scope1, scope2])
 
     # Bad scopes with overlap on 8.
     scope1 = [0, 1, 8]
     scope2 = [2, 3]
     scope3 = [4, 5, 6, 7, 8]
     with pytest.raises(ValueError):
-        _ = CompositeEstimator([lasso1, lasso2, l2l0], [scope1, scope2, scope3])
+        _ = StepwiseEstimator(steps, [scope1, scope2, scope3])
 
     # Bad scopes with missing index 5.
     scope1 = [0, 1, 8]
     scope2 = [2, 3]
     scope3 = [4, 6, 7]
     with pytest.raises(ValueError):
-        _ = CompositeEstimator([lasso1, lasso2, l2l0], [scope1, scope2, scope3])
+        _ = StepwiseEstimator(steps, [scope1, scope2, scope3])
 
     scope1 = [0, 1, 8]
     scope2 = [2, 3]
     scope3 = [4, 5, 6, 7]
-    estimator = CompositeEstimator([lasso1, lasso2, l2l0], [scope1, scope2, scope3])
+    estimator = StepwiseEstimator(steps, [scope1, scope2, scope3])
     assert estimator._estimators[0].fit_intercept
     assert not estimator._estimators[1].fit_intercept
     assert not estimator._estimators[2].fit_intercept
 
     # check parameters. Nested estimator case not tested yet.
     params = estimator.get_params(deep=True)
-    assert params["alpha_0"] == 1.0
-    assert params["alpha_1"] == 2.0
-    assert params["alpha_2"] == 0.1
-    assert params["eta_2"] == 4.0
-    estimator.set_params(alpha_1=0.5, alpha_2=0.2, eta_2=3.0)
+    assert params["lasso1__alpha"] == 1.0
+    assert params["lasso2__alpha"] == 2.0
+    assert params["l2l0__alpha"] == 0.1
+    assert params["l2l0__eta"] == 4.0
+    estimator.set_params(lasso2__alpha=0.5, l2l0__alpha=0.2, l2l0__eta=3.0)
     params = estimator.get_params(deep=True)
-    assert params["alpha_0"] == 1.0
-    assert params["alpha_1"] == 0.5
-    assert params["alpha_2"] == 0.2
-    assert params["eta_2"] == 3.0
+    assert params["lasso1__alpha"] == 1.0
+    assert params["lasso2__alpha"] == 0.5
+    assert params["l2l0__alpha"] == 0.2
+    assert params["l2l0__eta"] == 3.0
 
 
 def test_toy_composite():
     lasso1 = Lasso(fit_intercept=True, alpha=1e-9)
     lasso2 = Lasso(fit_intercept=True, alpha=1e-9)
     l2l0 = L2L0(groups=[0, 0, 1, 2], alpha=0, eta=1e-9)
+    steps = [("lasso1", lasso1), ("lasso2", lasso2), ("l2l0", l2l0)]
 
     scope1 = [0, 1, 8]
     scope2 = [2, 3]
     scope3 = [4, 5, 6, 7]
-    estimator = CompositeEstimator([lasso1, lasso2, l2l0], [scope1, scope2, scope3])
+    estimator = StepwiseEstimator(steps, [scope1, scope2, scope3])
 
     w_test = np.random.normal(scale=2, size=9) * 0.2
     w_test[0] = 10
@@ -81,7 +83,7 @@ def test_toy_composite():
     assert not np.isclose(estimator.intercept_, 0)
     assert not np.any(np.isnan(estimator.coef_))
 
-    for sub, scope in zip(estimator._estimators, estimator._estimator_scopes):
+    for sub, scope in zip(estimator._estimators, estimator._estimator_feature_indices):
         npt.assert_array_almost_equal(sub.coef_, estimator.coef_[scope])
     coef_1 = estimator.coef_.copy()
     intercept_1 = estimator.intercept_

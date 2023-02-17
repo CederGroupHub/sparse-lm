@@ -6,7 +6,6 @@ from ._adaptive_lasso import (
     AdaptiveRidgedGroupLasso,
     AdaptiveSparseGroupLasso,
 )
-from ._composite import CompositeEstimator
 from ._lasso import (
     GroupLasso,
     Lasso,
@@ -22,9 +21,10 @@ from ._miqp import (
     RidgedBestSubsetSelection,
 )
 from ._ols import OrdinaryLeastSquares
+from ._stepwise import StepwiseEstimator
 
 __all__ = [
-    "CompositeEstimator",
+    "StepwiseEstimator",
     "OrdinaryLeastSquares",
     "Lasso",
     "BestSubsetSelection",
