@@ -47,7 +47,9 @@ class StepwiseEstimator(RegressorMixin, LinearModel):
                    wrapping them up with the composite!
         """
         if len(steps) != len(estimator_feature_indices):
-            raise ValueError("Must specify a list of feature indices" " for each step!")
+            raise ValueError(
+                "Must specify a list of feature indices" " for each step!"
+            )
         full_scope = sorted(set(chain(*estimator_feature_indices)))
         if full_scope != sorted(
             chain(*estimator_feature_indices)
@@ -59,12 +61,14 @@ class StepwiseEstimator(RegressorMixin, LinearModel):
         for step_name, estimator in steps:
             if isinstance(estimator, StepwiseEstimator):
                 raise ValueError(
-                    "Cannot add a StepwiseEstimator into a" " CompositeEstimator!"
+                    "Cannot add a StepwiseEstimator into a"
+                    " CompositeEstimator!"
                 )
 
         self._step_names, self._estimators = tuple(zip(*steps))
         self._estimator_feature_indices = [
-            np.array(scope, dtype=int).tolist() for scope in estimator_feature_indices
+            np.array(scope, dtype=int).tolist()
+            for scope in estimator_feature_indices
         ]
         self._full_scope = full_scope
         # Only the first estimator is allowed to fit intercept.
@@ -75,7 +79,9 @@ class StepwiseEstimator(RegressorMixin, LinearModel):
     # Overwrite the class method in BaseEstimator as an object method.
     def _get_param_names(self):
         """Get parameter names for all estimators in the composite."""
-        all_params = [estimator._get_param_names() for estimator in self._estimators]
+        all_params = [
+            estimator._get_param_names() for estimator in self._estimators
+        ]
         all_names = []
         for step_name, names in zip(self._step_names, all_params):
             for name in names:
@@ -100,7 +106,9 @@ class StepwiseEstimator(RegressorMixin, LinearModel):
                 also estimators.
         """
         out = dict()
-        est_params = [estimator.get_params(deep=deep) for estimator in self._estimators]
+        est_params = [
+            estimator.get_params(deep=deep) for estimator in self._estimators
+        ]
         for name in self._get_param_names():
             step_ind, param_name = self._get_step_param_name(name)
             out[name] = est_params[step_ind].get(param_name)
@@ -126,7 +134,9 @@ class StepwiseEstimator(RegressorMixin, LinearModel):
         for name, value in params.items():
             step_ind, real_name = self._get_step_param_name(name)
             params_for_estimators[step_ind][real_name] = value
-        for estimator_params, estimator in zip(params_for_estimators, self._estimators):
+        for estimator_params, estimator in zip(
+            params_for_estimators, self._estimators
+        ):
             estimator.set_params(**estimator_params)
 
         return self
@@ -173,8 +183,12 @@ class StepwiseEstimator(RegressorMixin, LinearModel):
 
         self.coef_ = np.empty(X.shape[1])
         self.coef_.fill(np.nan)
-        for estimator, scope in zip(self._estimators, self._estimator_feature_indices):
-            estimator.fit(X[:, scope], residuals, sample_weight, *args, **kwargs)
+        for estimator, scope in zip(
+            self._estimators, self._estimator_feature_indices
+        ):
+            estimator.fit(
+                X[:, scope], residuals, sample_weight, *args, **kwargs
+            )
             self.coef_[scope] = estimator.coef_.copy()
             residuals = residuals - estimator.predict(X[:, scope])
             # Only the first estimator is allowed to fit intercept.

@@ -128,7 +128,9 @@ class RegularizedL0(MIQP_L0):
     def _gen_objective(self, X, y):
         """Generate the quadratic form and l0 portion of objective."""
         c0 = 2 * X.shape[0]  # keeps hyperparameter scale independent
-        objective = super()._gen_objective(X, y) + c0 * self._alpha * cp.sum(self._z0)
+        objective = super()._gen_objective(X, y) + c0 * self._alpha * cp.sum(
+            self._z0
+        )
         return objective
 
 
@@ -334,7 +336,9 @@ class L1L0(MixedL0):
         """Generate the objective function used in l1l0 regression model."""
         self._z1 = cp.Variable(X.shape[1])
         c0 = 2 * X.shape[0]  # keeps hyperparameter scale independent
-        objective = super()._gen_objective(X, y) + c0 * self._eta * cp.sum(self._z1)
+        objective = super()._gen_objective(X, y) + c0 * self._eta * cp.sum(
+            self._z1
+        )
         return objective
 
 
