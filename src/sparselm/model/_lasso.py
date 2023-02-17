@@ -320,7 +320,8 @@ class SparseGroupLasso(GroupLasso):
             + \alpha r ||\beta||_1
             + \alpha (1 - r) * \sum_{G}||\beta_G||_2
 
-    Where G represents groups of features / coefficients. And r is the L1 ratio.
+    Where G represents groups of features / coefficients. And r is the L1
+    ratio.
     """
 
     def __init__(

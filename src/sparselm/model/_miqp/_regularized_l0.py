@@ -1,6 +1,7 @@
 """MIQP based solvers for sparse solutions with hierarchical constraints.
 
-Generalized regularized l0 solvers that allow grouping parameters as detailed in:
+Generalized regularized l0 solvers that allow grouping parameters as detailed
+in:
 
     https://doi.org/10.1287/opre.2015.1436
 
@@ -12,8 +13,8 @@ L2L0 proposed by Peichen Zhong:
 
     https://journals.aps.org/prb/abstract/10.1103/PhysRevB.106.024203
 
-Estimators allow optional inclusion of hierarchical constraints at the single coefficient
-or group of coefficients level.
+Estimators allow optional inclusion of hierarchical constraints at the single
+coefficient or group of coefficients level.
 """
 
 __author__ = "Luis Barroso-Luque, Fengyu Xie"
@@ -29,10 +30,10 @@ from ._base import MIQP_L0
 
 
 class RegularizedL0(MIQP_L0):
-    r"""Implementation of mixed-integer quadratic programming l0 regularized estimator.
+    r"""Implementation of MIQP l0 regularization.
 
-    Supports grouping parameters and group-level hierarchy, but requires groups as a
-    compulsory argument.
+    Supports grouping parameters and group-level hierarchy, but requires groups
+    as a compulsory argument.
 
     Regularized model:
 
@@ -40,9 +41,8 @@ class RegularizedL0(MIQP_L0):
 
         || X \beta - y ||^2_2 + \alpha \sum_{G} z_G
 
-    Where G represents groups of features/coefficients and :math:`z_G` is are boolean
-    valued slack variables.
-
+    Where G represents groups of features/coefficients and :math:`z_G` is are
+    boolean valued slack variables.
     """
 
     def __init__(
@@ -62,11 +62,11 @@ class RegularizedL0(MIQP_L0):
 
         Args:
             groups (list or ndarray):
-                1D array-like of integers specifying groups. Length should be the
-                same as model, where each integer entry specifies the group
-                each parameter corresponds to. If no grouping is needed pass a list
-                of all distinct numbers (ie range(len(coefs)) to create singleton groups
-                for each parameter.
+                1D array-like of integers specifying groups. Length should be
+                the same as model, where each integer entry specifies the group
+                each parameter corresponds to. If no grouping is needed pass a
+                list of all distinct numbers (ie range(len(coefs)) to create
+                singleton groups for each parameter.
             alpha (float):
                 L0 pseudo-norm regularization hyper-parameter.
             big_M (float):
@@ -81,9 +81,10 @@ class RegularizedL0(MIQP_L0):
                 group 0 depends on 1, and 2; 1 depends on 0, and 2 has no
                 dependence.
             ignore_psd_check (bool):
-                Whether to ignore cvxpy's PSD checks  of matrix used in quadratic
-                form. Default is True to avoid raising errors for poorly
-                conditioned matrices. But if you want to be strict set to False.
+                Whether to ignore cvxpy's PSD checks  of matrix used in
+                quadratic form. Default is True to avoid raising errors for
+                poorly conditioned matrices. But if you want to be strict set
+                to False.
             fit_intercept (bool):
                 Whether the intercept should be estimated or not.
                 If False, the data is assumed to be already centered.
@@ -125,14 +126,14 @@ class RegularizedL0(MIQP_L0):
         self._alpha.value = val
 
     def _gen_objective(self, X, y):
-        """Generate the quadratic form and l0 regularization portion of objective."""
+        """Generate the quadratic form and l0 portion of objective."""
         c0 = 2 * X.shape[0]  # keeps hyperparameter scale independent
         objective = super()._gen_objective(X, y) + c0 * self._alpha * cp.sum(self._z0)
         return objective
 
 
 class MixedL0(RegularizedL0, metaclass=ABCMeta):
-    """Abstract base class for mixed L0 regularization models: L1L0 and L2L0."""
+    """Abstract base class for mixed L0 regularization: L1L0 and L2L0."""
 
     def __init__(
         self,
@@ -152,15 +153,16 @@ class MixedL0(RegularizedL0, metaclass=ABCMeta):
 
         Args:
             groups (list or ndarray):
-                1D array-like of integers specifying groups. Length should be the
-                same as model, where each integer entry specifies the group
-                each parameter corresponds to. If no grouping is needed pass a list
-                of all distinct numbers (ie range(len(coefs)) to create singleton groups
-                for each parameter.
+                1D array-like of integers specifying groups. Length should be
+                the same as model, where each integer entry specifies the group
+                each parameter corresponds to. If no grouping is needed pass a
+                list of all distinct numbers (ie range(len(coefs)) to create
+                singleton groups for each parameter.
             alpha (float):
                 L0 pseudo-norm regularization hyper-parameter.
             eta (float):
-                standard norm regularization hyper-parameter (usually l1 or l2).
+                standard norm regularization hyper-parameter (usually l1 or
+                l2).
             big_M (float):
                 Upper bound on the norm of coefficients associated with each
                 cluster (groups of coefficients) ||Beta_c||_2
@@ -173,9 +175,10 @@ class MixedL0(RegularizedL0, metaclass=ABCMeta):
                 coefficient 0 depends on 1, and 2; 1 depends on 0, and 2 has no
                 dependence.
             ignore_psd_check (bool):
-                Whether to ignore cvxpy's PSD checks  of matrix used in quadratic
-                form. Default is True to avoid raising errors for poorly
-                conditioned matrices. But if you want to be strict set to False.
+                Whether to ignore cvxpy's PSD checks  of matrix used in
+                quadratic form. Default is True to avoid raising errors for
+                poorly conditioned matrices. But if you want to be strict set
+                to False.
             fit_intercept (bool):
                 Whether the intercept should be estimated or not.
                 If False, the data is assumed to be already centered.
@@ -241,8 +244,8 @@ class L1L0(MixedL0):
 
         || X \beta - y ||^2_2 + \alpha \sum_{G} z_G + \eta ||\beta||_1
 
-    Where G represents groups of features/coefficients and :math:`z_G` is are boolean
-    valued slack variables.
+    Where G represents groups of features/coefficients and :math:`z_G` is are
+    boolean valued slack variables.
     """
 
     def __init__(
@@ -263,11 +266,11 @@ class L1L0(MixedL0):
 
         Args:
             groups (list or ndarray):
-                1D array-like of integers specifying groups. Length should be the
-                same as model, where each integer entry specifies the group
-                each parameter corresponds to. If no grouping is needed pass a list
-                of all distinct numbers (ie range(len(coefs)) to create singleton groups
-                for each parameter.
+                1D array-like of integers specifying groups. Length should be
+                the same as model, where each integer entry specifies the group
+                each parameter corresponds to. If no grouping is needed pass a
+                list of all distinct numbers (ie range(len(coefs)) to create
+                singleton groups for each parameter.
             alpha (float):
                 L0 pseudo-norm regularization hyper-parameter.
             eta (float):
@@ -284,9 +287,10 @@ class L1L0(MixedL0):
                 coefficient 0 depends on 1, and 2; 1 depends on 0, and 2 has no
                 dependence.
             ignore_psd_check (bool):
-                Whether to ignore cvxpy's PSD checks of matrix used in quadratic
-                form. Default is True to avoid raising errors for poorly
-                conditioned matrices. But if you want to be strict set to False.
+                Whether to ignore cvxpy's PSD checks of matrix used in
+                quadratic form. Default is True to avoid raising errors for
+                poorly conditioned matrices. But if you want to be strict set
+                to False.
             fit_intercept (bool):
                 Whether the intercept should be estimated or not.
                 If False, the data is assumed to be already centered.
@@ -337,13 +341,13 @@ class L1L0(MixedL0):
 class L2L0(TikhonovMixin, MixedL0):
     r"""L2L0 regularized estimator.
 
-    Based on estimator with L2L0 regularization solved with mixed integer programming
-    proposed by Peichen Zhong:
+    Based on estimator with L2L0 regularization solved with mixed integer
+    programming proposed by Peichen Zhong:
 
     https://arxiv.org/abs/2204.13789
 
-    Extended to allow grouping of coefficients and group-level hierarchy as described
-    in:
+    Extended to allow grouping of coefficients and group-level hierarchy as
+    described in:
 
     https://doi.org/10.1287/opre.2015.1436
 
@@ -355,8 +359,8 @@ class L2L0(TikhonovMixin, MixedL0):
 
         || X \beta - y ||^2_2 + \alpha \sum_{G} z_G + \eta ||W\beta||^2_2
 
-    Where G represents groups of features/coefficients and :math:`z_G` is are boolean
-    valued slack variables. W is a Tikhonov matrix.
+    Where G represents groups of features/coefficients and :math:`z_G` is are
+    boolean valued slack variables. W is a Tikhonov matrix.
     """
 
     def __init__(
@@ -378,11 +382,11 @@ class L2L0(TikhonovMixin, MixedL0):
 
         Args:
             groups (list or ndarray):
-                1D array-like of integers specifying groups. Length should be the
-                same as model, where each integer entry specifies the group
-                each parameter corresponds to. If no grouping is needed pass a list
-                of all distinct numbers (ie range(len(coefs)) to create singleton groups
-                for each parameter.
+                1D array-like of integers specifying groups. Length should be
+                the same as model, where each integer entry specifies the group
+                each parameter corresponds to. If no grouping is needed pass a
+                list of all distinct numbers (ie range(len(coefs)) to create
+                singleton groups for each parameter.
             alpha (float):
                 L0 pseudo-norm regularization hyper-parameter.
             eta (float):
@@ -401,9 +405,10 @@ class L2L0(TikhonovMixin, MixedL0):
             tikhonov_w (np.array):
                 Matrix to add weights to L2 regularization.
             ignore_psd_check (bool):
-                Wether to ignore cvxpy's PSD checks of matrix used in quadratic
-                form. Default is True to avoid raising errors for poorly
-                conditioned matrices. But if you want to be strict set to False.
+                Wether to ignore cvxpy's PSD checks of matrix used in
+                quadratic form. Default is True to avoid raising errors for
+                poorly conditioned matrices. But if you want to be strict set
+                to False.
             fit_intercept (bool):
                 Whether the intercept should be estimated or not.
                 If False, the data is assumed to be already centered.

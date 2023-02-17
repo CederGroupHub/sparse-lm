@@ -190,9 +190,9 @@ class AdaptiveGroupLasso(AdaptiveLasso, GroupLasso):
                 Absolute convergence tolerance for difference between weights
                 at successive steps.
             update_function (Callable): optional
-                A function with signature f(group_norms, eps) used to update the
-                weights at each iteration. Where group_norms are the norms of
-                the coefficients Beta for each group.
+                A function with signature f(group_norms, eps) used to update
+                the weights at each iteration. Where group_norms are the norms
+                of the coefficients Beta for each group.
                 Default is 1/(group_norms + eps)
             standardize (bool): optional
                 Whether to standardize the group regularization penalty using
@@ -306,9 +306,9 @@ class AdaptiveOverlapGroupLasso(OverlapGroupLasso, AdaptiveGroupLasso):
                 Absolute convergence tolerance for difference between weights
                 at successive steps.
             update_function (Callable): optional
-                A function with signature f(group_norms, eps) used to update the
-                weights at each iteration. Where group_norms are the norms of
-                the coefficients Beta for each group.
+                A function with signature f(group_norms, eps) used to update
+                the weights at each iteration. Where group_norms are the norms
+                of the coefficients Beta for each group.
                 Default is 1/(group_norms + eps)
             standardize (bool): optional
                 Whether to standardize the group regularization penalty using
@@ -360,7 +360,7 @@ class AdaptiveOverlapGroupLasso(OverlapGroupLasso, AdaptiveGroupLasso):
 
 
 class AdaptiveSparseGroupLasso(AdaptiveLasso, SparseGroupLasso):
-    r"""Adaptive Sparse Group Lasso, iteratively re-weighted sparse group lasso.
+    r"""Adaptive Sparse Group Lasso, iteratively re-weighted.
 
     Regularized model:
 
@@ -416,9 +416,9 @@ class AdaptiveSparseGroupLasso(AdaptiveLasso, SparseGroupLasso):
                 Absolute convergence tolerance for difference between weights
                 at successive steps.
             update_function (Callable): optional
-                A function with signature f(group_norms, eps) used to update the
-                weights at each iteration. Where group_norms are the norms of
-                the coefficients Beta for each group.
+                A function with signature f(group_norms, eps) used to update
+                the weights at each iteration. Where group_norms are the norms
+                of the coefficients Beta for each group.
                 Default is 1/(group_norms + eps)
             standardize (bool): optional
                 Whether to standardize the group regularization penalty using
@@ -512,8 +512,8 @@ class AdaptiveRidgedGroupLasso(AdaptiveGroupLasso, RidgedGroupLasso):
     For details on proper standardization refer to:
     http://faculty.washington.edu/nrsimon/standGL.pdf
 
-    * Adaptive iterative weights are only done on the group norm and not the ridge
-    portion.
+    * Adaptive iterative weights are only done on the group norm and not the
+    ridge portion.
     """
 
     def __init__(
@@ -561,9 +561,9 @@ class AdaptiveRidgedGroupLasso(AdaptiveGroupLasso, RidgedGroupLasso):
                 Absolute convergence tolerance for difference between weights
                 at successive steps.
             update_function (Callable): optional
-                A function with signature f(group_norms, eps) used to update the
-                weights at each iteration. Where group_norms are the norms of
-                the coefficients Beta for each group.
+                A function with signature f(group_norms, eps) used to update
+                the weights at each iteration. Where group_norms are the norms
+                of the coefficients Beta for each group.
                 Default is 1/(group_norms + eps)
             copy_X (bool):
                 If True, X will be copied; else, it may be overwritten.

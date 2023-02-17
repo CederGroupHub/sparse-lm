@@ -59,7 +59,7 @@ class CompositeEstimator(RegressorMixin, LinearModel):
         for estimator in estimators:
             if isinstance(estimator, CompositeEstimator):
                 raise ValueError(
-                    "Cannot add a CompositeEstimator" " into a CompositeEstimator!"
+                    "Cannot add a CompositeEstimator into a" " CompositeEstimator!"
                 )
 
         self._estimators = estimators
