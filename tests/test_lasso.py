@@ -81,7 +81,9 @@ def test_adaptive_lasso_sparser(random_model):
     lasso.fit(X, y)
     alasso.fit(X, y)
 
-    assert sum(abs(lasso.coef_) > THRESHOLD) >= sum(abs(alasso.coef_) > THRESHOLD)
+    assert sum(abs(lasso.coef_) > THRESHOLD) >= sum(
+        abs(alasso.coef_) > THRESHOLD
+    )
 
 
 # TODO flakey test, depends on THRESHOLD value
@@ -276,13 +278,17 @@ def test_set_parameters(estimator_cls, random_model_with_groups, rng):
 
     if hasattr(estimator, "delta"):
         estimator.delta = 4.0
-        npt.assert_array_equal(estimator.delta, 4.0 * np.ones(len(np.unique(groups))))
+        npt.assert_array_equal(
+            estimator.delta, 4.0 * np.ones(len(np.unique(groups)))
+        )
         npt.assert_array_equal(
             estimator._delta.value, 4.0 * np.ones(len(np.unique(groups)))
         )
 
         estimator.delta = 3.0 * np.ones(len(np.unique(groups)))
-        npt.assert_array_equal(estimator.delta, 3.0 * np.ones(len(np.unique(groups))))
+        npt.assert_array_equal(
+            estimator.delta, 3.0 * np.ones(len(np.unique(groups)))
+        )
         npt.assert_array_equal(
             estimator._delta.value, 3.0 * np.ones(len(np.unique(groups)))
         )
