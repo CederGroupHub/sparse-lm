@@ -8,9 +8,12 @@ import numpy as np
 from numpy.typing import ArrayLike
 from sklearn.base import RegressorMixin
 from sklearn.linear_model._base import LinearModel
+from sklearn.utils.metaestimators import _BaseComposition
+
+# BaseComposition makes sure that StepwiseEstimator can be correctly cloned.
 
 
-class StepwiseEstimator(RegressorMixin, LinearModel):
+class StepwiseEstimator(_BaseComposition, RegressorMixin, LinearModel):
     """A composite estimator used to do stepwise fitting.
 
     The first estimator in the composite will be used to fit
@@ -62,34 +65,20 @@ class StepwiseEstimator(RegressorMixin, LinearModel):
                     "Cannot add a StepwiseEstimator into a" " CompositeEstimator!"
                 )
 
-        self._step_names, self._estimators = tuple(zip(*steps))
-        self._estimator_feature_indices = [
+        self.steps = steps
+        self.estimator_feature_indices = [
             np.array(scope, dtype=int).tolist() for scope in estimator_feature_indices
         ]
+
+        self._step_names, self._estimators = tuple(zip(*steps))
+
         self._full_scope = full_scope
         # Only the first estimator is allowed to fit intercept.
         if len(self._estimators) > 1:
             for estimator in self._estimators[1:]:
                 estimator.fit_intercept = False
 
-    # Overwrite the class method in BaseEstimator as an object method.
-    def _get_param_names(self):
-        """Get parameter names for all estimators in the composite."""
-        all_params = [estimator._get_param_names() for estimator in self._estimators]
-        all_names = []
-        for step_name, names in zip(self._step_names, all_params):
-            for name in names:
-                all_names.append(step_name + "__" + name)
-        return all_names
-
-    def _get_step_param_name(self, name):
-        # Must contain at least 1 double underscores.
-        splitted = name.split("__")
-        step_name = splitted[0]
-        step_ind = self._step_names.index(step_name)
-        param_name = "__".join(splitted[1:])
-        return step_ind, param_name
-
+    # Overwrite the method in BaseEstimator.
     def get_params(self, deep=True):
         """Get parameters of all estimators in the composite.
 
@@ -99,12 +88,7 @@ class StepwiseEstimator(RegressorMixin, LinearModel):
                 composite, and their contained sub-objects if they are
                 also estimators.
         """
-        out = dict()
-        est_params = [estimator.get_params(deep=deep) for estimator in self._estimators]
-        for name in self._get_param_names():
-            step_ind, param_name = self._get_step_param_name(name)
-            out[name] = est_params[step_ind].get(param_name)
-        return out
+        return self._get_params("steps", deep=deep)
 
     def set_params(self, **params):
         """Set parameters for each estimator in the composite.
@@ -118,17 +102,7 @@ class StepwiseEstimator(RegressorMixin, LinearModel):
             going to be set.
             Remember only to set params you wish to optimize!
         """
-        if not params:
-            # Simple optimization to gain speed (inspect is slow)
-            return self
-
-        params_for_estimators = [{} for _ in range(len(self._estimators))]
-        for name, value in params.items():
-            step_ind, real_name = self._get_step_param_name(name)
-            params_for_estimators[step_ind][real_name] = value
-        for estimator_params, estimator in zip(params_for_estimators, self._estimators):
-            estimator.set_params(**estimator_params)
-
+        self._set_params("steps", **params)
         return self
 
     def fit(
@@ -173,7 +147,7 @@ class StepwiseEstimator(RegressorMixin, LinearModel):
 
         self.coef_ = np.empty(X.shape[1])
         self.coef_.fill(np.nan)
-        for estimator, scope in zip(self._estimators, self._estimator_feature_indices):
+        for estimator, scope in zip(self._estimators, self.estimator_feature_indices):
             estimator.fit(X[:, scope], residuals, sample_weight, *args, **kwargs)
             self.coef_[scope] = estimator.coef_.copy()
             residuals = residuals - estimator.predict(X[:, scope])

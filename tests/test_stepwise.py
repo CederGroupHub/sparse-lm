@@ -2,6 +2,7 @@
 import numpy as np
 import numpy.testing as npt
 import pytest
+from sklearn.base import clone
 
 from sparselm.model import L2L0, Lasso, StepwiseEstimator
 
@@ -43,12 +44,33 @@ def test_make_composite():
 
     # check parameters. Nested estimator case not tested yet.
     params = estimator.get_params(deep=True)
+    assert params["lasso1"].get_params(deep=True)["alpha"] == 1.0
+    assert params["lasso2"].get_params(deep=True)["alpha"] == 2.0
+    assert params["l2l0"].get_params(deep=True)["alpha"] == 0.1
+    assert params["l2l0"].get_params(deep=True)["eta"] == 4.0
     assert params["lasso1__alpha"] == 1.0
     assert params["lasso2__alpha"] == 2.0
     assert params["l2l0__alpha"] == 0.1
     assert params["l2l0__eta"] == 4.0
+
     estimator.set_params(lasso2__alpha=0.5, l2l0__alpha=0.2, l2l0__eta=3.0)
     params = estimator.get_params(deep=True)
+    assert params["lasso1"].get_params(deep=True)["alpha"] == 1.0
+    assert params["lasso2"].get_params(deep=True)["alpha"] == 0.5
+    assert params["l2l0"].get_params(deep=True)["alpha"] == 0.2
+    assert params["l2l0"].get_params(deep=True)["eta"] == 3.0
+    assert params["lasso1__alpha"] == 1.0
+    assert params["lasso2__alpha"] == 0.5
+    assert params["l2l0__alpha"] == 0.2
+    assert params["l2l0__eta"] == 3.0
+
+    # Test safe clone, such that composite can be used in the optimizers.
+    cloned = clone(estimator)
+    params = cloned.get_params(deep=True)
+    assert params["lasso1"].get_params(deep=True)["alpha"] == 1.0
+    assert params["lasso2"].get_params(deep=True)["alpha"] == 0.5
+    assert params["l2l0"].get_params(deep=True)["alpha"] == 0.2
+    assert params["l2l0"].get_params(deep=True)["eta"] == 3.0
     assert params["lasso1__alpha"] == 1.0
     assert params["lasso2__alpha"] == 0.5
     assert params["l2l0__alpha"] == 0.2
