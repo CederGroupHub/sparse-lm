@@ -83,9 +83,7 @@ def test_toy_composite():
     assert not np.isclose(estimator.intercept_, 0)
     assert not np.any(np.isnan(estimator.coef_))
 
-    for sub, scope in zip(
-        estimator._estimators, estimator._estimator_feature_indices
-    ):
+    for sub, scope in zip(estimator._estimators, estimator._estimator_feature_indices):
         npt.assert_array_almost_equal(sub.coef_, estimator.coef_[scope])
     coef_1 = estimator.coef_.copy()
     intercept_1 = estimator.intercept_

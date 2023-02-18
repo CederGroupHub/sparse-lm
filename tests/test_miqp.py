@@ -26,8 +26,7 @@ def assert_hierarchy_respected(coef, slack_z, hierarchy, groups=None):
     for grp_id, active, parents in zip(group_ids, slack_z, hierarchy):
         if active == 1:  # all parents must also be active
             assert all(
-                (abs(coef[groups == parent]) >= THRESHOLD).all()
-                for parent in parents
+                (abs(coef[groups == parent]) >= THRESHOLD).all() for parent in parents
             )
 
 
@@ -70,9 +69,7 @@ def test_perfect_signal_recovery(sparse_coded_signal):
 
 
 @pytest.mark.parametrize("estimator_cls", MIQP_estimators)
-def test_slack_variables(
-    estimator_cls, random_model_with_groups, miqp_solver, rng
-):
+def test_slack_variables(estimator_cls, random_model_with_groups, miqp_solver, rng):
     X, y, beta, groups = random_model_with_groups
 
     # ignore groups
@@ -131,9 +128,7 @@ def test_singleton_hierarchy(estimator_cls, random_model, miqp_solver, rng):
         assert all(estimator.coef_ == 0)
     else:
         assert all(estimator.coef_ != 0)
-    assert_hierarchy_respected(
-        estimator.coef_, estimator._z0.value, fully_chained
-    )
+    assert_hierarchy_respected(estimator.coef_, estimator._z0.value, fully_chained)
 
     hierarchy = []
     for i in range(len(beta)):
@@ -157,9 +152,7 @@ def test_singleton_hierarchy(estimator_cls, random_model, miqp_solver, rng):
 
 
 @pytest.mark.parametrize("estimator_cls", MIQP_estimators)
-def test_group_hierarchy(
-    estimator_cls, random_model_with_groups, miqp_solver, rng
-):
+def test_group_hierarchy(estimator_cls, random_model_with_groups, miqp_solver, rng):
     X, y, beta, groups = random_model_with_groups
     (idx,) = beta.nonzero()
 
@@ -172,9 +165,7 @@ def test_group_hierarchy(
     else:
         estimator = estimator_cls(groups, alpha=3.0, solver=miqp_solver)
 
-    fully_chained = [[len(group_ids) - 1]] + [
-        [i] for i in range(0, len(group_ids) - 1)
-    ]
+    fully_chained = [[len(group_ids) - 1]] + [[i] for i in range(0, len(group_ids) - 1)]
     estimator.hierarchy = fully_chained
     estimator.fit(X, y)
 
