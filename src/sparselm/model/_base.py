@@ -106,9 +106,7 @@ class CVXEstimator(RegressorMixin, LinearModel, metaclass=ABCMeta):
         )
 
         if sample_weight is not None:
-            sample_weight = _check_sample_weight(
-                sample_weight, X, dtype=X.dtype
-            )
+            sample_weight = _check_sample_weight(sample_weight, X, dtype=X.dtype)
 
         X, y, X_offset, y_offset, X_scale = self._preprocess_data(
             X, y, copy=self.copy_X, sample_weight=sample_weight
@@ -202,9 +200,7 @@ class CVXEstimator(RegressorMixin, LinearModel, metaclass=ABCMeta):
         """Solve the cvxpy problem."""
         problem = self._get_problem(X, y)
         problem.solve(
-            solver=self.solver,
-            warm_start=self.warm_start,
-            **self.solver_options
+            solver=self.solver, warm_start=self.warm_start, **self.solver_options
         )
         return self._beta.value
 
@@ -226,8 +222,8 @@ class TikhonovMixin:
         else:
             tikhonov_w = np.eye(X.shape[1])
 
-        objective = super()._gen_objective(
-            X, y
-        ) + c0 * self._eta * cp.sum_squares(tikhonov_w @ self._beta)
+        objective = super()._gen_objective(X, y) + c0 * self._eta * cp.sum_squares(
+            tikhonov_w @ self._beta
+        )
 
         return objective

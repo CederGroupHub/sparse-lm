@@ -67,13 +67,9 @@ def constrain_coefficients(indices, high=None, low=None):
             # TODO do not set features to zero, do the fit without them instead
             if sum(above_range) > 0 or sum(below_range) > 0:
                 X_, y_ = X.copy(), y.copy()
-                y_ -= np.sum(
-                    X_[:, indices[above_range]] * high[above_range], axis=1
-                )
+                y_ -= np.sum(X_[:, indices[above_range]] * high[above_range], axis=1)
                 X_[:, indices[above_range]] = 0.0
-                y_ -= np.sum(
-                    X_[:, indices[below_range]] * low[below_range], axis=1
-                )
+                y_ -= np.sum(X_[:, indices[below_range]] * low[below_range], axis=1)
                 X_[:, indices[below_range]] = 0.0
                 coefs = fit_method(X_, y_, *args, **kwargs)
                 coefs[indices[above_range]] = high[above_range]

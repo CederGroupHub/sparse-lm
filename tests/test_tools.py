@@ -25,9 +25,7 @@ def test_constrain_coefficients(test_number, rng):
     inds = rng.choice(n_features, size=3, replace=False)
 
     with warnings.catch_warnings(record=True) as w:
-        cstr_coefs = constrain_coefficients(inds, 2, 0)(partial(fit, reg=reg))(
-            X, y
-        )
+        cstr_coefs = constrain_coefficients(inds, 2, 0)(partial(fit, reg=reg))(X, y)
 
     assert cstr_coefs.shape == coefs.shape
 
@@ -35,9 +33,7 @@ def test_constrain_coefficients(test_number, rng):
     # in that case just test that the indeed that warning was raised.
     if len(w) > 0:
         with pytest.warns(RuntimeWarning):
-            cstr_coefs = constrain_coefficients(inds, 2, 0)(
-                partial(fit, reg=reg)
-            )(X, y)
+            cstr_coefs = constrain_coefficients(inds, 2, 0)(partial(fit, reg=reg))(X, y)
     else:
         for i in inds:
             assert 0 <= cstr_coefs[i] <= 2
@@ -55,9 +51,9 @@ def test_constrain_coefficients(test_number, rng):
     high = rng.random(size=3) + low
 
     with warnings.catch_warnings(record=True) as w:
-        cstr_coefs = constrain_coefficients(inds, high, low)(
-            partial(fit, reg=reg)
-        )(X, y)
+        cstr_coefs = constrain_coefficients(inds, high, low)(partial(fit, reg=reg))(
+            X, y
+        )
 
     assert cstr_coefs.shape == coefs.shape
 
@@ -65,9 +61,9 @@ def test_constrain_coefficients(test_number, rng):
     # in that case just test that the indeed that warning was raised.
     if len(w) > 0:
         with pytest.warns(RuntimeWarning):
-            cstr_coefs = constrain_coefficients(inds, high, low)(
-                partial(fit, reg=reg)
-            )(X, y)
+            cstr_coefs = constrain_coefficients(inds, high, low)(partial(fit, reg=reg))(
+                X, y
+            )
     else:
         for i, l, h in zip(inds, low, high):
             assert l <= cstr_coefs[i] <= h
@@ -82,9 +78,9 @@ def test_constrain_coefficients(test_number, rng):
 
     # just use high value
     with warnings.catch_warnings(record=True) as w:
-        cstr_coefs = constrain_coefficients(inds, high=high)(
-            partial(fit, reg=reg)
-        )(X, y)
+        cstr_coefs = constrain_coefficients(inds, high=high)(partial(fit, reg=reg))(
+            X, y
+        )
 
     assert cstr_coefs.shape == coefs.shape
 
@@ -92,18 +88,16 @@ def test_constrain_coefficients(test_number, rng):
     # in that case just test that the indeed that warning was raised.
     if len(w) > 0:
         with pytest.warns(RuntimeWarning):
-            cstr_coefs = constrain_coefficients(inds, high=high)(
-                partial(fit, reg=reg)
-            )(X, y)
+            cstr_coefs = constrain_coefficients(inds, high=high)(partial(fit, reg=reg))(
+                X, y
+            )
     else:
         for i, h in zip(inds, high):
             assert cstr_coefs[i] <= h
 
     # just use low value
     with warnings.catch_warnings(record=True) as w:
-        cstr_coefs = constrain_coefficients(inds, low=low)(
-            partial(fit, reg=reg)
-        )(X, y)
+        cstr_coefs = constrain_coefficients(inds, low=low)(partial(fit, reg=reg))(X, y)
 
     assert cstr_coefs.shape == coefs.shape
 
@@ -111,9 +105,9 @@ def test_constrain_coefficients(test_number, rng):
     # in that case just test that the indeed that warning was raised.
     if len(w) > 0:
         with pytest.warns(RuntimeWarning):
-            cstr_coefs = constrain_coefficients(inds, low=low)(
-                partial(fit, reg=reg)
-            )(X, y)
+            cstr_coefs = constrain_coefficients(inds, low=low)(partial(fit, reg=reg))(
+                X, y
+            )
     else:
         for i, l in zip(inds, low):
             assert l <= cstr_coefs[i]

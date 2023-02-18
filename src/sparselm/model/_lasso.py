@@ -89,9 +89,7 @@ class Lasso(CVXEstimator):
     def _gen_objective(self, X, y):
         # can also use cp.norm2(X @ self._beta - y)**2 not sure whats better
         reg = self._gen_regularization(X)
-        objective = (
-            1 / (2 * X.shape[0]) * cp.sum_squares(X @ self._beta - y) + reg
-        )
+        objective = 1 / (2 * X.shape[0]) * cp.sum_squares(X @ self._beta - y) + reg
         return objective
 
 
@@ -187,10 +185,7 @@ class GroupLasso(Lasso):
     def _gen_group_norms(self, X):
         if self.standardize:
             grp_norms = cp.hstack(
-                [
-                    cp.norm2(X[:, mask] @ self._beta[mask])
-                    for mask in self.group_masks
-                ]
+                [cp.norm2(X[:, mask] @ self._beta[mask]) for mask in self.group_masks]
             )
         else:
             grp_norms = cp.hstack(
@@ -311,10 +306,7 @@ class OverlapGroupLasso(GroupLasso):
             **self.solver_options,
         )
         beta = np.array(
-            [
-                sum(self._beta.value[self.beta_indices == i])
-                for i in range(X.shape[1])
-            ]
+            [sum(self._beta.value[self.beta_indices == i]) for i in range(X.shape[1])]
         )
         return beta
 
@@ -443,9 +435,7 @@ class SparseGroupLasso(GroupLasso):
     def _gen_regularization(self, X):
         grp_norms = super()._gen_group_norms(X)
         l1_reg = cp.norm1(self._beta)
-        reg = self._lambda1 * l1_reg + self._lambda2 * (
-            self.group_weights @ grp_norms
-        )
+        reg = self._lambda1 * l1_reg + self._lambda2 * (self.group_weights @ grp_norms)
         return reg
 
 
@@ -573,9 +563,6 @@ class RidgedGroupLasso(GroupLasso):
         ridge = cp.hstack(
             [cp.sum_squares(self._beta[mask]) for mask in self.group_masks]
         )
-        reg = (
-            self._alpha * self.group_weights @ grp_norms
-            + 0.5 * self._delta @ ridge
-        )
+        reg = self._alpha * self.group_weights @ grp_norms + 0.5 * self._delta @ ridge
 
         return reg
