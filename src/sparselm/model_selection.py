@@ -204,17 +204,13 @@ class GridSearchCV(_GridSearchCV):
             m = results[f"mean_test_{refit_metric}"][opt_index]
             sig = results[f"std_test_{refit_metric}"][opt_index]
             metrics = results[f"mean_test_{refit_metric}"]
-            param_names = [
-                key for key in results if re.match(r"^param_(\w+)", key)
-            ]
+            param_names = [key for key in results if re.match(r"^param_(\w+)", key)]
             params = []
             # Will only apply one std rule on numerical, all positive
             # parameters, which are usually regularization factors.
             # All parameters are equally treated in grid and line search.
             for name in param_names:
-                if all(
-                    isinstance(val, numbers.Number) for val in results[name]
-                ):
+                if all(isinstance(val, numbers.Number) for val in results[name]):
                     p = np.array(results[name], dtype=float)
                     if np.all(p > -1e-9):
                         params.append(p)
@@ -291,9 +287,7 @@ class GridSearchCV(_GridSearchCV):
             all_out = []
             all_more_results = defaultdict(list)
 
-            def evaluate_candidates(
-                candidate_params, cv=None, more_results=None
-            ):
+            def evaluate_candidates(candidate_params, cv=None, more_results=None):
                 cv = cv or cv_orig
                 candidate_params = list(candidate_params)
                 n_candidates = len(candidate_params)
@@ -337,9 +331,7 @@ class GridSearchCV(_GridSearchCV):
                     raise ValueError(
                         "cv.split and cv.get_n_splits returned "
                         "inconsistent results. Expected {} "
-                        "splits, got {}".format(
-                            n_splits, len(out) // n_candidates
-                        )
+                        "splits, got {}".format(n_splits, len(out) // n_candidates)
                     )
 
                 _warn_or_raise_about_fit_failures(out, self.error_score)
@@ -601,14 +593,10 @@ class LineSearchCV(BaseSearchCV):
         ):
             self.n_params = len(param_grid)
         else:
-            raise ValueError(
-                "Parameters grid not given in the correct" " format!"
-            )
+            raise ValueError("Parameters grid not given in the correct" " format!")
 
         if opt_selection_method is None:
-            self.opt_selection_methods = [
-                "max_score" for _ in range(self.n_params)
-            ]
+            self.opt_selection_methods = ["max_score" for _ in range(self.n_params)]
         elif isinstance(opt_selection_method, str):
             self.opt_selection_methods = [
                 opt_selection_method for _ in range(self.n_params)
