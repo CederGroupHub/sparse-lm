@@ -56,7 +56,7 @@ class StepwiseEstimator(RegressorMixin, LinearModel):
                 f"Estimator feature indices: {estimator_feature_indices}"
                 f" can not overlap and must be continuous!"
             )
-        for step_name, estimator in steps:
+        for _, estimator in steps:
             if isinstance(estimator, StepwiseEstimator):
                 raise ValueError(
                     "Cannot add a StepwiseEstimator into a" " CompositeEstimator!"
