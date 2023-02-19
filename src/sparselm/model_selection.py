@@ -86,7 +86,6 @@ def clone(estimator, *, safe=True):
     for name, param in new_object_params.items():
         new_object_params[name] = clone(param, safe=False)
     new_object = klass(**new_object_params)
-    params_set = new_object.get_params(deep=False)
 
     # Totally abandon equality check for now.
 

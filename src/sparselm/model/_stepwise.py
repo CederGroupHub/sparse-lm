@@ -66,8 +66,9 @@ class StepwiseEstimator(_BaseComposition, RegressorMixin, LinearModel):
                 )
 
         self.steps = steps
-        # The estimator_feature_indices saved must be tuple because in sklearn.base.clone,
-        # a cloned object is checked by pointer, rather than by value.
+        # The estimator_feature_indices saved must be tuple because in
+        # sklearn.base.clone, a cloned object is checked by pointer, rather than
+        # by value.
         self.estimator_feature_indices = [
             np.array(scope, dtype=int).tolist() for scope in estimator_feature_indices
         ]
