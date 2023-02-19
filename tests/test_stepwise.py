@@ -2,9 +2,11 @@
 import numpy as np
 import numpy.testing as npt
 import pytest
-from sklearn.base import clone
 
 from sparselm.model import L2L0, Lasso, StepwiseEstimator
+from sparselm.model_selection import (  # sklearn clone cannot be used by StepwiseEstimator.
+    clone,
+)
 
 
 def test_make_composite():
@@ -64,7 +66,8 @@ def test_make_composite():
     assert params["l2l0__alpha"] == 0.2
     assert params["l2l0__eta"] == 3.0
 
-    # Test safe clone, such that composite can be used in the optimizers.
+    # Test unsafe clone, such that composite can be used in the optimizers.
+    # Currently, have to mute sanity check from origianl sklearn clone.
     cloned = clone(estimator)
     params = cloned.get_params(deep=True)
     assert params["lasso1"].get_params(deep=True)["alpha"] == 1.0
@@ -105,7 +108,7 @@ def test_toy_composite():
     assert not np.isclose(estimator.intercept_, 0)
     assert not np.any(np.isnan(estimator.coef_))
 
-    for sub, scope in zip(estimator._estimators, estimator._estimator_feature_indices):
+    for sub, scope in zip(estimator._estimators, estimator.estimator_feature_indices):
         npt.assert_array_almost_equal(sub.coef_, estimator.coef_[scope])
     coef_1 = estimator.coef_.copy()
     intercept_1 = estimator.intercept_
