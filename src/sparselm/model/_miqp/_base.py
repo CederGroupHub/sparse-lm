@@ -89,55 +89,75 @@ class MIQP_L0(CVXEstimator, metaclass=ABCMeta):
         self.hierarchy = hierarchy
         self.ignore_psd_check = ignore_psd_check
         self.groups = groups
-        self._big_M = cp.Parameter(nonneg=True, value=big_M)
+        self.big_M = big_M
 
-    @property
-    def big_M(self):
-        """Get MIQP big M value."""
-        return self._big_M.value
-
-    @big_M.setter
-    def big_M(self, val):
-        """Set MIQP big M value."""
-        self._big_M.value = val
 
     def _validate_params(self, X: ArrayLike, y: ArrayLike):
         """Validate parameters."""
         super()._validate_params(X, y)
         check_scalar(self.big_M, "big_M", float, min_val=0.0)
         self.groups = _check_groups(self.groups, X.shape[1])
-        self._group_masks = [self.groups == i for i in np.sort(np.unique(self.groups))]
-        self._z0 = cp.Variable(len(self._group_masks), boolean=True)
+        # self._group_masks = [self.groups == i for i in np.sort(np.unique(self.groups))]
 
-    def _generate_objective(self, X, y):
+    def _set_param_values(self) -> None:
+        """Set the big M value to the underlying cvxpy parameter."""
+        self.canonicals_.big_M = self.big_M
+
+    def _generate_params(self, X: ArrayLike, y: ArrayLike) -> Optional[SimpleNamespace]:
+        n_groups = X.shape[1] if self.groups is None else len(np.unique(self.groups))
+        self.canonicals_.big_M = cp.Parameter(nonneg=True, value=self.big_M)
+
+    def _generate_auxiliaries(
+        self, X: ArrayLike, y: ArrayLike, beta: cp.Variable, parameters: SimpleNamespace
+    ) -> Optional[SimpleNamespace]:
+        """Generate the boolean slack variable."""
+        self.canonicals_.z0 = cp.Variable(n_groups, boolean=True)
+
+
+    def _generate_objective(
+        self,
+        X: ArrayLike,
+        y: ArrayLike,
+        beta: cp.Variable,
+        parameters: Optional[SimpleNamespace] = None,
+        auxiliaries: Optional[SimpleNamespace] = None,
+    ) -> cp.Expression:
         """Generate the quadratic form portion of objective."""
         # psd_wrap will ignore cvxpy PSD checks, without it errors will
         # likely be raised since correlation matrices are usually very
         # poorly conditioned
         XTX = psd_wrap(X.T @ X) if self.ignore_psd_check else X.T @ X
-        objective = cp.quad_form(self.beta_, XTX) - 2 * y.T @ X @ self.beta_
+        objective = cp.quad_form(beta, XTX) - 2 * y.T @ X @ beta
         # objective = cp.sum_squares(X @ self.beta_ - y)
         return objective
 
-    def _generate_constraints(self, X, y):
+    def _generate_constraints(
+        self,
+        X: ArrayLike,
+        y: ArrayLike,
+        parameters: Optional[SimpleNamespace] = None,
+        auxiliaries: Optional[SimpleNamespace] = None,
+    ) -> list[cp.constraints]:
         """Generate the constraints used to solve l0 regularization."""
+        groups = np.arange(X.shape[1]) if self.groups is None else self.groups
+        group_masks = [groups == i for i in np.sort(np.unique(groups))]
         constraints = []
-        for i, mask in enumerate(self._group_masks):
+        for i, mask in enumerate(group_masks):
             constraints += [
-                self.beta_[mask] <= self._big_M * self._z0[i],
-                -self._big_M * self._z0[i] <= self.beta_[mask],
+                beta[mask] <= self.big_M * auxiliaries.z0[i],
+                -self.big_M * auxiliaries.z0[i] <= beta[mask],
             ]
 
         if self.hierarchy is not None:
-            constraints += self._gen_hierarchy_constraints()
+            constraints += self._generate_hierarchy_constraints(groups, auxiliaries.z0)
 
         return constraints
 
-    def _gen_hierarchy_constraints(self):
+    def _generate_hierarchy_constraints(self, groups: ArrayLike, z0: cp.Variable):
         """Generate single feature hierarchy constraints."""
-        group_ids = np.sort(np.unique(self.groups))
+        group_ids = np.sort(np.unique(groups))
         return [
-            self._z0[high_id] <= self._z0[sub_id]
+            z0[high_id] <= z0[sub_id]
             for high_id, sub_ids in zip(group_ids, self.hierarchy)
             for sub_id in sub_ids
         ]

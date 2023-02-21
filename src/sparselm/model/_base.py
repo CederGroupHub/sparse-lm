@@ -239,6 +239,8 @@ class CVXEstimator(RegressorMixin, LinearModel, metaclass=ABCMeta):
                 Covariate/Feature matrix
             y (ArrayLike):
                 Target vector
+            beta (cp.Variable):
+                cp.Variable representing the estimated coefs_
             parameters (SimpleNamespace): optional
                 SimpleNamespace with cp.Parameter objects
             auxiliaries (SimpleNamespace): optional
@@ -253,6 +255,7 @@ class CVXEstimator(RegressorMixin, LinearModel, metaclass=ABCMeta):
         self,
         X: ArrayLike,
         y: ArrayLike,
+        beta: cp.Variable,
         parameters: Optional[SimpleNamespace] = None,
         auxiliaries: Optional[SimpleNamespace] = None,
     ) -> list[cp.constraints]:
@@ -263,6 +266,8 @@ class CVXEstimator(RegressorMixin, LinearModel, metaclass=ABCMeta):
                 Covariate/Feature matrix
             y (ArrayLike):
                 Target vector
+            beta (cp.Variable):
+                cp.Variable representing the estimated coefs_
             parameters (SimpleNamespace): optional
                 SimpleNamespace with cp.Parameter objects
             auxiliaries (SimpleNamespace): optional
@@ -286,7 +291,7 @@ class CVXEstimator(RegressorMixin, LinearModel, metaclass=ABCMeta):
         parameters = self._generate_params(X, y)
         auxiliaries = self._generate_auxiliaries(X, y, beta, parameters)
         objective = self._generate_objective(X, y, beta, parameters, auxiliaries)
-        constraints = self._generate_constraints(X, y, parameters, auxiliaries)
+        constraints = self._generate_constraints(X, y, beta, parameters, auxiliaries)
         problem = cp.Problem(cp.Minimize(objective), constraints)
         self.canonicals_ = CVXCanonicals(
             problem=problem,
