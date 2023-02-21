@@ -23,10 +23,10 @@ from scipy.linalg import sqrtm
 from sklearn.utils.validation import check_scalar
 
 from .._utils.validation import _check_group_weights, _check_groups
-from ._base import CVXCanonicals, CVXEstimator
+from ._base import CVXCanonicals, CVXEstimator, SimpleHyperparameterMixin
 
 
-class Lasso(CVXEstimator):
+class Lasso(SimpleHyperparameterMixin, CVXEstimator):
     r"""
     Lasso Estimator implemented with cvxpy.
 
@@ -37,6 +37,8 @@ class Lasso(CVXEstimator):
         || X \beta - y ||^2_2 + \alpha ||\beta||_1
 
     """
+
+    _hyperparam_names = ("alpha", )
 
     def __init__(
         self,
@@ -77,19 +79,6 @@ class Lasso(CVXEstimator):
             solver=solver,
             solver_options=solver_options,
         )
-
-    def _validate_params(self, X: ArrayLike, y: ArrayLike) -> None:
-        """Validate parameters."""
-        super()._validate_params(X, y)
-        check_scalar(self.alpha, "alpha", float, min_val=0.0)
-
-    def _set_param_values(self) -> None:
-        """Set parameter values."""
-        self.canonicals_.parameters.alpha.value = self.alpha
-
-    def _generate_params(self, X: ArrayLike, y: ArrayLike) -> Optional[SimpleNamespace]:
-        """Generate cvxpy parameters."""
-        return SimpleNamespace(alpha=cp.Parameter(nonneg=True, value=self.alpha))
 
     def _generate_regularization(
         self,

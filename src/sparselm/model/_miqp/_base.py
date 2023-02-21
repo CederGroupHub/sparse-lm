@@ -4,6 +4,8 @@
 __author__ = "Luis Barroso-Luque"
 
 from abc import ABCMeta
+from typing import Optional
+from types import SimpleNamespace
 
 import cvxpy as cp
 import numpy as np

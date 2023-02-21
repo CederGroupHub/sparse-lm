@@ -13,6 +13,7 @@ import cvxpy as cp
 import numpy as np
 from numpy.typing import ArrayLike
 from sklearn.base import RegressorMixin
+from sklearn.utils.validation import check_scalar
 from sklearn.linear_model._base import (
     LinearModel,
     _check_sample_weight,
@@ -308,6 +309,33 @@ class CVXEstimator(RegressorMixin, LinearModel, metaclass=ABCMeta):
             solver=self.solver, warm_start=self.warm_start, **solver_options
         )
         return self.canonicals_.beta.value
+
+
+# in future this can be refactored to take more complex specifications for hyperparameters
+# such as min/max, positive, etc.
+class SimpleHyperparameterMixin:
+    """Mixin class to generate, validate, and set scalar hyperparameters.
+
+    For now simple hyperparameters are scalar, floats and positive valued
+
+    Classes derived from this must set a class attribute _hyperparam_names
+    as a tuple of str with the names of scalar hyper-parameters
+    """
+    def _validate_params(self, X: ArrayLike, y: ArrayLike) -> None:
+        """Validate parameters."""
+        for param_name in self._hyperparam_names:
+            check_scalar(getattr(self, param_name), param_name, float, min_val=0.0)
+
+    def _set_param_values(self) -> None:
+        """Set parameter values."""
+        for param_name in self._hyperparam_names:
+            parameter = getattr(self.canonicals_.parameters, param_name)
+            parameter.value = getattr(self, param_name)
+
+    def _generate_params(self, X: ArrayLike, y: ArrayLike) -> Optional[SimpleNamespace]:
+        """Generate cvxpy parameters."""
+        hyperparams = {name: cp.Parameter(nonneg=True, value=getattr(self, name)) for name in self._hyperparam_names}
+        return SimpleNamespace(**hyperparams)
 
 
 class TikhonovMixin:
