@@ -14,16 +14,18 @@ from numpy.typing import ArrayLike
 from sklearn.utils.validation import check_scalar
 
 from ..._utils.validation import _check_groups
-from .._base import CVXEstimator
+from .._base import CVXEstimator, SimpleHyperparameterMixin
 
 
-class MIQP_L0(CVXEstimator, metaclass=ABCMeta):
+class MIQP_L0(SimpleHyperparameterMixin, CVXEstimator, metaclass=ABCMeta):
     """Base class for mixed-integer quadratic programming (MIQP) estimators.
 
     Generalized l0 formulation that allows grouping coefficients, based on:
 
     https://doi.org/10.1287/opre.2015.1436
     """
+
+    _hyperparam_names = ("big_M", )
 
     def __init__(
         self,
@@ -93,20 +95,12 @@ class MIQP_L0(CVXEstimator, metaclass=ABCMeta):
         self.groups = groups
         self.big_M = big_M
 
-
     def _validate_params(self, X: ArrayLike, y: ArrayLike):
         """Validate parameters."""
         super()._validate_params(X, y)
-        check_scalar(self.big_M, "big_M", float, min_val=0.0)
+        # check_scalar(self.big_M, "big_M", float, min_val=0.0)
         self.groups = _check_groups(self.groups, X.shape[1])
         # self._group_masks = [self.groups == i for i in np.sort(np.unique(self.groups))]
-
-    def _set_param_values(self) -> None:
-        """Set the big M value to the underlying cvxpy parameter."""
-        self.canonicals_.big_M = self.big_M
-
-    def _generate_params(self, X: ArrayLike, y: ArrayLike) -> Optional[SimpleNamespace]:
-        return SimpleNamespace(big_M=cp.Parameter(nonneg=True, value=self.big_M))
 
     def _generate_auxiliaries(
         self, X: ArrayLike, y: ArrayLike, beta: cp.Variable, parameters: SimpleNamespace
@@ -114,7 +108,6 @@ class MIQP_L0(CVXEstimator, metaclass=ABCMeta):
         """Generate the boolean slack variable."""
         n_groups = X.shape[1] if self.groups is None else len(np.unique(self.groups))
         return SimpleNamespace(z0=cp.Variable(n_groups, boolean=True))
-
 
     def _generate_objective(
         self,
@@ -147,8 +140,8 @@ class MIQP_L0(CVXEstimator, metaclass=ABCMeta):
         constraints = []
         for i, mask in enumerate(group_masks):
             constraints += [
-                beta[mask] <= self.big_M * auxiliaries.z0[i],
-                -self.big_M * auxiliaries.z0[i] <= beta[mask],
+                beta[mask] <= parameters.big_M * auxiliaries.z0[i],
+                -parameters.big_M * auxiliaries.z0[i] <= beta[mask],
             ]
 
         if self.hierarchy is not None:

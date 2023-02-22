@@ -31,7 +31,7 @@ from sparselm.model._base import TikhonovMixin, SimpleHyperparameterMixin
 from ._base import MIQP_L0
 
 
-class RegularizedL0(SimpleHyperparameterMixin, MIQP_L0):
+class RegularizedL0(MIQP_L0):
     r"""Implementation of mixed-integer quadratic programming l0 regularized estimator.
 
     Supports grouping parameters and group-level hierarchy, but requires groups as a
@@ -48,7 +48,7 @@ class RegularizedL0(SimpleHyperparameterMixin, MIQP_L0):
 
     """
 
-    _hyperparam_names = ("alpha", )
+    _hyperparam_names = ("alpha", "big_M")
 
     def __init__(
         self,
