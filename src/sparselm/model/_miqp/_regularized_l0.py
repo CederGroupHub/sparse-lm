@@ -20,15 +20,18 @@ __author__ = "Luis Barroso-Luque, Fengyu Xie"
 
 
 from abc import ABCMeta, abstractmethod
+from typing import Optional
+from types import SimpleNamespace
 
+from numpy.typing import ArrayLike
 import cvxpy as cp
 
-from sparselm.model._base import TikhonovMixin
+from sparselm.model._base import TikhonovMixin, SimpleHyperparameterMixin
 
 from ._base import MIQP_L0
 
 
-class RegularizedL0(MIQP_L0):
+class RegularizedL0(SimpleHyperparameterMixin, MIQP_L0):
     r"""Implementation of mixed-integer quadratic programming l0 regularized estimator.
 
     Supports grouping parameters and group-level hierarchy, but requires groups as a
@@ -44,6 +47,8 @@ class RegularizedL0(MIQP_L0):
     valued slack variables.
 
     """
+
+    _hyperparam_names = ("alpha", )
 
     def __init__(
         self,
@@ -112,23 +117,20 @@ class RegularizedL0(MIQP_L0):
             solver=solver,
             solver_options=solver_options,
         )
-        self._alpha = cp.Parameter(nonneg=True, value=alpha)
+        self.alpha = alpha
 
-    @property
-    def alpha(self):
-        """Get alpha hyperparameter value."""
-        return self._alpha.value
-
-    @alpha.setter
-    def alpha(self, val):
-        """Set alpha hyperparameter value."""
-        self._alpha.value = val
-
-    def _generate_objective(self, X, y):
+    def _generate_objective(
+        self,
+        X: ArrayLike,
+        y: ArrayLike,
+        beta: cp.Variable,
+        parameters: Optional[SimpleNamespace] = None,
+        auxiliaries: Optional[SimpleNamespace] = None,
+    ) -> cp.Expression:
         """Generate the quadratic form and l0 regularization portion of objective."""
         c0 = 2 * X.shape[0]  # keeps hyperparameter scale independent
-        objective = super()._generate_objective(X, y) + c0 * self._alpha * cp.sum(
-            self._z0
+        objective = super()._generate_objective(X, y, beta, parameters, auxiliaries) + c0 * parameters.alpha * cp.sum(
+            auxiliaries.z0
         )
         return objective
 

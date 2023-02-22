@@ -62,7 +62,8 @@ from sparselm.model import (
     OverlapGroupLasso,
     RidgedGroupLasso,
     SparseGroupLasso,
-AdaptiveRidgedGroupLasso
+    AdaptiveRidgedGroupLasso,
+    RegularizedL0
 )
 
 compliant_estimators = [
@@ -76,8 +77,10 @@ compliant_estimators = [
     AdaptiveGroupLasso,
     AdaptiveOverlapGroupLasso,
     AdaptiveSparseGroupLasso,
-    AdaptiveRidgedGroupLasso
+    AdaptiveRidgedGroupLasso,
 ]
+
+miqp_compliant_estimators = [RegularizedL0, ]
 
 
 @pytest.fixture(params=compliant_estimators)
@@ -88,3 +91,13 @@ def estimator(request):
 def test_sklearn_compatible(estimator):
     """Test sklearn compatibility with no parameter inputs."""
     check_estimator(estimator)
+
+
+@pytest.fixture(params=miqp_compliant_estimators)
+def miqp_estimator(request):
+    return request.param(fit_intercept=True, solver="SCIP")
+
+
+def test_miqp_sklearn_compatible(miqp_estimator):
+    """Test sklearn compatibility with no parameter inputs."""
+    check_estimator(miqp_estimator)

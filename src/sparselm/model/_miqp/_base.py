@@ -106,14 +106,14 @@ class MIQP_L0(CVXEstimator, metaclass=ABCMeta):
         self.canonicals_.big_M = self.big_M
 
     def _generate_params(self, X: ArrayLike, y: ArrayLike) -> Optional[SimpleNamespace]:
-        n_groups = X.shape[1] if self.groups is None else len(np.unique(self.groups))
-        self.canonicals_.big_M = cp.Parameter(nonneg=True, value=self.big_M)
+        return SimpleNamespace(big_M=cp.Parameter(nonneg=True, value=self.big_M))
 
     def _generate_auxiliaries(
         self, X: ArrayLike, y: ArrayLike, beta: cp.Variable, parameters: SimpleNamespace
     ) -> Optional[SimpleNamespace]:
         """Generate the boolean slack variable."""
-        self.canonicals_.z0 = cp.Variable(n_groups, boolean=True)
+        n_groups = X.shape[1] if self.groups is None else len(np.unique(self.groups))
+        return SimpleNamespace(z0=cp.Variable(n_groups, boolean=True))
 
 
     def _generate_objective(
@@ -137,6 +137,7 @@ class MIQP_L0(CVXEstimator, metaclass=ABCMeta):
         self,
         X: ArrayLike,
         y: ArrayLike,
+        beta: cp.Variable,
         parameters: Optional[SimpleNamespace] = None,
         auxiliaries: Optional[SimpleNamespace] = None,
     ) -> list[cp.constraints]:
