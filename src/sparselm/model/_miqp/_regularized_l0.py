@@ -20,13 +20,13 @@ __author__ = "Luis Barroso-Luque, Fengyu Xie"
 
 
 from abc import ABCMeta, abstractmethod
-from typing import Optional
 from types import SimpleNamespace
+from typing import Optional
 
-from numpy.typing import ArrayLike
 import cvxpy as cp
+from numpy.typing import ArrayLike
 
-from sparselm.model._base import TikhonovMixin, SimpleHyperparameterMixin
+from sparselm.model._base import TikhonovMixin
 
 from ._base import MIQP_L0
 
@@ -48,7 +48,7 @@ class RegularizedL0(MIQP_L0):
 
     """
 
-    _hyperparam_names = ("alpha", "big_M")
+    _hyperparam_names = ("big_M", "alpha")
 
     def __init__(
         self,
@@ -129,14 +129,16 @@ class RegularizedL0(MIQP_L0):
     ) -> cp.Expression:
         """Generate the quadratic form and l0 regularization portion of objective."""
         c0 = 2 * X.shape[0]  # keeps hyperparameter scale independent
-        objective = super()._generate_objective(X, y, beta, parameters, auxiliaries) + c0 * parameters.alpha * cp.sum(
-            auxiliaries.z0
-        )
+        objective = super()._generate_objective(
+            X, y, beta, parameters, auxiliaries
+        ) + c0 * parameters.alpha * cp.sum(auxiliaries.z0)
         return objective
 
 
 class MixedL0(RegularizedL0, metaclass=ABCMeta):
     """Abstract base class for mixed L0 regularization models: L1L0 and L2L0."""
+
+    _hyperparam_names = ("big_M", "alpha", "eta")
 
     def __init__(
         self,
@@ -209,22 +211,20 @@ class MixedL0(RegularizedL0, metaclass=ABCMeta):
             solver=solver,
             solver_options=solver_options,
         )
-        self._eta = cp.Parameter(nonneg=True, value=eta)
-
-    @property
-    def eta(self):
-        """Get eta hyperparameter value."""
-        return self._eta.value
-
-    @eta.setter
-    def eta(self, val):
-        """Set eta hyperparameter values."""
-        self._eta.val = val
+        self.eta = eta
 
     @abstractmethod
-    def _generate_objective(self, X, y):
+    def _generate_objective(
+        self,
+        X: ArrayLike,
+        y: ArrayLike,
+        beta: cp.Variable,
+        parameters: Optional[SimpleNamespace] = None,
+        auxiliaries: Optional[SimpleNamespace] = None,
+    ) -> cp.Expression:
         """Generate optimization objective."""
-        return super()._generate_objective(X, y)
+        # implement in derived classes using super to call MIQP_L0 objective
+        return super()._generate_objective(X, y, beta, parameters, auxiliaries)
 
 
 class L1L0(MixedL0):
@@ -321,22 +321,42 @@ class L1L0(MixedL0):
             solver=solver,
             solver_options=solver_options,
         )
-        self._z1 = None
 
-    def _generate_constraints(self, X, y):
+    def _generate_auxiliaries(
+        self, X: ArrayLike, y: ArrayLike, beta: cp.Variable, parameters: SimpleNamespace
+    ) -> Optional[SimpleNamespace]:
+        """Generate the boolean slack variable."""
+        auxiliaries = super()._generate_auxiliaries(X, y, beta, parameters)
+        X.shape[1] if self.groups is None else len(np.unique(self.groups))
+        auxiliaries.z1 = cp.Variable(X.shape[1])
+        return auxiliaries
+
+    def _generate_constraints(
+        self,
+        X: ArrayLike,
+        y: ArrayLike,
+        beta: cp.Variable,
+        parameters: Optional[SimpleNamespace] = None,
+        auxiliaries: Optional[SimpleNamespace] = None,
+    ) -> list[cp.constraints]:
         """Generate the constraints used to solve l1l0 regularization."""
-        constraints = super()._generate_constraints(X, y)
+        constraints = super()._generate_constraints(X, y, beta, parameters, auxiliaries)
         # L1 constraints (why not do an l1 norm in the objective instead?)
-        constraints += [self._z1 >= self.beta_, self._z1 >= -1.0 * self.beta_]
+        constraints += [-auxiliaries.z1 <= beta, beta <= auxiliaries.z1]
         return constraints
 
-    def _generate_objective(self, X, y):
+    def _generate_objective(
+        self,
+        X: ArrayLike,
+        y: ArrayLike,
+        beta: cp.Variable,
+        parameters: Optional[SimpleNamespace] = None,
+        auxiliaries: Optional[SimpleNamespace] = None,
+    ) -> cp.Expression:
         """Generate the objective function used in l1l0 regression model."""
-        self._z1 = cp.Variable(X.shape[1])
         c0 = 2 * X.shape[0]  # keeps hyperparameter scale independent
-        objective = super()._generate_objective(X, y) + c0 * self._eta * cp.sum(
-            self._z1
-        )
+        objective = super()._generate_objective(X, y, beta, parameters, auxiliaries)
+        objective += c0 * parameters.eta * cp.sum(auxiliaries.z1)
         return objective
 
 

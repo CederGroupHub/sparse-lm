@@ -4,14 +4,13 @@
 __author__ = "Luis Barroso-Luque"
 
 from abc import ABCMeta
-from typing import Optional
 from types import SimpleNamespace
+from typing import Optional
 
 import cvxpy as cp
 import numpy as np
 from cvxpy.atoms.affine.wraps import psd_wrap
 from numpy.typing import ArrayLike
-from sklearn.utils.validation import check_scalar
 
 from ..._utils.validation import _check_groups
 from .._base import CVXEstimator, SimpleHyperparameterMixin
@@ -25,7 +24,7 @@ class MIQP_L0(SimpleHyperparameterMixin, CVXEstimator, metaclass=ABCMeta):
     https://doi.org/10.1287/opre.2015.1436
     """
 
-    _hyperparam_names = ("big_M", )
+    _hyperparam_names = ("big_M",)
 
     def __init__(
         self,
@@ -98,9 +97,7 @@ class MIQP_L0(SimpleHyperparameterMixin, CVXEstimator, metaclass=ABCMeta):
     def _validate_params(self, X: ArrayLike, y: ArrayLike):
         """Validate parameters."""
         super()._validate_params(X, y)
-        # check_scalar(self.big_M, "big_M", float, min_val=0.0)
         self.groups = _check_groups(self.groups, X.shape[1])
-        # self._group_masks = [self.groups == i for i in np.sort(np.unique(self.groups))]
 
     def _generate_auxiliaries(
         self, X: ArrayLike, y: ArrayLike, beta: cp.Variable, parameters: SimpleNamespace
@@ -140,8 +137,8 @@ class MIQP_L0(SimpleHyperparameterMixin, CVXEstimator, metaclass=ABCMeta):
         constraints = []
         for i, mask in enumerate(group_masks):
             constraints += [
-                beta[mask] <= parameters.big_M * auxiliaries.z0[i],
                 -parameters.big_M * auxiliaries.z0[i] <= beta[mask],
+                beta[mask] <= parameters.big_M * auxiliaries.z0[i],
             ]
 
         if self.hierarchy is not None:

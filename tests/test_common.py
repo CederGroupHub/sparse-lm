@@ -52,18 +52,20 @@ def test_general_fit(estimator_cls, random_model, rng):
 
 
 from sparselm.model import (
+    L1L0,
     AdaptiveGroupLasso,
     AdaptiveLasso,
     AdaptiveOverlapGroupLasso,
+    AdaptiveRidgedGroupLasso,
     AdaptiveSparseGroupLasso,
     GroupLasso,
     Lasso,
     OrdinaryLeastSquares,
     OverlapGroupLasso,
+    RegularizedL0,
     RidgedGroupLasso,
     SparseGroupLasso,
-    AdaptiveRidgedGroupLasso,
-    RegularizedL0
+    L2L0
 )
 
 compliant_estimators = [
@@ -80,7 +82,7 @@ compliant_estimators = [
     AdaptiveRidgedGroupLasso,
 ]
 
-miqp_compliant_estimators = [RegularizedL0, ]
+miqp_compliant_estimators = [L2L0, RegularizedL0, L1L0]
 
 
 @pytest.fixture(params=compliant_estimators)
@@ -95,7 +97,10 @@ def test_sklearn_compatible(estimator):
 
 @pytest.fixture(params=miqp_compliant_estimators)
 def miqp_estimator(request):
-    return request.param(fit_intercept=True, solver="SCIP")
+    regressor = request.param(fit_intercept=True, solver="SCIP")
+    if hasattr(regressor, "eta"):
+        regressor.eta = 0.01
+    return regressor
 
 
 def test_miqp_sklearn_compatible(miqp_estimator):

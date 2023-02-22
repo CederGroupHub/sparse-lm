@@ -13,13 +13,13 @@ import cvxpy as cp
 import numpy as np
 from numpy.typing import ArrayLike
 from sklearn.base import RegressorMixin
-from sklearn.utils.validation import check_scalar
 from sklearn.linear_model._base import (
     LinearModel,
     _check_sample_weight,
     _preprocess_data,
     _rescale_data,
 )
+from sklearn.utils.validation import check_scalar
 
 
 class CVXCanonicals(NamedTuple):
@@ -321,6 +321,7 @@ class SimpleHyperparameterMixin:
     Classes derived from this must set a class attribute _hyperparam_names
     as a tuple of str with the names of scalar hyper-parameters
     """
+
     def _validate_params(self, X: ArrayLike, y: ArrayLike) -> None:
         """Validate parameters."""
         for param_name in self._hyperparam_names:
@@ -334,29 +335,37 @@ class SimpleHyperparameterMixin:
 
     def _generate_params(self, X: ArrayLike, y: ArrayLike) -> Optional[SimpleNamespace]:
         """Generate cvxpy parameters."""
-        hyperparams = {name: cp.Parameter(nonneg=True, value=getattr(self, name)) for name in self._hyperparam_names}
+        hyperparams = {
+            name: cp.Parameter(nonneg=True, value=getattr(self, name))
+            for name in self._hyperparam_names
+        }
         return SimpleNamespace(**hyperparams)
 
 
 class TikhonovMixin:
     """Mixin class to add a Tihhonov/ridge regularization term.
 
-    When using this Mixin, a cvxpy parameter should be set as the _eta attribute
-    and an attribute tikhonov_w can be added to allow a matrix otherwise simple l2/Ridge
+    When using this Mixin, a cvxpy parameter named "eta" should be saved in the parameters
+    SompliNamespace an attribute tikhonov_w can be added to allow a matrix otherwise simple l2/Ridge
     is used.
     """
 
-    def _gen_objective(self, X, y):
+    def _generate_objective(
+        self,
+        X: ArrayLike,
+        y: ArrayLike,
+        beta: cp.Variable,
+        parameters: Optional[SimpleNamespace] = None,
+        auxiliaries: Optional[SimpleNamespace] = None,
+    ) -> cp.Expression:
         """Add a Tikhnonov regularization term to the objective function."""
-        c0 = 2 * X.shape[0]  # keeps hyperparameter scale independent
-
         if hasattr(self, "tikhonov_w") and self.tikhonov_w is not None:
             tikhonov_w = self.tikhonov_w
         else:
             tikhonov_w = np.eye(X.shape[1])
 
-        objective = super()._generate_objective(X, y) + c0 * self._eta * cp.sum_squares(
-            tikhonov_w @ self.beta_
-        )
+        c0 = 2 * X.shape[0]  # keeps hyperparameter scale independent
+        objective = super()._generate_objective(X, y, beta, parameters, auxiliaries)
+        objective += c0 * parameters.eta * cp.sum_squares(tikhonov_w @ beta)
 
         return objective

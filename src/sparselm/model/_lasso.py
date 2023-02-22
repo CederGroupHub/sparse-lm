@@ -38,7 +38,7 @@ class Lasso(SimpleHyperparameterMixin, CVXEstimator):
 
     """
 
-    _hyperparam_names = ("alpha", )
+    _hyperparam_names = ("alpha",)
 
     def __init__(
         self,
