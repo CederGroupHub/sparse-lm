@@ -219,7 +219,10 @@ class CVXEstimator(RegressorMixin, LinearModel, metaclass=ABCMeta):
             if parameter in self._cvx_parameter_constraints:
                 cvx_parameter = getattr(self.canonicals_.parameters, parameter)
                 # check for parameters that take a scalar or an array
-                if isinstance(value, np.ndarray) and value.shape != cvx_parameter.value.shape:
+                if (
+                    isinstance(value, np.ndarray)
+                    and value.shape != cvx_parameter.value.shape
+                ):
                     cvx_parameter.value = value * np.ones_like(cvx_parameter.value)
                 else:
                     cvx_parameter.value = value
@@ -239,7 +242,11 @@ class CVXEstimator(RegressorMixin, LinearModel, metaclass=ABCMeta):
             NamedTuple of cvxpy parameters
         """
         cvx_parameters = {}
-        cvx_constraints = {} if self._cvx_parameter_constraints is None else self._cvx_parameter_constraints
+        cvx_constraints = (
+            {}
+            if self._cvx_parameter_constraints is None
+            else self._cvx_parameter_constraints
+        )
         for param_name, param_val in self.get_params(deep=False).items():
             if param_name not in cvx_constraints:
                 continue

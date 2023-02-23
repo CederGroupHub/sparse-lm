@@ -21,13 +21,14 @@ or run with n_jobs=1 (but that may take a while to solve)
 __author__ = "Luis Barroso-Luque"
 
 import warnings
+from numbers import Integral, Real
 from types import SimpleNamespace
 from typing import Optional
 
 import cvxpy as cp
 import numpy as np
 from numpy.typing import ArrayLike
-from sklearn.utils.validation import check_scalar
+from sklearn.utils._param_validation import Interval
 
 from ._lasso import (
     GroupLasso,
@@ -50,6 +51,13 @@ class AdaptiveLasso(Lasso):
 
     Where w represents a vector of weights that is iteratively updated.
     """
+
+    _parameter_constraints: dict = {
+        "tol": [Interval(type=Real, left=0.0, right=1.0, closed="both")],
+        "max_iter": [Interval(type=Integral, left=0, right=None, closed="left")],
+        "eps": [Interval(type=Real, left=0.0, right=1.0, closed="both")],
+        "update_function": [callable, None],
+    } | Lasso._parameter_constraints
 
     def __init__(
         self,
@@ -113,20 +121,12 @@ class AdaptiveLasso(Lasso):
 
     def _validate_params(self, X: ArrayLike, y: ArrayLike) -> None:
         super()._validate_params(X, y)
-        check_scalar(self.max_iter, "max_iter", int, min_val=1)
-        check_scalar(self.eps, "eps", float)
-        check_scalar(self.tol, "tol", float)
-
         if self.max_iter == 1:
             warnings.warn(
                 "max_iter is set to 1. It should ideally be set > 1, otherwise consider "
                 "using a non-adaptive estimator",
                 UserWarning,
             )
-
-        if self.update_function is not None:
-            if not callable(self.update_function):
-                raise ValueError("update_function must be callable.")
 
     def _set_param_values(self) -> None:
         """Set parameter values."""
@@ -661,7 +661,7 @@ class AdaptiveRidgedGroupLasso(AdaptiveGroupLasso, RidgedGroupLasso):
         self,
         groups=None,
         alpha=1.0,
-        delta=(1.0, ),
+        delta=(1.0,),
         group_weights=None,
         max_iter=3,
         eps=1e-6,

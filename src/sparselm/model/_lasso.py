@@ -582,14 +582,17 @@ class RidgedGroupLasso(GroupLasso):
 
     _cvx_parameter_constraints: dict = {
         "alpha": [Interval(type=Real, left=0.0, right=None, closed="left")],
-        "delta": ["array-like", Interval(type=Real, left=0.0, right=None, closed="left")]
+        "delta": [
+            "array-like",
+            Interval(type=Real, left=0.0, right=None, closed="left"),
+        ],
     }
 
     def __init__(
         self,
         groups=None,
         alpha=1.0,
-        delta=(1.0, ),  # TODO type this as ArrayLike
+        delta=(1.0,),  # TODO type this as ArrayLike
         group_weights=None,
         standardize=False,
         fit_intercept=False,
@@ -661,9 +664,9 @@ class RidgedGroupLasso(GroupLasso):
             len(np.unique(self.groups)) if self.groups is not None else X.shape[1]
         )
         if len(self.delta) != n_groups and len(self.delta) != 1:
-                raise ValueError(
-                    f"delta must be an array of length 1 or equal to the number of groups {n_groups}."
-                )
+            raise ValueError(
+                f"delta must be an array of length 1 or equal to the number of groups {n_groups}."
+            )
 
     def _generate_params(self, X: ArrayLike, y: ArrayLike) -> Optional[SimpleNamespace]:
         """Generate parameters."""
