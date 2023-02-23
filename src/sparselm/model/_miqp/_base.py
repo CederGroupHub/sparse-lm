@@ -13,10 +13,10 @@ from cvxpy.atoms.affine.wraps import psd_wrap
 from numpy.typing import ArrayLike
 
 from ..._utils.validation import _check_groups
-from .._base import CVXEstimator, SimpleHyperparameterMixin
+from .._base import CVXEstimator, CVXParametersMixin
 
 
-class MIQP_L0(SimpleHyperparameterMixin, CVXEstimator, metaclass=ABCMeta):
+class MIQP_L0(CVXParametersMixin, CVXEstimator, metaclass=ABCMeta):
     """Base class for mixed-integer quadratic programming (MIQP) estimators.
 
     Generalized l0 formulation that allows grouping coefficients, based on:

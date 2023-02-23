@@ -13,6 +13,7 @@ optimization problem.
 __author__ = "Luis Barroso-Luque, Fengyu Xie"
 
 import warnings
+from numbers import Real
 from types import SimpleNamespace
 from typing import Optional
 
@@ -20,13 +21,14 @@ import cvxpy as cp
 import numpy as np
 from numpy.typing import ArrayLike
 from scipy.linalg import sqrtm
+from sklearn.utils._param_validation import Interval
 from sklearn.utils.validation import check_scalar
 
 from .._utils.validation import _check_group_weights, _check_groups
-from ._base import CVXCanonicals, CVXEstimator, SimpleHyperparameterMixin
+from ._base import CVXCanonicals, CVXEstimator
 
 
-class Lasso(SimpleHyperparameterMixin, CVXEstimator):
+class Lasso(CVXEstimator):
     r"""
     Lasso Estimator implemented with cvxpy.
 
@@ -38,7 +40,9 @@ class Lasso(SimpleHyperparameterMixin, CVXEstimator):
 
     """
 
-    _hyperparam_names = ("alpha",)
+    _cvx_parameter_constraints: dict = {
+        "alpha": [Interval(type=Real, left=0.0, right=None, closed="left")]
+    }
 
     def __init__(
         self,
@@ -71,7 +75,6 @@ class Lasso(SimpleHyperparameterMixin, CVXEstimator):
                 dictionary of keyword arguments passed to cvxpy solve.
                 See docs in CVXEstimator for more information.
         """
-        self.alpha = alpha
         super().__init__(
             fit_intercept=fit_intercept,
             copy_X=copy_X,
@@ -79,6 +82,7 @@ class Lasso(SimpleHyperparameterMixin, CVXEstimator):
             solver=solver,
             solver_options=solver_options,
         )
+        self.alpha = alpha
 
     def _generate_regularization(
         self,

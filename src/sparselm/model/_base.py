@@ -6,6 +6,7 @@ The classes make use of and follow the scikit-learn API.
 __author__ = "Luis Barroso-Luque, Fengyu Xie"
 
 from abc import ABCMeta, abstractmethod
+from numbers import Integral
 from types import SimpleNamespace
 from typing import NamedTuple, Optional
 
@@ -19,7 +20,15 @@ from sklearn.linear_model._base import (
     _preprocess_data,
     _rescale_data,
 )
-from sklearn.utils.validation import check_scalar
+from sklearn.utils._param_validation import (
+    Interval,
+    Options,
+    _ArrayLikes,
+    _Booleans,
+    _InstancesOf,
+    make_constraint,
+    validate_parameter_constraints,
+)
 
 
 class CVXCanonicals(NamedTuple):
@@ -63,6 +72,17 @@ class CVXEstimator(RegressorMixin, LinearModel, metaclass=ABCMeta):
 
     Keyword arguments are the same as those found in sklearn linear models.
     """
+
+    # parameter constraints that do not need any cvxpy Parameter object
+    _parameter_constraints: dict = {
+        "fit_intercept": ["boolean"],
+        "copy_X": ["boolean"],
+        "warm_start": ["boolean"],
+        "solver": [Options(type=str, options=set(cp.installed_solvers())), None],
+        "solver_options": [dict, None],
+    }
+    # parameter constraints that require a cvxpy Parameter object in problem definition
+    _cvx_parameter_constraints: Optional[dict] = None
 
     def __init__(
         self,
@@ -176,15 +196,29 @@ class CVXEstimator(RegressorMixin, LinearModel, metaclass=ABCMeta):
         return self
 
     def _validate_params(self, X: ArrayLike, y: ArrayLike) -> None:
-        """Validate hyper-parameters.
+        """Validate hyperparameter values.
 
-        Implement this in an estimator to check for valid hyper-parameters.
+        Implement this in an estimator for additional parameter value validation.
         """
-        return
+
+        if self._cvx_parameter_constraints is None:
+            parameter_constraints = self._parameter_constraints
+        else:
+            parameter_constraints = (
+                self._parameter_constraints | self._cvx_parameter_constraints
+            )
+        validate_parameter_constraints(
+            parameter_constraints,
+            self.get_params(deep=False),
+            caller_name=self.__class__.__name__,
+        )
 
     def _set_param_values(self) -> None:
         """Set the values of cvxpy parameters from param attributes for warm starts."""
-        return
+        for parameter, value in self.get_params(deep=False):
+            if parameter in self._cvx_parameter_constraints:
+                cvx_parameter = getattr(self.canonicals_.parameters, parameter)
+                cvx_parameter.value = value
 
     def _generate_params(self, X: ArrayLike, y: ArrayLike) -> Optional[SimpleNamespace]:
         """Return the named tuple of cvxpy parameters for optimization problem.
@@ -200,7 +234,59 @@ class CVXEstimator(RegressorMixin, LinearModel, metaclass=ABCMeta):
         Returns:
             NamedTuple of cvxpy parameters
         """
-        return None
+        cvx_parameters = {}
+        cvx_constraints = {} if self._cvx_parameter_constraints is None else self._cvx_parameter_constraints
+        for param_name, param_val in self.get_params(deep=False).items():
+            if param_name not in cvx_constraints:
+                continue
+
+            # make constraints sklearn constraint objects
+            constraints = [
+                make_constraint(constraint)
+                for constraint in cvx_constraints[param_name]
+            ]
+
+            # For now we will only set nonneg, nonpos, neg, pos, integer, boolean and shape
+            # of the cvxpy Parameter objects.
+            param_kwargs = {}
+            for constraint in constraints:
+                if isinstance(constraint, _ArrayLikes):
+                    param_kwargs["shape"] = param_val.shape
+
+                if isinstance(constraint, _Booleans):
+                    param_kwargs["boolean"] = True
+
+                if isinstance(constraint, _InstancesOf):
+                    if constraint.is_satisfied_by(True):  # is it boolean
+                        param_kwargs["boolean"] = True
+                    elif constraint.is_satisfied_by(5):  # is it integer
+                        param_kwargs["integer"] = True
+
+                if isinstance(constraint, Interval):
+                    if constraint.type is Integral:
+                        param_kwargs["integer"] = True
+                    if constraint.left is not None:
+                        if constraint.left == 0:
+                            if constraint.closed in ("left", "both"):
+                                param_kwargs["nonneg"] = True
+                            else:
+                                param_kwargs["pos"] = True
+                        elif constraint.left > 0:
+                            param_kwargs["pos"] = True
+                    if constraint.right is not None:
+                        if constraint.right == 0:
+                            if constraint.closed in ("right", "both"):
+                                param_kwargs["nonpos"] = True
+                            else:
+                                param_kwargs["neg"] = True
+                        elif constraint.right < 0:
+                            param_kwargs["neg"] = True
+
+                cvx_parameters[param_name] = cp.Parameter(
+                    value=param_val, **param_kwargs
+                )
+
+        return SimpleNamespace(**cvx_parameters)
 
     def _generate_auxiliaries(
         self, X: ArrayLike, y: ArrayLike, beta: cp.Variable, parameters: SimpleNamespace
@@ -259,7 +345,7 @@ class CVXEstimator(RegressorMixin, LinearModel, metaclass=ABCMeta):
         beta: cp.Variable,
         parameters: Optional[SimpleNamespace] = None,
         auxiliaries: Optional[SimpleNamespace] = None,
-    ) -> list[cp.constraints]:
+    ) -> Optional[list[cp.constraints]]:
         """Generate constraints for optimization problem.
 
         Args:
@@ -311,37 +397,6 @@ class CVXEstimator(RegressorMixin, LinearModel, metaclass=ABCMeta):
         return self.canonicals_.beta.value
 
 
-# in future this can be refactored to take more complex specifications for hyperparameters
-# such as min/max, positive, etc.
-class SimpleHyperparameterMixin:
-    """Mixin class to generate, validate, and set scalar hyperparameters.
-
-    For now simple hyperparameters are scalar, floats and positive valued
-
-    Classes derived from this must set a class attribute _hyperparam_names
-    as a tuple of str with the names of scalar hyper-parameters
-    """
-
-    def _validate_params(self, X: ArrayLike, y: ArrayLike) -> None:
-        """Validate parameters."""
-        for param_name in self._hyperparam_names:
-            check_scalar(getattr(self, param_name), param_name, float, min_val=0.0)
-
-    def _set_param_values(self) -> None:
-        """Set parameter values."""
-        for param_name in self._hyperparam_names:
-            parameter = getattr(self.canonicals_.parameters, param_name)
-            parameter.value = getattr(self, param_name)
-
-    def _generate_params(self, X: ArrayLike, y: ArrayLike) -> Optional[SimpleNamespace]:
-        """Generate cvxpy parameters."""
-        hyperparams = {
-            name: cp.Parameter(nonneg=True, value=getattr(self, name))
-            for name in self._hyperparam_names
-        }
-        return SimpleNamespace(**hyperparams)
-
-
 class TikhonovMixin:
     """Mixin class to add a Tihhonov/ridge regularization term.
 
@@ -369,3 +424,7 @@ class TikhonovMixin:
         objective += c0 * parameters.eta * cp.sum_squares(tikhonov_w @ beta)
 
         return objective
+
+
+class CVXParametersMixin:
+    pass
