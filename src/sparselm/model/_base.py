@@ -257,8 +257,9 @@ class CVXEstimator(RegressorMixin, LinearModel, metaclass=ABCMeta):
                 for constraint in cvx_constraints[param_name]
             ]
 
-            # For now we will only set nonneg, nonpos, neg, pos, integer, boolean and shape
+            # For now we will only set nonneg, nonpos, neg, pos, integer, boolean and/or shape
             # of the cvxpy Parameter objects.
+            # TODO cxvpy only allows a single one of these to be set (except bool and integer)
             param_kwargs = {}
             for constraint in constraints:
                 if isinstance(constraint, _ArrayLikes):
@@ -295,7 +296,6 @@ class CVXEstimator(RegressorMixin, LinearModel, metaclass=ABCMeta):
                                 param_kwargs["neg"] = True
                         elif constraint.right < 0:
                             param_kwargs["neg"] = True
-                print(param_kwargs)
                 cvx_parameters[param_name] = cp.Parameter(
                     value=param_val, **param_kwargs
                 )
