@@ -28,7 +28,7 @@ def test_general_fit(estimator_cls, random_model, rng):
         args["groups"] = rng.integers(0, 5, size=len(beta))
     if "group_list" in sig.parameters:
         args["group_list"] = [
-            rng.choice(range(5), replace=False, size=rng.integers(1, 5))
+            np.sort(rng.choice(range(5), replace=False, size=rng.integers(1, 5)))
             for _ in range(len(beta))
         ]
     if "sparse_bound" in sig.parameters:
