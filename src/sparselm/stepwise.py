@@ -214,11 +214,16 @@ class StepwiseEstimator(_BaseComposition, RegressorMixin, LinearModel):
         self.coef_ = np.empty(X.shape[1])
         self.coef_.fill(np.nan)
         for (_, estimator), scope in zip(self.steps, self.estimator_feature_indices):
+            # np.array indices should not be tuple.
             estimator.fit(
-                X[:, scope], residuals, *args, sample_weight=sample_weight, **kwargs
+                X[:, list(scope)],
+                residuals,
+                *args,
+                sample_weight=sample_weight,
+                **kwargs,
             )
-            self.coef_[scope] = self._get_estimator_coef(estimator)
-            residuals = residuals - estimator.predict(X[:, scope])
+            self.coef_[list(scope)] = self._get_estimator_coef(estimator)
+            residuals = residuals - estimator.predict(X[:, list(scope)])
             # Only the first estimator is allowed to fit intercept.
         if hasattr(self.steps[0][1], "estimator"):
             fit_intercept = self.steps[0][1].estimator.fit_intercept
