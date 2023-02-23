@@ -676,6 +676,11 @@ class LineSearchCV(BaseSearchCV):
             ):
                 param_line[name] = [last_value] if pid != param_id else values
 
+            # Overwrite default CV splitter to RepeatedKFold and force shuffling
+            # before split.
+            if self.cv is None:
+                self.cv = RepeatedKFold(n_splits=5, n_repeats=3)
+
             grid_search = GridSearchCV(
                 estimator=self.estimator,
                 param_grid=param_line,
