@@ -21,10 +21,8 @@ from ._miqp import (
     RidgedBestSubsetSelection,
 )
 from ._ols import OrdinaryLeastSquares
-from ._stepwise import StepwiseEstimator
 
 __all__ = [
-    "StepwiseEstimator",
     "OrdinaryLeastSquares",
     "Lasso",
     "BestSubsetSelection",

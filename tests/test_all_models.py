@@ -9,10 +9,8 @@ import numpy as np
 import pytest
 
 import sparselm.model as spm
-from sparselm.model import StepwiseEstimator
 
 ALL_ESTIMATORS = getmembers(spm, isclass)
-ALL_ESTIMATORS.remove(("StepwiseEstimator", StepwiseEstimator))
 
 
 @pytest.mark.parametrize("estimator_cls", ALL_ESTIMATORS)

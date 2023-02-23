@@ -2,7 +2,7 @@ import cvxpy as cp
 import numpy as np
 import pytest
 
-from sparselm.model import L1L0, L2L0, Lasso, StepwiseEstimator
+from sparselm.model import L1L0, L2L0
 from sparselm.model_selection import GridSearchCV, LineSearchCV
 
 ALL_CRITERION = ["max_score", "one_std_score"]
@@ -50,24 +50,6 @@ def estimator(random_energy_model, request):
     # return request.param(solver="ECOS_BB")
 
 
-@pytest.fixture(scope="module")
-def stepwise(random_energy_model):
-    ecis = random_energy_model[2]
-    # Each correlation function as its own group. Doing ordinary hierarchy.
-    # First half of the ECIs will be given to lasso.
-    groups_l2l0 = list(range(len(ecis) - len(ecis) // 3))
-    if "GUROBI" in cp.installed_solvers():
-        solver = "GUROBI"
-    else:
-        solver = "ECOS_BB"
-    steps = [
-        ("lasso", Lasso(alpha=1e-6)),
-        ("l2l0", L2L0(groups=groups_l2l0, solver=solver)),
-    ]
-    scopes = [list(range(len(ecis) // 3)), list(range(len(ecis) // 3, len(ecis)))]
-    return StepwiseEstimator(steps, scopes)
-
-
 @pytest.fixture(scope="module", params=ONLY_L2L0)
 def mixed_l2l0_est(random_energy_model, request):
     ecis = random_energy_model[2]
@@ -113,21 +95,6 @@ def line_search(estimator, param_grid, request):
     return line_searcher
 
 
-@pytest.fixture(scope="module", params=ALL_CRITERION)
-def line_search_stepwise(stepwise, param_grid, request):
-    # Multi-grids not supported in line search mode.
-    param_grid_lines = sorted(
-        ("l2l0__" + key, values) for key, values in param_grid[0].items()
-    )
-    line_searcher = LineSearchCV(
-        stepwise,
-        param_grid_lines,
-        opt_selection_method=request.param,
-        n_iter=3,
-    )
-    return line_searcher
-
-
 def test_grid_search(random_energy_model, grid_search):
     femat, energies, _ = random_energy_model
     n_samples, n_features = femat.shape
@@ -166,23 +133,3 @@ def test_line_search(random_energy_model, line_search):
     # Overfit.
     if n_samples < n_features:
         assert -line_search.best_score_ >= rmse
-
-
-def test_line_search_stepwise(random_energy_model, line_search_stepwise):
-    femat, energies, _ = random_energy_model
-    n_samples, n_features = femat.shape
-    line_search_stepwise.fit(X=femat, y=energies)
-    assert "best_params_" in vars(line_search_stepwise)
-    best_params = line_search_stepwise.best_params_
-    assert "l2l0__alpha" in best_params and "l2l0__eta" in best_params
-    assert best_params["l2l0__alpha"] in [0.01, 0.1]
-    assert best_params["l2l0__eta"] in [0.03, 0.3]
-
-    assert line_search_stepwise.best_score_ <= 1
-    assert "coef_" in vars(line_search_stepwise.best_estimator_)
-    assert "intercept_" in vars(line_search_stepwise.best_estimator_)
-    energies_pred = line_search_stepwise.predict(femat)
-    rmse = np.sum((energies - energies_pred) ** 2) / len(energies)
-    # Overfit.
-    if n_samples < n_features:
-        assert -line_search_stepwise.best_score_ >= rmse

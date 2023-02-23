@@ -11,7 +11,7 @@ from itertools import product
 
 import numpy as np
 from joblib import Parallel
-from sklearn.base import is_classifier
+from sklearn.base import clone, is_classifier
 from sklearn.metrics import check_scoring
 from sklearn.metrics._scorer import _check_multimetric_scoring
 from sklearn.model_selection import GridSearchCV as _GridSearchCV
@@ -24,76 +24,6 @@ from sklearn.model_selection._validation import (
 )
 from sklearn.utils.fixes import delayed
 from sklearn.utils.validation import _check_fit_params, indexable
-
-
-# Redefine clone as pointer equality check can be very buggy.
-# Estimator feature indices can not be handled.
-# We temporarily mute equality check here.
-def clone(estimator, *, safe=True):
-    """Construct a new unfitted estimator with the same parameters.
-
-    Clone does a deep copy of the model in an estimator
-    without actually copying attached data. It returns a new estimator
-    with the same parameters that has not been fitted on any data.
-
-    Parameters
-    ----------
-    estimator : {list, tuple, set} of estimator instance or a single \
-            estimator instance
-        The estimator or group of estimators to be cloned.
-    safe : bool, default=True
-        If safe is False, clone will fall back to a deep copy on objects
-        that are not estimators.
-
-    Returns
-    -------
-    estimator : object
-        The deep copy of the input, an estimator if input is an estimator.
-
-    Notes
-    -----
-    If the estimator's `random_state` parameter is an integer (or if the
-    estimator doesn't have a `random_state` parameter), an *exact clone* is
-    returned: the clone and the original estimator will give the exact same
-    results. Otherwise, *statistical clone* is returned: the clone might
-    return different results from the original estimator. More details can be
-    found in :ref:`randomness`.
-    """
-    estimator_type = type(estimator)
-    # XXX: not handling dictionaries
-    if estimator_type in (list, tuple, set, frozenset):
-        return estimator_type([clone(e, safe=safe) for e in estimator])
-    elif not hasattr(estimator, "get_params") or isinstance(estimator, type):
-        if not safe:
-            return deepcopy(estimator)
-        else:
-            if isinstance(estimator, type):
-                raise TypeError(
-                    "Cannot clone object. "
-                    + "You should provide an instance of "
-                    + "scikit-learn estimator instead of a class."
-                )
-            else:
-                raise TypeError(
-                    "Cannot clone object '%s' (type %s): "
-                    "it does not seem to be a scikit-learn "
-                    "estimator as it does not implement a "
-                    "'get_params' method." % (repr(estimator), type(estimator))
-                )
-
-    klass = estimator.__class__
-    new_object_params = estimator.get_params(deep=False)
-    for name, param in new_object_params.items():
-        new_object_params[name] = clone(param, safe=False)
-    new_object = klass(**new_object_params)
-
-    # Totally abandon equality check for now.
-
-    # _sklearn_output_config is used by `set_output` to configure the output
-    # container of an estimator.
-    if hasattr(estimator, "_sklearn_output_config"):
-        new_object._sklearn_output_config = deepcopy(estimator._sklearn_output_config)
-    return new_object
 
 
 class GridSearchCV(_GridSearchCV):
