@@ -197,7 +197,6 @@ class GroupLasso(Lasso):
 
     def _set_param_values(self) -> None:
         super()._set_param_values()
-        self.canonicals_.parameters.alpha.value = self.alpha
         if self.group_weights is not None:
             self.canonicals_.parameters.group_weights = self.group_weights
 
@@ -581,11 +580,16 @@ class RidgedGroupLasso(GroupLasso):
     http://faculty.washington.edu/nrsimon/standGL.pdf
     """
 
+    _cvx_parameter_constraints: dict = {
+        "alpha": [Interval(type=Real, left=0.0, right=None, closed="left")],
+        "delta": ["array-like", Interval(type=Real, left=0.0, right=None, closed="left")]
+    }
+
     def __init__(
         self,
         groups=None,
         alpha=1.0,
-        delta=1.0,
+        delta=(1.0, ),  # TODO type this as ArrayLike
         group_weights=None,
         standardize=False,
         fit_intercept=False,
@@ -605,7 +609,9 @@ class RidgedGroupLasso(GroupLasso):
             alpha (float):
                 Regularization hyper-parameter.
             delta (ndarray): optional
-                Positive 1D array. Regularization vector for ridge penalty.
+                Positive 1D array. Regularization vector for ridge penalty. The array
+                must be of the same lenght as the number of groups, or length 1 if all
+                groups are ment to have the same ridge hyperparamter.
             group_weights (ndarray): optional
                 Weights for each group to use in the regularization term.
                 The default is to use the sqrt of the group sizes, however any
@@ -651,38 +657,24 @@ class RidgedGroupLasso(GroupLasso):
     def _validate_params(self, X: ArrayLike, y: ArrayLike) -> None:
         """Validate group parameters and delta."""
         super()._validate_params(X, y)
-        check_scalar(self.delta, "delta", float)
-
         n_groups = (
             len(np.unique(self.groups)) if self.groups is not None else X.shape[1]
         )
-        if isinstance(self.delta, np.ndarray):
-            if len(self.delta) != len(n_groups):
+        if len(self.delta) != n_groups and len(self.delta) != 1:
                 raise ValueError(
-                    f"delta must be a scalar or an array of lenght equal to the number of groups {n_groups}."
+                    f"delta must be an array of length 1 or equal to the number of groups {n_groups}."
                 )
-
-    def _set_param_values(self) -> None:
-        super()._set_param_values()
-        if isinstance(self.delta, float):
-            n_groups = self.canonicals_.parameters.delta.value.shape[0]
-            delta = self.delta * np.ones(n_groups)
-        else:
-            delta = self.delta
-        self.canonicals_.parameters.delta.value = delta
 
     def _generate_params(self, X: ArrayLike, y: ArrayLike) -> Optional[SimpleNamespace]:
         """Generate parameters."""
         parameters = super()._generate_params(X, y)
+        # force cvxpy delta to be an array of n_groups!
         n_groups = (
             len(np.unique(self.groups)) if self.groups is not None else X.shape[1]
         )
-        delta = (
-            self.delta * np.ones(n_groups)
-            if isinstance(self.delta, float)
-            else self.delta
-        )
-        parameters.delta = cp.Parameter(shape=(n_groups,), nonneg=True, value=delta)
+        if len(self.delta) != n_groups:
+            delta = self.delta * np.ones(n_groups)
+            parameters.delta = cp.Parameter(shape=(n_groups,), nonneg=True, value=delta)
         return parameters
 
     @staticmethod

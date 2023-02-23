@@ -218,7 +218,11 @@ class CVXEstimator(RegressorMixin, LinearModel, metaclass=ABCMeta):
         for parameter, value in self.get_params(deep=False):
             if parameter in self._cvx_parameter_constraints:
                 cvx_parameter = getattr(self.canonicals_.parameters, parameter)
-                cvx_parameter.value = value
+                # check for parameters that take a scalar or an array
+                if isinstance(value, np.ndarray) and value.shape != cvx_parameter.value.shape:
+                    cvx_parameter.value = value * np.ones_like(cvx_parameter.value)
+                else:
+                    cvx_parameter.value = value
 
     def _generate_params(self, X: ArrayLike, y: ArrayLike) -> Optional[SimpleNamespace]:
         """Return the named tuple of cvxpy parameters for optimization problem.
@@ -251,6 +255,9 @@ class CVXEstimator(RegressorMixin, LinearModel, metaclass=ABCMeta):
             param_kwargs = {}
             for constraint in constraints:
                 if isinstance(constraint, _ArrayLikes):
+                    if not hasattr(param_val, "shape"):
+                        param_val = np.asarray(param_val)
+
                     param_kwargs["shape"] = param_val.shape
 
                 if isinstance(constraint, _Booleans):

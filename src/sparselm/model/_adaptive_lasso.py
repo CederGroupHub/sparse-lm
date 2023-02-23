@@ -661,7 +661,7 @@ class AdaptiveRidgedGroupLasso(AdaptiveGroupLasso, RidgedGroupLasso):
         self,
         groups=None,
         alpha=1.0,
-        delta=1.0,
+        delta=(1.0, ),
         group_weights=None,
         max_iter=3,
         eps=1e-6,
