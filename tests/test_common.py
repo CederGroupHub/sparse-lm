@@ -65,7 +65,9 @@ from sparselm.model import (
     RegularizedL0,
     RidgedGroupLasso,
     SparseGroupLasso,
-    L2L0
+    L2L0,
+    BestSubsetSelection,
+    RidgedBestSubsetSelection
 )
 
 compliant_estimators = [
@@ -82,7 +84,7 @@ compliant_estimators = [
     AdaptiveRidgedGroupLasso,
 ]
 
-miqp_compliant_estimators = [L2L0, RegularizedL0, L1L0]
+miqp_compliant_estimators = [BestSubsetSelection, RidgedBestSubsetSelection] #, RegularizedL0, L1L0, L2L0]
 
 
 @pytest.fixture(params=compliant_estimators)

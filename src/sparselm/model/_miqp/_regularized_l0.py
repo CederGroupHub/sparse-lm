@@ -25,6 +25,7 @@ from typing import Optional
 
 import cvxpy as cp
 from numpy.typing import ArrayLike
+import numpy as np
 
 from sparselm.model._base import TikhonovMixin
 

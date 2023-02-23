@@ -5,9 +5,12 @@ Allows hierarchy constraints similar to mixed L0 solvers.
 
 __author__ = "Luis Barroso-Luque"
 
+from typing import Optional
+from types import SimpleNamespace
+from numpy.typing import ArrayLike
 import cvxpy as cp
 
-from sparselm.model._base import TikhonovMixin
+from sparselm.model._base import TikhonovMixin, SimpleHyperparameterMixin
 
 from ._base import MIQP_L0
 
@@ -21,10 +24,12 @@ class BestSubsetSelection(MIQP_L0):
     converge for large problems and under-determined problems.
     """
 
+    _hyperparam_names = ("big_M", "sparse_bound", )
+
     def __init__(
         self,
         groups=None,
-        sparse_bound=100,
+        sparse_bound=100.0,
         big_M=100.0,
         hierarchy=None,
         ignore_psd_check=True,
@@ -89,37 +94,31 @@ class BestSubsetSelection(MIQP_L0):
             solver=solver,
             solver_options=solver_options,
         )
-        if sparse_bound <= 0:
-            raise ValueError("sparse_bound must be > 0")
+        self.sparse_bound = sparse_bound
 
-        self._bound = cp.Parameter(nonneg=True, value=sparse_bound)
-
-    @property
-    def sparse_bound(self):
-        """Get sparse bound value."""
-        return self._bound.value
-
-    @sparse_bound.setter
-    def sparse_bound(self, val):
-        """Set sparse bound value."""
-        if val <= 0:
-            raise ValueError("sparse_bound must be > 0")
-        self._bound.value = val
-
-    def _generate_constraints(self, X, y):
-        """Generate the constraints used to solve l0 regularization."""
-        constraints = [cp.sum(self._z0) <= self._bound]
-        constraints += super()._generate_constraints(X, y)
+    def _generate_constraints(
+        self,
+        X: ArrayLike,
+        y: ArrayLike,
+        beta: cp.Variable,
+        parameters: Optional[SimpleNamespace] = None,
+        auxiliaries: Optional[SimpleNamespace] = None,
+    ) -> list[cp.constraints]:
+        """Generate the constraints for best subset selection."""
+        constraints = super()._generate_constraints(X, y, beta, parameters, auxiliaries)
+        constraints += [cp.sum(auxiliaries.z0) <= parameters.sparse_bound]
         return constraints
 
 
 class RidgedBestSubsetSelection(TikhonovMixin, BestSubsetSelection):
-    """MIQP  Best subset selection estimator with ridge regularization."""
+    """MIQP best subset selection estimator with Ridge/Tihkonov regularization."""
+
+    _hyperparam_names = ("big_M", "sparse_bound", "eta")
 
     def __init__(
         self,
         groups=None,
-        sparse_bound=100,
+        sparse_bound=100.0,
         eta=1.0,
         big_M=100.0,
         hierarchy=None,
@@ -193,14 +192,4 @@ class RidgedBestSubsetSelection(TikhonovMixin, BestSubsetSelection):
             **kwargs,
         )
         self.tikhonov_w = tikhonov_w
-        self._eta = cp.Parameter(nonneg=True, value=eta)
-
-    @property
-    def eta(self):
-        """Get alpha hyper-parameter value."""
-        return self._eta.value
-
-    @eta.setter
-    def eta(self, val):
-        """Set alpha hyper-parameter value."""
-        self._eta.value = val
+        self.eta = eta
