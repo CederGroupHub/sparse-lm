@@ -60,14 +60,14 @@ from sparselm.model import (
     AdaptiveRidgedGroupLasso,
     AdaptiveSparseGroupLasso,
     BestSubsetSelection,
+    GroupLasso,
+    Lasso,
+    OrdinaryLeastSquares,
+    OverlapGroupLasso,
     RegularizedL0,
     RidgedBestSubsetSelection,
-    OrdinaryLeastSquares,
-    Lasso,
-    GroupLasso,
-    OverlapGroupLasso,
-    SparseGroupLasso,
     RidgedGroupLasso,
+    SparseGroupLasso,
 )
 
 compliant_estimators = [
@@ -85,8 +85,8 @@ compliant_estimators = [
 ]
 
 miqp_compliant_estimators = [
-    #BestSubsetSelection,
-    #RidgedBestSubsetSelection,
+    BestSubsetSelection,
+    RidgedBestSubsetSelection,
     RegularizedL0,
     L1L0,
     L2L0,

@@ -26,9 +26,11 @@ class MIQP_L0(CVXEstimator, metaclass=ABCMeta):
     https://doi.org/10.1287/opre.2015.1436
     """
 
-    _parameter_constraints: dict = {"ignore_psd_check": ["boolean"]} | CVXEstimator._parameter_constraints
+    _parameter_constraints: dict = {
+        "ignore_psd_check": ["boolean"]
+    } | CVXEstimator._parameter_constraints
     _cvx_parameter_constraints: dict = {
-    "big_M": [Interval(type=Real, left=0.0, right=None, closed="left")]
+        "big_M": [Interval(type=Real, left=0.0, right=None, closed="left")]
     }
 
     def __init__(

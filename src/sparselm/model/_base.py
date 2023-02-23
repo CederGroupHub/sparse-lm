@@ -295,7 +295,7 @@ class CVXEstimator(RegressorMixin, LinearModel, metaclass=ABCMeta):
                                 param_kwargs["neg"] = True
                         elif constraint.right < 0:
                             param_kwargs["neg"] = True
-
+                print(param_kwargs)
                 cvx_parameters[param_name] = cp.Parameter(
                     value=param_val, **param_kwargs
                 )
@@ -438,7 +438,3 @@ class TikhonovMixin:
         objective += c0 * parameters.eta * cp.sum_squares(tikhonov_w @ beta)
 
         return objective
-
-
-class CVXParametersMixin:
-    pass

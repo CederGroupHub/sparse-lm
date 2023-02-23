@@ -5,11 +5,13 @@ Allows hierarchy constraints similar to mixed L0 solvers.
 
 __author__ = "Luis Barroso-Luque"
 
+from numbers import Real
 from types import SimpleNamespace
 from typing import Optional
 
 import cvxpy as cp
 from numpy.typing import ArrayLike
+from sklearn.utils._param_validation import Interval
 
 from sparselm.model._base import TikhonovMixin
 
@@ -25,15 +27,14 @@ class BestSubsetSelection(MIQP_L0):
     converge for large problems and under-determined problems.
     """
 
-    _hyperparam_names = (
-        "big_M",
-        "sparse_bound",
-    )
+    _cvx_parameter_constraints: dict = {
+        "sparse_bound": [Interval(type=Real, left=0, right=None, closed="left")],
+    } | MIQP_L0._cvx_parameter_constraints
 
     def __init__(
         self,
         groups=None,
-        sparse_bound=100.0,
+        sparse_bound=100,
         big_M=100.0,
         hierarchy=None,
         ignore_psd_check=True,
@@ -117,12 +118,14 @@ class BestSubsetSelection(MIQP_L0):
 class RidgedBestSubsetSelection(TikhonovMixin, BestSubsetSelection):
     """MIQP best subset selection estimator with Ridge/Tihkonov regularization."""
 
-    _hyperparam_names = ("big_M", "sparse_bound", "eta")
+    _cvx_parameter_constraints: dict = {
+        "eta": [Interval(type=Real, left=0.0, right=None, closed="left")],
+    } | BestSubsetSelection._cvx_parameter_constraints
 
     def __init__(
         self,
         groups=None,
-        sparse_bound=100.0,
+        sparse_bound=100,
         eta=1.0,
         big_M=100.0,
         hierarchy=None,
