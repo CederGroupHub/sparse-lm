@@ -22,7 +22,7 @@ from sklearn.model_selection._validation import (
     _insert_error_scores,
     _warn_or_raise_about_fit_failures,
 )
-from sklearn.utils.fixes import delayed
+from sklearn.utils.parallel import delayed
 from sklearn.utils.validation import _check_fit_params, indexable
 
 
