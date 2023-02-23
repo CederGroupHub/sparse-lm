@@ -32,7 +32,7 @@ def _first_step_fit_intercept_only(steps):
 
 
 def _no_nested_stepwise(steps):
-    for sid, (_, estimator) in enumerate(steps):
+    for _, estimator in steps:
         if isinstance(estimator, StepwiseEstimator):
             return False
     return True
@@ -40,6 +40,7 @@ def _no_nested_stepwise(steps):
 
 class StepwiseEstimator(_BaseComposition, RegressorMixin, LinearModel):
     """A composite estimator used to do stepwise fitting.
+
     The first estimator in the composite will be used to fit
     certain features (a piece of the feature matrix) to the
     target vector, and the residuals are fitted to the rest
@@ -61,6 +62,7 @@ class StepwiseEstimator(_BaseComposition, RegressorMixin, LinearModel):
         estimator_feature_indices,
     ):
         """Initialize estimator.
+
         Args:
             steps(list[(str, CVXEstimator)]):
                 A list of step names and the CVXEstimators to use
@@ -148,6 +150,7 @@ class StepwiseEstimator(_BaseComposition, RegressorMixin, LinearModel):
         **kwargs,
     ):
         """Prepare fit input with sklearn help then call fit method.
+
         Args:
             X (ArrayLike):
                 Training data of shape (n_samples, n_features).
@@ -203,7 +206,7 @@ class StepwiseEstimator(_BaseComposition, RegressorMixin, LinearModel):
 
         self.coef_ = np.empty(X.shape[1])
         self.coef_.fill(np.nan)
-        for (name, estimator), scope in zip(self.steps, self.estimator_feature_indices):
+        for (_, estimator), scope in zip(self.steps, self.estimator_feature_indices):
             estimator.fit(
                 X[:, scope], residuals, *args, sample_weight=sample_weight, **kwargs
             )
