@@ -54,6 +54,13 @@ class StepwiseEstimator(_BaseComposition, RegressorMixin, LinearModel):
         StepwiseEstimator!
         2, No nesting is allowed for StepwiseEstimator, which means
         no step of a StepwiseEstimator can be a StepwiseEstimator.
+        3, Since stepwise estimator requires specifying a list of
+        feature indices for each step estimator, it requires fixing
+        n_features_in_ before fitting, which violates sklearn
+        convention for a regressor. Therefore, StepwiseEstimator is
+        not checked by sklearn check_estimator method, and there is
+        no guarantee that it is fully compatible with all sklearn
+        features.
     """
 
     def __init__(
