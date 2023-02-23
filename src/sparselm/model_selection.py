@@ -15,6 +15,7 @@ from sklearn.base import clone, is_classifier
 from sklearn.metrics import check_scoring
 from sklearn.metrics._scorer import _check_multimetric_scoring
 from sklearn.model_selection import GridSearchCV as _GridSearchCV
+from sklearn.model_selection import RepeatedKFold
 from sklearn.model_selection._search import BaseSearchCV
 from sklearn.model_selection._split import check_cv
 from sklearn.model_selection._validation import (
@@ -22,7 +23,7 @@ from sklearn.model_selection._validation import (
     _insert_error_scores,
     _warn_or_raise_about_fit_failures,
 )
-from sklearn.utils.parallel import delayed
+from sklearn.utils.parallel import delayed  # sklearn>=1.2.1
 from sklearn.utils.validation import _check_fit_params, indexable
 
 
@@ -135,6 +136,9 @@ class GridSearchCV(_GridSearchCV):
                 will be the same across calls.
                 Refer :ref:`User Guide <cross_validation>` for the various
                 cross-validation strategies that can be used here.
+                Note: the default cv splitter is changed to:
+                 RepeatedKFold(n_splits=5, n_repeats=3) because the original
+                 default KFold(5) does not shuffle columns before splitting!
             verbose (int, default=0):
                 Controls the verbosity: the higher, the more messages.
                 - >1 : the computation time for each fold and parameter
@@ -264,6 +268,9 @@ class GridSearchCV(_GridSearchCV):
         X, y, groups = indexable(X, y, groups)
         fit_params = _check_fit_params(X, fit_params)
 
+        # Overwrite default CV splitter to RepeatedKFold and force shuffling before split.
+        if self.cv is None:
+            self.cv = RepeatedKFold(n_splits=5, n_repeats=3)
         cv_orig = check_cv(self.cv, y, classifier=is_classifier(estimator))
         n_splits = cv_orig.get_n_splits(X, y, groups)
 

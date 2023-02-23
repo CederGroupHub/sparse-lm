@@ -3,7 +3,7 @@ import numpy as np
 import pytest
 
 from sparselm.model import L1L0, L2L0
-from sparselm.model_selection import GridSearchCV, LineSearchCV
+from sparselm.model_selection import GridSearchCV, LineSearchCV, RepeatedKFold
 
 ALL_CRITERION = ["max_score", "one_std_score"]
 # Currently we will only test on mixedL0
@@ -99,6 +99,8 @@ def test_grid_search(random_energy_model, grid_search):
     femat, energies, _ = random_energy_model
     n_samples, n_features = femat.shape
     grid_search.fit(X=femat, y=energies)
+    assert isinstance(grid_search.cv, RepeatedKFold)
+    assert grid_search.cv.n_repeats == 3
     assert "best_params_" in vars(grid_search)
     best_params = grid_search.best_params_
     assert "alpha" in best_params and "eta" in best_params
