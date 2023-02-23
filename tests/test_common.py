@@ -53,21 +53,21 @@ def test_general_fit(estimator_cls, random_model, rng):
 
 from sparselm.model import (
     L1L0,
+    L2L0,
     AdaptiveGroupLasso,
     AdaptiveLasso,
     AdaptiveOverlapGroupLasso,
     AdaptiveRidgedGroupLasso,
     AdaptiveSparseGroupLasso,
+    BestSubsetSelection,
     GroupLasso,
     Lasso,
     OrdinaryLeastSquares,
     OverlapGroupLasso,
     RegularizedL0,
+    RidgedBestSubsetSelection,
     RidgedGroupLasso,
     SparseGroupLasso,
-    L2L0,
-    BestSubsetSelection,
-    RidgedBestSubsetSelection
 )
 
 compliant_estimators = [
@@ -84,7 +84,13 @@ compliant_estimators = [
     AdaptiveRidgedGroupLasso,
 ]
 
-miqp_compliant_estimators = [BestSubsetSelection, RidgedBestSubsetSelection] #, RegularizedL0, L1L0, L2L0]
+miqp_compliant_estimators = [
+    BestSubsetSelection,
+    RidgedBestSubsetSelection,
+    RegularizedL0,
+    L1L0,
+    L2L0,
+]
 
 
 @pytest.fixture(params=compliant_estimators)

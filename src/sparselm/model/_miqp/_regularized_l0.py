@@ -24,8 +24,8 @@ from types import SimpleNamespace
 from typing import Optional
 
 import cvxpy as cp
-from numpy.typing import ArrayLike
 import numpy as np
+from numpy.typing import ArrayLike
 
 from sparselm.model._base import TikhonovMixin
 

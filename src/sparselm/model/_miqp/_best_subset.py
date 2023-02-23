@@ -5,12 +5,13 @@ Allows hierarchy constraints similar to mixed L0 solvers.
 
 __author__ = "Luis Barroso-Luque"
 
-from typing import Optional
 from types import SimpleNamespace
-from numpy.typing import ArrayLike
-import cvxpy as cp
+from typing import Optional
 
-from sparselm.model._base import TikhonovMixin, SimpleHyperparameterMixin
+import cvxpy as cp
+from numpy.typing import ArrayLike
+
+from sparselm.model._base import TikhonovMixin
 
 from ._base import MIQP_L0
 
@@ -24,7 +25,10 @@ class BestSubsetSelection(MIQP_L0):
     converge for large problems and under-determined problems.
     """
 
-    _hyperparam_names = ("big_M", "sparse_bound", )
+    _hyperparam_names = (
+        "big_M",
+        "sparse_bound",
+    )
 
     def __init__(
         self,
