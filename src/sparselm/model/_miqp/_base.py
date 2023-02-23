@@ -4,6 +4,7 @@
 __author__ = "Luis Barroso-Luque"
 
 from abc import ABCMeta
+from numbers import Real
 from types import SimpleNamespace
 from typing import Optional
 
@@ -11,12 +12,13 @@ import cvxpy as cp
 import numpy as np
 from cvxpy.atoms.affine.wraps import psd_wrap
 from numpy.typing import ArrayLike
+from sklearn.utils._param_validation import Interval
 
 from ..._utils.validation import _check_groups
-from .._base import CVXEstimator, CVXParametersMixin
+from .._base import CVXEstimator
 
 
-class MIQP_L0(CVXParametersMixin, CVXEstimator, metaclass=ABCMeta):
+class MIQP_L0(CVXEstimator, metaclass=ABCMeta):
     """Base class for mixed-integer quadratic programming (MIQP) estimators.
 
     Generalized l0 formulation that allows grouping coefficients, based on:
@@ -24,12 +26,15 @@ class MIQP_L0(CVXParametersMixin, CVXEstimator, metaclass=ABCMeta):
     https://doi.org/10.1287/opre.2015.1436
     """
 
-    _hyperparam_names = ("big_M",)
+    _parameter_constraints: dict = {"ignore_psd_check": ["boolean"]} | CVXEstimator._parameter_constraints
+    _cvx_parameter_constraints: dict = {
+    "big_M": [Interval(type=Real, left=0.0, right=None, closed="left")]
+    }
 
     def __init__(
         self,
         groups=None,
-        big_M=100.0,
+        big_M=100,
         hierarchy=None,
         ignore_psd_check=True,
         fit_intercept=False,
@@ -46,9 +51,6 @@ class MIQP_L0(CVXParametersMixin, CVXEstimator, metaclass=ABCMeta):
                 same as model, where each integer entry specifies the group
                 each parameter corresponds to. If no grouping is required, simply
                 pass a list of all different numbers, i.e. using range.
-            sparse_bound (int):
-                Upper bound on sparsity. The upper bound on total number of
-                nonzero coefficients.
             big_M (float):
                 Upper bound on the norm of coefficients associated with each
                 cluster (groups of coefficients) ||Beta_c||_2

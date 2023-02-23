@@ -20,12 +20,14 @@ __author__ = "Luis Barroso-Luque, Fengyu Xie"
 
 
 from abc import ABCMeta, abstractmethod
+from numbers import Real
 from types import SimpleNamespace
 from typing import Optional
 
 import cvxpy as cp
 import numpy as np
 from numpy.typing import ArrayLike
+from sklearn.utils._param_validation import Interval
 
 from sparselm.model._base import TikhonovMixin
 
@@ -49,13 +51,15 @@ class RegularizedL0(MIQP_L0):
 
     """
 
-    _hyperparam_names = ("big_M", "alpha")
+    _cvx_parameter_constraints: dict = {
+        "alpha": [Interval(type=Real, left=0.0, right=None, closed="left")],
+    } | MIQP_L0._cvx_parameter_constraints
 
     def __init__(
         self,
         groups=None,
         alpha=1.0,
-        big_M=100.0,
+        big_M=100,
         hierarchy=None,
         ignore_psd_check=True,
         fit_intercept=False,
@@ -139,14 +143,16 @@ class RegularizedL0(MIQP_L0):
 class MixedL0(RegularizedL0, metaclass=ABCMeta):
     """Abstract base class for mixed L0 regularization models: L1L0 and L2L0."""
 
-    _hyperparam_names = ("big_M", "alpha", "eta")
+    _cvx_parameter_constraints: dict = {
+        "eta": [Interval(type=Real, left=0.0, right=None, closed="left")],
+    } | RegularizedL0._cvx_parameter_constraints
 
     def __init__(
         self,
         groups=None,
         alpha=1.0,
         eta=1.0,
-        big_M=100.0,
+        big_M=100,
         hierarchy=None,
         ignore_psd_check=True,
         fit_intercept=False,
@@ -255,7 +261,7 @@ class L1L0(MixedL0):
         groups=None,
         alpha=1.0,
         eta=1.0,
-        big_M=100.0,
+        big_M=100,
         hierarchy=None,
         ignore_psd_check=True,
         fit_intercept=False,
@@ -391,7 +397,7 @@ class L2L0(TikhonovMixin, MixedL0):
         groups=None,
         alpha=1.0,
         eta=1.0,
-        big_M=100.0,
+        big_M=100,
         hierarchy=None,
         tikhonov_w=None,
         ignore_psd_check=True,
