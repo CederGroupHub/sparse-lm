@@ -665,7 +665,7 @@ class LineSearchCV(BaseSearchCV):
         history_ = []
 
         best_line_params_ = None
-        for i in range(self.n_iter):
+        for i in range(n_iter):
             param_id = i % n_params_
             if best_line_params_ is None:
                 last_params = [values[0] for name, values in self.param_grid]
