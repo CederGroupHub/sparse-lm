@@ -4,7 +4,6 @@ __author__ = "Fengyu Xie"
 import numbers
 import re
 import time
-import warnings
 from collections import defaultdict
 from copy import deepcopy
 from itertools import product
@@ -15,7 +14,6 @@ from sklearn.base import clone, is_classifier
 from sklearn.metrics import check_scoring
 from sklearn.metrics._scorer import _check_multimetric_scoring
 from sklearn.model_selection import GridSearchCV as _GridSearchCV
-from sklearn.model_selection import RepeatedKFold
 from sklearn.model_selection._search import BaseSearchCV
 from sklearn.model_selection._split import check_cv
 from sklearn.model_selection._validation import (
@@ -136,9 +134,11 @@ class GridSearchCV(_GridSearchCV):
                 will be the same across calls.
                 Refer :ref:`User Guide <cross_validation>` for the various
                 cross-validation strategies that can be used here.
-                Note: the default cv splitter is changed to:
-                 RepeatedKFold(n_splits=5, n_repeats=3) because the original
-                 default KFold(5) does not shuffle columns before splitting!
+                Notice that if cv is not specified, KFold(5) will be used, and your
+                training set will not be shuffled in each train-test split. This can
+                be dangerous if your training set has internal relations, for example,
+                structures with similar composition are close to each other in feature
+                rows. In this case, you should use RepeatedKFold as cv instead.
             verbose (int, default=0):
                 Controls the verbosity: the higher, the more messages.
                 - >1 : the computation time for each fold and parameter
@@ -268,9 +268,6 @@ class GridSearchCV(_GridSearchCV):
         X, y, groups = indexable(X, y, groups)
         fit_params = _check_fit_params(X, fit_params)
 
-        # Overwrite default CV splitter to RepeatedKFold and force shuffling before split.
-        if self.cv is None:
-            self.cv = RepeatedKFold(n_splits=5, n_repeats=3)
         cv_orig = check_cv(self.cv, y, classifier=is_classifier(estimator))
         n_splits = cv_orig.get_n_splits(X, y, groups)
 
@@ -546,6 +543,11 @@ class LineSearchCV(BaseSearchCV):
                 will be the same across calls.
                 Refer :ref:`User Guide <cross_validation>` for the various
                 cross-validation strategies that can be used here.
+                Notice that if cv is not specified, KFold(5) will be used, and your
+                training set will not be shuffled in each train-test split. This can
+                be dangerous if your training set has internal relations, for example,
+                structures with similar composition are close to each other in feature
+                rows. In this case, you should use RepeatedKFold as cv instead.
             verbose (int, default=0):
                 Controls the verbosity: the higher, the more messages.
                 - >1 : the computation time for each fold and parameter
@@ -584,51 +586,21 @@ class LineSearchCV(BaseSearchCV):
 
         """
         # These are equally passed into GridSearchCV objects at each iteration.
-        self.estimator = estimator
-        self.scoring = scoring
-        self.n_jobs = n_jobs
-        self.refit = refit
-        self.cv = cv
-        self.verbose = verbose
-        self.pre_dispatch = pre_dispatch
-        self.error_score = error_score
-        self.return_train_score = return_train_score
-
+        super().__init__(
+            estimator=estimator,
+            scoring=scoring,
+            n_jobs=n_jobs,
+            refit=refit,
+            cv=cv,
+            verbose=verbose,
+            pre_dispatch=pre_dispatch,
+            error_score=error_score,
+            return_train_score=return_train_score,
+        )
         self.param_grid = param_grid
-        if isinstance(param_grid[0][0], str) and isinstance(
-            param_grid[0], (tuple, list)
-        ):
-            self.n_params = len(param_grid)
-        else:
-            raise ValueError("Parameters grid not given in the correct" " format!")
-
-        if opt_selection_method is None:
-            self.opt_selection_methods = ["max_score" for _ in range(self.n_params)]
-        elif isinstance(opt_selection_method, str):
-            self.opt_selection_methods = [
-                opt_selection_method for _ in range(self.n_params)
-            ]
-        elif (
-            isinstance(opt_selection_method, (list, tuple))
-            and all(isinstance(m, str) for m in opt_selection_method)
-            and len(opt_selection_method) == self.n_params
-        ):
-            self.opt_selection_methods = opt_selection_method
-        else:
-            raise ValueError(
-                "Optimal hyperparams selection method"
-                " should either not be given, or given as a single string,"
-                " or as a list or strings with the same length as parameters!"
-            )
-
-        # Set a proper value for this, not too large or too small.
-        if n_iter is not None and n_iter > 0:
-            self.n_iter = n_iter
-        else:
-            self.n_iter = 2 * self.n_params
-
-        # Stores GridSearch object at each iteration
-        self._history = []
+        self.opt_selection_method = opt_selection_method
+        self.n_iter = n_iter
+        # Do not validate parameters in init.
 
     def fit(self, X, y=None, *, groups=None, **fit_params):
         """Run fit with all sets of parameters.
@@ -656,13 +628,45 @@ class LineSearchCV(BaseSearchCV):
                 self(LineSearch):
                     Instance of fitted estimator.
         """
-        if len(self._history) > 0:
-            warnings.warn("Overwrite existing fit history!")
-            self._history = []
+        # Validate parameters.
+        if isinstance(self.param_grid[0][0], str) and isinstance(
+            self.param_grid[0], (tuple, list)
+        ):
+            n_params_ = len(self.param_grid)
+        else:
+            raise ValueError("Parameter grid is not given in the correct format!")
+
+        if self.opt_selection_method is None:
+            opt_selection_methods = ["max_score" for _ in range(n_params_)]
+        elif isinstance(self.opt_selection_method, str):
+            opt_selection_methods = [
+                self.opt_selection_method for _ in range(n_params_)
+            ]
+        elif (
+            isinstance(self.opt_selection_method, (list, tuple))
+            and all(isinstance(m, str) for m in self.opt_selection_method)
+            and len(self.opt_selection_method) == n_params_
+        ):
+            opt_selection_methods = self.opt_selection_method
+        else:
+            raise ValueError(
+                "Optimal hyperparams selection methods should be given as a"
+                " single string, or as a list of strings with the same"
+                " amount of parameters!"
+            )
+
+        # Need a proper value for n_iter, not too large or too small.
+        if self.n_iter is not None and self.n_iter > 0:
+            n_iter = self.n_iter
+        else:
+            n_iter = 2 * n_params_
+
+        # Stores GridSearch object at each iteration
+        history_ = []
 
         best_line_params_ = None
         for i in range(self.n_iter):
-            param_id = i % self.n_params
+            param_id = i % n_params_
             if best_line_params_ is None:
                 last_params = [values[0] for name, values in self.param_grid]
             else:
@@ -676,15 +680,10 @@ class LineSearchCV(BaseSearchCV):
             ):
                 param_line[name] = [last_value] if pid != param_id else values
 
-            # Overwrite default CV splitter to RepeatedKFold and force shuffling
-            # before split.
-            if self.cv is None:
-                self.cv = RepeatedKFold(n_splits=5, n_repeats=3)
-
             grid_search = GridSearchCV(
                 estimator=self.estimator,
                 param_grid=param_line,
-                opt_selection_method=self.opt_selection_methods[param_id],
+                opt_selection_method=opt_selection_methods[param_id],
                 scoring=self.scoring,
                 n_jobs=self.n_jobs,
                 refit=self.refit,
@@ -696,16 +695,14 @@ class LineSearchCV(BaseSearchCV):
             )
             grid_search.fit(X=X, y=y, groups=groups, **fit_params)
             best_line_params_ = deepcopy(grid_search.best_params_)
-            self._history.append(grid_search)
+            history_.append(grid_search)
 
         # Buffer fitted attributes into LineSearch object.
         attrs = [
-            v
-            for v in vars(self._history[-1])
-            if v.endswith("_") and not v.startswith("__")
+            v for v in vars(history_[-1]) if v.endswith("_") and not v.startswith("__")
         ]
         for attr in attrs:
-            setattr(self, attr, getattr(self._history[-1], attr))
+            setattr(self, attr, getattr(history_[-1], attr))
         return self
 
     def _run_search(self, evaluate_candidates):
