@@ -1,5 +1,4 @@
 """Classes implementing generalized linear regression estimators."""
-
 from ._adaptive_lasso import (
     AdaptiveGroupLasso,
     AdaptiveLasso,
