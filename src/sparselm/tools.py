@@ -1,4 +1,4 @@
-"""A variety of tools for fitting linear regression models to polish CE fits."""
+"""A variety of tools for fitting linear regression models to polish CE."""
 
 __author__ = "Luis Barroso-Luque"
 
@@ -16,7 +16,8 @@ def constrain_coefficients(indices, high=None, low=None):
     and below the supplied value.
 
     Use this as a standard decorator with parameters:
-    - At runtime: coefs = constrain_coefficients(indices, high, low)(fit_method)(X, y)
+    - At runtime:
+    coefs = constrain_coefficients(indices, high, low)(fit_method)(X, y)
     - In fit_method definitions:
       @constrain_coefficients(indices, high, low)
       def your_fit_method(X, y):
@@ -79,8 +80,9 @@ def constrain_coefficients(indices, high=None, low=None):
             below_range = coefs[indices] < low
             if sum(above_range) > 0 or sum(below_range) > 0:
                 warnings.warn(
-                    "Running the constrained fit has resulted in new out of range "
-                    "coefficients that were not so in the unconstrained fit.\n"
+                    "Running the constrained fit has resulted in new out of"
+                    " range coefficients that were not so in the unconstrained"
+                    " fit.\n"
                     "Double check the sensibility of the bounds you provided!",
                     RuntimeWarning,
                 )

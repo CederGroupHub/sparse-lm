@@ -112,7 +112,9 @@ class AdaptiveLasso(Lasso):
 
     def _gen_regularization(self, X):
         self._weights = cp.Parameter(
-            shape=X.shape[1], nonneg=True, value=self.alpha * np.ones(X.shape[1])
+            shape=X.shape[1],
+            nonneg=True,
+            value=self.alpha * np.ones(X.shape[1]),
         )
         return cp.norm1(cp.multiply(self._weights, self._beta))
 
@@ -128,7 +130,9 @@ class AdaptiveLasso(Lasso):
     def _solve(self, X, y, *args, **kwargs):
         problem = self._get_problem(X, y)
         problem.solve(
-            solver=self.solver, warm_start=self.warm_start, **self.solver_options
+            solver=self.solver,
+            warm_start=self.warm_start,
+            **self.solver_options,
         )
         for _ in range(self.max_iter - 1):
             self._update_weights(self._beta.value)
@@ -190,9 +194,9 @@ class AdaptiveGroupLasso(AdaptiveLasso, GroupLasso):
                 Absolute convergence tolerance for difference between weights
                 at successive steps.
             update_function (Callable): optional
-                A function with signature f(group_norms, eps) used to update the
-                weights at each iteration. Where group_norms are the norms of
-                the coefficients Beta for each group.
+                A function with signature f(group_norms, eps) used to update
+                the weights at each iteration. Where group_norms are the norms
+                of the coefficients Beta for each group.
                 Default is 1/(group_norms + eps)
             standardize (bool): optional
                 Whether to standardize the group regularization penalty using
@@ -306,9 +310,9 @@ class AdaptiveOverlapGroupLasso(OverlapGroupLasso, AdaptiveGroupLasso):
                 Absolute convergence tolerance for difference between weights
                 at successive steps.
             update_function (Callable): optional
-                A function with signature f(group_norms, eps) used to update the
-                weights at each iteration. Where group_norms are the norms of
-                the coefficients Beta for each group.
+                A function with signature f(group_norms, eps) used to update
+                the weights at each iteration. Where group_norms are the norms
+                of the coefficients Beta for each group.
                 Default is 1/(group_norms + eps)
             standardize (bool): optional
                 Whether to standardize the group regularization penalty using
@@ -360,7 +364,7 @@ class AdaptiveOverlapGroupLasso(OverlapGroupLasso, AdaptiveGroupLasso):
 
 
 class AdaptiveSparseGroupLasso(AdaptiveLasso, SparseGroupLasso):
-    r"""Adaptive Sparse Group Lasso, iteratively re-weighted sparse group lasso.
+    r"""Adaptive Sparse Group Lasso, iteratively re-weighted.
 
     Regularized model:
 
@@ -416,9 +420,9 @@ class AdaptiveSparseGroupLasso(AdaptiveLasso, SparseGroupLasso):
                 Absolute convergence tolerance for difference between weights
                 at successive steps.
             update_function (Callable): optional
-                A function with signature f(group_norms, eps) used to update the
-                weights at each iteration. Where group_norms are the norms of
-                the coefficients Beta for each group.
+                A function with signature f(group_norms, eps) used to update
+                the weights at each iteration. Where group_norms are the norms
+                of the coefficients Beta for each group.
                 Default is 1/(group_norms + eps)
             standardize (bool): optional
                 Whether to standardize the group regularization penalty using
@@ -478,7 +482,10 @@ class AdaptiveSparseGroupLasso(AdaptiveLasso, SparseGroupLasso):
         return l1_reg + grp_reg
 
     def _update_weights(self, beta):
-        self._previous_weights = [self._weights[0].value, self._weights[1].value]
+        self._previous_weights = [
+            self._weights[0].value,
+            self._weights[1].value,
+        ]
         self._weights[0].value = self._lambda1.value / (abs(beta) + self.eps)
         self._weights[1].value = (
             self._lambda2.value * self.group_weights
@@ -512,8 +519,8 @@ class AdaptiveRidgedGroupLasso(AdaptiveGroupLasso, RidgedGroupLasso):
     For details on proper standardization refer to:
     http://faculty.washington.edu/nrsimon/standGL.pdf
 
-    * Adaptive iterative weights are only done on the group norm and not the ridge
-    portion.
+    * Adaptive iterative weights are only done on the group norm and not the
+    ridge portion.
     """
 
     def __init__(
@@ -561,9 +568,9 @@ class AdaptiveRidgedGroupLasso(AdaptiveGroupLasso, RidgedGroupLasso):
                 Absolute convergence tolerance for difference between weights
                 at successive steps.
             update_function (Callable): optional
-                A function with signature f(group_norms, eps) used to update the
-                weights at each iteration. Where group_norms are the norms of
-                the coefficients Beta for each group.
+                A function with signature f(group_norms, eps) used to update
+                the weights at each iteration. Where group_norms are the norms
+                of the coefficients Beta for each group.
                 Default is 1/(group_norms + eps)
             copy_X (bool):
                 If True, X will be copied; else, it may be overwritten.

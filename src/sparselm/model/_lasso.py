@@ -301,7 +301,9 @@ class OverlapGroupLasso(GroupLasso):
         """Solve the cvxpy problem."""
         problem = self._get_problem(X[:, self.beta_indices], y)
         problem.solve(
-            solver=self.solver, warm_start=self.warm_start, **self.solver_options
+            solver=self.solver,
+            warm_start=self.warm_start,
+            **self.solver_options,
         )
         beta = np.array(
             [sum(self._beta.value[self.beta_indices == i]) for i in range(X.shape[1])]
@@ -320,7 +322,8 @@ class SparseGroupLasso(GroupLasso):
             + \alpha r ||\beta||_1
             + \alpha (1 - r) * \sum_{G}||\beta_G||_2
 
-    Where G represents groups of features / coefficients. And r is the L1 ratio.
+    Where G represents groups of features / coefficients. And r is the L1
+    ratio.
     """
 
     def __init__(

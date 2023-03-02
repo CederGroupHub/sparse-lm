@@ -27,7 +27,8 @@ class CVXEstimator(RegressorMixin, LinearModel, metaclass=ABCMeta):
     And can solver specific settings can be set by passing a dictionary of
     solver_options.
 
-    See "Setting solver options" in documentation for details of available options:
+    See "Setting solver options" in documentation for details of available
+    options:
     https://www.cvxpy.org/tutorial/advanced/index.html#advanced
 
     Keyword arguments are the same as those found in sklearn linear models.
@@ -207,9 +208,9 @@ class CVXEstimator(RegressorMixin, LinearModel, metaclass=ABCMeta):
 class TikhonovMixin:
     """Mixin class to add a Tihhonov/ridge regularization term.
 
-    When using this Mixin, a cvxpy parameter should be set as the _eta attribute
-    and an attribute tikhonov_w can be added to allow a matrix otherwise simple l2/Ridge
-    is used.
+    When using this Mixin, a cvxpy parameter should be set as the _eta
+    attribute and an attribute tikhonov_w can be added to allow a matrix
+    otherwise simple l2/Ridge is used.
     """
 
     def _gen_objective(self, X, y):

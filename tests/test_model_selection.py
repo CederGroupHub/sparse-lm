@@ -87,13 +87,17 @@ def line_search(estimator, param_grid, request):
     # Multi-grids not supported in line search mode.
     param_grid_lines = sorted((key, values) for key, values in param_grid[0].items())
     line_searcher = LineSearchCV(
-        estimator, param_grid_lines, opt_selection_method=request.param, n_iter=3
+        estimator,
+        param_grid_lines,
+        opt_selection_method=request.param,
+        n_iter=3,
     )
     return line_searcher
 
 
 def test_grid_search(random_energy_model, grid_search):
     femat, energies, _ = random_energy_model
+    n_samples, n_features = femat.shape
     grid_search.fit(X=femat, y=energies)
     assert "best_params_" in vars(grid_search)
     best_params = grid_search.best_params_
@@ -105,12 +109,15 @@ def test_grid_search(random_energy_model, grid_search):
     assert "coef_" in vars(grid_search.best_estimator_)
     assert "intercept_" in vars(grid_search.best_estimator_)
     energies_pred = grid_search.predict(femat)
-    if grid_search.best_score_ > 0.8:
-        assert np.sum((energies - energies_pred) ** 2) / len(energies) <= 1e-1
+    rmse = np.sum((energies - energies_pred) ** 2) / len(energies)
+    # Overfit.
+    if n_samples < n_features:
+        assert -grid_search.best_score_ >= rmse
 
 
 def test_line_search(random_energy_model, line_search):
     femat, energies, _ = random_energy_model
+    n_samples, n_features = femat.shape
     line_search.fit(X=femat, y=energies)
     assert "best_params_" in vars(line_search)
     best_params = line_search.best_params_
@@ -122,5 +129,7 @@ def test_line_search(random_energy_model, line_search):
     assert "coef_" in vars(line_search.best_estimator_)
     assert "intercept_" in vars(line_search.best_estimator_)
     energies_pred = line_search.predict(femat)
-    if line_search.best_score_ > 0.8:
-        assert np.sum((energies - energies_pred) ** 2) / len(energies) <= 1e-1
+    rmse = np.sum((energies - energies_pred) ** 2) / len(energies)
+    # Overfit.
+    if n_samples < n_features:
+        assert -line_search.best_score_ >= rmse

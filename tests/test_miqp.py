@@ -10,7 +10,12 @@ from sparselm.model import (
 )
 
 # exclude L1L0 since it breaks hierarchy constraints...
-MIQP_estimators = [BestSubsetSelection, RidgedBestSubsetSelection, RegularizedL0, L2L0]
+MIQP_estimators = [
+    BestSubsetSelection,
+    RidgedBestSubsetSelection,
+    RegularizedL0,
+    L2L0,
+]
 
 THRESHOLD = 1e-12
 

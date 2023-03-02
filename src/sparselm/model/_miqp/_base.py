@@ -1,4 +1,4 @@
-"""Base class for mixed-integer quadratic programming l0 pseudo norm based estimators."""
+"""Base class for mixed-integer quadratic programming l0 norm estimators."""
 
 
 __author__ = "Luis Barroso-Luque"
@@ -38,8 +38,8 @@ class MIQP_L0(CVXEstimator, metaclass=ABCMeta):
             groups (list or ndarray):
                 array-like of integers specifying groups. Length should be the
                 same as model, where each integer entry specifies the group
-                each parameter corresponds to. If no grouping is required, simply
-                pass a list of all different numbers, i.e. using range.
+                each parameter corresponds to. If no grouping is required,
+                simply pass a list of all different numbers, i.e. using range.
             sparse_bound (int):
                 Upper bound on sparsity. The upper bound on total number of
                 nonzero coefficients.
@@ -55,9 +55,10 @@ class MIQP_L0(CVXEstimator, metaclass=ABCMeta):
                 coefficient 0 depends on 1, and 2; 1 depends on 0, and 2 has no
                 dependence.
             ignore_psd_check (bool):
-                Whether to ignore cvxpy's PSD checks  of matrix used in quadratic
-                form. Default is True to avoid raising errors for poorly
-                conditioned matrices. But if you want to be strict set to False.
+                Whether to ignore cvxpy's PSD checks  of matrix used in
+                quadratic form. Default is True to avoid raising errors for
+                poorly conditioned matrices. But if you want to be strict set
+                to False.
             fit_intercept (bool):
                 Whether the intercept should be estimated or not.
                 If False, the data is assumed to be already centered.
