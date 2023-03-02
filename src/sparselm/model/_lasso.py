@@ -192,8 +192,12 @@ class GroupLasso(Lasso):
                 " a simple Lasso. You should consider using that instead.",
                 UserWarning,
             )
+            n_groups = X.shape[1]
+        else:
+            n_groups = len(np.unique(self.groups))
+
         _check_groups(self.groups, X.shape[1])
-        _check_group_weights(self.group_weights, X.shape[1])
+        _check_group_weights(self.group_weights, n_groups)
 
     def _set_param_values(self) -> None:
         super()._set_param_values()
