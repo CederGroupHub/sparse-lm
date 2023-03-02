@@ -167,7 +167,7 @@ class CVXEstimator(RegressorMixin, LinearModel, metaclass=ABCMeta):
         self._validate_params(X, y)
 
         if not hasattr(self, "canonicals_") or self.warm_start is False:
-            self._initialize_problem(X, y)
+            self.generate_problem(X, y)
 
         if self.warm_start is True:
             # cache training data
@@ -180,7 +180,7 @@ class CVXEstimator(RegressorMixin, LinearModel, metaclass=ABCMeta):
             if not np.array_equal(self.cached_X_, X) or not np.array_equal(
                 self.cached_y_, y
             ):
-                self._initialize_problem(X, y)
+                self.generate_problem(X, y)
             else:
                 self._set_param_values()  # set parameter values
 
@@ -378,8 +378,14 @@ class CVXEstimator(RegressorMixin, LinearModel, metaclass=ABCMeta):
         """
         return None
 
-    def _initialize_problem(self, X: ArrayLike, y: ArrayLike):
-        """Initialize cvxpy problem from the generated objective function.
+    def generate_problem(self, X: ArrayLike, y: ArrayLike):
+        """Generate regression problem and auxiliary cvxpy objects.
+
+        This initializes the minimization problem, the objective, coefficient variable (beta), problem parameters,
+        solution constraints, and auxiliary variables/terms.
+
+        This is called in the fit method, however it can be called directly if further control over the problem
+        is needed. For example to add additional constraints.
 
         Args:
             X (ArrayLike):

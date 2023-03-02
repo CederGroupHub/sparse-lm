@@ -191,9 +191,9 @@ def test_adaptive_weights(estimator_cls, random_model_with_groups, solver, rng):
     # force generating weights
     estimator._validate_params(X, y)
     if estimator_cls.__name__ == "AdaptiveOverlapGroupLasso":
-        _ = estimator._initialize_problem(X[:, estimator.beta_indices], y)
+        _ = estimator.generate_problem(X[:, estimator.beta_indices], y)
     else:
-        _ = estimator._initialize_problem(X, y)
+        _ = estimator.generate_problem(X, y)
 
     if isinstance(estimator.weights_, tuple):
         weights = [
