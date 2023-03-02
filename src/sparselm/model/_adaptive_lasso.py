@@ -98,9 +98,8 @@ class AdaptiveLasso(Lasso):
                 fit as initialization, otherwise, just erase the previous
                 solution.
             solver (str):
-                cvxpy backend solver to use. Supported solvers are:
-                ECOS, ECOS_BB, CVXOPT, SCS, GUROBI, Elemental.
-                GLPK and GLPK_MI (via CVXOPT GLPK interface)
+                cvxpy backend solver to use. Supported solvers are listed here:
+                https://www.cvxpy.org/tutorial/advanced/index.html#solve-method-options
             solver_options (dict):
                 dictionary of keyword arguments passed to cvxpy solve.
                 See docs in CVXEstimator for more information.
@@ -275,9 +274,8 @@ class AdaptiveGroupLasso(AdaptiveLasso, GroupLasso):
                 fit as initialization, otherwise, just erase the previous
                 solution.
             solver (str):
-                cvxpy backend solver to use. Supported solvers are:
-                ECOS, ECOS_BB, CVXOPT, SCS, GUROBI, Elemental.
-                GLPK and GLPK_MI (via CVXOPT GLPK interface)
+                cvxpy backend solver to use. Supported solvers are listed here:
+                https://www.cvxpy.org/tutorial/advanced/index.html#solve-method-options
             solver_options (dict):
                 dictionary of keyword arguments passed to cvxpy solve.
                 See docs in CVXEstimator for more information.
@@ -407,9 +405,8 @@ class AdaptiveOverlapGroupLasso(OverlapGroupLasso, AdaptiveGroupLasso):
                 fit as initialization, otherwise, just erase the previous
                 solution.
             solver (str):
-                cvxpy backend solver to use. Supported solvers are:
-                ECOS, ECOS_BB, CVXOPT, SCS, GUROBI, Elemental.
-                GLPK and GLPK_MI (via CVXOPT GLPK interface)
+                cvxpy backend solver to use. Supported solvers are listed here:
+                https://www.cvxpy.org/tutorial/advanced/index.html#solve-method-options
             solver_options (dict):
                 dictionary of keyword arguments passed to cvxpy solve.
                 See docs in CVXEstimator for more information.
@@ -527,9 +524,8 @@ class AdaptiveSparseGroupLasso(AdaptiveLasso, SparseGroupLasso):
                 fit as initialization, otherwise, just erase the previous
                 solution.
             solver (str):
-                cvxpy backend solver to use. Supported solvers are:
-                ECOS, ECOS_BB, CVXOPT, SCS, GUROBI, Elemental.
-                GLPK and GLPK_MI (via CVXOPT GLPK interface)
+                cvxpy backend solver to use. Supported solvers are listed here:
+                https://www.cvxpy.org/tutorial/advanced/index.html#solve-method-options
             solver_options (dict):
                 dictionary of keyword arguments passed to cvxpy solve.
                 See docs in CVXEstimator for more information.
@@ -713,9 +709,8 @@ class AdaptiveRidgedGroupLasso(AdaptiveGroupLasso, RidgedGroupLasso):
                 fit as initialization, otherwise, just erase the previous
                 solution.
             solver (str):
-                cvxpy backend solver to use. Supported solvers are:
-                ECOS, ECOS_BB, CVXOPT, SCS, GUROBI, Elemental.
-                GLPK and GLPK_MI (via CVXOPT GLPK interface)
+                cvxpy backend solver to use. Supported solvers are listed here:
+                https://www.cvxpy.org/tutorial/advanced/index.html#solve-method-options
             solver_options (dict):
                 dictionary of keyword arguments passed to cvxpy solve.
                 See docs in CVXEstimator for more information.

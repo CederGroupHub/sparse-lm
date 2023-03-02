@@ -78,9 +78,8 @@ class MIQP_L0(CVXEstimator, metaclass=ABCMeta):
                 fit as initialization, otherwise, just erase the previous
                 solution.
             solver (str):
-                cvxpy backend solver to use. Supported solvers are:
-                ECOS, ECOS_BB, CVXOPT, SCS, GUROBI, Elemental.
-                GLPK and GLPK_MI (via CVXOPT GLPK interface)
+                cvxpy backend solver to use. Supported solvers are listed here:
+                https://www.cvxpy.org/tutorial/advanced/index.html#solve-method-options
             solver_options (dict):
                 dictionary of keyword arguments passed to cvxpy solve.
                 See docs in CVXEstimator for more information.
