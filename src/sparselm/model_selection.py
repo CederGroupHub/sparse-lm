@@ -9,7 +9,6 @@ from copy import deepcopy
 from itertools import product
 
 import numpy as np
-from joblib import Parallel
 from sklearn.base import clone, is_classifier
 from sklearn.metrics import check_scoring
 from sklearn.metrics._scorer import _check_multimetric_scoring
@@ -21,7 +20,7 @@ from sklearn.model_selection._validation import (
     _insert_error_scores,
     _warn_or_raise_about_fit_failures,
 )
-from sklearn.utils.parallel import delayed  # sklearn>=1.2.1
+from sklearn.utils.parallel import Parallel, delayed  # sklearn>=1.2.1
 from sklearn.utils.validation import _check_fit_params, indexable
 
 
