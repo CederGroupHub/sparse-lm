@@ -9,10 +9,10 @@ from typing import Optional
 import cvxpy as cp
 from numpy.typing import ArrayLike
 
-from ._base import CVXEstimator
+from ._base import CVXRegressor
 
 
-class OrdinaryLeastSquares(CVXEstimator):
+class OrdinaryLeastSquares(CVXRegressor):
     """OLS Linear Regression Estimator implemented with cvxpy."""
 
     def _generate_objective(

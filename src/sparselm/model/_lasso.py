@@ -26,10 +26,10 @@ from sklearn.utils._param_validation import Interval
 from sklearn.utils.validation import check_scalar
 
 from .._utils.validation import _check_group_weights, _check_groups
-from ._base import CVXCanonicals, CVXEstimator
+from ._base import CVXCanonicals, CVXRegressor
 
 
-class Lasso(CVXEstimator):
+class Lasso(CVXRegressor):
     r"""
     Lasso Estimator implemented with cvxpy.
 

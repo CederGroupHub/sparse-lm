@@ -61,7 +61,7 @@ class CVXCanonicals(NamedTuple):
     constraints: Optional[list[cp.Expression]]
 
 
-class CVXEstimator(RegressorMixin, LinearModel, metaclass=ABCMeta):
+class CVXRegressor(RegressorMixin, LinearModel, metaclass=ABCMeta):
     """Abstract base class for estimators using cvxpy with a sklearn interface.
 
     Note cvxpy can use one of many 3rd party solvers, default is most often

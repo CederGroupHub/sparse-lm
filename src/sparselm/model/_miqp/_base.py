@@ -15,10 +15,10 @@ from numpy.typing import ArrayLike
 from sklearn.utils._param_validation import Interval
 
 from ..._utils.validation import _check_groups
-from .._base import CVXEstimator
+from .._base import CVXRegressor
 
 
-class MIQP_L0(CVXEstimator, metaclass=ABCMeta):
+class MIQP_L0(CVXRegressor, metaclass=ABCMeta):
     """Base class for mixed-integer quadratic programming (MIQP) estimators.
 
     Generalized l0 formulation that allows grouping coefficients, based on:
@@ -28,7 +28,7 @@ class MIQP_L0(CVXEstimator, metaclass=ABCMeta):
 
     _parameter_constraints: dict[str, list[Any]] = {
         "ignore_psd_check": ["boolean"]
-    } | CVXEstimator._parameter_constraints
+    } | CVXRegressor._parameter_constraints
     _cvx_parameter_constraints: dict[str, list[Any]] = {
         "big_M": [Interval(type=Real, left=0.0, right=None, closed="left")]
     }
