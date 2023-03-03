@@ -13,7 +13,7 @@ from ._base import CVXRegressor
 
 
 class OrdinaryLeastSquares(CVXRegressor):
-    """OLS Linear Regression Estimator implemented with cvxpy."""
+    """OLS Linear Regression Regressor implemented with cvxpy."""
 
     def _generate_objective(
         self,

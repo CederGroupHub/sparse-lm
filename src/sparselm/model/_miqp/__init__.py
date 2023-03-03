@@ -1,4 +1,4 @@
-"""MIQP based regression estimators."""
+"""MIQP based regression Regressors."""
 
 
 from ._best_subset import BestSubsetSelection, RidgedBestSubsetSelection

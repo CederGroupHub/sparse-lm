@@ -19,7 +19,7 @@ from ._base import MIQPl0
 
 
 class BestSubsetSelection(MIQPl0):
-    """MIQP Best Subset Selection estimator.
+    """MIQP Best Subset Selection Regressor.
 
     Generalized best subset that allows grouping subsets.
 
@@ -44,7 +44,7 @@ class BestSubsetSelection(MIQPl0):
         solver: Optional[str] = None,
         solver_options: Optional[dict] = None,
     ):
-        """Initialize estimator.
+        """Initialize Regressor.
 
         Args:
             groups (ArrayLike):
@@ -85,7 +85,7 @@ class BestSubsetSelection(MIQPl0):
                 https://www.cvxpy.org/tutorial/advanced/index.html#solve-method-options
             solver_options (dict):
                 dictionary of keyword arguments passed to cvxpy solve.
-                See docs in CVXEstimator for more information.
+                See docs in CVXRegressor for more information.
         """
         super().__init__(
             groups=groups,
@@ -115,7 +115,7 @@ class BestSubsetSelection(MIQPl0):
 
 
 class RidgedBestSubsetSelection(TikhonovMixin, BestSubsetSelection):
-    """MIQP best subset selection estimator with Ridge/Tihkonov regularization."""
+    """MIQP best subset selection Regressor with Ridge/Tihkonov regularization."""
 
     _cvx_parameter_constraints: dict[str, list[Any]] = {
         "eta": [Interval(type=Real, left=0.0, right=None, closed="left")],
@@ -136,7 +136,7 @@ class RidgedBestSubsetSelection(TikhonovMixin, BestSubsetSelection):
         solver: Optional[str] = None,
         solver_options: Optional[dict] = None,
     ):
-        """Initialize estimator.
+        """Initialize Regressor.
 
         Args:
             groups (ArrayLike):
@@ -181,7 +181,7 @@ class RidgedBestSubsetSelection(TikhonovMixin, BestSubsetSelection):
                 https://www.cvxpy.org/tutorial/advanced/index.html#solve-method-options
             solver_options (dict):
                 dictionary of keyword arguments passed to cvxpy solve.
-                See docs in CVXEstimator for more information.
+                See docs in CVXRegressor for more information.
         """
         super().__init__(
             groups=groups,

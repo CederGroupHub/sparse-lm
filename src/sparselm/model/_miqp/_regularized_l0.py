@@ -12,7 +12,7 @@ L2L0 proposed by Peichen Zhong:
 
     https://journals.aps.org/prb/abstract/10.1103/PhysRevB.106.024203
 
-Estimators allow optional inclusion of hierarchical constraints at the single coefficient
+Regressors allow optional inclusion of hierarchical constraints at the single coefficient
 or group of coefficients level.
 """
 
@@ -35,7 +35,7 @@ from ._base import MIQPl0
 
 
 class RegularizedL0(MIQPl0):
-    r"""Implementation of mixed-integer quadratic programming l0 regularized estimator.
+    r"""Implementation of mixed-integer quadratic programming l0 regularized Regressor.
 
     Supports grouping parameters and group-level hierarchy, but requires groups as a
     compulsory argument.
@@ -68,7 +68,7 @@ class RegularizedL0(MIQPl0):
         solver: Optional[str] = None,
         solver_options: Optional[dict] = None,
     ):
-        """Initialize estimator.
+        """Initialize Regressor.
 
         Args:
             groups (ArrayLike):
@@ -108,7 +108,7 @@ class RegularizedL0(MIQPl0):
                 https://www.cvxpy.org/tutorial/advanced/index.html#solve-method-options
             solver_options (dict):
                 dictionary of keyword arguments passed to cvxpy solve.
-                See docs in CVXEstimator for more information.
+                See docs in CVXRegressor for more information.
         """
         super().__init__(
             groups=groups,
@@ -160,7 +160,7 @@ class MixedL0(RegularizedL0, metaclass=ABCMeta):
         solver: Optional[str] = None,
         solver_options: Optional[dict] = None,
     ):
-        """Initialize estimator.
+        """Initialize Regressor.
 
         Args:
             groups (ArrayLike):
@@ -202,7 +202,7 @@ class MixedL0(RegularizedL0, metaclass=ABCMeta):
                 https://www.cvxpy.org/tutorial/advanced/index.html#solve-method-options
             solver_options (dict):
                 dictionary of keyword arguments passed to cvxpy solve.
-                See docs in CVXEstimator for more information.
+                See docs in CVXRegressor for more information.
         """
         super().__init__(
             groups=groups,
@@ -233,9 +233,9 @@ class MixedL0(RegularizedL0, metaclass=ABCMeta):
 
 
 class L1L0(MixedL0):
-    r"""L1L0 regularized estimator.
+    r"""L1L0 regularized Regressor.
 
-    Estimator with L1L0 regularization solved with mixed integer programming
+    Regressor with L1L0 regularization solved with mixed integer programming
     as discussed in:
 
     https://arxiv.org/abs/1807.10753
@@ -268,7 +268,7 @@ class L1L0(MixedL0):
         solver: Optional[str] = None,
         solver_options: Optional[dict] = None,
     ):
-        """Initialize estimator.
+        """Initialize Regressor.
 
         Args:
             groups (ArrayLike):
@@ -310,7 +310,7 @@ class L1L0(MixedL0):
                 https://www.cvxpy.org/tutorial/advanced/index.html#solve-method-options
             solver_options (dict):
                 dictionary of keyword arguments passed to cvxpy solve.
-                See docs in CVXEstimator for more information.
+                See docs in CVXRegressor for more information.
         """
         super().__init__(
             groups=groups,
@@ -365,9 +365,9 @@ class L1L0(MixedL0):
 
 
 class L2L0(TikhonovMixin, MixedL0):
-    r"""L2L0 regularized estimator.
+    r"""L2L0 regularized Regressor.
 
-    Based on estimator with L2L0 regularization solved with mixed integer programming
+    Based on Regressor with L2L0 regularization solved with mixed integer programming
     proposed by Peichen Zhong:
 
     https://arxiv.org/abs/2204.13789

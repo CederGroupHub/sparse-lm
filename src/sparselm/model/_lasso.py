@@ -1,4 +1,4 @@
-"""A set of generalized lasso estimators.
+"""A set of generalized lasso Regressors.
 
 * Lasso
 * Group Lasso
@@ -6,7 +6,7 @@
 * Sparse Group Lasso
 * Ridged Group Lasso
 
-Estimators follow scikit-learn interface, but use cvxpy to set up and solve
+Regressors follow scikit-learn interface, but use cvxpy to set up and solve
 optimization problem.
 """
 
@@ -31,7 +31,7 @@ from ._base import CVXCanonicals, CVXRegressor
 
 class Lasso(CVXRegressor):
     r"""
-    Lasso Estimator implemented with cvxpy.
+    Lasso Regressor implemented with cvxpy.
 
     Regularized model:
 
@@ -54,7 +54,7 @@ class Lasso(CVXRegressor):
         solver: Optional[str] = None,
         solver_options: Optional[dict[str, Any]] = None,
     ):
-        """Initialize a Lasso estimator.
+        """Initialize a Lasso Regressor.
 
         Args:
             alpha (float):
@@ -73,7 +73,7 @@ class Lasso(CVXRegressor):
                 https://www.cvxpy.org/tutorial/advanced/index.html#solve-method-options
             solver_options (dict):
                 dictionary of keyword arguments passed to cvxpy solve.
-                See docs in CVXEstimator for more information.
+                See docs in CVXRegressor for more information.
         """
         super().__init__(
             fit_intercept=fit_intercept,
@@ -132,7 +132,7 @@ class GroupLasso(Lasso):
         solver: Optional[str] = None,
         solver_options: Optional[dict[str, Any]] = None,
     ):
-        """Initialize estimator.
+        """Initialize Regressor.
 
         Args:
             groups (ArrayLike):
@@ -165,7 +165,7 @@ class GroupLasso(Lasso):
                 https://www.cvxpy.org/tutorial/advanced/index.html#solve-method-options
             solver_options (dict):
                 dictionary of keyword arguments passed to cvxpy solve.
-                See docs in CVXEstimator for more information.
+                See docs in CVXRegressor for more information.
         """
         self.groups = groups
         self.standardize = standardize
@@ -275,7 +275,7 @@ class OverlapGroupLasso(GroupLasso):
         solver_options: Optional[dict[str, Any]] = None,
         **kwargs,
     ):
-        """Initialize estimator.
+        """Initialize Regressor.
 
         Args:
             group_list (list of lists of int):
@@ -313,7 +313,7 @@ class OverlapGroupLasso(GroupLasso):
                 https://www.cvxpy.org/tutorial/advanced/index.html#solve-method-options
             solver_options (dict):
                 dictionary of keyword arguments passed to cvxpy solve.
-                See docs in CVXEstimator for more information.
+                See docs in CVXRegressor for more information.
         """
         self.group_list = group_list
 
@@ -465,7 +465,7 @@ class SparseGroupLasso(GroupLasso):
         solver: Optional[str] = None,
         solver_options: Optional[dict[str, Any]] = None,
     ):
-        """Initialize estimator.
+        """Initialize Regressor.
 
         Args:
             groups (ArrayLike):
@@ -500,7 +500,7 @@ class SparseGroupLasso(GroupLasso):
                 https://www.cvxpy.org/tutorial/advanced/index.html#solve-method-options
             solver_options (dict):
                 dictionary of keyword arguments passed to cvxpy solve.
-                See docs in CVXEstimator for more information.
+                See docs in CVXRegressor for more information.
         """
         super().__init__(
             groups=groups,
@@ -598,7 +598,7 @@ class RidgedGroupLasso(GroupLasso):
         solver: Optional[str] = None,
         solver_options: Optional[dict[str, Any]] = None,
     ):
-        """Initialize estimator.
+        """Initialize Regressor.
 
         Args:
             groups (ArrayLike):

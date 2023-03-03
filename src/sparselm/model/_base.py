@@ -1,4 +1,4 @@
-"""Base classes for in-house linear regression estimators.
+"""Base classes for in-house linear regression Regressors.
 
 The classes make use of and follow the scikit-learn API.
 """
@@ -45,10 +45,10 @@ class CVXCanonicals(NamedTuple):
             Variable to be optimized (corresponds to the estimated coef_ attribute).
         parameters (SimpleNamespace of cp.Parameter or ArrayLike):
             SimpleNamespace with named cp.Parameter objects or ArrayLike of parameters.
-            The namespace should be defined by the estimator generating it.
+            The namespace should be defined by the Regressor generating it.
         auxiliaries (SimpleNamespace of cp.Variable or cp.Expression):
             SimpleNamespace with auxiliary cp.Variable or cp.Expression objects.
-            The namespace should be defined by the estimator generating it.
+            The namespace should be defined by the Regressor generating it.
         constraints (list of cp.Constaint):
             List of constraints.
     """
@@ -62,7 +62,7 @@ class CVXCanonicals(NamedTuple):
 
 
 class CVXRegressor(RegressorMixin, LinearModel, metaclass=ABCMeta):
-    """Abstract base class for estimators using cvxpy with a sklearn interface.
+    """Abstract base class for Regressors using cvxpy with a sklearn interface.
 
     Note cvxpy can use one of many 3rd party solvers, default is most often
     CVXOPT. The solver can be specified by setting the solver keyword argument.
@@ -94,7 +94,7 @@ class CVXRegressor(RegressorMixin, LinearModel, metaclass=ABCMeta):
         solver: Optional[str] = None,
         solver_options: Optional[dict[str, Any]] = None,
     ):
-        """Initialize estimator.
+        """Initialize Regressor.
 
         Args:
             fit_intercept (bool):
@@ -201,7 +201,7 @@ class CVXRegressor(RegressorMixin, LinearModel, metaclass=ABCMeta):
     def _validate_params(self, X: ArrayLike, y: ArrayLike) -> None:
         """Validate hyperparameter values.
 
-        Implement this in an estimator for additional parameter value validation.
+        Implement this in an Regressor for additional parameter value validation.
         """
 
         if self._cvx_parameter_constraints is None:

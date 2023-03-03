@@ -1,4 +1,4 @@
-"""Base class for mixed-integer quadratic programming l0 pseudo norm based estimators."""
+"""Base class for mixed-integer quadratic programming l0 pseudo norm based Regressors."""
 
 
 __author__ = "Luis Barroso-Luque"
@@ -19,7 +19,7 @@ from .._base import CVXRegressor
 
 
 class MIQPl0(CVXRegressor, metaclass=ABCMeta):
-    """Base class for mixed-integer quadratic programming (MIQP) estimators.
+    """Base class for mixed-integer quadratic programming (MIQP) Regressors.
 
     Generalized l0 formulation that allows grouping coefficients, based on:
 
@@ -45,7 +45,7 @@ class MIQPl0(CVXRegressor, metaclass=ABCMeta):
         solver: Optional[str] = None,
         solver_options: Optional[dict] = None,
     ):
-        """Initialize estimator.
+        """Initialize Regressor.
 
         Args:
             groups (list or ndarray):
@@ -82,7 +82,7 @@ class MIQPl0(CVXRegressor, metaclass=ABCMeta):
                 https://www.cvxpy.org/tutorial/advanced/index.html#solve-method-options
             solver_options (dict):
                 dictionary of keyword arguments passed to cvxpy solve.
-                See docs in CVXEstimator for more information.
+                See docs in CVXRegressor for more information.
         """
         super().__init__(
             fit_intercept=fit_intercept,
