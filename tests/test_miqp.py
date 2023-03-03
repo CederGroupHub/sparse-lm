@@ -118,7 +118,7 @@ def test_singleton_hierarchy(estimator_cls, random_model, miqp_solver, rng):
         assert all(estimator.coef_ == 0)
     else:
         assert all(estimator.coef_ != 0)
-    assert_hierarchy_respected(estimator.coef_, estimator._z0.value, fully_chained)
+    assert_hierarchy_respected(estimator.coef_, estimator.canonicals_.auxiliaries.z0.value, fully_chained)
 
     hierarchy = []
     for i in range(len(beta)):
@@ -138,7 +138,7 @@ def test_singleton_hierarchy(estimator_cls, random_model, miqp_solver, rng):
     # TODO make hierarchy and other non cp.Parameter params reset problem if reset
     estimator.problem = None
     estimator.fit(X, y)
-    assert_hierarchy_respected(estimator.coef_, estimator._z0.value, hierarchy)
+    assert_hierarchy_respected(estimator.coef_, estimator.canonicals_.auxiliaries.z0.value, hierarchy)
 
 
 @pytest.mark.parametrize("estimator_cls", MIQP_estimators)
@@ -155,7 +155,7 @@ def test_group_hierarchy(estimator_cls, random_model_with_groups, miqp_solver, r
     else:
         estimator = estimator_cls(groups, alpha=3.0, solver=miqp_solver)
 
-    fully_chained = [[len(group_ids) - 1]] + [[i] for i in range(0, len(group_ids) - 1)]
+    fully_chained = [[group_ids[-1]]] + [[group_ids[i]] for i in range(0, len(group_ids) - 1)]
     estimator.hierarchy = fully_chained
     estimator.fit(X, y)
 
@@ -166,7 +166,7 @@ def test_group_hierarchy(estimator_cls, random_model_with_groups, miqp_solver, r
         assert all(estimator.coef_ != 0)
 
     assert_hierarchy_respected(
-        estimator.coef_, estimator._z0.value, fully_chained, groups=groups
+        estimator.coef_, estimator.canonicals_.auxiliaries.z0.value, fully_chained, groups=groups
     )
 
     # pick two groups with nozero coefs
@@ -190,7 +190,7 @@ def test_group_hierarchy(estimator_cls, random_model_with_groups, miqp_solver, r
     estimator.fit(X, y)
 
     assert_hierarchy_respected(
-        estimator.coef_, estimator._z0.value, hierarchy, groups=groups
+        estimator.coef_, estimator.canonicals_.auxiliaries.z0.value, hierarchy, groups=groups
     )
 
 

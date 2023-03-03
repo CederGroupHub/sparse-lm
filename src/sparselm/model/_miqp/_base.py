@@ -152,8 +152,9 @@ class MIQP_L0(CVXEstimator, metaclass=ABCMeta):
     def _generate_hierarchy_constraints(self, groups: ArrayLike, z0: cp.Variable):
         """Generate single feature hierarchy constraints."""
         group_ids = np.sort(np.unique(groups))
+        z0_index = {gid: i for i, gid in enumerate(group_ids)}
         return [
-            z0[high_id] <= z0[sub_id]
+            z0[z0_index[high_id]] <= z0[z0_index[sub_id]]
             for high_id, sub_ids in zip(group_ids, self.hierarchy)
             for sub_id in sub_ids
         ]
