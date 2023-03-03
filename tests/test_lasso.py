@@ -189,26 +189,25 @@ def test_adaptive_weights(estimator_cls, random_model_with_groups, solver, rng):
         estimator = estimator_cls(groups=groups, solver=solver)
 
     # force generating weights
-    estimator._validate_params(X, y)
-    if estimator_cls.__name__ == "AdaptiveOverlapGroupLasso":
-        _ = estimator.generate_problem(X[:, estimator.beta_indices], y)
-    else:
-        _ = estimator.generate_problem(X, y)
+    estimator.generate_problem(X, y)
 
-    if isinstance(estimator.weights_, tuple):
+    if estimator_cls.__name__ == "AdaptiveSparseGroupLasso":
         weights = [
-            estimator.weights_[0].value.copy(),
-            estimator.weights_[1].value.copy(),
+            estimator.canonicals_.parameters.adaptive_coef_weights.value.copy(),
+            estimator.canonicals_.parameters.adaptive_group_weights.value.copy(),
         ]
     else:
-        weights = [estimator.weights_.value.copy()]
+        weights = [estimator.canonicals_.parameters.adaptive_weights.value.copy()]
 
     estimator.fit(X, y)
 
-    if isinstance(estimator.weights_, tuple):
-        new_weights = [estimator.weights_[0].value, estimator.weights_[1].value]
+    if estimator_cls.__name__ == "AdaptiveSparseGroupLasso":
+        new_weights = [
+            estimator.canonicals_.parameters.adaptive_coef_weights.value.copy(),
+            estimator.canonicals_.parameters.adaptive_group_weights.value.copy(),
+        ]
     else:
-        new_weights = [estimator.weights_.value]
+        new_weights = [estimator.canonicals_.parameters.adaptive_weights.value.copy()]
 
     # simply check that the weights are updated.
     # TODO a better check would be to check that weights for active groups/coefs

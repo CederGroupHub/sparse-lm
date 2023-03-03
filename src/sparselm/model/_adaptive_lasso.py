@@ -428,6 +428,20 @@ class AdaptiveOverlapGroupLasso(OverlapGroupLasso, AdaptiveGroupLasso):
             solver_options=solver_options,
         )
 
+    def _generate_params(self, X: ArrayLike, y: ArrayLike) -> Optional[SimpleNamespace]:
+        parameters = super()._generate_params(X, y)
+        if self.group_list is None:
+            n_groups = X.shape[1]
+        else:
+            n_groups = len(np.unique([gid for grp in self.group_list for gid in grp]))
+
+        parameters.adaptive_weights = cp.Parameter(
+            shape=n_groups,
+            nonneg=True,
+            value=self.alpha * np.ones(n_groups),
+        )
+        return parameters
+
     def _generate_objective(
         self,
         X: ArrayLike,

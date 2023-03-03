@@ -402,16 +402,17 @@ class OverlapGroupLasso(GroupLasso):
 
         X_ext = X[:, beta_indices]
         beta = cp.Variable(X_ext.shape[1])
-        parameters = self._generate_params(X, y)
+        parameters = self._generate_params(X_ext, y)
         group_norms = self._generate_group_norms(
             X_ext, extended_groups, beta, self.standardize
         )
         auxiliaries = SimpleNamespace(
             group_norms=group_norms, extended_coef_indices=beta_indices
         )
-        objective = self._generate_objective(X, y, beta, parameters, auxiliaries)
-        constraints = self._generate_constraints(X, y, parameters, auxiliaries)
+        objective = self._generate_objective(X_ext, y, beta, parameters, auxiliaries)
+        constraints = self._generate_constraints(X_ext, y, parameters, auxiliaries)
         problem = cp.Problem(cp.Minimize(objective), constraints)
+
         self.canonicals_ = CVXCanonicals(
             problem=problem,
             objective=objective,
