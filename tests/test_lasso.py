@@ -11,6 +11,7 @@ from sparselm.model import (
     AdaptiveSparseGroupLasso,
     GroupLasso,
     Lasso,
+    OverlapGroupLasso,
     SparseGroupLasso,
 )
 
@@ -216,32 +217,64 @@ def test_adaptive_weights(estimator_cls, random_model_with_groups, solver, rng):
         assert not any(nw_i == pytest.approx(w_i) for nw_i, w_i in zip(nw, w))
 
 
-def test_bad_inputs(rng):
-    groups = rng.integers(0, 6, size=50)
-    group_weights = np.ones(len(np.unique(groups)) - 1)
+def test_bad_inputs(random_model_with_groups, rng):
+    X, y, beta, groups = random_model_with_groups
+    bad_groups = rng.integers(0, 6, size=len(beta) - 1)
+    group_weights = np.ones(len(np.unique(bad_groups)))
 
-    # bad group weights
+    # test that warns when no groups given
+    with pytest.warns(UserWarning):
+        gl = GroupLasso()
+        gl.fit(X, y)
+
+    with pytest.warns(UserWarning):
+        gl = OverlapGroupLasso()
+        gl.fit(X, y)
+
+    # bad groups
     with pytest.raises(ValueError):
-        GroupLasso(groups, group_weights=group_weights)
+        gl = GroupLasso(bad_groups, group_weights=group_weights)
+        gl.fit(X, y)
+
+    with pytest.raises(TypeError):
+        gl = GroupLasso("groups", group_weights=group_weights)
+        gl.fit(X, y)
+
+    # bad group_weights
+    with pytest.raises(ValueError):
+        group_weights = np.ones(len(np.unique(bad_groups)) - 1)
+        gl = GroupLasso(bad_groups, group_weights=group_weights)
+        gl.fit(X, y)
+
+    with pytest.raises(TypeError):
+        gl = GroupLasso(groups, group_weights="weights")
+        gl.fit(X, y)
 
     # bad l1_ratio
     lasso = SparseGroupLasso(groups)
     with pytest.raises(ValueError):
-        lasso.l1_ratio = -1
-    with pytest.raises(ValueError):
-        lasso.l1_ratio = 2
+        lasso.l1_ratio = -1.0
+        lasso.fit(X, y)
 
     with pytest.raises(ValueError):
-        SparseGroupLasso(groups, l1_ratio=-1)
+        lasso.l1_ratio = 2.0
+        lasso.fit(X, y)
 
     with pytest.raises(ValueError):
-        SparseGroupLasso(groups, l1_ratio=2)
+        sgl = SparseGroupLasso(groups, l1_ratio=-1.0)
+        sgl.fit(X, y)
+
+    with pytest.raises(ValueError):
+        sgl = SparseGroupLasso(groups, l1_ratio=2.0)
+        sgl.fit(X, y)
 
     # test that it warns
     with pytest.warns(UserWarning):
-        SparseGroupLasso(groups, l1_ratio=0)
+        sgl = SparseGroupLasso(groups, l1_ratio=0.0)
+        sgl.fit(X, y)
     with pytest.warns(UserWarning):
-        SparseGroupLasso(groups, l1_ratio=1)
+        sgl = SparseGroupLasso(groups, l1_ratio=1.0)
+        sgl.fit(X, y)
 
 
 @pytest.mark.parametrize("estimator_cls", ADAPTIVE_ESTIMATORS)

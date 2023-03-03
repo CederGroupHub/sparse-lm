@@ -105,7 +105,9 @@ def random_model_with_groups(random_model, rng, request):
     # set active groups
     for i in active_group_inds:
         if len(active_feature_inds) > n_features_per_group:
-            group_inds = rng.choice(active_feature_inds, size=n_features_per_group, replace=False)
+            group_inds = rng.choice(
+                active_feature_inds, size=n_features_per_group, replace=False
+            )
         else:
             group_inds = active_feature_inds
         groups[group_inds] = i
@@ -114,7 +116,9 @@ def random_model_with_groups(random_model, rng, request):
     # set inactive_groups
     for i in inactive_group_inds:
         if len(inactive_feature_inds) > n_features_per_group:
-            group_inds = rng.choice(inactive_feature_inds, size=n_features_per_group, replace=False)
+            group_inds = rng.choice(
+                inactive_feature_inds, size=n_features_per_group, replace=False
+            )
         else:
             group_inds = inactive_feature_inds
         groups[group_inds] = i
