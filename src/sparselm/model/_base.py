@@ -9,6 +9,7 @@ from abc import ABCMeta, abstractmethod
 from numbers import Integral
 from types import SimpleNamespace
 from typing import NamedTuple, Optional
+from collections.abc import Sequence
 
 import cvxpy as cp
 import numpy as np
@@ -214,17 +215,14 @@ class CVXEstimator(RegressorMixin, LinearModel, metaclass=ABCMeta):
 
     def _set_param_values(self) -> None:
         """Set the values of cvxpy parameters from param attributes for warm starts."""
-        for parameter, value in self.get_params(deep=False):
+        for parameter, value in self.get_params(deep=False).items():
             if parameter in self._cvx_parameter_constraints:
                 cvx_parameter = getattr(self.canonicals_.parameters, parameter)
                 # check for parameters that take a scalar or an array
-                if (
-                    isinstance(value, np.ndarray)
-                    and value.shape != cvx_parameter.value.shape
-                ):
-                    cvx_parameter.value = value * np.ones_like(cvx_parameter.value)
-                else:
-                    cvx_parameter.value = value
+                if isinstance(value, np.ndarray | Sequence):
+                    if len(value) == 1 and len(cvx_parameter.value) > 1:
+                        value = value * np.ones_like(cvx_parameter.value)
+                cvx_parameter.value = value
 
     def _generate_params(self, X: ArrayLike, y: ArrayLike) -> Optional[SimpleNamespace]:
         """Return the named tuple of cvxpy parameters for optimization problem.

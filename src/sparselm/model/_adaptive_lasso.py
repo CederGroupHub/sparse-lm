@@ -129,6 +129,7 @@ class AdaptiveLasso(Lasso):
 
     def _set_param_values(self) -> None:
         """Set parameter values."""
+        super()._set_param_values()
         length = len(self.canonicals_.parameters.adaptive_weights.value)
         self.canonicals_.parameters.adaptive_weights.value = self.alpha * np.ones(
             length
@@ -563,7 +564,7 @@ class AdaptiveSparseGroupLasso(AdaptiveLasso, SparseGroupLasso):
         )
 
     def _set_param_values(self) -> None:
-        super()._set_param_values()
+        SparseGroupLasso._set_param_values(self)
         group_weights = self.canonicals_.parameters.adaptive_group_weights.value
         group_weights = self.canonicals_.parameters.lambda1.value * np.ones_like(
             group_weights
@@ -573,7 +574,7 @@ class AdaptiveSparseGroupLasso(AdaptiveLasso, SparseGroupLasso):
         coef_weights = self.canonicals_.parameters.lambda1.value * np.ones_like(
             coef_weights
         )
-        self.canonicals_.parameters.adaptive_group_weights.value = coef_weights
+        self.canonicals_.parameters.adaptive_coef_weights.value = coef_weights
 
     def _generate_params(self, X: ArrayLike, y: ArrayLike) -> Optional[SimpleNamespace]:
         # skip AdaptiveLasso in super

@@ -295,27 +295,30 @@ def test_set_parameters(estimator_cls, random_model_with_groups, rng):
 
     estimator.alpha = 0.5
     assert estimator.alpha == 0.5
-    assert estimator.alpha_.value == 0.5
+    estimator.generate_problem(X, y)
+    assert estimator.canonicals_.parameters.alpha.value == 0.5
 
     if hasattr(estimator, "l1_ratio"):
         # default l1_ratio is 0.5
-        assert estimator.lambda1_.value == 0.5 * 0.5
-        assert estimator.lambda2_.value == 0.5 * 0.5
+        assert estimator.canonicals_.parameters.lambda1.value == 0.5 * 0.5
+        assert estimator.canonicals_.parameters.lambda2.value == 0.5 * 0.5
 
         estimator.l1_ratio = 0.25
+        estimator._set_param_values()
         assert estimator.l1_ratio == 0.25
-        assert estimator.lambda1_.value == 0.25 * 0.5
-        assert estimator.lambda2_.value == 0.75 * 0.5
+        assert estimator.canonicals_.parameters.lambda1.value == 0.25 * 0.5
+        assert estimator.canonicals_.parameters.lambda2.value == 0.75 * 0.5
 
     if hasattr(estimator, "delta"):
-        estimator.delta = 4.0
-        npt.assert_array_equal(estimator.delta, 4.0 * np.ones(len(np.unique(groups))))
+        estimator.delta = (4.0, )
+        estimator._set_param_values()
         npt.assert_array_equal(
-            estimator.delta_.value, 4.0 * np.ones(len(np.unique(groups)))
+            estimator.canonicals_.parameters.delta.value, 4.0 * np.ones(len(np.unique(groups)))
         )
 
         estimator.delta = 3.0 * np.ones(len(np.unique(groups)))
+        estimator._set_param_values()
         npt.assert_array_equal(estimator.delta, 3.0 * np.ones(len(np.unique(groups))))
         npt.assert_array_equal(
-            estimator.delta_.value, 3.0 * np.ones(len(np.unique(groups)))
+            estimator.canonicals_.parameters.delta.value, 3.0 * np.ones(len(np.unique(groups)))
         )
