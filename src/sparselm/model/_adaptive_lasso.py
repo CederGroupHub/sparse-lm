@@ -18,16 +18,17 @@ In that case either tweak settings/solvers around so that that does not happen
 or run with n_jobs=1 (but that may take a while to solve)
 """
 
+
 __author__ = "Luis Barroso-Luque"
 
 import warnings
 from numbers import Integral, Real
 from types import SimpleNamespace
-from typing import Optional
+from typing import Any, Callable, Optional
 
 import cvxpy as cp
 import numpy as np
-from numpy.typing import ArrayLike
+from numpy.typing import ArrayLike, NDArray
 from sklearn.utils._param_validation import Interval
 
 from ._lasso import (
@@ -52,7 +53,7 @@ class AdaptiveLasso(Lasso):
     Where w represents a vector of weights that is iteratively updated.
     """
 
-    _parameter_constraints: dict = {
+    _parameter_constraints: dict[str, list[Any]] = {
         "tol": [Interval(type=Real, left=0.0, right=1.0, closed="both")],
         "max_iter": [Interval(type=Integral, left=0, right=None, closed="left")],
         "eps": [Interval(type=Real, left=0.0, right=1.0, closed="both")],
@@ -61,16 +62,16 @@ class AdaptiveLasso(Lasso):
 
     def __init__(
         self,
-        alpha=1.0,
-        max_iter=3,
-        eps=1e-6,
-        tol=1e-10,
-        update_function=None,
-        fit_intercept=False,
-        copy_X=True,
-        warm_start=True,
-        solver=None,
-        solver_options=None,
+        alpha: float = 1.0,
+        max_iter: int = 3,
+        eps: float = 1e-6,
+        tol: float = 1e-10,
+        update_function: Optional[Callable[[float, float], float]] = None,
+        fit_intercept: bool = False,
+        copy_X: bool = True,
+        warm_start: bool = True,
+        solver: Optional[str] = None,
+        solver_options: Optional[dict[str, Any]] = None,
         **kwargs,
     ):
         """Initialize estimator.
@@ -153,19 +154,19 @@ class AdaptiveLasso(Lasso):
         """Generate regularization term."""
         return cp.norm1(cp.multiply(parameters.adaptive_weights, beta))
 
-    def _get_update_function(self):
+    def _get_update_function(self) -> Callable[[float, float], float]:
         if self.update_function is None:
             return lambda beta, eps: self.alpha / (abs(beta) + eps)
         return self.update_function
 
     @staticmethod
-    def _get_weights_value(parameters: SimpleNamespace):
+    def _get_weights_value(parameters: SimpleNamespace) -> NDArray[float]:
         """Simply return a copy of the value of adaptive weights."""
         return parameters.adaptive_weights.value.copy()
 
     def _check_convergence(
         self, parameters: SimpleNamespace, previous_weights: ArrayLike
-    ):
+    ) -> bool:
         """Check if weights have converged to set tolerance."""
         current_weights = parameters.adaptive_weights.value
         return np.linalg.norm(current_weights - previous_weights) <= self.tol
@@ -180,7 +181,9 @@ class AdaptiveLasso(Lasso):
         update = self._get_update_function()
         parameters.adaptive_weights.value = self.alpha * update(beta, self.eps)
 
-    def _solve(self, X: ArrayLike, y: ArrayLike, solver_options: dict, *args, **kwargs):
+    def _solve(
+        self, X: ArrayLike, y: ArrayLike, solver_options: dict, *args, **kwargs
+    ) -> NDArray[float]:
         """Solve Lasso problem iteratively adaptive weights."""
         previous_weights = self._get_weights_value(self.canonicals_.parameters)
         for i in range(self.max_iter):
@@ -219,19 +222,19 @@ class AdaptiveGroupLasso(AdaptiveLasso, GroupLasso):
 
     def __init__(
         self,
-        groups=None,
-        alpha=1.0,
-        group_weights=None,
-        max_iter=3,
-        eps=1e-6,
-        tol=1e-10,
-        update_function=None,
-        standardize=False,
-        fit_intercept=False,
-        copy_X=True,
-        warm_start=False,
-        solver=None,
-        solver_options=None,
+        groups: Optional[ArrayLike] = None,
+        alpha: float = 1.0,
+        group_weights: Optional[ArrayLike] = None,
+        max_iter: int = 3,
+        eps: float = 1e-6,
+        tol: float = 1e-10,
+        update_function: Optional[Callable[[float, float], float]] = None,
+        standardize: bool = False,
+        fit_intercept: bool = False,
+        copy_X: bool = True,
+        warm_start: bool = True,
+        solver: Optional[str] = None,
+        solver_options: Optional[dict[str, Any]] = None,
         **kwargs,
     ):
         """Initialize estimator.
@@ -316,7 +319,7 @@ class AdaptiveGroupLasso(AdaptiveLasso, GroupLasso):
         beta: cp.Variable,
         parameters: SimpleNamespace,
         auxiliaries: Optional[SimpleNamespace] = None,
-    ):
+    ) -> cp.Expression:
         return parameters.adaptive_weights @ auxiliaries.group_norms
 
     def _iterative_update(
@@ -346,19 +349,19 @@ class AdaptiveOverlapGroupLasso(OverlapGroupLasso, AdaptiveGroupLasso):
 
     def __init__(
         self,
-        group_list=None,
-        alpha=1.0,
-        group_weights=None,
-        max_iter=3,
-        eps=1e-6,
-        tol=1e-10,
-        update_function=None,
-        standardize=False,
-        fit_intercept=False,
-        copy_X=True,
-        warm_start=False,
-        solver=None,
-        solver_options=None,
+        group_list: list[list[int]] = None,
+        alpha: float = 1.0,
+        group_weights: Optional[ArrayLike] = None,
+        max_iter: int = 3,
+        eps: float = 1e-6,
+        tol: float = 1e-10,
+        update_function: Optional[Callable[[float, float], float]] = None,
+        standardize: bool = False,
+        fit_intercept: bool = False,
+        copy_X: bool = True,
+        warm_start: bool = True,
+        solver: Optional[str] = None,
+        solver_options: Optional[dict[str, Any]] = None,
     ):
         """Initialize estimator.
 
@@ -455,7 +458,9 @@ class AdaptiveOverlapGroupLasso(OverlapGroupLasso, AdaptiveGroupLasso):
             self, X, y, beta, parameters, auxiliaries
         )
 
-    def _solve(self, X: ArrayLike, y: ArrayLike, solver_options: dict, *args, **kwargs):
+    def _solve(
+        self, X: ArrayLike, y: ArrayLike, solver_options: dict, *args, **kwargs
+    ) -> NDArray[float]:
         extended_indices = self.canonicals_.auxiliaries.extended_coef_indices
         beta = AdaptiveGroupLasso._solve(
             self, X[:, extended_indices], y, solver_options, *args, **kwargs
@@ -481,20 +486,20 @@ class AdaptiveSparseGroupLasso(AdaptiveLasso, SparseGroupLasso):
 
     def __init__(
         self,
-        groups=None,
-        l1_ratio=0.5,
-        alpha=1.0,
-        group_weights=None,
-        max_iter=3,
-        eps=1e-6,
-        tol=1e-10,
-        update_function=None,
-        standardize=False,
-        fit_intercept=False,
-        copy_X=True,
-        warm_start=False,
-        solver=None,
-        solver_options=None,
+        groups: Optional[ArrayLike] = None,
+        l1_ratio: float = 0.5,
+        alpha: float = 1.0,
+        group_weights: Optional[ArrayLike] = None,
+        max_iter: int = 3,
+        eps: float = 1e-6,
+        tol: float = 1e-10,
+        update_function: Optional[Callable[[float, float], float]] = None,
+        standardize: bool = False,
+        fit_intercept: bool = False,
+        copy_X: bool = True,
+        warm_start: bool = True,
+        solver: Optional[str] = None,
+        solver_options: Optional[dict[str, Any]] = None,
     ):
         """Initialize estimator.
 
@@ -598,7 +603,7 @@ class AdaptiveSparseGroupLasso(AdaptiveLasso, SparseGroupLasso):
         beta: cp.Variable,
         parameters: SimpleNamespace,
         auxiliaries: Optional[SimpleNamespace] = None,
-    ):
+    ) -> cp.Expression:
         group_regularization = (
             parameters.adaptive_group_weights @ auxiliaries.group_norms
         )
@@ -608,7 +613,7 @@ class AdaptiveSparseGroupLasso(AdaptiveLasso, SparseGroupLasso):
         return group_regularization + l1_regularization
 
     @staticmethod
-    def _get_weights_value(parameters: SimpleNamespace):
+    def _get_weights_value(parameters: SimpleNamespace) -> NDArray[float]:
         """Simply return a copy of the value of adaptive weights."""
         # does concatenate copy?
         concat_weights = np.concatenate(
@@ -621,7 +626,7 @@ class AdaptiveSparseGroupLasso(AdaptiveLasso, SparseGroupLasso):
 
     def _check_convergence(
         self, parameters: SimpleNamespace, previous_weights: ArrayLike
-    ):
+    ) -> bool:
         """Check if weights have converged to set tolerance."""
         # This will technically check the norm of the concatenation instead of the sum
         # of the norm of each weight vector, so it's a bit of tighter tolerance.
@@ -670,20 +675,20 @@ class AdaptiveRidgedGroupLasso(AdaptiveGroupLasso, RidgedGroupLasso):
 
     def __init__(
         self,
-        groups=None,
-        alpha=1.0,
-        delta=(1.0,),
-        group_weights=None,
-        max_iter=3,
-        eps=1e-6,
-        tol=1e-10,
-        update_function=None,
-        standardize=False,
-        fit_intercept=False,
-        copy_X=True,
-        warm_start=False,
-        solver=None,
-        solver_options=None,
+        groups: Optional[ArrayLike] = None,
+        alpha: float = 1.0,
+        delta: ArrayLike = (1.0,),
+        group_weights: Optional[ArrayLike] = None,
+        max_iter: int = 3,
+        eps: float = 1e-6,
+        tol: float = 1e-10,
+        update_function: Optional[Callable[[float, float], float]] = None,
+        standardize: bool = False,
+        fit_intercept: bool = False,
+        copy_X: bool = True,
+        warm_start: bool = True,
+        solver: Optional[str] = None,
+        solver_options: Optional[dict[str, Any]] = None,
     ):
         """Initialize estimator.
 
@@ -756,7 +761,7 @@ class AdaptiveRidgedGroupLasso(AdaptiveGroupLasso, RidgedGroupLasso):
         beta: cp.Variable,
         parameters: SimpleNamespace,
         auxiliaries: Optional[SimpleNamespace] = None,
-    ):
+    ) -> cp.Expression:
         group_regularization = AdaptiveGroupLasso._generate_regularization(
             self, X, beta, parameters, auxiliaries
         )

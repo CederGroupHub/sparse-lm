@@ -69,7 +69,7 @@ def test_slack_variables(estimator_cls, random_model_with_groups, miqp_solver, r
     X, y, beta, groups = random_model_with_groups
 
     # ignore groups
-    if hasattr(estimator_cls, "sparse_bound"):
+    if "Subset" in estimator_cls.__name__:
         estimator = estimator_cls(sparse_bound=len(beta) // 2, solver=miqp_solver)
     else:
         estimator = estimator_cls(alpha=2.0, solver=miqp_solver)
@@ -85,7 +85,7 @@ def test_slack_variables(estimator_cls, random_model_with_groups, miqp_solver, r
 
     # now group hierarchy
     group_ids = np.sort(np.unique(groups))
-    if hasattr(estimator_cls, "sparse_bound"):
+    if "Subset" in estimator_cls.__name__:
         estimator = estimator_cls(
             groups, sparse_bound=len(group_ids) // 2, solver=miqp_solver
         )
@@ -106,7 +106,7 @@ def test_singleton_hierarchy(estimator_cls, random_model, miqp_solver, rng):
     (idx,) = beta.nonzero()
 
     # ignore groups, single covariate hierarchy
-    if hasattr(estimator_cls, "sparse_bound"):
+    if "Subset" in estimator_cls.__name__:
         estimator = estimator_cls(sparse_bound=len(beta) // 2, solver=miqp_solver)
     else:
         estimator = estimator_cls(alpha=2.0, solver=miqp_solver)
@@ -154,7 +154,7 @@ def test_group_hierarchy(estimator_cls, random_model_with_groups, miqp_solver, r
 
     # now group hierarchy
     group_ids = np.unique(groups)
-    if hasattr(estimator_cls, "sparse_bound"):
+    if "Subset" in estimator_cls.__name__:
         estimator = estimator_cls(
             groups, sparse_bound=len(group_ids) // 2, solver=miqp_solver
         )

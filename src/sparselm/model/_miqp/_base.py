@@ -6,7 +6,7 @@ __author__ = "Luis Barroso-Luque"
 from abc import ABCMeta
 from numbers import Real
 from types import SimpleNamespace
-from typing import Optional
+from typing import Any, Optional
 
 import cvxpy as cp
 import numpy as np
@@ -26,24 +26,24 @@ class MIQP_L0(CVXEstimator, metaclass=ABCMeta):
     https://doi.org/10.1287/opre.2015.1436
     """
 
-    _parameter_constraints: dict = {
+    _parameter_constraints: dict[str, list[Any]] = {
         "ignore_psd_check": ["boolean"]
     } | CVXEstimator._parameter_constraints
-    _cvx_parameter_constraints: dict = {
+    _cvx_parameter_constraints: dict[str, list[Any]] = {
         "big_M": [Interval(type=Real, left=0.0, right=None, closed="left")]
     }
 
     def __init__(
         self,
-        groups=None,
-        big_M=100,
-        hierarchy=None,
-        ignore_psd_check=True,
-        fit_intercept=False,
-        copy_X=True,
-        warm_start=False,
-        solver=None,
-        solver_options=None,
+        groups: Optional[ArrayLike] = None,
+        big_M: int = 100,
+        hierarchy: Optional[list[list[int]]] = None,
+        ignore_psd_check: bool = True,
+        fit_intercept: bool = False,
+        copy_X: bool = True,
+        warm_start: bool = False,
+        solver: Optional[str] = None,
+        solver_options: Optional[dict] = None,
     ):
         """Initialize estimator.
 
@@ -97,7 +97,7 @@ class MIQP_L0(CVXEstimator, metaclass=ABCMeta):
         self.groups = groups
         self.big_M = big_M
 
-    def _validate_params(self, X: ArrayLike, y: ArrayLike):
+    def _validate_params(self, X: ArrayLike, y: ArrayLike) -> None:
         """Validate parameters."""
         super()._validate_params(X, y)
         _check_groups(self.groups, X.shape[1])
@@ -133,7 +133,7 @@ class MIQP_L0(CVXEstimator, metaclass=ABCMeta):
         beta: cp.Variable,
         parameters: Optional[SimpleNamespace] = None,
         auxiliaries: Optional[SimpleNamespace] = None,
-    ) -> list[cp.constraints]:
+    ) -> list[cp.Constraint]:
         """Generate the constraints used to solve l0 regularization."""
         groups = np.arange(X.shape[1]) if self.groups is None else self.groups
         group_masks = [groups == i for i in np.sort(np.unique(groups))]
@@ -149,12 +149,15 @@ class MIQP_L0(CVXEstimator, metaclass=ABCMeta):
 
         return constraints
 
-    def _generate_hierarchy_constraints(self, groups: ArrayLike, z0: cp.Variable):
+    def _generate_hierarchy_constraints(
+        self, groups: ArrayLike, z0: cp.Variable
+    ) -> list[cp.Constraint]:
         """Generate single feature hierarchy constraints."""
         group_ids = np.sort(np.unique(groups))
         z0_index = {gid: i for i, gid in enumerate(group_ids)}
-        return [
+        constraints = [
             z0[z0_index[high_id]] <= z0[z0_index[sub_id]]
             for high_id, sub_ids in zip(group_ids, self.hierarchy)
             for sub_id in sub_ids
         ]
+        return constraints

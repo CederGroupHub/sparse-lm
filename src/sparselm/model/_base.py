@@ -3,17 +3,18 @@
 The classes make use of and follow the scikit-learn API.
 """
 
+
 __author__ = "Luis Barroso-Luque, Fengyu Xie"
 
 from abc import ABCMeta, abstractmethod
 from collections.abc import Sequence
 from numbers import Integral
 from types import SimpleNamespace
-from typing import NamedTuple, Optional
+from typing import Any, NamedTuple, Optional
 
 import cvxpy as cp
 import numpy as np
-from numpy.typing import ArrayLike
+from numpy.typing import ArrayLike, NDArray
 from sklearn.base import RegressorMixin
 from sklearn.linear_model._base import (
     LinearModel,
@@ -75,7 +76,7 @@ class CVXEstimator(RegressorMixin, LinearModel, metaclass=ABCMeta):
     """
 
     # parameter constraints that do not need any cvxpy Parameter object
-    _parameter_constraints: dict = {
+    _parameter_constraints: dict[str, list[Any]] = {
         "fit_intercept": ["boolean"],
         "copy_X": ["boolean"],
         "warm_start": ["boolean"],
@@ -83,15 +84,15 @@ class CVXEstimator(RegressorMixin, LinearModel, metaclass=ABCMeta):
         "solver_options": [dict, None],
     }
     # parameter constraints that require a cvxpy Parameter object in problem definition
-    _cvx_parameter_constraints: Optional[dict] = None
+    _cvx_parameter_constraints: Optional[dict[str, list[Any]]] = None
 
     def __init__(
         self,
         fit_intercept: bool = False,
         copy_X: bool = True,
         warm_start: bool = False,
-        solver: str = None,
-        solver_options: dict = None,
+        solver: Optional[str] = None,
+        solver_options: Optional[dict[str, Any]] = None,
     ):
         """Initialize estimator.
 
@@ -122,7 +123,7 @@ class CVXEstimator(RegressorMixin, LinearModel, metaclass=ABCMeta):
         self,
         X: ArrayLike,
         y: ArrayLike,
-        sample_weight: ArrayLike = None,
+        sample_weight: Optional[ArrayLike] = None,
         *args,
         **kwargs
     ):
@@ -220,8 +221,10 @@ class CVXEstimator(RegressorMixin, LinearModel, metaclass=ABCMeta):
                 cvx_parameter = getattr(self.canonicals_.parameters, parameter)
                 # check for parameters that take a scalar or an array
                 if isinstance(value, np.ndarray | Sequence):
-                    if len(value) == 1 and len(cvx_parameter.value) > 1:
+                    if len(value) == 1:
                         value = value * np.ones_like(cvx_parameter.value)
+                    else:
+                        value = np.asarray(value)
                 cvx_parameter.value = value
 
     def _generate_params(self, X: ArrayLike, y: ArrayLike) -> Optional[SimpleNamespace]:
@@ -376,7 +379,7 @@ class CVXEstimator(RegressorMixin, LinearModel, metaclass=ABCMeta):
         """
         return None
 
-    def generate_problem(self, X: ArrayLike, y: ArrayLike):
+    def generate_problem(self, X: ArrayLike, y: ArrayLike) -> None:
         """Generate regression problem and auxiliary cvxpy objects.
 
         This initializes the minimization problem, the objective, coefficient variable (beta), problem parameters,
@@ -406,7 +409,9 @@ class CVXEstimator(RegressorMixin, LinearModel, metaclass=ABCMeta):
             constraints=constraints,
         )
 
-    def _solve(self, X: ArrayLike, y: ArrayLike, solver_options: dict, *args, **kwargs):
+    def _solve(
+        self, X: ArrayLike, y: ArrayLike, solver_options: dict, *args, **kwargs
+    ) -> NDArray[float]:
         """Solve the cvxpy problem."""
         self.canonicals_.problem.solve(
             solver=self.solver, warm_start=self.warm_start, **solver_options

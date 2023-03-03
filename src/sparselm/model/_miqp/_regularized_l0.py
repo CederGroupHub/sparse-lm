@@ -22,11 +22,11 @@ __author__ = "Luis Barroso-Luque, Fengyu Xie"
 from abc import ABCMeta, abstractmethod
 from numbers import Real
 from types import SimpleNamespace
-from typing import Optional
+from typing import Any, Optional
 
 import cvxpy as cp
 import numpy as np
-from numpy.typing import ArrayLike
+from numpy.typing import ArrayLike, NDArray
 from sklearn.utils._param_validation import Interval
 
 from sparselm.model._base import TikhonovMixin
@@ -51,27 +51,27 @@ class RegularizedL0(MIQP_L0):
 
     """
 
-    _cvx_parameter_constraints: dict = {
+    _cvx_parameter_constraints: dict[str, list[Any]] = {
         "alpha": [Interval(type=Real, left=0.0, right=None, closed="left")],
     } | MIQP_L0._cvx_parameter_constraints
 
     def __init__(
         self,
-        groups=None,
-        alpha=1.0,
-        big_M=100,
-        hierarchy=None,
-        ignore_psd_check=True,
-        fit_intercept=False,
-        copy_X=True,
-        warm_start=False,
-        solver=None,
-        solver_options=None,
+        groups: Optional[ArrayLike] = None,
+        alpha: float = 1.0,
+        big_M: int = 100,
+        hierarchy: Optional[list[list[int]]] = None,
+        ignore_psd_check: bool = True,
+        fit_intercept: bool = False,
+        copy_X: bool = True,
+        warm_start: bool = False,
+        solver: Optional[str] = None,
+        solver_options: Optional[dict] = None,
     ):
         """Initialize estimator.
 
         Args:
-            groups (list or ndarray):
+            groups (ArrayLike):
                 1D array-like of integers specifying groups. Length should be the
                 same as model, where each integer entry specifies the group
                 each parameter corresponds to. If no grouping is needed pass a list
@@ -142,28 +142,28 @@ class RegularizedL0(MIQP_L0):
 class MixedL0(RegularizedL0, metaclass=ABCMeta):
     """Abstract base class for mixed L0 regularization models: L1L0 and L2L0."""
 
-    _cvx_parameter_constraints: dict = {
+    _cvx_parameter_constraints: dict[str, list[Any]] = {
         "eta": [Interval(type=Real, left=0.0, right=None, closed="left")],
     } | RegularizedL0._cvx_parameter_constraints
 
     def __init__(
         self,
-        groups=None,
-        alpha=1.0,
-        eta=1.0,
-        big_M=100,
-        hierarchy=None,
-        ignore_psd_check=True,
-        fit_intercept=False,
-        copy_X=True,
-        warm_start=False,
-        solver=None,
-        solver_options=None,
+        groups: Optional[ArrayLike] = None,
+        alpha: float = 1.0,
+        eta: float = 1.0,
+        big_M: int = 100,
+        hierarchy: Optional[list[list[int]]] = None,
+        ignore_psd_check: bool = True,
+        fit_intercept: bool = False,
+        copy_X: bool = True,
+        warm_start: bool = False,
+        solver: Optional[str] = None,
+        solver_options: Optional[dict] = None,
     ):
         """Initialize estimator.
 
         Args:
-            groups (list or ndarray):
+            groups (ArrayLike):
                 1D array-like of integers specifying groups. Length should be the
                 same as model, where each integer entry specifies the group
                 each parameter corresponds to. If no grouping is needed pass a list
@@ -256,22 +256,22 @@ class L1L0(MixedL0):
 
     def __init__(
         self,
-        groups=None,
-        alpha=1.0,
-        eta=1.0,
-        big_M=100,
-        hierarchy=None,
-        ignore_psd_check=True,
-        fit_intercept=False,
-        copy_X=True,
-        warm_start=False,
-        solver=None,
-        solver_options=None,
+        groups: Optional[ArrayLike] = None,
+        alpha: float = 1.0,
+        eta: float = 1.0,
+        big_M: int = 100,
+        hierarchy: Optional[list[list[int]]] = None,
+        ignore_psd_check: bool = True,
+        fit_intercept: bool = False,
+        copy_X: bool = True,
+        warm_start: bool = False,
+        solver: Optional[str] = None,
+        solver_options: Optional[dict] = None,
     ):
         """Initialize estimator.
 
         Args:
-            groups (list or ndarray):
+            groups (ArrayLike):
                 1D array-like of integers specifying groups. Length should be the
                 same as model, where each integer entry specifies the group
                 each parameter corresponds to. If no grouping is needed pass a list
@@ -391,23 +391,23 @@ class L2L0(TikhonovMixin, MixedL0):
 
     def __init__(
         self,
-        groups=None,
-        alpha=1.0,
-        eta=1.0,
-        big_M=100,
-        hierarchy=None,
-        tikhonov_w=None,
-        ignore_psd_check=True,
-        fit_intercept=False,
-        copy_X=True,
-        warm_start=False,
-        solver=None,
-        solver_options=None,
+        groups: Optional[ArrayLike] = None,
+        alpha: float = 1.0,
+        eta: float = 1.0,
+        big_M: int = 100,
+        hierarchy: Optional[list[list[int]]] = None,
+        tikhonov_w: Optional[NDArray[float]] = None,
+        ignore_psd_check: bool = True,
+        fit_intercept: bool = False,
+        copy_X: bool = True,
+        warm_start: bool = False,
+        solver: Optional[str] = None,
+        solver_options: Optional[dict] = None,
     ):
         """Initialize L2L0 estimator.
 
         Args:
-            groups (list or ndarray):
+            groups (ArrayLike):
                 1D array-like of integers specifying groups. Length should be the
                 same as model, where each integer entry specifies the group
                 each parameter corresponds to. If no grouping is needed pass a list

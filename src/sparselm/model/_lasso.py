@@ -10,16 +10,17 @@ Estimators follow scikit-learn interface, but use cvxpy to set up and solve
 optimization problem.
 """
 
+
 __author__ = "Luis Barroso-Luque, Fengyu Xie"
 
 import warnings
 from numbers import Real
 from types import SimpleNamespace
-from typing import Optional
+from typing import Any, Optional
 
 import cvxpy as cp
 import numpy as np
-from numpy.typing import ArrayLike
+from numpy.typing import ArrayLike, NDArray
 from scipy.linalg import sqrtm
 from sklearn.utils._param_validation import Interval
 from sklearn.utils.validation import check_scalar
@@ -40,18 +41,18 @@ class Lasso(CVXEstimator):
 
     """
 
-    _cvx_parameter_constraints: dict = {
+    _cvx_parameter_constraints: dict[str, list[Any]] = {
         "alpha": [Interval(type=Real, left=0.0, right=None, closed="left")]
     }
 
     def __init__(
         self,
-        alpha=1.0,
-        fit_intercept=False,
-        copy_X=True,
-        warm_start=False,
-        solver=None,
-        solver_options=None,
+        alpha: float = 1.0,
+        fit_intercept: bool = False,
+        copy_X: bool = True,
+        warm_start: bool = False,
+        solver: Optional[str] = None,
+        solver_options: Optional[dict[str, Any]] = None,
     ):
         """Initialize a Lasso estimator.
 
@@ -121,21 +122,20 @@ class GroupLasso(Lasso):
 
     def __init__(
         self,
-        groups=None,
-        alpha=1.0,
-        group_weights=None,
-        standardize=False,
-        fit_intercept=False,
-        copy_X=True,
-        warm_start=False,
-        solver=None,
-        solver_options=None,
-        **kwargs,
+        groups: Optional[ArrayLike] = None,
+        alpha: float = 1.0,
+        group_weights: Optional[ArrayLike] = None,
+        standardize: bool = False,
+        fit_intercept: bool = False,
+        copy_X: bool = True,
+        warm_start: bool = False,
+        solver: Optional[str] = None,
+        solver_options: Optional[dict[str, Any]] = None,
     ):
         """Initialize estimator.
 
         Args:
-            groups (list or ndarray):
+            groups (ArrayLike):
                 array-like of integers specifying groups. Length should be the
                 same as model, where each integer entry specifies the group
                 each parameter corresponds to.
@@ -144,7 +144,7 @@ class GroupLasso(Lasso):
             fit_intercept (bool):
                 Whether the intercept should be estimated or not.
                 If False, the data is assumed to be already centered.
-            group_weights (ndarray): optional
+            group_weights (ArrayLike): optional
                 Weights for each group to use in the regularization term.
                 The default is to use the sqrt of the group sizes, however any
                 weight can be specified. The array must be the
@@ -178,7 +178,6 @@ class GroupLasso(Lasso):
             warm_start=warm_start,
             solver=solver,
             solver_options=solver_options,
-            **kwargs,
         )
 
     def _validate_params(self, X: ArrayLike, y: ArrayLike) -> None:
@@ -245,7 +244,7 @@ class GroupLasso(Lasso):
         beta: cp.Variable,
         parameters: SimpleNamespace,
         auxiliaries: Optional[SimpleNamespace] = None,
-    ):
+    ) -> cp.Expression:
         return parameters.alpha * (parameters.group_weights @ auxiliaries.group_norms)
 
 
@@ -265,21 +264,21 @@ class OverlapGroupLasso(GroupLasso):
 
     def __init__(
         self,
-        group_list=None,
-        alpha=1.0,
-        group_weights=None,
-        standardize=False,
-        fit_intercept=False,
-        copy_X=True,
-        warm_start=False,
-        solver=None,
-        solver_options=None,
+        group_list: list[list[int]] = None,
+        alpha: float = 1.0,
+        group_weights: Optional[ArrayLike] = None,
+        standardize: bool = False,
+        fit_intercept: bool = False,
+        copy_X: bool = True,
+        warm_start: bool = False,
+        solver: Optional[str] = None,
+        solver_options: Optional[dict[str, Any]] = None,
         **kwargs,
     ):
         """Initialize estimator.
 
         Args:
-            group_list (list of lists):
+            group_list (list of lists of int):
                 list of lists of integers specifying groups. The length of the
                 list holding lists should be the same as model. Each inner list
                 has integers specifying the groups the coefficient for that
@@ -289,7 +288,7 @@ class OverlapGroupLasso(GroupLasso):
                 be: (0, 2), (0, 1, 2), (1, 2)
             alpha (float):
                 Regularization hyper-parameter.
-            group_weights (ndarray): optional
+            group_weights (ArrayLike): optional
                 Weights for each group to use in the regularization term.
                 The default is to use the sqrt of the group sizes, however any
                 weight can be specified. The array must be the
@@ -328,7 +327,6 @@ class OverlapGroupLasso(GroupLasso):
             warm_start=warm_start,
             solver=solver,
             solver_options=solver_options,
-            **kwargs,
         )
 
     def _validate_params(self, X: ArrayLike, y: ArrayLike) -> None:
@@ -367,7 +365,7 @@ class OverlapGroupLasso(GroupLasso):
         parameters.group_weights = group_weights
         return parameters
 
-    def generate_problem(self, X: ArrayLike, y: ArrayLike):
+    def generate_problem(self, X: ArrayLike, y: ArrayLike) -> None:
         """Initialize cvxpy problem from the generated objective function.
 
         Args:
@@ -422,7 +420,7 @@ class OverlapGroupLasso(GroupLasso):
             constraints=constraints,
         )
 
-    def _solve(self, X, y, solver_options, *args, **kwargs):
+    def _solve(self, X, y, solver_options, *args, **kwargs) -> NDArray[float]:
         """Solve the cvxpy problem."""
         self.canonicals_.problem.solve(
             solver=self.solver, warm_start=self.warm_start, **solver_options
@@ -456,30 +454,29 @@ class SparseGroupLasso(GroupLasso):
 
     def __init__(
         self,
-        groups=None,
-        l1_ratio=0.5,
-        alpha=1.0,
-        group_weights=None,
-        standardize=False,
-        fit_intercept=False,
-        copy_X=True,
-        warm_start=False,
-        solver=None,
-        solver_options=None,
-        **kwargs,
+        groups: Optional[ArrayLike] = None,
+        l1_ratio: float = 0.5,
+        alpha: float = 1.0,
+        group_weights: Optional[ArrayLike] = None,
+        standardize: bool = False,
+        fit_intercept: bool = False,
+        copy_X: bool = True,
+        warm_start: bool = False,
+        solver: Optional[str] = None,
+        solver_options: Optional[dict[str, Any]] = None,
     ):
         """Initialize estimator.
 
         Args:
-            groups (list or ndarray):
+            groups (ArrayLike):
                 array-like of integers specifying groups. Length should be the
                 same as model, where each integer entry specifies the group
                 each parameter corresponds to.
-            l1_ratio (float):
-                Mixing parameter between l1 and group lasso regularization.
             alpha (float):
                 Regularization hyper-parameter.
-            group_weights (ndarray): optional
+            l1_ratio (float):
+                Mixing parameter between l1 and group lasso regularization.
+            group_weights ArrayLike: optional
                 Weights for each group to use in the regularization term.
                 The default is to use the sqrt of the group sizes, however any
                 weight can be specified. The array must be the
@@ -515,7 +512,6 @@ class SparseGroupLasso(GroupLasso):
             warm_start=warm_start,
             solver=solver,
             solver_options=solver_options,
-            **kwargs,
         )
         self.l1_ratio = l1_ratio
 
@@ -557,7 +553,7 @@ class SparseGroupLasso(GroupLasso):
         beta: cp.Variable,
         parameters: SimpleNamespace,
         auxiliaries: Optional[SimpleNamespace] = None,
-    ):
+    ) -> cp.Expression:
         group_regularization = parameters.lambda2 * (
             parameters.group_weights @ auxiliaries.group_norms
         )
@@ -581,7 +577,7 @@ class RidgedGroupLasso(GroupLasso):
     http://faculty.washington.edu/nrsimon/standGL.pdf
     """
 
-    _cvx_parameter_constraints: dict = {
+    _cvx_parameter_constraints: dict[str, list[Any]] = {
         "alpha": [Interval(type=Real, left=0.0, right=None, closed="left")],
         "delta": [
             "array-like",
@@ -591,32 +587,31 @@ class RidgedGroupLasso(GroupLasso):
 
     def __init__(
         self,
-        groups=None,
-        alpha=1.0,
-        delta=(1.0,),  # TODO type this as ArrayLike
-        group_weights=None,
-        standardize=False,
-        fit_intercept=False,
-        copy_X=True,
-        warm_start=False,
-        solver=None,
-        solver_options=None,
-        **kwargs,
+        groups: Optional[ArrayLike] = None,
+        alpha: float = 1.0,
+        delta: ArrayLike = (1.0,),
+        group_weights: Optional[ArrayLike] = None,
+        standardize: bool = False,
+        fit_intercept: bool = False,
+        copy_X: bool = True,
+        warm_start: bool = False,
+        solver: Optional[str] = None,
+        solver_options: Optional[dict[str, Any]] = None,
     ):
         """Initialize estimator.
 
         Args:
-            groups (list or ndarray):
+            groups (ArrayLike):
                 array-like of integers specifying groups. Length should be the
                 same as model, where each integer entry specifies the group
                 each parameter corresponds to.
             alpha (float):
                 Regularization hyper-parameter.
-            delta (ndarray): optional
+            delta (ArrayLike): optional
                 Positive 1D array. Regularization vector for ridge penalty. The array
                 must be of the same lenght as the number of groups, or length 1 if all
                 groups are ment to have the same ridge hyperparamter.
-            group_weights (ndarray): optional
+            group_weights (ArrayLike): optional
                 Weights for each group to use in the regularization term.
                 The default is to use the sqrt of the group sizes, however any
                 weight can be specified. The array must be the
@@ -652,7 +647,6 @@ class RidgedGroupLasso(GroupLasso):
             warm_start=warm_start,
             solver=solver,
             solver_options=solver_options,
-            **kwargs,
         )
 
         self.delta = delta
@@ -713,7 +707,7 @@ class RidgedGroupLasso(GroupLasso):
         beta: cp.Variable,
         parameters: SimpleNamespace,
         auxiliaries: Optional[SimpleNamespace] = None,
-    ):
+    ) -> cp.Expression:
         # repetitive code...
         groups = np.arange(X.shape[1]) if self.groups is None else self.groups
         group_masks = [groups == i for i in np.sort(np.unique(groups))]
