@@ -10,7 +10,7 @@ import pytest
 from sklearn.utils.estimator_checks import check_estimator
 
 import sparselm.model as spm
-from sparselm.model._miqp._base import MIQP_L0
+from sparselm.model._miqp._base import MIQPl0
 
 ESTIMATORS = getmembers(spm, isclass)
 ESTIMATOR_NAMES = [est[0] for est in ESTIMATORS]
@@ -20,7 +20,7 @@ ESTIMATORS = [est[1] for est in ESTIMATORS]
 @pytest.fixture(params=ESTIMATORS, ids=ESTIMATOR_NAMES)
 def estimator(request):
     estimator_cls = request.param
-    if issubclass(estimator_cls, MIQP_L0):
+    if issubclass(estimator_cls, MIQPl0):
         regressor = estimator_cls(fit_intercept=True, solver="SCIP")
         if hasattr(regressor, "eta"):
             regressor.eta = 0.01

@@ -15,10 +15,10 @@ from sklearn.utils._param_validation import Interval
 
 from sparselm.model._base import TikhonovMixin
 
-from ._base import MIQP_L0
+from ._base import MIQPl0
 
 
-class BestSubsetSelection(MIQP_L0):
+class BestSubsetSelection(MIQPl0):
     """MIQP Best Subset Selection estimator.
 
     Generalized best subset that allows grouping subsets.
@@ -29,7 +29,7 @@ class BestSubsetSelection(MIQP_L0):
 
     _cvx_parameter_constraints: dict[str, list[Any]] = {
         "sparse_bound": [Interval(type=Real, left=0, right=None, closed="left")],
-    } | MIQP_L0._cvx_parameter_constraints
+    } | MIQPl0._cvx_parameter_constraints
 
     def __init__(
         self,

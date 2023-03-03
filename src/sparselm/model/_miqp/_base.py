@@ -18,7 +18,7 @@ from ..._utils.validation import _check_groups
 from .._base import CVXRegressor
 
 
-class MIQP_L0(CVXRegressor, metaclass=ABCMeta):
+class MIQPl0(CVXRegressor, metaclass=ABCMeta):
     """Base class for mixed-integer quadratic programming (MIQP) estimators.
 
     Generalized l0 formulation that allows grouping coefficients, based on:

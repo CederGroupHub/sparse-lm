@@ -31,10 +31,10 @@ from sklearn.utils._param_validation import Interval
 
 from sparselm.model._base import TikhonovMixin
 
-from ._base import MIQP_L0
+from ._base import MIQPl0
 
 
-class RegularizedL0(MIQP_L0):
+class RegularizedL0(MIQPl0):
     r"""Implementation of mixed-integer quadratic programming l0 regularized estimator.
 
     Supports grouping parameters and group-level hierarchy, but requires groups as a
@@ -53,7 +53,7 @@ class RegularizedL0(MIQP_L0):
 
     _cvx_parameter_constraints: dict[str, list[Any]] = {
         "alpha": [Interval(type=Real, left=0.0, right=None, closed="left")],
-    } | MIQP_L0._cvx_parameter_constraints
+    } | MIQPl0._cvx_parameter_constraints
 
     def __init__(
         self,
