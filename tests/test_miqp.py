@@ -75,24 +75,24 @@ def test_slack_variables(estimator_cls, random_model_with_groups, miqp_solver, r
         estimator = estimator_cls(alpha=2.0, solver=miqp_solver)
 
     estimator.fit(X, y)
-    for coef, active in zip(estimator.coef_, estimator._z0.value):
+    for coef, active in zip(estimator.coef_, estimator.canonicals_.auxiliaries.z0.value):
         if active == 1:
             assert abs(coef) >= THRESHOLD
         else:
             assert abs(coef) < THRESHOLD
 
     # now group hierarchy
-    group_ids = np.unique(groups)
+    group_ids = np.sort(np.unique(groups))
     if hasattr(estimator_cls, "sparse_bound"):
         estimator = estimator_cls(
             groups, sparse_bound=len(group_ids) // 2, solver=miqp_solver
         )
     else:
-        estimator = estimator_cls(groups, alpha=3.0, solver=miqp_solver)
+        estimator = estimator_cls(groups, alpha=2.0, solver=miqp_solver)
 
     estimator.fit(X, y)
-    for gid, active in zip(group_ids, estimator._z0.value):
-        if active == True:
+    for gid, active in zip(group_ids, estimator.canonicals_.auxiliaries.z0.value):
+        if active:
             assert all(abs(estimator.coef_[groups == gid]) >= THRESHOLD)
         else:
             assert all(abs(estimator.coef_[groups == gid]) < THRESHOLD)

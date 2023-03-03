@@ -100,7 +100,7 @@ class MIQP_L0(CVXEstimator, metaclass=ABCMeta):
     def _validate_params(self, X: ArrayLike, y: ArrayLike):
         """Validate parameters."""
         super()._validate_params(X, y)
-        self.groups = _check_groups(self.groups, X.shape[1])
+        _check_groups(self.groups, X.shape[1])
 
     def _generate_auxiliaries(
         self, X: ArrayLike, y: ArrayLike, beta: cp.Variable, parameters: SimpleNamespace
