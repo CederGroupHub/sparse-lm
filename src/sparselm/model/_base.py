@@ -127,7 +127,9 @@ class CVXRegressor(RegressorMixin, LinearModel, metaclass=ABCMeta):
         *args,
         **kwargs
     ):
-        """Prepare fit input with sklearn help then call fit method.
+        """Fit linear model.
+
+        Prepare fit data input with sklearn help then call cvxpy based solve method.
 
         Args:
             X (ArrayLike):
@@ -139,9 +141,9 @@ class CVXRegressor(RegressorMixin, LinearModel, metaclass=ABCMeta):
                 Individual weights for each sample of shape (n_samples,)
                 default=None
             *args:
-                Positional arguments passed to _fit method
+                Positional arguments passed to solve method
             **kwargs:
-                Keyword arguments passed to _fit method
+                Keyword arguments passed to solve method
 
         Returns:
             instance of self
@@ -348,7 +350,7 @@ class CVXRegressor(RegressorMixin, LinearModel, metaclass=ABCMeta):
                 SimpleNamespace with auxiliary cvxpy objects
 
         Returns:
-            cvpx Expression
+            cvxpy Expression
         """
         return
 
@@ -375,7 +377,7 @@ class CVXRegressor(RegressorMixin, LinearModel, metaclass=ABCMeta):
                 SimpleNamespace with auxiliary cvxpy objects
 
         Returns:
-            list of cvpx constraints
+            list of cvxpy constraints
         """
         return None
 
