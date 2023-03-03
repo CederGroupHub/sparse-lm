@@ -6,10 +6,10 @@ The classes make use of and follow the scikit-learn API.
 __author__ = "Luis Barroso-Luque, Fengyu Xie"
 
 from abc import ABCMeta, abstractmethod
+from collections.abc import Sequence
 from numbers import Integral
 from types import SimpleNamespace
 from typing import NamedTuple, Optional
-from collections.abc import Sequence
 
 import cvxpy as cp
 import numpy as np

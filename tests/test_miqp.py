@@ -57,7 +57,7 @@ def test_perfect_signal_recovery(sparse_coded_signal):
     assert np.linalg.norm(coef) > np.linalg.norm(r_estimator.coef_)
 
     # very sensitive to the value of alpha for exact results
-    estimator = RegularizedL0(alpha=0.03)
+    estimator = RegularizedL0(alpha=0.02)
     estimator.fit(X, y)
 
     npt.assert_array_equal(idx, np.flatnonzero(estimator.coef_))
@@ -75,7 +75,9 @@ def test_slack_variables(estimator_cls, random_model_with_groups, miqp_solver, r
         estimator = estimator_cls(alpha=2.0, solver=miqp_solver)
 
     estimator.fit(X, y)
-    for coef, active in zip(estimator.coef_, estimator.canonicals_.auxiliaries.z0.value):
+    for coef, active in zip(
+        estimator.coef_, estimator.canonicals_.auxiliaries.z0.value
+    ):
         if active == 1:
             assert abs(coef) >= THRESHOLD
         else:
@@ -118,7 +120,9 @@ def test_singleton_hierarchy(estimator_cls, random_model, miqp_solver, rng):
         assert all(estimator.coef_ == 0)
     else:
         assert all(estimator.coef_ != 0)
-    assert_hierarchy_respected(estimator.coef_, estimator.canonicals_.auxiliaries.z0.value, fully_chained)
+    assert_hierarchy_respected(
+        estimator.coef_, estimator.canonicals_.auxiliaries.z0.value, fully_chained
+    )
 
     hierarchy = []
     for i in range(len(beta)):
@@ -138,7 +142,9 @@ def test_singleton_hierarchy(estimator_cls, random_model, miqp_solver, rng):
     # TODO make hierarchy and other non cp.Parameter params reset problem if reset
     estimator.problem = None
     estimator.fit(X, y)
-    assert_hierarchy_respected(estimator.coef_, estimator.canonicals_.auxiliaries.z0.value, hierarchy)
+    assert_hierarchy_respected(
+        estimator.coef_, estimator.canonicals_.auxiliaries.z0.value, hierarchy
+    )
 
 
 @pytest.mark.parametrize("estimator_cls", MIQP_estimators)
@@ -155,7 +161,9 @@ def test_group_hierarchy(estimator_cls, random_model_with_groups, miqp_solver, r
     else:
         estimator = estimator_cls(groups, alpha=3.0, solver=miqp_solver)
 
-    fully_chained = [[group_ids[-1]]] + [[group_ids[i]] for i in range(0, len(group_ids) - 1)]
+    fully_chained = [[group_ids[-1]]] + [
+        [group_ids[i]] for i in range(0, len(group_ids) - 1)
+    ]
     estimator.hierarchy = fully_chained
     estimator.fit(X, y)
 
@@ -166,7 +174,10 @@ def test_group_hierarchy(estimator_cls, random_model_with_groups, miqp_solver, r
         assert all(estimator.coef_ != 0)
 
     assert_hierarchy_respected(
-        estimator.coef_, estimator.canonicals_.auxiliaries.z0.value, fully_chained, groups=groups
+        estimator.coef_,
+        estimator.canonicals_.auxiliaries.z0.value,
+        fully_chained,
+        groups=groups,
     )
 
     # pick two groups with nozero coefs
@@ -190,25 +201,35 @@ def test_group_hierarchy(estimator_cls, random_model_with_groups, miqp_solver, r
     estimator.fit(X, y)
 
     assert_hierarchy_respected(
-        estimator.coef_, estimator.canonicals_.auxiliaries.z0.value, hierarchy, groups=groups
+        estimator.coef_,
+        estimator.canonicals_.auxiliaries.z0.value,
+        hierarchy,
+        groups=groups,
     )
 
 
-def test_set_parameters():
-    estimator = RidgedBestSubsetSelection(groups=[0, 1, 2], sparse_bound=1)
+def test_set_parameters(random_model):
+    X, y, beta = random_model
+    estimator = RidgedBestSubsetSelection(sparse_bound=1, eta=1.0)
     estimator.sparse_bound = 2
-    assert estimator.sparse_bound == 2
-    assert estimator._bound.value == 2
+    estimator.fit(X, y)
+    assert estimator.canonicals_.parameters.sparse_bound.value == 2
+    assert estimator.canonicals_.parameters.eta.value == 1.0
 
     estimator.eta = 0.5
-    assert estimator.eta == 0.5
-    assert estimator._eta.value == 0.5
+    estimator.fit(X, y)
+    assert estimator.canonicals_.parameters.eta.value == 0.5
 
 
-def test_bad_input():
+def test_bad_input(random_model):
+    X, y, beta = random_model
+
+    # bad sparse_bound
+    estimator = BestSubsetSelection(sparse_bound=-1)
     with pytest.raises(ValueError):
-        estimator = BestSubsetSelection(groups=[0, 1, 2], sparse_bound=-1)
+        estimator.fit(X, y)
 
-    estimator = BestSubsetSelection(groups=[0, 1, 2], sparse_bound=1)
+    # bad eta
+    estimator = RidgedBestSubsetSelection(eta=-1.0)
     with pytest.raises(ValueError):
-        estimator.sparse_bound = 0
+        estimator.fit(X, y)

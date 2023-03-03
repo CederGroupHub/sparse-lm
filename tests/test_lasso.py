@@ -310,15 +310,17 @@ def test_set_parameters(estimator_cls, random_model_with_groups, rng):
         assert estimator.canonicals_.parameters.lambda2.value == 0.75 * 0.5
 
     if hasattr(estimator, "delta"):
-        estimator.delta = (4.0, )
+        estimator.delta = (4.0,)
         estimator._set_param_values()
         npt.assert_array_equal(
-            estimator.canonicals_.parameters.delta.value, 4.0 * np.ones(len(np.unique(groups)))
+            estimator.canonicals_.parameters.delta.value,
+            4.0 * np.ones(len(np.unique(groups))),
         )
 
         estimator.delta = 3.0 * np.ones(len(np.unique(groups)))
         estimator._set_param_values()
         npt.assert_array_equal(estimator.delta, 3.0 * np.ones(len(np.unique(groups))))
         npt.assert_array_equal(
-            estimator.canonicals_.parameters.delta.value, 3.0 * np.ones(len(np.unique(groups)))
+            estimator.canonicals_.parameters.delta.value,
+            3.0 * np.ones(len(np.unique(groups))),
         )
