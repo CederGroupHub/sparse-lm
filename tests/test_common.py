@@ -10,17 +10,30 @@ import pytest
 from sklearn.utils.estimator_checks import check_estimator
 
 import sparselm.model as spm
+from sparselm.model._miqp._base import MIQP_L0
 
-ALL_ESTIMATORS = getmembers(spm, isclass)
+ESTIMATORS = getmembers(spm, isclass)
+ESTIMATOR_NAMES = [est[0] for est in ESTIMATORS]
+ESTIMATORS = [est[1] for est in ESTIMATORS]
 
 
-@pytest.mark.parametrize("estimator_cls", ALL_ESTIMATORS)
+@pytest.fixture(params=ESTIMATORS, ids=ESTIMATOR_NAMES)
+def estimator(request):
+    estimator_cls = request.param
+    if issubclass(estimator_cls, MIQP_L0):
+        regressor = estimator_cls(fit_intercept=True, solver="SCIP")
+        if hasattr(regressor, "eta"):
+            regressor.eta = 0.01
+        return regressor
+    return estimator_cls(fit_intercept=True, solver="ECOS")
+
+
+@pytest.mark.parametrize("estimator_cls", ESTIMATORS)
 def test_general_fit(estimator_cls, random_model, rng):
-    print(f"\nGeneral test of {estimator_cls[0]}.")
     X, y, beta = random_model
 
     # instantiate the estimator
-    sig = signature(estimator_cls[1])
+    sig = signature(estimator_cls)
 
     # check for necessary parameters
     args = {}
@@ -34,7 +47,7 @@ def test_general_fit(estimator_cls, random_model, rng):
     if "sparse_bound" in sig.parameters:
         args["sparse_bound"] = 12
 
-    estimator = estimator_cls[1](**args)
+    estimator = estimator_cls(**args)
     estimator.fit(X, y)
     # assert a value of coefficients has been set correctly
     assert isinstance(estimator.coef_, np.ndarray)
@@ -42,7 +55,7 @@ def test_general_fit(estimator_cls, random_model, rng):
     assert len(estimator.predict(X)) == len(y)
     assert estimator.intercept_ == 0.0
 
-    estimator = estimator_cls[1](fit_intercept=True, **args)
+    estimator = estimator_cls(fit_intercept=True, **args)
     estimator.fit(X, y)
     # assert a value of coefficients has been set correctly
     assert isinstance(estimator.coef_, np.ndarray)
@@ -51,66 +64,6 @@ def test_general_fit(estimator_cls, random_model, rng):
     assert estimator.intercept_ != 0.0
 
 
-from sparselm.model import (
-    L1L0,
-    L2L0,
-    AdaptiveGroupLasso,
-    AdaptiveLasso,
-    AdaptiveOverlapGroupLasso,
-    AdaptiveRidgedGroupLasso,
-    AdaptiveSparseGroupLasso,
-    BestSubsetSelection,
-    GroupLasso,
-    Lasso,
-    OrdinaryLeastSquares,
-    OverlapGroupLasso,
-    RegularizedL0,
-    RidgedBestSubsetSelection,
-    RidgedGroupLasso,
-    SparseGroupLasso,
-)
-
-compliant_estimators = [
-    OrdinaryLeastSquares,
-    Lasso,
-    GroupLasso,
-    OverlapGroupLasso,
-    SparseGroupLasso,
-    RidgedGroupLasso,
-    AdaptiveLasso,
-    AdaptiveGroupLasso,
-    AdaptiveOverlapGroupLasso,
-    AdaptiveSparseGroupLasso,
-    AdaptiveRidgedGroupLasso,
-]
-
-miqp_compliant_estimators = [
-    BestSubsetSelection,
-    RidgedBestSubsetSelection,
-    RegularizedL0,
-    L1L0,
-    L2L0,
-]
-
-
-@pytest.fixture(params=compliant_estimators)
-def estimator(request):
-    return request.param(fit_intercept=True, solver="ECOS")
-
-
 def test_sklearn_compatible(estimator):
     """Test sklearn compatibility with no parameter inputs."""
     check_estimator(estimator)
-
-
-@pytest.fixture(params=miqp_compliant_estimators)
-def miqp_estimator(request):
-    regressor = request.param(fit_intercept=True, solver="SCIP")
-    if hasattr(regressor, "eta"):
-        regressor.eta = 0.01
-    return regressor
-
-
-def test_miqp_sklearn_compatible(miqp_estimator):
-    """Test sklearn compatibility with no parameter inputs."""
-    check_estimator(miqp_estimator)
