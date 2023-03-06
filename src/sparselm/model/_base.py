@@ -10,7 +10,7 @@ from abc import ABCMeta, abstractmethod
 from collections.abc import Sequence
 from numbers import Integral
 from types import SimpleNamespace
-from typing import Any, NamedTuple, Optional, Union
+from typing import Any, NamedTuple, Optional
 
 import cvxpy as cp
 import numpy as np
@@ -221,7 +221,7 @@ class CVXRegressor(RegressorMixin, LinearModel, metaclass=ABCMeta):
             if parameter in self._cvx_parameter_constraints:
                 cvx_parameter = getattr(self.canonicals_.parameters, parameter)
                 # check for parameters that take a scalar or an array
-                if isinstance(value, Union[np.ndarray, Sequence]):
+                if isinstance(value, np.ndarray) or isinstance(value, Sequence):
                     if len(value) == 1:
                         value = value * np.ones_like(cvx_parameter.value)
                     else:
