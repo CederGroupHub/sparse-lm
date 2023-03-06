@@ -584,7 +584,7 @@ class AdaptiveSparseGroupLasso(AdaptiveLasso, SparseGroupLasso):
 
     def _generate_params(self, X: ArrayLike, y: ArrayLike) -> Optional[SimpleNamespace]:
         # skip AdaptiveLasso in super
-        parameters = super(AdaptiveLasso, self)._generate_params(X, y)
+        parameters = SparseGroupLasso._generate_params(self, X, y)
         n_groups = X.shape[1] if self.groups is None else len(np.unique(self.groups))
         parameters.adaptive_coef_weights = cp.Parameter(
             shape=X.shape[1],
