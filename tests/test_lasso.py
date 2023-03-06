@@ -23,7 +23,7 @@ ADAPTIVE_ESTIMATORS = [
     AdaptiveRidgedGroupLasso,
 ]
 # a high threshold since beta from make_regression are always ~ 1E1
-THRESHOLD = 1E-8
+THRESHOLD = 1e-8
 
 
 def test_lasso_toy():
