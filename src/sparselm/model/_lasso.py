@@ -231,7 +231,7 @@ class GroupLasso(Lasso):
     def _generate_auxiliaries(
         self, X: ArrayLike, y: ArrayLike, beta: cp.Variable, parameters: SimpleNamespace
     ) -> Optional[SimpleNamespace]:
-        """Generate auxiliary cp.Expression for group norms"""
+        """Generate auxiliary cp.Expression for group norms."""
         groups = np.arange(X.shape[1]) if self.groups is None else self.groups
         group_norms = self._generate_group_norms(
             X, groups, beta, self.standardize, parameters
@@ -374,7 +374,6 @@ class OverlapGroupLasso(GroupLasso):
             y (ArrayLike):
                 Target vector
         """
-
         # need to generate the auxiliaries here since the problem data is "augmented"
         # based on them
         if self.group_list is None:

@@ -203,7 +203,6 @@ class CVXRegressor(RegressorMixin, LinearModel, metaclass=ABCMeta):
 
         Implement this in an Regressor for additional parameter value validation.
         """
-
         if self._cvx_parameter_constraints is None:
             parameter_constraints = self._parameter_constraints
         else:

@@ -43,7 +43,6 @@ def _check_group_weights(group_weights, n_groups):
     Returns:
         ndarray: group weights as a 1D ndarray
     """
-
     if group_weights is None:
         return
 
