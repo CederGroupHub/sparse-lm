@@ -25,8 +25,8 @@ jobs:
 
       - name: Install dependencies
         run: |
-          wget --quiet --no-check-certificate https://scipopt.org/download/release/SCIPOptSuite-${{ env.scp-version }}-Linux-ubuntu.deb
-          sudo apt-get update && sudo apt install -y ./SCIPOptSuite-${{ env.scp-version }}-Linux-ubuntu.deb
+          wget --quiet --no-check-certificate https://scipopt.org/download/release/SCIPOptSuite-${{ env.scip-version }}-Linux-ubuntu.deb
+          sudo apt-get update && sudo apt install -y ./SCIPOptSuite-${{ env.scip-version }}-Linux-ubuntu.deb
 
       - name: Set up Python ${{ matrix.python_version }}
         uses: actions/setup-python@v4
