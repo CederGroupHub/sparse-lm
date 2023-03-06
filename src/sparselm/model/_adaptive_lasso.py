@@ -187,14 +187,15 @@ class AdaptiveLasso(Lasso):
         """Solve Lasso problem iteratively adaptive weights."""
         previous_weights = self._get_weights_value(self.canonicals_.parameters)
         for i in range(self.max_iter):
+            self.canonicals_.problem.solve(
+                solver=self.solver, warm_start=self.warm_start, **solver_options
+            )
             if (
                 self.canonicals_.beta.value is None
                 and self.canonicals_.problem.value == -np.inf
             ):
                 raise RuntimeError(f"{self.canonicals_.problem} is infeasible.")
-            self.canonicals_.problem.solve(
-                solver=self.solver, warm_start=self.warm_start, **solver_options
-            )
+
             self.n_iter_ = i + 1  # save number of iterations for sklearn
             self._iterative_update(
                 self.canonicals_.beta.value,
