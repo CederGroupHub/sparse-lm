@@ -3,7 +3,7 @@
 
 __author__ = "Luis Barroso-Luque"
 
-from abc import ABCMeta
+from abc import ABCMeta, abstractmethod
 from numbers import Real
 from types import SimpleNamespace
 from typing import Any, Optional
@@ -33,6 +33,7 @@ class MIQPl0(CVXRegressor, metaclass=ABCMeta):
         "big_M": [Interval(type=Real, left=0.0, right=None, closed="left")]
     }
 
+    @abstractmethod  # force inspect.isabstract to return True
     def __init__(
         self,
         groups: Optional[ArrayLike] = None,
