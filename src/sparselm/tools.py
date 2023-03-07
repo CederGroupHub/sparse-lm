@@ -4,13 +4,17 @@ __author__ = "Luis Barroso-Luque"
 
 import warnings
 from functools import wraps
+from typing import Optional, Union
 
-from typing import Union, Optional
-from numpy.typing import ArrayLike
 import numpy as np
+from numpy.typing import ArrayLike
 
 
-def constrain_coefficients(indices: ArrayLike, high: Union[float, ArrayLike] = None, low: Union[float, ArrayLike] = None):
+def constrain_coefficients(
+    indices: ArrayLike,
+    high: Union[float, ArrayLike] = None,
+    low: Union[float, ArrayLike] = None,
+):
     """Constrain a fit method to keep coefficients within a specified range.
 
     Decorator to enforce that a fit method fitting a cluster expansion that
@@ -96,7 +100,9 @@ def constrain_coefficients(indices: ArrayLike, high: Union[float, ArrayLike] = N
     return decorate_fit_method
 
 
-def r2_score_to_cv_error(score: float, y: ArrayLike, y_pred: ArrayLike, weights: Optional[ArrayLike] = None):
+def r2_score_to_cv_error(
+    score: float, y: ArrayLike, y_pred: ArrayLike, weights: Optional[ArrayLike] = None
+):
     """Convert r2 score to cross-validation error.
 
     Args:
