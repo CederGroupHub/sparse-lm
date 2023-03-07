@@ -114,6 +114,7 @@ def r2_score_to_cv_error(
             The fitted vector.
         weights (ArrayLike): 1D
             The weights of each sample. Default to 1.
+
     Returns:
         float:
             The CV error

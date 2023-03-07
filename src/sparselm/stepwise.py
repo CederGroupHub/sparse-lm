@@ -114,6 +114,7 @@ class StepwiseEstimator(_BaseComposition, RegressorMixin, LinearModel):
 
         This will be called when model selection optimizes
         all hyper parameters.
+
         Args:
             params: A Dictionary of parameters. Each parameter
             name must end with an underscore and a number to specify

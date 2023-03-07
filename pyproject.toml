@@ -77,3 +77,7 @@ ignore-words-list = ['nd', 'tread']
 [tool.coverage.run]
 source = ["src/sparselm"]
 omit = ["*/__init__.py"]
+
+[tool.pydocstyle]
+convention = "google"
+add_ignore = ["D107"]

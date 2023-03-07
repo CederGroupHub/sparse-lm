@@ -63,7 +63,7 @@ class CVXCanonicals(NamedTuple):
 
 
 class CVXRegressor(RegressorMixin, LinearModel, metaclass=ABCMeta):
-    """Abstract base class for Regressors using cvxpy with a sklearn interface.
+    r"""Abstract base class for Regressors using cvxpy with a sklearn interface.
 
     Note cvxpy can use one of many 3rd party solvers, default is most often
     CVXOPT or ECOS. For integer and mixed integer problems options include SCIP (open source)

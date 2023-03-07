@@ -246,9 +246,10 @@ class GridSearchCV(_GridSearchCV):
                 `num_samples` then it will be split across CV groups along with
                 `X` and `y`. For example, the :term:`sample_weight` parameter
                 is split because `len(sample_weights) = len(X)`.
-            Returns:
-                self(GridSearch):
-                    Instance of fitted estimator.
+
+        Returns:
+            self(GridSearch):
+                Instance of fitted estimator.
         """
         estimator = self.estimator
         refit_metric = "score"
@@ -478,7 +479,8 @@ class LineSearchCV(BaseSearchCV):
                 a time in the order of param_grid.
                 n_iter must be at least as large as the number of hyper-params.
                 Default is 2 * number of hyper-params.
-            scoring (str, callable, list, tuple or dict,
+            scoring (str, callable, list, tuple or dict):
+                Strategy to evaluate the performance of the cross-validated model on the test set.
             default="neg_root_mean_squared_error"):
                 Strategy to evaluate the performance of the cross-validated
                 model on the test set.
@@ -502,7 +504,7 @@ class LineSearchCV(BaseSearchCV):
                 context.
                 ``-1`` means using all processors. See
                 :term:`Glossary <n_jobs>` for more details.
-            refit (bool, str, or callable, default=True)
+            refit (bool, str, or callable, default=True):
                 Refit an estimator using the best found parameters on the whole
                 dataset.
                 For multiple metric evaluation, this needs to be a `str`
@@ -621,9 +623,10 @@ class LineSearchCV(BaseSearchCV):
                 `num_samples` then it will be split across CV groups along with
                 `X` and `y`. For example, the :term:`sample_weight` parameter
                 is split because `len(sample_weights) = len(X)`.
-            Returns:
-                self(LineSearch):
-                    Instance of fitted estimator.
+
+        Returns:
+            self (LineSearch):
+                Instance of fitted estimator.
         """
         # Validate parameters.
         if isinstance(self.param_grid[0][0], str) and isinstance(

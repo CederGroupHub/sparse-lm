@@ -31,8 +31,7 @@ from ._base import CVXCanonicals, CVXRegressor
 
 
 class Lasso(CVXRegressor):
-    r"""
-    Lasso Regressor implemented with cvxpy.
+    r"""Lasso Regressor implemented with cvxpy.
 
     Regularized regression objective:
 
