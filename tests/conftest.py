@@ -8,7 +8,7 @@ SEED = 0
 # ECOS sometimes fails for Adaptive group estimators, but is fast
 # SCS and CXVOPT are reliable, but slower
 # GUROBI is best
-CONVEX_SOLVERS = ["GUROBI", "SCS", "ECOS"]
+CONVEX_SOLVERS = ["GUROBI", "ECOS"]  # SCS, GUROBI, CVXOPT
 
 # ECOS_BB is open source alternative, but much slower, and can get things wrong
 MIQP_SOLVERS = ["GUROBI"]  # SCIP fails some tests...
