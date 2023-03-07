@@ -58,7 +58,7 @@ class OrdinaryLeastSquares(CVXRegressor):
         X: ArrayLike,
         y: ArrayLike,
         beta: cp.Variable,
-        parameters: Optional[SimpleNamespace] = None,
-        auxiliaries: Optional[SimpleNamespace] = None,
+        parameters: SimpleNamespace | None = None,
+        auxiliaries: SimpleNamespace | None = None,
     ) -> cp.Expression:
         return 1 / (2 * X.shape[0]) * cp.sum_squares(X @ beta - y)

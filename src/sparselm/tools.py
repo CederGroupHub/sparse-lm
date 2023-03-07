@@ -4,7 +4,6 @@ __author__ = "Luis Barroso-Luque"
 
 import warnings
 from functools import wraps
-from typing import Optional, Union
 
 import numpy as np
 from numpy.typing import ArrayLike
@@ -12,8 +11,8 @@ from numpy.typing import ArrayLike
 
 def constrain_coefficients(
     indices: ArrayLike,
-    high: Union[float, ArrayLike] = None,
-    low: Union[float, ArrayLike] = None,
+    high: float | ArrayLike = None,
+    low: float | ArrayLike = None,
 ):
     """Constrain a fit method to keep coefficients within a specified range.
 
@@ -101,7 +100,7 @@ def constrain_coefficients(
 
 
 def r2_score_to_cv_error(
-    score: float, y: ArrayLike, y_pred: ArrayLike, weights: Optional[ArrayLike] = None
+    score: float, y: ArrayLike, y_pred: ArrayLike, weights: ArrayLike | None = None
 ):
     """Convert r2 score to cross-validation error.
 
