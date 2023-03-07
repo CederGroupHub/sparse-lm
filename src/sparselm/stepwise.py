@@ -50,13 +50,13 @@ class StepwiseEstimator(_BaseComposition, RegressorMixin, LinearModel):
     a LineSearchCV.
 
     Args:
-        steps(list[(str, CVXEstimator)]):
+        steps (list[(str, CVXEstimator)]):
             A list of step names and the CVXEstimators to use
             for each step. StepwiseEstimator cannot be used as
             a member of StepwiseEstimator.
             An estimator will fit the residuals of the previous
             estimator fits in the list.
-        estimator_feature_indices(tuple[tuple[int]]):
+        estimator_feature_indices (tuple[tuple[int]]):
             Scope of each estimator, which means the indices of
             features in the scope (features[:, scope]) will be
             fitted to the residual using the corresponding estimator.
@@ -74,17 +74,16 @@ class StepwiseEstimator(_BaseComposition, RegressorMixin, LinearModel):
                wrapping them up with the composite!
 
     Notes:
-        1, Do not use GridSearchCV or LineSearchCV to search a
-        StepwiseEstimator!
-        2, No nesting is allowed for StepwiseEstimator, which means
-        no step of a StepwiseEstimator can be a StepwiseEstimator.
-        3, Since stepwise estimator requires specifying a list of
-        feature indices for each step estimator, it requires fixing
-        n_features_in_ before fitting, which violates sklearn
-        convention for a regressor. Therefore, StepwiseEstimator is
-        not checked by sklearn check_estimator method, and there is
-        no guarantee that it is fully compatible with all sklearn
-        features.
+        1. Do not use GridSearchCV or LineSearchCV to search a StepwiseEstimator!
+
+        2. No nesting is allowed for StepwiseEstimator, which means no step of a
+        StepwiseEstimator can be a StepwiseEstimator.
+
+        3. Since stepwise estimator requires specifying a list of feature indices for
+        each step estimator, it requires fixing n_features_in_ before fitting, which
+        violates sklearn convention for a regressor. Therefore, StepwiseEstimator is
+        not checked by sklearn check_estimator method, and there is no guarantee that it
+        is fully compatible with all scikit-learn features.
     """
 
     def __init__(
