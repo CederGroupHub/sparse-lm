@@ -3,6 +3,7 @@
 The classes make use of and follow the scikit-learn API.
 """
 
+from __future__ import annotations
 
 __author__ = "Luis Barroso-Luque, Fengyu Xie"
 

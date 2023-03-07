@@ -1,5 +1,6 @@
 """Base class for mixed-integer quadratic programming l0 pseudo norm based Regressors."""
 
+from __future__ import annotations
 
 __author__ = "Luis Barroso-Luque"
 

@@ -16,6 +16,8 @@ Regressors allow optional inclusion of hierarchical constraints at the single co
 or group of coefficients level.
 """
 
+from __future__ import annotations
+
 __author__ = "Luis Barroso-Luque, Fengyu Xie"
 
 

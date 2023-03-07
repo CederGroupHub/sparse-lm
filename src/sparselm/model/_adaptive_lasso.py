@@ -18,6 +18,7 @@ In that case either tweak settings/solvers around so that that does not happen
 or run with n_jobs=1 (but that may take a while to solve)
 """
 
+from __future__ import annotations
 
 __author__ = "Luis Barroso-Luque"
 

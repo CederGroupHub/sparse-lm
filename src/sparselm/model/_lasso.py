@@ -10,6 +10,7 @@ Regressors follow scikit-learn interface, but use cvxpy to set up and solve
 optimization problem.
 """
 
+from __future__ import annotations
 
 __author__ = "Luis Barroso-Luque, Fengyu Xie"
 

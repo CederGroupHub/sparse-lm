@@ -3,6 +3,8 @@
 Allows hierarchy constraints similar to mixed L0 solvers.
 """
 
+from __future__ import annotations
+
 __author__ = "Luis Barroso-Luque"
 
 from numbers import Real
