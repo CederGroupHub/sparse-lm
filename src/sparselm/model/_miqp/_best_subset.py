@@ -9,7 +9,7 @@ __author__ = "Luis Barroso-Luque"
 
 from numbers import Real
 from types import SimpleNamespace
-from typing import Any, Optional
+from typing import Any
 
 import cvxpy as cp
 from numpy.typing import ArrayLike, NDArray
@@ -36,16 +36,16 @@ class BestSubsetSelection(MIQPl0):
 
     def __init__(
         self,
-        groups: Optional[ArrayLike] = None,
+        groups: ArrayLike | None = None,
         sparse_bound=100,
         big_M: int = 100,
-        hierarchy: Optional[list[list[int]]] = None,
+        hierarchy: list[list[int]] | None = None,
         ignore_psd_check: bool = True,
         fit_intercept: bool = False,
         copy_X: bool = True,
         warm_start: bool = False,
-        solver: Optional[str] = None,
-        solver_options: Optional[dict] = None,
+        solver: str | None = None,
+        solver_options: dict | None = None,
     ):
         """Initialize Regressor.
 
@@ -108,8 +108,8 @@ class BestSubsetSelection(MIQPl0):
         X: ArrayLike,
         y: ArrayLike,
         beta: cp.Variable,
-        parameters: Optional[SimpleNamespace] = None,
-        auxiliaries: Optional[SimpleNamespace] = None,
+        parameters: SimpleNamespace | None = None,
+        auxiliaries: SimpleNamespace | None = None,
     ) -> list[cp.constraints]:
         """Generate the constraints for best subset selection."""
         constraints = super()._generate_constraints(X, y, beta, parameters, auxiliaries)
@@ -127,18 +127,18 @@ class RidgedBestSubsetSelection(TikhonovMixin, BestSubsetSelection):
 
     def __init__(
         self,
-        groups: Optional[ArrayLike] = None,
+        groups: ArrayLike | None = None,
         sparse_bound: int = 100,
         eta: float = 1.0,
         big_M: int = 100,
-        hierarchy: Optional[list[list[int]]] = None,
-        tikhonov_w: Optional[NDArray[float]] = None,
+        hierarchy: list[list[int]] | None = None,
+        tikhonov_w: NDArray[float] | None = None,
         ignore_psd_check: bool = True,
         fit_intercept: bool = False,
         copy_X: bool = True,
         warm_start: bool = False,
-        solver: Optional[str] = None,
-        solver_options: Optional[dict] = None,
+        solver: str | None = None,
+        solver_options: dict | None = None,
     ):
         """Initialize Regressor.
 

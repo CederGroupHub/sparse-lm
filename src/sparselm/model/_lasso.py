@@ -17,7 +17,7 @@ __author__ = "Luis Barroso-Luque, Fengyu Xie"
 import warnings
 from numbers import Real
 from types import SimpleNamespace
-from typing import Any, Optional
+from typing import Any
 
 import cvxpy as cp
 import numpy as np
@@ -52,8 +52,8 @@ class Lasso(CVXRegressor):
         fit_intercept: bool = False,
         copy_X: bool = True,
         warm_start: bool = False,
-        solver: Optional[str] = None,
-        solver_options: Optional[dict[str, Any]] = None,
+        solver: str | None = None,
+        solver_options: dict[str, Any] | None = None,
     ):
         """Initialize a Lasso Regressor.
 
@@ -90,7 +90,7 @@ class Lasso(CVXRegressor):
         X: ArrayLike,
         beta: cp.Variable,
         parameters: SimpleNamespace,
-        auxiliaries: Optional[SimpleNamespace] = None,
+        auxiliaries: SimpleNamespace | None = None,
     ) -> cp.Expression:
         """Generate regularization term."""
         return parameters.alpha * cp.norm1(beta)
@@ -100,8 +100,8 @@ class Lasso(CVXRegressor):
         X: ArrayLike,
         y: ArrayLike,
         beta: cp.Variable,
-        parameters: Optional[SimpleNamespace] = None,
-        auxiliaries: Optional[SimpleNamespace] = None,
+        parameters: SimpleNamespace | None = None,
+        auxiliaries: SimpleNamespace | None = None,
     ) -> cp.Expression:
         # can also use cp.norm2(X @ beta - y)**2 not sure whats better
         reg = self._generate_regularization(X, beta, parameters, auxiliaries)
@@ -123,15 +123,15 @@ class GroupLasso(Lasso):
 
     def __init__(
         self,
-        groups: Optional[ArrayLike] = None,
+        groups: ArrayLike | None = None,
         alpha: float = 1.0,
-        group_weights: Optional[ArrayLike] = None,
+        group_weights: ArrayLike | None = None,
         standardize: bool = False,
         fit_intercept: bool = False,
         copy_X: bool = True,
         warm_start: bool = False,
-        solver: Optional[str] = None,
-        solver_options: Optional[dict[str, Any]] = None,
+        solver: str | None = None,
+        solver_options: dict[str, Any] | None = None,
     ):
         """Initialize Regressor.
 
@@ -202,7 +202,7 @@ class GroupLasso(Lasso):
         if self.group_weights is not None:
             self.canonicals_.parameters.group_weights = self.group_weights
 
-    def _generate_params(self, X: ArrayLike, y: ArrayLike) -> Optional[SimpleNamespace]:
+    def _generate_params(self, X: ArrayLike, y: ArrayLike) -> SimpleNamespace | None:
         parameters = super()._generate_params(X, y)
         n_groups = X.shape[1] if self.groups is None else len(np.unique(self.groups))
         group_weights = (
@@ -217,7 +217,7 @@ class GroupLasso(Lasso):
         groups: ArrayLike,
         beta: cp.Variable,
         standardize: bool,
-        parameters: Optional[SimpleNamespace] = None,
+        parameters: SimpleNamespace | None = None,
     ) -> cp.Expression:
         """Generate cp.Expression of group norms."""
         group_masks = [groups == i for i in np.sort(np.unique(groups))]
@@ -231,7 +231,7 @@ class GroupLasso(Lasso):
 
     def _generate_auxiliaries(
         self, X: ArrayLike, y: ArrayLike, beta: cp.Variable, parameters: SimpleNamespace
-    ) -> Optional[SimpleNamespace]:
+    ) -> SimpleNamespace | None:
         """Generate auxiliary cp.Expression for group norms."""
         groups = np.arange(X.shape[1]) if self.groups is None else self.groups
         group_norms = self._generate_group_norms(
@@ -244,7 +244,7 @@ class GroupLasso(Lasso):
         X: ArrayLike,
         beta: cp.Variable,
         parameters: SimpleNamespace,
-        auxiliaries: Optional[SimpleNamespace] = None,
+        auxiliaries: SimpleNamespace | None = None,
     ) -> cp.Expression:
         return parameters.alpha * (parameters.group_weights @ auxiliaries.group_norms)
 
@@ -267,13 +267,13 @@ class OverlapGroupLasso(GroupLasso):
         self,
         group_list: list[list[int]] = None,
         alpha: float = 1.0,
-        group_weights: Optional[ArrayLike] = None,
+        group_weights: ArrayLike | None = None,
         standardize: bool = False,
         fit_intercept: bool = False,
         copy_X: bool = True,
         warm_start: bool = False,
-        solver: Optional[str] = None,
-        solver_options: Optional[dict[str, Any]] = None,
+        solver: str | None = None,
+        solver_options: dict[str, Any] | None = None,
         **kwargs,
     ):
         """Initialize Regressor.
@@ -352,7 +352,7 @@ class OverlapGroupLasso(GroupLasso):
 
         _check_group_weights(self.group_weights, n_groups)
 
-    def _generate_params(self, X: ArrayLike, y: ArrayLike) -> Optional[SimpleNamespace]:
+    def _generate_params(self, X: ArrayLike, y: ArrayLike) -> SimpleNamespace | None:
         parameters = super()._generate_params(X, y)
 
         if self.group_list is None:
@@ -454,16 +454,16 @@ class SparseGroupLasso(GroupLasso):
 
     def __init__(
         self,
-        groups: Optional[ArrayLike] = None,
+        groups: ArrayLike | None = None,
         l1_ratio: float = 0.5,
         alpha: float = 1.0,
-        group_weights: Optional[ArrayLike] = None,
+        group_weights: ArrayLike | None = None,
         standardize: bool = False,
         fit_intercept: bool = False,
         copy_X: bool = True,
         warm_start: bool = False,
-        solver: Optional[str] = None,
-        solver_options: Optional[dict[str, Any]] = None,
+        solver: str | None = None,
+        solver_options: dict[str, Any] | None = None,
     ):
         """Initialize Regressor.
 
@@ -536,7 +536,7 @@ class SparseGroupLasso(GroupLasso):
         self.canonicals_.parameters.lambda1.value = self.l1_ratio * self.alpha
         self.canonicals_.parameters.lambda2.value = (1 - self.l1_ratio) * self.alpha
 
-    def _generate_params(self, X: ArrayLike, y: ArrayLike) -> Optional[SimpleNamespace]:
+    def _generate_params(self, X: ArrayLike, y: ArrayLike) -> SimpleNamespace | None:
         """Generate parameters."""
         parameters = super()._generate_params(X, y)
         # del parameters.alpha  # hacky but we don't need this
@@ -552,7 +552,7 @@ class SparseGroupLasso(GroupLasso):
         X: ArrayLike,
         beta: cp.Variable,
         parameters: SimpleNamespace,
-        auxiliaries: Optional[SimpleNamespace] = None,
+        auxiliaries: SimpleNamespace | None = None,
     ) -> cp.Expression:
         group_regularization = parameters.lambda2 * (
             parameters.group_weights @ auxiliaries.group_norms
@@ -587,16 +587,16 @@ class RidgedGroupLasso(GroupLasso):
 
     def __init__(
         self,
-        groups: Optional[ArrayLike] = None,
+        groups: ArrayLike | None = None,
         alpha: float = 1.0,
         delta: ArrayLike = (1.0,),
-        group_weights: Optional[ArrayLike] = None,
+        group_weights: ArrayLike | None = None,
         standardize: bool = False,
         fit_intercept: bool = False,
         copy_X: bool = True,
         warm_start: bool = False,
-        solver: Optional[str] = None,
-        solver_options: Optional[dict[str, Any]] = None,
+        solver: str | None = None,
+        solver_options: dict[str, Any] | None = None,
     ):
         """Initialize Regressor.
 
@@ -662,7 +662,7 @@ class RidgedGroupLasso(GroupLasso):
                 f"delta must be an array of length 1 or equal to the number of groups {n_groups}."
             )
 
-    def _generate_params(self, X: ArrayLike, y: ArrayLike) -> Optional[SimpleNamespace]:
+    def _generate_params(self, X: ArrayLike, y: ArrayLike) -> SimpleNamespace | None:
         """Generate parameters."""
         parameters = super()._generate_params(X, y)
         # force cvxpy delta to be an array of n_groups!
@@ -680,7 +680,7 @@ class RidgedGroupLasso(GroupLasso):
         groups: ArrayLike,
         beta: cp.Variable,
         standardize: bool,
-        parameters: Optional[SimpleNamespace] = None,
+        parameters: SimpleNamespace | None = None,
     ) -> cp.Expression:
         group_masks = [groups == i for i in np.sort(np.unique(groups))]
         if standardize:
@@ -706,7 +706,7 @@ class RidgedGroupLasso(GroupLasso):
         X: ArrayLike,
         beta: cp.Variable,
         parameters: SimpleNamespace,
-        auxiliaries: Optional[SimpleNamespace] = None,
+        auxiliaries: SimpleNamespace | None = None,
     ) -> cp.Expression:
         # repetitive code...
         groups = np.arange(X.shape[1]) if self.groups is None else self.groups

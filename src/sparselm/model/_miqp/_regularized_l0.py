@@ -24,7 +24,7 @@ __author__ = "Luis Barroso-Luque, Fengyu Xie"
 from abc import ABCMeta, abstractmethod
 from numbers import Real
 from types import SimpleNamespace
-from typing import Any, Optional
+from typing import Any
 
 import cvxpy as cp
 import numpy as np
@@ -60,16 +60,16 @@ class RegularizedL0(MIQPl0):
 
     def __init__(
         self,
-        groups: Optional[ArrayLike] = None,
+        groups: ArrayLike | None = None,
         alpha: float = 1.0,
         big_M: int = 100,
-        hierarchy: Optional[list[list[int]]] = None,
+        hierarchy: list[list[int]] | None = None,
         ignore_psd_check: bool = True,
         fit_intercept: bool = False,
         copy_X: bool = True,
         warm_start: bool = False,
-        solver: Optional[str] = None,
-        solver_options: Optional[dict] = None,
+        solver: str | None = None,
+        solver_options: dict | None = None,
     ):
         """Initialize Regressor.
 
@@ -131,8 +131,8 @@ class RegularizedL0(MIQPl0):
         X: ArrayLike,
         y: ArrayLike,
         beta: cp.Variable,
-        parameters: Optional[SimpleNamespace] = None,
-        auxiliaries: Optional[SimpleNamespace] = None,
+        parameters: SimpleNamespace | None = None,
+        auxiliaries: SimpleNamespace | None = None,
     ) -> cp.Expression:
         """Generate the quadratic form and l0 regularization portion of objective."""
         c0 = 2 * X.shape[0]  # keeps hyperparameter scale independent
@@ -152,17 +152,17 @@ class MixedL0(RegularizedL0, metaclass=ABCMeta):
 
     def __init__(
         self,
-        groups: Optional[ArrayLike] = None,
+        groups: ArrayLike | None = None,
         alpha: float = 1.0,
         eta: float = 1.0,
         big_M: int = 100,
-        hierarchy: Optional[list[list[int]]] = None,
+        hierarchy: list[list[int]] | None = None,
         ignore_psd_check: bool = True,
         fit_intercept: bool = False,
         copy_X: bool = True,
         warm_start: bool = False,
-        solver: Optional[str] = None,
-        solver_options: Optional[dict] = None,
+        solver: str | None = None,
+        solver_options: dict | None = None,
     ):
         """Initialize Regressor.
 
@@ -228,8 +228,8 @@ class MixedL0(RegularizedL0, metaclass=ABCMeta):
         X: ArrayLike,
         y: ArrayLike,
         beta: cp.Variable,
-        parameters: Optional[SimpleNamespace] = None,
-        auxiliaries: Optional[SimpleNamespace] = None,
+        parameters: SimpleNamespace | None = None,
+        auxiliaries: SimpleNamespace | None = None,
     ) -> cp.Expression:
         """Generate optimization objective."""
         # implement in derived classes using super to call MIQP_L0 objective
@@ -260,17 +260,17 @@ class L1L0(MixedL0):
 
     def __init__(
         self,
-        groups: Optional[ArrayLike] = None,
+        groups: ArrayLike | None = None,
         alpha: float = 1.0,
         eta: float = 1.0,
         big_M: int = 100,
-        hierarchy: Optional[list[list[int]]] = None,
+        hierarchy: list[list[int]] | None = None,
         ignore_psd_check: bool = True,
         fit_intercept: bool = False,
         copy_X: bool = True,
         warm_start: bool = False,
-        solver: Optional[str] = None,
-        solver_options: Optional[dict] = None,
+        solver: str | None = None,
+        solver_options: dict | None = None,
     ):
         """Initialize Regressor.
 
@@ -332,7 +332,7 @@ class L1L0(MixedL0):
 
     def _generate_auxiliaries(
         self, X: ArrayLike, y: ArrayLike, beta: cp.Variable, parameters: SimpleNamespace
-    ) -> Optional[SimpleNamespace]:
+    ) -> SimpleNamespace | None:
         """Generate the boolean slack variable."""
         auxiliaries = super()._generate_auxiliaries(X, y, beta, parameters)
         X.shape[1] if self.groups is None else len(np.unique(self.groups))
@@ -344,8 +344,8 @@ class L1L0(MixedL0):
         X: ArrayLike,
         y: ArrayLike,
         beta: cp.Variable,
-        parameters: Optional[SimpleNamespace] = None,
-        auxiliaries: Optional[SimpleNamespace] = None,
+        parameters: SimpleNamespace | None = None,
+        auxiliaries: SimpleNamespace | None = None,
     ) -> list[cp.constraints]:
         """Generate the constraints used to solve l1l0 regularization."""
         constraints = super()._generate_constraints(X, y, beta, parameters, auxiliaries)
@@ -358,8 +358,8 @@ class L1L0(MixedL0):
         X: ArrayLike,
         y: ArrayLike,
         beta: cp.Variable,
-        parameters: Optional[SimpleNamespace] = None,
-        auxiliaries: Optional[SimpleNamespace] = None,
+        parameters: SimpleNamespace | None = None,
+        auxiliaries: SimpleNamespace | None = None,
     ) -> cp.Expression:
         """Generate the objective function used in l1l0 regression model."""
         c0 = 2 * X.shape[0]  # keeps hyperparameter scale independent
@@ -395,18 +395,18 @@ class L2L0(TikhonovMixin, MixedL0):
 
     def __init__(
         self,
-        groups: Optional[ArrayLike] = None,
+        groups: ArrayLike | None = None,
         alpha: float = 1.0,
         eta: float = 1.0,
         big_M: int = 100,
-        hierarchy: Optional[list[list[int]]] = None,
-        tikhonov_w: Optional[NDArray[float]] = None,
+        hierarchy: list[list[int]] | None = None,
+        tikhonov_w: NDArray[float] | None = None,
         ignore_psd_check: bool = True,
         fit_intercept: bool = False,
         copy_X: bool = True,
         warm_start: bool = False,
-        solver: Optional[str] = None,
-        solver_options: Optional[dict] = None,
+        solver: str | None = None,
+        solver_options: dict | None = None,
     ):
         """Initialize L2L0 estimator.
 

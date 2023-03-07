@@ -11,7 +11,7 @@ from abc import ABCMeta, abstractmethod
 from collections.abc import Sequence
 from numbers import Integral
 from types import SimpleNamespace
-from typing import Any, NamedTuple, Optional
+from typing import Any, NamedTuple
 
 import cvxpy as cp
 import numpy as np
@@ -57,9 +57,9 @@ class CVXCanonicals(NamedTuple):
     problem: cp.Problem
     objective: cp.Expression
     beta: cp.Variable
-    parameters: Optional[SimpleNamespace]
-    auxiliaries: Optional[SimpleNamespace]
-    constraints: Optional[list[cp.Expression]]
+    parameters: SimpleNamespace | None
+    auxiliaries: SimpleNamespace | None
+    constraints: list[cp.Expression] | None
 
 
 class CVXRegressor(RegressorMixin, LinearModel, metaclass=ABCMeta):
@@ -85,15 +85,15 @@ class CVXRegressor(RegressorMixin, LinearModel, metaclass=ABCMeta):
         "solver_options": [dict, None],
     }
     # parameter constraints that require a cvxpy Parameter object in problem definition
-    _cvx_parameter_constraints: Optional[dict[str, list[Any]]] = None
+    _cvx_parameter_constraints: dict[str, list[Any]] | None = None
 
     def __init__(
         self,
         fit_intercept: bool = False,
         copy_X: bool = True,
         warm_start: bool = False,
-        solver: Optional[str] = None,
-        solver_options: Optional[dict[str, Any]] = None,
+        solver: str | None = None,
+        solver_options: dict[str, Any] | None = None,
     ):
         """Initialize Regressor.
 
@@ -124,9 +124,9 @@ class CVXRegressor(RegressorMixin, LinearModel, metaclass=ABCMeta):
         self,
         X: ArrayLike,
         y: ArrayLike,
-        sample_weight: Optional[ArrayLike] = None,
+        sample_weight: ArrayLike | None = None,
         *args,
-        **kwargs
+        **kwargs,
     ):
         """Fit linear model.
 
@@ -230,7 +230,7 @@ class CVXRegressor(RegressorMixin, LinearModel, metaclass=ABCMeta):
                         value = np.asarray(value)
                 cvx_parameter.value = value
 
-    def _generate_params(self, X: ArrayLike, y: ArrayLike) -> Optional[SimpleNamespace]:
+    def _generate_params(self, X: ArrayLike, y: ArrayLike) -> SimpleNamespace | None:
         """Return the named tuple of cvxpy parameters for optimization problem.
 
         The cvxpy Parameters must be given values when generating.
@@ -307,7 +307,7 @@ class CVXRegressor(RegressorMixin, LinearModel, metaclass=ABCMeta):
 
     def _generate_auxiliaries(
         self, X: ArrayLike, y: ArrayLike, beta: cp.Variable, parameters: SimpleNamespace
-    ) -> Optional[SimpleNamespace]:
+    ) -> SimpleNamespace | None:
         """Generate any auxiliary variables or expressions necessary in defining the objective.
 
         Args:
@@ -331,8 +331,8 @@ class CVXRegressor(RegressorMixin, LinearModel, metaclass=ABCMeta):
         X: ArrayLike,
         y: ArrayLike,
         beta: cp.Variable,
-        parameters: Optional[SimpleNamespace] = None,
-        auxiliaries: Optional[SimpleNamespace] = None,
+        parameters: SimpleNamespace | None = None,
+        auxiliaries: SimpleNamespace | None = None,
     ) -> cp.Expression:
         """Define the cvxpy objective function represeting regression model.
 
@@ -360,9 +360,9 @@ class CVXRegressor(RegressorMixin, LinearModel, metaclass=ABCMeta):
         X: ArrayLike,
         y: ArrayLike,
         beta: cp.Variable,
-        parameters: Optional[SimpleNamespace] = None,
-        auxiliaries: Optional[SimpleNamespace] = None,
-    ) -> Optional[list[cp.constraints]]:
+        parameters: SimpleNamespace | None = None,
+        auxiliaries: SimpleNamespace | None = None,
+    ) -> list[cp.constraints] | None:
         """Generate constraints for optimization problem.
 
         Args:
@@ -435,8 +435,8 @@ class TikhonovMixin:
         X: ArrayLike,
         y: ArrayLike,
         beta: cp.Variable,
-        parameters: Optional[SimpleNamespace] = None,
-        auxiliaries: Optional[SimpleNamespace] = None,
+        parameters: SimpleNamespace | None = None,
+        auxiliaries: SimpleNamespace | None = None,
     ) -> cp.Expression:
         """Add a Tikhnonov regularization term to the objective function."""
         if hasattr(self, "tikhonov_w") and self.tikhonov_w is not None:

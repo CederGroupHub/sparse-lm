@@ -7,7 +7,7 @@ __author__ = "Luis Barroso-Luque"
 from abc import ABCMeta, abstractmethod
 from numbers import Real
 from types import SimpleNamespace
-from typing import Any, Optional
+from typing import Any
 
 import cvxpy as cp
 import numpy as np
@@ -39,15 +39,15 @@ class MIQPl0(CVXRegressor, metaclass=ABCMeta):
     @abstractmethod  # force inspect.isabstract to return True
     def __init__(
         self,
-        groups: Optional[ArrayLike] = None,
+        groups: ArrayLike | None = None,
         big_M: int = 100,
-        hierarchy: Optional[list[list[int]]] = None,
+        hierarchy: list[list[int]] | None = None,
         ignore_psd_check: bool = True,
         fit_intercept: bool = False,
         copy_X: bool = True,
         warm_start: bool = False,
-        solver: Optional[str] = None,
-        solver_options: Optional[dict] = None,
+        solver: str | None = None,
+        solver_options: dict | None = None,
     ):
         """Initialize Regressor.
 
@@ -108,7 +108,7 @@ class MIQPl0(CVXRegressor, metaclass=ABCMeta):
 
     def _generate_auxiliaries(
         self, X: ArrayLike, y: ArrayLike, beta: cp.Variable, parameters: SimpleNamespace
-    ) -> Optional[SimpleNamespace]:
+    ) -> SimpleNamespace | None:
         """Generate the boolean slack variable."""
         n_groups = X.shape[1] if self.groups is None else len(np.unique(self.groups))
         return SimpleNamespace(z0=cp.Variable(n_groups, boolean=True))
@@ -118,8 +118,8 @@ class MIQPl0(CVXRegressor, metaclass=ABCMeta):
         X: ArrayLike,
         y: ArrayLike,
         beta: cp.Variable,
-        parameters: Optional[SimpleNamespace] = None,
-        auxiliaries: Optional[SimpleNamespace] = None,
+        parameters: SimpleNamespace | None = None,
+        auxiliaries: SimpleNamespace | None = None,
     ) -> cp.Expression:
         """Generate the quadratic form portion of objective."""
         # psd_wrap will ignore cvxpy PSD checks, without it errors will
@@ -135,8 +135,8 @@ class MIQPl0(CVXRegressor, metaclass=ABCMeta):
         X: ArrayLike,
         y: ArrayLike,
         beta: cp.Variable,
-        parameters: Optional[SimpleNamespace] = None,
-        auxiliaries: Optional[SimpleNamespace] = None,
+        parameters: SimpleNamespace | None = None,
+        auxiliaries: SimpleNamespace | None = None,
     ) -> list[cp.Constraint]:
         """Generate the constraints used to solve l0 regularization."""
         groups = np.arange(X.shape[1]) if self.groups is None else self.groups

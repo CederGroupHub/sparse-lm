@@ -25,7 +25,7 @@ __author__ = "Luis Barroso-Luque"
 import warnings
 from numbers import Integral, Real
 from types import SimpleNamespace
-from typing import Any, Callable, Optional
+from typing import Any, Callable
 
 import cvxpy as cp
 import numpy as np
@@ -68,12 +68,12 @@ class AdaptiveLasso(Lasso):
         max_iter: int = 3,
         eps: float = 1e-6,
         tol: float = 1e-10,
-        update_function: Optional[Callable[[float, float], float]] = None,
+        update_function: Callable[[float, float], float] | None = None,
         fit_intercept: bool = False,
         copy_X: bool = True,
         warm_start: bool = True,
-        solver: Optional[str] = None,
-        solver_options: Optional[dict[str, Any]] = None,
+        solver: str | None = None,
+        solver_options: dict[str, Any] | None = None,
         **kwargs,
     ):
         """Initialize Regressor.
@@ -138,7 +138,7 @@ class AdaptiveLasso(Lasso):
             length
         )
 
-    def _generate_params(self, X: ArrayLike, y: ArrayLike) -> Optional[SimpleNamespace]:
+    def _generate_params(self, X: ArrayLike, y: ArrayLike) -> SimpleNamespace | None:
         """Generate parameters for the problem."""
         parameters = super()._generate_params(X, y)
         parameters.adaptive_weights = cp.Parameter(
@@ -151,7 +151,7 @@ class AdaptiveLasso(Lasso):
         X: ArrayLike,
         beta: cp.Variable,
         parameters: SimpleNamespace,
-        auxiliaries: Optional[SimpleNamespace] = None,
+        auxiliaries: SimpleNamespace | None = None,
     ) -> cp.Expression:
         """Generate regularization term."""
         return cp.norm1(cp.multiply(parameters.adaptive_weights, beta))
@@ -177,7 +177,7 @@ class AdaptiveLasso(Lasso):
         self,
         beta: ArrayLike,
         parameters: SimpleNamespace,
-        auxiliaries: Optional[SimpleNamespace] = None,
+        auxiliaries: SimpleNamespace | None = None,
     ) -> None:
         """Update the adaptive weights."""
         update = self._get_update_function()
@@ -225,19 +225,19 @@ class AdaptiveGroupLasso(AdaptiveLasso, GroupLasso):
 
     def __init__(
         self,
-        groups: Optional[ArrayLike] = None,
+        groups: ArrayLike | None = None,
         alpha: float = 1.0,
-        group_weights: Optional[ArrayLike] = None,
+        group_weights: ArrayLike | None = None,
         max_iter: int = 3,
         eps: float = 1e-6,
         tol: float = 1e-10,
-        update_function: Optional[Callable[[float, float], float]] = None,
+        update_function: Callable[[float, float], float] | None = None,
         standardize: bool = False,
         fit_intercept: bool = False,
         copy_X: bool = True,
         warm_start: bool = True,
-        solver: Optional[str] = None,
-        solver_options: Optional[dict[str, Any]] = None,
+        solver: str | None = None,
+        solver_options: dict[str, Any] | None = None,
         **kwargs,
     ):
         """Initialize Regressor.
@@ -305,7 +305,7 @@ class AdaptiveGroupLasso(AdaptiveLasso, GroupLasso):
             **kwargs,
         )
 
-    def _generate_params(self, X: ArrayLike, y: ArrayLike) -> Optional[SimpleNamespace]:
+    def _generate_params(self, X: ArrayLike, y: ArrayLike) -> SimpleNamespace | None:
         # skip AdaptiveLasso in super
         parameters = super(AdaptiveLasso, self)._generate_params(X, y)
         n_groups = X.shape[1] if self.groups is None else len(np.unique(self.groups))
@@ -321,7 +321,7 @@ class AdaptiveGroupLasso(AdaptiveLasso, GroupLasso):
         X: ArrayLike,
         beta: cp.Variable,
         parameters: SimpleNamespace,
-        auxiliaries: Optional[SimpleNamespace] = None,
+        auxiliaries: SimpleNamespace | None = None,
     ) -> cp.Expression:
         return parameters.adaptive_weights @ auxiliaries.group_norms
 
@@ -329,7 +329,7 @@ class AdaptiveGroupLasso(AdaptiveLasso, GroupLasso):
         self,
         beta: ArrayLike,
         parameters: SimpleNamespace,
-        auxiliaries: Optional[SimpleNamespace] = None,
+        auxiliaries: SimpleNamespace | None = None,
     ) -> None:
         update = self._get_update_function()
         parameters.adaptive_weights.value = (
@@ -354,17 +354,17 @@ class AdaptiveOverlapGroupLasso(OverlapGroupLasso, AdaptiveGroupLasso):
         self,
         group_list: list[list[int]] = None,
         alpha: float = 1.0,
-        group_weights: Optional[ArrayLike] = None,
+        group_weights: ArrayLike | None = None,
         max_iter: int = 3,
         eps: float = 1e-6,
         tol: float = 1e-10,
-        update_function: Optional[Callable[[float, float], float]] = None,
+        update_function: Callable[[float, float], float] | None = None,
         standardize: bool = False,
         fit_intercept: bool = False,
         copy_X: bool = True,
         warm_start: bool = True,
-        solver: Optional[str] = None,
-        solver_options: Optional[dict[str, Any]] = None,
+        solver: str | None = None,
+        solver_options: dict[str, Any] | None = None,
     ):
         """Initialize Regressor.
 
@@ -435,7 +435,7 @@ class AdaptiveOverlapGroupLasso(OverlapGroupLasso, AdaptiveGroupLasso):
             solver_options=solver_options,
         )
 
-    def _generate_params(self, X: ArrayLike, y: ArrayLike) -> Optional[SimpleNamespace]:
+    def _generate_params(self, X: ArrayLike, y: ArrayLike) -> SimpleNamespace | None:
         parameters = super()._generate_params(X, y)
         if self.group_list is None:
             n_groups = X.shape[1]
@@ -454,8 +454,8 @@ class AdaptiveOverlapGroupLasso(OverlapGroupLasso, AdaptiveGroupLasso):
         X: ArrayLike,
         y: ArrayLike,
         beta: cp.Variable,
-        parameters: Optional[SimpleNamespace] = None,
-        auxiliaries: Optional[SimpleNamespace] = None,
+        parameters: SimpleNamespace | None = None,
+        auxiliaries: SimpleNamespace | None = None,
     ) -> cp.Expression:
         return AdaptiveGroupLasso._generate_objective(
             self, X, y, beta, parameters, auxiliaries
@@ -489,20 +489,20 @@ class AdaptiveSparseGroupLasso(AdaptiveLasso, SparseGroupLasso):
 
     def __init__(
         self,
-        groups: Optional[ArrayLike] = None,
+        groups: ArrayLike | None = None,
         l1_ratio: float = 0.5,
         alpha: float = 1.0,
-        group_weights: Optional[ArrayLike] = None,
+        group_weights: ArrayLike | None = None,
         max_iter: int = 3,
         eps: float = 1e-6,
         tol: float = 1e-10,
-        update_function: Optional[Callable[[float, float], float]] = None,
+        update_function: Callable[[float, float], float] | None = None,
         standardize: bool = False,
         fit_intercept: bool = False,
         copy_X: bool = True,
         warm_start: bool = True,
-        solver: Optional[str] = None,
-        solver_options: Optional[dict[str, Any]] = None,
+        solver: str | None = None,
+        solver_options: dict[str, Any] | None = None,
     ):
         """Initialize Regressor.
 
@@ -584,7 +584,7 @@ class AdaptiveSparseGroupLasso(AdaptiveLasso, SparseGroupLasso):
         )
         self.canonicals_.parameters.adaptive_coef_weights.value = coef_weights
 
-    def _generate_params(self, X: ArrayLike, y: ArrayLike) -> Optional[SimpleNamespace]:
+    def _generate_params(self, X: ArrayLike, y: ArrayLike) -> SimpleNamespace | None:
         # skip AdaptiveLasso in super
         parameters = SparseGroupLasso._generate_params(self, X, y)
         n_groups = X.shape[1] if self.groups is None else len(np.unique(self.groups))
@@ -605,7 +605,7 @@ class AdaptiveSparseGroupLasso(AdaptiveLasso, SparseGroupLasso):
         X: ArrayLike,
         beta: cp.Variable,
         parameters: SimpleNamespace,
-        auxiliaries: Optional[SimpleNamespace] = None,
+        auxiliaries: SimpleNamespace | None = None,
     ) -> cp.Expression:
         group_regularization = (
             parameters.adaptive_group_weights @ auxiliaries.group_norms
@@ -645,7 +645,7 @@ class AdaptiveSparseGroupLasso(AdaptiveLasso, SparseGroupLasso):
         self,
         beta: ArrayLike,
         parameters: SimpleNamespace,
-        auxiliaries: Optional[SimpleNamespace] = None,
+        auxiliaries: SimpleNamespace | None = None,
     ) -> None:
         update = self._get_update_function()
         parameters.adaptive_coef_weights.value = (
@@ -678,20 +678,20 @@ class AdaptiveRidgedGroupLasso(AdaptiveGroupLasso, RidgedGroupLasso):
 
     def __init__(
         self,
-        groups: Optional[ArrayLike] = None,
+        groups: ArrayLike | None = None,
         alpha: float = 1.0,
         delta: ArrayLike = (1.0,),
-        group_weights: Optional[ArrayLike] = None,
+        group_weights: ArrayLike | None = None,
         max_iter: int = 3,
         eps: float = 1e-6,
         tol: float = 1e-10,
-        update_function: Optional[Callable[[float, float], float]] = None,
+        update_function: Callable[[float, float], float] | None = None,
         standardize: bool = False,
         fit_intercept: bool = False,
         copy_X: bool = True,
         warm_start: bool = True,
-        solver: Optional[str] = None,
-        solver_options: Optional[dict[str, Any]] = None,
+        solver: str | None = None,
+        solver_options: dict[str, Any] | None = None,
     ):
         """Initialize Regressor.
 
@@ -755,7 +755,7 @@ class AdaptiveRidgedGroupLasso(AdaptiveGroupLasso, RidgedGroupLasso):
             solver_options=solver_options,
         )
 
-    def _generate_params(self, X: ArrayLike, y: ArrayLike) -> Optional[SimpleNamespace]:
+    def _generate_params(self, X: ArrayLike, y: ArrayLike) -> SimpleNamespace | None:
         return super()._generate_params(X, y)
 
     def _generate_regularization(
@@ -763,7 +763,7 @@ class AdaptiveRidgedGroupLasso(AdaptiveGroupLasso, RidgedGroupLasso):
         X: ArrayLike,
         beta: cp.Variable,
         parameters: SimpleNamespace,
-        auxiliaries: Optional[SimpleNamespace] = None,
+        auxiliaries: SimpleNamespace | None = None,
     ) -> cp.Expression:
         group_regularization = AdaptiveGroupLasso._generate_regularization(
             self, X, beta, parameters, auxiliaries

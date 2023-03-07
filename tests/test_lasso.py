@@ -89,10 +89,7 @@ def test_adaptive_lasso_sparser(random_model):
 @pytest.mark.xfail(raises=SolverError)
 @pytest.mark.parametrize(
     "standardize",
-    [
-        True,
-        False
-    ],
+    [True, False],
 )  # standardize=False leads to failures
 def test_group_lasso(random_model_with_groups, solver, standardize):
     X, y, _, groups = random_model_with_groups
@@ -117,10 +114,7 @@ def test_group_lasso(random_model_with_groups, solver, standardize):
 @pytest.mark.xfail(raises=SolverError)
 @pytest.mark.parametrize(
     "standardize",
-    [
-        True,
-        False
-    ],
+    [True, False],
 )
 def test_group_lasso_weights(random_model_with_groups, solver, standardize):
     X, y, _, groups = random_model_with_groups
