@@ -72,7 +72,7 @@ def test_slack_variables(estimator_cls, random_model_with_groups, miqp_solver, r
     if "Subset" in estimator_cls.__name__:
         estimator = estimator_cls(sparse_bound=len(beta) // 2, solver=miqp_solver)
     else:
-        estimator = estimator_cls(alpha=2.0, solver=miqp_solver)
+        estimator = estimator_cls(alpha=3.0, solver=miqp_solver)
 
     estimator.fit(X, y)
     for coef, active in zip(
