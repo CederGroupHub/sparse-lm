@@ -4,7 +4,6 @@ __author__ = "Fengyu Xie, Luis Barroso-Luque"
 
 
 from types import SimpleNamespace
-from typing import Optional
 
 import cvxpy as cp
 from numpy.typing import ArrayLike
