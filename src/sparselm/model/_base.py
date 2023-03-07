@@ -66,14 +66,46 @@ class CVXRegressor(RegressorMixin, LinearModel, metaclass=ABCMeta):
     """Abstract base class for Regressors using cvxpy with a sklearn interface.
 
     Note cvxpy can use one of many 3rd party solvers, default is most often
-    CVXOPT. The solver can be specified by setting the solver keyword argument.
+    CVXOPT or ECOS. For integer and mixed integer problems options include SCIP (open source)
+    and Gurobi, among other commercial solvers.
+
+    The solver can be specified by setting the solver keyword argument.
     And can solver specific settings can be set by passing a dictionary of
     solver_options.
 
     See "Setting solver options" in documentation for details of available options:
     https://www.cvxpy.org/tutorial/advanced/index.html#advanced
 
-    Keyword arguments are the same as those found in sklearn linear models.
+    Args:
+        fit_intercept (bool):
+            Whether the intercept should be estimated or not.
+            If False, the data is assumed to be already centered.
+        copy_X (bool):
+            If True, X will be copied; else, it may be overwritten.
+        warm_start (bool):
+            When set to True, reuse the solution of the previous call to
+            fit as initialization, otherwise, just erase the previous
+            solution.
+        solver (str):
+            cvxpy backend solver to use. Supported solvers are listed here:
+            https://www.cvxpy.org/tutorial/advanced/index.html#solve-method-options
+        solver_options (dict):
+            dictionary of keyword arguments passed to cvxpy solve.
+            See docs linked above for more information.
+
+    Attributes:
+        coef_ (NDArray):
+            Parameter vector (:math:`\beta` in the cost function formula) of shape (n_features,).
+        intercept_ (float):
+            Independent term in decision function.
+        canonicals_ (SimpleNamespace):
+            Namespace object that contains underlying cvxpy objects used to define
+            the optimization problem:
+                objective - the objective function.
+                beta - variable to be optimized (corresponds to the estimated coef_ attribute).
+                parameters - hyper-parameters
+                auxiliaries - auxiliary variables and expressions
+                constraints - solution constraints
     """
 
     # parameter constraints that do not need any cvxpy Parameter object
@@ -95,25 +127,6 @@ class CVXRegressor(RegressorMixin, LinearModel, metaclass=ABCMeta):
         solver: str | None = None,
         solver_options: dict[str, Any] | None = None,
     ):
-        """Initialize Regressor.
-
-        Args:
-            fit_intercept (bool):
-                Whether the intercept should be estimated or not.
-                If False, the data is assumed to be already centered.
-            copy_X (bool):
-                If True, X will be copied; else, it may be overwritten.
-            warm_start (bool):
-                When set to True, reuse the solution of the previous call to
-                fit as initialization, otherwise, just erase the previous
-                solution.
-            solver (str):
-                cvxpy backend solver to use. Supported solvers are listed here:
-                https://www.cvxpy.org/tutorial/advanced/index.html#solve-method-options
-            solver_options (dict):
-                dictionary of keyword arguments passed to cvxpy solve.
-                See docs linked above for more information.
-        """
         self.fit_intercept = fit_intercept
         self.copy_X = copy_X
         self.warm_start = warm_start
