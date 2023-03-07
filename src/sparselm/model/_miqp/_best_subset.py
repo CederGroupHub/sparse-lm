@@ -29,7 +29,8 @@ class BestSubsetSelection(MIQPl0):
 
     _cvx_parameter_constraints: dict[str, list[Any]] = {
         "sparse_bound": [Interval(type=Real, left=0, right=None, closed="left")],
-    } | MIQPl0._cvx_parameter_constraints
+        **MIQPl0._cvx_parameter_constraints,
+    }
 
     def __init__(
         self,
@@ -119,7 +120,8 @@ class RidgedBestSubsetSelection(TikhonovMixin, BestSubsetSelection):
 
     _cvx_parameter_constraints: dict[str, list[Any]] = {
         "eta": [Interval(type=Real, left=0.0, right=None, closed="left")],
-    } | BestSubsetSelection._cvx_parameter_constraints
+        **BestSubsetSelection._cvx_parameter_constraints,
+    }
 
     def __init__(
         self,

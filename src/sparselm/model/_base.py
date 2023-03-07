@@ -206,9 +206,10 @@ class CVXRegressor(RegressorMixin, LinearModel, metaclass=ABCMeta):
         if self._cvx_parameter_constraints is None:
             parameter_constraints = self._parameter_constraints
         else:
-            parameter_constraints = (
-                self._parameter_constraints | self._cvx_parameter_constraints
-            )
+            parameter_constraints = {
+                **self._parameter_constraints,
+                **self._cvx_parameter_constraints,
+            }
         validate_parameter_constraints(
             parameter_constraints,
             self.get_params(deep=False),

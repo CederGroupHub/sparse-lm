@@ -58,7 +58,8 @@ class AdaptiveLasso(Lasso):
         "max_iter": [Interval(type=Integral, left=0, right=None, closed="left")],
         "eps": [Interval(type=Real, left=0.0, right=1.0, closed="both")],
         "update_function": [callable, None],
-    } | Lasso._parameter_constraints
+        **Lasso._parameter_constraints,
+    }
 
     def __init__(
         self,

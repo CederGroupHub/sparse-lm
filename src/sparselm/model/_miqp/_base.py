@@ -27,8 +27,10 @@ class MIQPl0(CVXRegressor, metaclass=ABCMeta):
     """
 
     _parameter_constraints: dict[str, list[Any]] = {
-        "ignore_psd_check": ["boolean"]
-    } | CVXRegressor._parameter_constraints
+        "ignore_psd_check": ["boolean"],
+        **CVXRegressor._parameter_constraints,
+    }
+
     _cvx_parameter_constraints: dict[str, list[Any]] = {
         "big_M": [Interval(type=Real, left=0.0, right=None, closed="left")]
     }

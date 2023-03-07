@@ -53,7 +53,8 @@ class RegularizedL0(MIQPl0):
 
     _cvx_parameter_constraints: dict[str, list[Any]] = {
         "alpha": [Interval(type=Real, left=0.0, right=None, closed="left")],
-    } | MIQPl0._cvx_parameter_constraints
+        **MIQPl0._cvx_parameter_constraints,
+    }
 
     def __init__(
         self,
@@ -144,7 +145,8 @@ class MixedL0(RegularizedL0, metaclass=ABCMeta):
 
     _cvx_parameter_constraints: dict[str, list[Any]] = {
         "eta": [Interval(type=Real, left=0.0, right=None, closed="left")],
-    } | RegularizedL0._cvx_parameter_constraints
+        **RegularizedL0._cvx_parameter_constraints,
+    }
 
     def __init__(
         self,
