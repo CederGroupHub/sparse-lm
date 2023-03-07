@@ -20,8 +20,8 @@ Available regression models
 - Adaptive versions of Lasso, Group Lasso, Overlap Group Lasso, Sparse Group Lasso & Ridged Group Lasso.
 - Best Subset Selection, Ridged Best Subset, L0, L1L0 & L2L0 (all with optional grouping of parameters)
 
-Usage
------
+Basic usage
+-----------
 If you already use **scikit-learn**, using **sparse-lm** will be very easy. Just use any
 model like you would any linear model in **scikit-learn**:
 
