@@ -1,4 +1,4 @@
-name: build-dist
+name: build
 
 # Use this workflow to manually trigger a build for testing purposes.
 # Download it from artifacts to test installation, or upload directly to PyPI.

@@ -1,5 +1,7 @@
 """A variety of tools for fitting linear regression models to polish CE."""
 
+from __future__ import annotations
+
 __author__ = "Luis Barroso-Luque"
 
 import warnings

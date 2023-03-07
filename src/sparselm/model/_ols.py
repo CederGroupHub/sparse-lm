@@ -1,5 +1,7 @@
 """Ordinary least squares cvxpy solver."""
 
+from __future__ import annotations
+
 __author__ = "Fengyu Xie, Luis Barroso-Luque"
 
 
