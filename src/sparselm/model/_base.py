@@ -99,13 +99,13 @@ class CVXRegressor(RegressorMixin, LinearModel, metaclass=ABCMeta):
         intercept_ (float):
             Independent term in decision function.
         canonicals_ (SimpleNamespace):
-            Namespace object that contains underlying cvxpy objects used to define
-            the optimization problem:
-                objective - the objective function.
-                beta - variable to be optimized (corresponds to the estimated coef_ attribute).
-                parameters - hyper-parameters
-                auxiliaries - auxiliary variables and expressions
-                constraints - solution constraints
+            Namespace that contains underlying cvxpy objects used to define
+            the optimization problem. The objects included are the following:
+                - objective - the objective function.
+                - beta - variable to be optimized (corresponds to the estimated coef_ attribute).
+                - parameters - hyper-parameters
+                - auxiliaries - auxiliary variables and expressions
+                - constraints - solution constraints
     """
 
     # parameter constraints that do not need any cvxpy Parameter object
@@ -141,9 +141,10 @@ class CVXRegressor(RegressorMixin, LinearModel, metaclass=ABCMeta):
         *args,
         **kwargs,
     ):
-        """Fit linear model.
+        """Fit the linear model coefficients.
 
-        Prepare fit data input with sklearn help then call cvxpy based solve method.
+        Prepares the  fit data input, generates cvxpy objects to represent the minimization
+        objective, and solves the regression problem using the given solver.
 
         Args:
             X (ArrayLike):
@@ -401,8 +402,9 @@ class CVXRegressor(RegressorMixin, LinearModel, metaclass=ABCMeta):
         This initializes the minimization problem, the objective, coefficient variable (beta), problem parameters,
         solution constraints, and auxiliary variables/terms.
 
-        This is called in the fit method, however it can be called directly if further control over the problem
-        is needed. For example to add additional constraints.
+        This is (almost always) called in the fit method, and not directly. However, it can be called directly if
+        further control over the problem is needed by accessing the canonicals_ objects. For example to add additional
+        constraints on problem variables.
 
         Args:
             X (ArrayLike):
@@ -439,7 +441,7 @@ class TikhonovMixin:
     """Mixin class to add a Tihhonov/ridge regularization term.
 
     When using this Mixin, a cvxpy parameter named "eta" should be saved in the parameters
-    SompliNamespace an attribute tikhonov_w can be added to allow a matrix otherwise simple l2/Ridge
+    SimpleNamespace an attribute tikhonov_w can be added to allow a matrix otherwise simple l2/Ridge
     is used.
     """
 

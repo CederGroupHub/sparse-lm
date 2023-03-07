@@ -49,6 +49,30 @@ class StepwiseEstimator(_BaseComposition, RegressorMixin, LinearModel):
     Each estimator can be either a CVXEstimator, a GridSearchCV or
     a LineSearchCV.
 
+    Args:
+        steps(list[(str, CVXEstimator)]):
+            A list of step names and the CVXEstimators to use
+            for each step. StepwiseEstimator cannot be used as
+            a member of StepwiseEstimator.
+            An estimator will fit the residuals of the previous
+            estimator fits in the list.
+        estimator_feature_indices(tuple[tuple[int]]):
+            Scope of each estimator, which means the indices of
+            features in the scope (features[:, scope]) will be
+            fitted to the residual using the corresponding estimator.
+            Notice:
+               If estimators in the composite requires hierarchy
+               or groups, the indices in the groups or hierarchy
+               must be adjusted such that they correspond to the groups
+               or hierarchy relations in the part of features sliced
+               by scope.
+               For example, consider original groups = [0, 1, 1, 2, 2],
+               and an estimator has scope = [3, 4], then the estimator
+               should be initialized with group = [0, 0].
+               You are fully responsible to initialize the estimators
+               with correct hierarchy, groups and other parameters before
+               wrapping them up with the composite!
+
     Notes:
         1, Do not use GridSearchCV or LineSearchCV to search a
         StepwiseEstimator!
@@ -68,33 +92,6 @@ class StepwiseEstimator(_BaseComposition, RegressorMixin, LinearModel):
         steps,
         estimator_feature_indices,
     ):
-        """Initialize estimator.
-
-        Args:
-            steps(list[(str, CVXEstimator)]):
-                A list of step names and the CVXEstimators to use
-                for each step. StepwiseEstimator cannot be used as
-                a member of StepwiseEstimator.
-                An estimator will fit the residuals of the previous
-                estimator fits in the list.
-            estimator_feature_indices(tuple[tuple[int]]):
-                Scope of each estimator, which means the indices of
-                features in the scope (features[:, scope]) will be
-                fitted to the residual using the corresponding estimator.
-                Notice:
-                   If estimators in the composite requires hierarchy
-                   or groups, the indices in the groups or hierarchy
-                   must be adjusted such that they correspond to the groups
-                   or hierarchy relations in the part of features sliced
-                   by scope.
-                   For example, consider original groups = [0, 1, 1, 2, 2],
-                   and an estimator has scope = [3, 4], then the estimator
-                   should be initialized with group = [0, 0].
-                   You are fully responsible to initialize the estimators
-                   with correct hierarchy, groups and other parameters before
-                   wrapping them up with the composite!
-        """
-        # No checking or change of param value is allowed __init__.
         self.steps = steps
         # The estimator_feature_indices saved must be tuple because in
         # sklearn.base.clone, a cloned object is checked by pointer, rather than

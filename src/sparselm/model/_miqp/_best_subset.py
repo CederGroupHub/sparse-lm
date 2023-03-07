@@ -21,12 +21,74 @@ from ._base import MIQPl0
 
 
 class BestSubsetSelection(MIQPl0):
-    """MIQP Best Subset Selection Regressor.
+    r"""MIQP Best Subset Selection Regressor.
 
     Generalized best subset that allows grouping subsets.
 
-    WARNING: Even with gurobi solver, this can take a very long time to
-    converge for large problems and under-determined problems.
+    Args:
+        groups (ArrayLike):
+            array-like of integers specifying groups. Length should be the
+            same as model, where each integer entry specifies the group
+            each parameter corresponds to. If no grouping is required,
+            simply pass a list of all different numbers, i.e. using range.
+        sparse_bound (int):
+            Upper bound on sparsity. The upper bound on total number of
+            nonzero coefficients.
+        big_M (float):
+            Upper bound on the norm of coefficients associated with each
+            cluster (groups of coefficients) ||Beta_c||_2
+        hierarchy (list):
+            A list of lists of integers storing hierarchy relations between
+            coefficients.
+            Each sublist contains indices of other coefficients
+            on which the coefficient associated with each element of
+            the list depends. i.e. hierarchy = [[1, 2], [0], []] mean that
+            coefficient 0 depends on 1, and 2; 1 depends on 0, and 2 has no
+            dependence.
+        ignore_psd_check (bool):
+            Whether to ignore cvxpy's PSD checks of matrix used in
+            quadratic form. Default is True to avoid raising errors for
+            poorly conditioned matrices. But if you want to be strict set
+            to False.
+        fit_intercept (bool):
+            Whether the intercept should be estimated or not.
+            If False, the data is assumed to be already centered.
+        copy_X (bool):
+            If True, X will be copied; else, it may be overwritten.
+        warm_start (bool):
+            When set to True, reuse the solution of the previous call to
+            fit as initialization, otherwise, just erase the previous
+            solution.
+        solver (str):
+            cvxpy backend solver to use. Supported solvers are listed here:
+            https://www.cvxpy.org/tutorial/advanced/index.html#solve-method-options
+        solver_options (dict):
+            dictionary of keyword arguments passed to cvxpy solve.
+            See docs in CVXRegressor for more information.
+
+    Attributes:
+        coef_ (NDArray):
+            Parameter vector (:math:`\beta` in the cost function formula) of shape (n_features,).
+        intercept_ (float):
+            Independent term in decision function.
+        canonicals_ (SimpleNamespace):
+            Namespace that contains underlying cvxpy objects used to define
+            the optimization problem. The objects included are the following:
+                - objective - the objective function.
+                - beta - variable to be optimized (corresponds to the estimated coef_ attribute).
+                - parameters - hyper-parameters
+                - auxiliaries - auxiliary variables and expressions
+                - constraints - solution constraints
+
+    Notes:
+        Installation of Gurobi is not a must, but highly recommended. An open source alternative
+        is SCIP. ECOS_BB also works but can be very slow, and has recurring correctness issues.
+        See the Mixed-integer programs section of the cvxpy docs:
+        https://www.cvxpy.org/tutorial/advanced/index.html
+
+    WARNING:
+        Even with gurobi solver, this can take a very long time to converge for large problems and under-determined
+        problems.
     """
 
     _cvx_parameter_constraints: dict[str, list[Any]] = {
@@ -47,49 +109,6 @@ class BestSubsetSelection(MIQPl0):
         solver: str | None = None,
         solver_options: dict | None = None,
     ):
-        """Initialize Regressor.
-
-        Args:
-            groups (ArrayLike):
-                array-like of integers specifying groups. Length should be the
-                same as model, where each integer entry specifies the group
-                each parameter corresponds to. If no grouping is required,
-                simply pass a list of all different numbers, i.e. using range.
-            sparse_bound (int):
-                Upper bound on sparsity. The upper bound on total number of
-                nonzero coefficients.
-            big_M (float):
-                Upper bound on the norm of coefficients associated with each
-                cluster (groups of coefficients) ||Beta_c||_2
-            hierarchy (list):
-                A list of lists of integers storing hierarchy relations between
-                coefficients.
-                Each sublist contains indices of other coefficients
-                on which the coefficient associated with each element of
-                the list depends. i.e. hierarchy = [[1, 2], [0], []] mean that
-                coefficient 0 depends on 1, and 2; 1 depends on 0, and 2 has no
-                dependence.
-            ignore_psd_check (bool):
-                Whether to ignore cvxpy's PSD checks of matrix used in
-                quadratic form. Default is True to avoid raising errors for
-                poorly conditioned matrices. But if you want to be strict set
-                to False.
-            fit_intercept (bool):
-                Whether the intercept should be estimated or not.
-                If False, the data is assumed to be already centered.
-            copy_X (bool):
-                If True, X will be copied; else, it may be overwritten.
-            warm_start (bool):
-                When set to True, reuse the solution of the previous call to
-                fit as initialization, otherwise, just erase the previous
-                solution.
-            solver (str):
-                cvxpy backend solver to use. Supported solvers are listed here:
-                https://www.cvxpy.org/tutorial/advanced/index.html#solve-method-options
-            solver_options (dict):
-                dictionary of keyword arguments passed to cvxpy solve.
-                See docs in CVXRegressor for more information.
-        """
         super().__init__(
             groups=groups,
             big_M=big_M,
@@ -118,7 +137,77 @@ class BestSubsetSelection(MIQPl0):
 
 
 class RidgedBestSubsetSelection(TikhonovMixin, BestSubsetSelection):
-    """MIQP best subset selection Regressor with Ridge/Tihkonov regularization."""
+    r"""MIQP best subset selection Regressor with Ridge/Tihkonov regularization.
+
+    Args:
+        groups (ArrayLike):
+            array-like of integers specifying groups. Length should be the
+            same as model, where each integer entry specifies the group
+            each parameter corresponds to. If no grouping is required,
+            simply pass a list of all different numbers, i.e. using range.
+        sparse_bound (int):
+            Upper bound on sparsity. The upper bound on total number of
+            nonzero coefficients.
+        eta (float):
+            L2 regularization hyper-parameter.
+        big_M (float):
+            Upper bound on the norm of coefficients associated with each
+            cluster (groups of coefficients) ||Beta_c||_2
+        hierarchy (list):
+            A list of lists of integers storing hierarchy relations between
+            coefficients.
+            Each sublist contains indices of other coefficients
+            on which the coefficient associated with each element of
+            the list depends. i.e. hierarchy = [[1, 2], [0], []] mean that
+            coefficient 0 depends on 1, and 2; 1 depends on 0, and 2 has no
+            dependence.
+        tikhonov_w (np.array):
+            Matrix to add weights to L2 regularization.
+        ignore_psd_check (bool):
+            Whether to ignore cvxpy's PSD checks of matrix used in
+            quadratic form. Default is True to avoid raising errors for
+            poorly conditioned matrices. But if you want to be strict set
+            to False.
+        fit_intercept (bool):
+            Whether the intercept should be estimated or not.
+            If False, the data is assumed to be already centered.
+        copy_X (bool):
+            If True, X will be copied; else, it may be overwritten.
+        warm_start (bool):
+            When set to True, reuse the solution of the previous call to
+            fit as initialization, otherwise, just erase the previous
+            solution.
+        solver (str):
+            cvxpy backend solver to use. Supported solvers are listed here:
+            https://www.cvxpy.org/tutorial/advanced/index.html#solve-method-options
+        solver_options (dict):
+            dictionary of keyword arguments passed to cvxpy solve.
+            See docs in CVXRegressor for more information.
+
+    Attributes:
+        coef_ (NDArray):
+            Parameter vector (:math:`\beta` in the cost function formula) of shape (n_features,).
+        intercept_ (float):
+            Independent term in decision function.
+        canonicals_ (SimpleNamespace):
+            Namespace that contains underlying cvxpy objects used to define
+            the optimization problem. The objects included are the following:
+                - objective - the objective function.
+                - beta - variable to be optimized (corresponds to the estimated coef_ attribute).
+                - parameters - hyper-parameters
+                - auxiliaries - auxiliary variables and expressions
+                - constraints - solution constraints
+
+    Notes:
+        Installation of Gurobi is not a must, but highly recommended. An open source alternative
+        is SCIP. ECOS_BB also works but can be very slow, and has recurring correctness issues.
+        See the Mixed-integer programs section of the cvxpy docs:
+        https://www.cvxpy.org/tutorial/advanced/index.html
+
+    WARNING:
+        Even with gurobi solver, this can take a very long time to converge for large problems and under-determined
+        problems.
+    """
 
     _cvx_parameter_constraints: dict[str, list[Any]] = {
         "eta": [Interval(type=Real, left=0.0, right=None, closed="left")],
@@ -140,53 +229,6 @@ class RidgedBestSubsetSelection(TikhonovMixin, BestSubsetSelection):
         solver: str | None = None,
         solver_options: dict | None = None,
     ):
-        """Initialize Regressor.
-
-        Args:
-            groups (ArrayLike):
-                array-like of integers specifying groups. Length should be the
-                same as model, where each integer entry specifies the group
-                each parameter corresponds to. If no grouping is required,
-                simply pass a list of all different numbers, i.e. using range.
-            sparse_bound (int):
-                Upper bound on sparsity. The upper bound on total number of
-                nonzero coefficients.
-            eta (float):
-                L2 regularization hyper-parameter.
-            big_M (float):
-                Upper bound on the norm of coefficients associated with each
-                cluster (groups of coefficients) ||Beta_c||_2
-            hierarchy (list):
-                A list of lists of integers storing hierarchy relations between
-                coefficients.
-                Each sublist contains indices of other coefficients
-                on which the coefficient associated with each element of
-                the list depends. i.e. hierarchy = [[1, 2], [0], []] mean that
-                coefficient 0 depends on 1, and 2; 1 depends on 0, and 2 has no
-                dependence.
-            tikhonov_w (np.array):
-                Matrix to add weights to L2 regularization.
-            ignore_psd_check (bool):
-                Whether to ignore cvxpy's PSD checks of matrix used in
-                quadratic form. Default is True to avoid raising errors for
-                poorly conditioned matrices. But if you want to be strict set
-                to False.
-            fit_intercept (bool):
-                Whether the intercept should be estimated or not.
-                If False, the data is assumed to be already centered.
-            copy_X (bool):
-                If True, X will be copied; else, it may be overwritten.
-            warm_start (bool):
-                When set to True, reuse the solution of the previous call to
-                fit as initialization, otherwise, just erase the previous
-                solution.
-            solver (str):
-                cvxpy backend solver to use. Supported solvers are listed here:
-                https://www.cvxpy.org/tutorial/advanced/index.html#solve-method-options
-            solver_options (dict):
-                dictionary of keyword arguments passed to cvxpy solve.
-                See docs in CVXRegressor for more information.
-        """
         super().__init__(
             groups=groups,
             sparse_bound=sparse_bound,

@@ -5,10 +5,12 @@ __author__ = "Luis Barroso-Luque"
 import warnings
 from functools import wraps
 
+from typing import Union, Optional
+from numpy.typing import ArrayLike
 import numpy as np
 
 
-def constrain_coefficients(indices, high=None, low=None):
+def constrain_coefficients(indices: ArrayLike, high: Union[float, ArrayLike] = None, low: Union[float, ArrayLike] = None):
     """Constrain a fit method to keep coefficients within a specified range.
 
     Decorator to enforce that a fit method fitting a cluster expansion that
@@ -94,21 +96,21 @@ def constrain_coefficients(indices, high=None, low=None):
     return decorate_fit_method
 
 
-def r2_score_to_cv_error(score, y, y_pred, weights=None):
+def r2_score_to_cv_error(score: float, y: ArrayLike, y_pred: ArrayLike, weights: Optional[ArrayLike] = None):
     """Convert r2 score to cross-validation error.
 
     Args:
-        score(float):
+        score (float):
             An r2 score obtained from cross validation.
-        y(1d arrayLike):
+        y (ArrayLike): 1D
             The target vector.
-        y_pred(1d arrayLike):
+        y_pred (ArrayLike): 1D
             The fitted vector.
-        weights(1d arrayLike):
+        weights (ArrayLike): 1D
             The weights of each sample. Default to 1.
     Returns:
         float:
-            The CV error, in eV per site.
+            The CV error
     """
     if weights is None:
         weights = np.ones(len(y))

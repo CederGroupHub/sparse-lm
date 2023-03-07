@@ -42,15 +42,74 @@ class RegularizedL0(MIQPl0):
     Supports grouping parameters and group-level hierarchy, but requires groups as a
     compulsory argument.
 
-    Regularized model:
+    Regularized regression objective:
 
     .. math::
 
-        || X \beta - y ||^2_2 + \alpha \sum_{G} z_G
+        \min_{\beta} || X \beta - y ||^2_2 + \alpha \sum_{G} z_G
 
     Where G represents groups of features/coefficients and :math:`z_G` is are boolean
     valued slack variables.
 
+    Args:
+        groups (ArrayLike):
+            1D array-like of integers specifying groups. Length should be the
+            same as model, where each integer entry specifies the group
+            each parameter corresponds to. If no grouping is needed pass a list
+            of all distinct numbers (ie range(len(coefs)) to create singleton groups
+            for each parameter.
+        alpha (float):
+            L0 pseudo-norm regularization hyper-parameter.
+        big_M (float):
+            Upper bound on the norm of coefficients associated with each
+            cluster (groups of coefficients) ||Beta_c||_2
+        hierarchy (list):
+            A list of lists of integers storing hierarchy relations between
+            groups.
+            Each sublist contains indices of other groups
+            on which the group associated with each element of
+            the list depends. i.e. hierarchy = [[1, 2], [0], []] mean that
+            group 0 depends on 1, and 2; 1 depends on 0, and 2 has no
+            dependence.
+        ignore_psd_check (bool):
+            Whether to ignore cvxpy's PSD checks  of matrix used in quadratic
+            form. Default is True to avoid raising errors for poorly
+            conditioned matrices. But if you want to be strict set to False.
+        fit_intercept (bool):
+            Whether the intercept should be estimated or not.
+            If False, the data is assumed to be already centered.
+        copy_X (bool):
+            If True, X will be copied; else, it may be overwritten.
+        warm_start (bool):
+            When set to True, reuse the solution of the previous call to
+            fit as initialization, otherwise, just erase the previous
+            solution.
+        solver (str):
+            cvxpy backend solver to use. Supported solvers are listed here:
+            https://www.cvxpy.org/tutorial/advanced/index.html#solve-method-options
+        solver_options (dict):
+            dictionary of keyword arguments passed to cvxpy solve.
+            See docs in CVXRegressor for more information.
+
+    Attributes:
+        coef_ (NDArray):
+            Parameter vector (:math:`\beta` in the cost function formula) of shape (n_features,).
+        intercept_ (float):
+            Independent term in decision function.
+        canonicals_ (SimpleNamespace):
+            Namespace that contains underlying cvxpy objects used to define
+            the optimization problem. The objects included are the following:
+                - objective - the objective function.
+                - beta - variable to be optimized (corresponds to the estimated coef_ attribute).
+                - parameters - hyper-parameters
+                - auxiliaries - auxiliary variables and expressions
+                - constraints - solution constraints
+
+    Notes:
+        Installation of Gurobi is not a must, but highly recommended. An open source alternative
+        is SCIP. ECOS_BB also works but can be very slow, and has recurring correctness issues.
+        See the Mixed-integer programs section of the cvxpy docs:
+        https://www.cvxpy.org/tutorial/advanced/index.html
     """
 
     _cvx_parameter_constraints: dict[str, list[Any]] = {
@@ -71,48 +130,6 @@ class RegularizedL0(MIQPl0):
         solver: str | None = None,
         solver_options: dict | None = None,
     ):
-        """Initialize Regressor.
-
-        Args:
-            groups (ArrayLike):
-                1D array-like of integers specifying groups. Length should be the
-                same as model, where each integer entry specifies the group
-                each parameter corresponds to. If no grouping is needed pass a list
-                of all distinct numbers (ie range(len(coefs)) to create singleton groups
-                for each parameter.
-            alpha (float):
-                L0 pseudo-norm regularization hyper-parameter.
-            big_M (float):
-                Upper bound on the norm of coefficients associated with each
-                cluster (groups of coefficients) ||Beta_c||_2
-            hierarchy (list):
-                A list of lists of integers storing hierarchy relations between
-                groups.
-                Each sublist contains indices of other groups
-                on which the group associated with each element of
-                the list depends. i.e. hierarchy = [[1, 2], [0], []] mean that
-                group 0 depends on 1, and 2; 1 depends on 0, and 2 has no
-                dependence.
-            ignore_psd_check (bool):
-                Whether to ignore cvxpy's PSD checks  of matrix used in quadratic
-                form. Default is True to avoid raising errors for poorly
-                conditioned matrices. But if you want to be strict set to False.
-            fit_intercept (bool):
-                Whether the intercept should be estimated or not.
-                If False, the data is assumed to be already centered.
-            copy_X (bool):
-                If True, X will be copied; else, it may be overwritten.
-            warm_start (bool):
-                When set to True, reuse the solution of the previous call to
-                fit as initialization, otherwise, just erase the previous
-                solution.
-            solver (str):
-                cvxpy backend solver to use. Supported solvers are listed here:
-                https://www.cvxpy.org/tutorial/advanced/index.html#solve-method-options
-            solver_options (dict):
-                dictionary of keyword arguments passed to cvxpy solve.
-                See docs in CVXRegressor for more information.
-        """
         super().__init__(
             groups=groups,
             big_M=big_M,
@@ -244,18 +261,81 @@ class L1L0(MixedL0):
 
     https://arxiv.org/abs/1807.10753
 
-    Installation of Gurobi is not a must, but highly recommended.
-    You can get a free academic gurobi license...
-    ECOS_BB also works but can be very slow.
+    Extended to allow grouping of coefficients and group-level hierarchy as described
+    in:
 
-    Regularized model is:
+    https://doi.org/10.1287/opre.2015.1436
+
+    Regularized regression objective:
 
     .. math::
 
-        || X \beta - y ||^2_2 + \alpha \sum_{G} z_G + \eta ||\beta||_1
+        \min_{\beta} || X \beta - y ||^2_2 + \alpha \sum_{G} z_G + \eta ||\beta||_1
 
     Where G represents groups of features/coefficients and :math:`z_G` is are boolean
     valued slack variables.
+
+    Args:
+        groups (ArrayLike):
+            1D array-like of integers specifying groups. Length should be the
+            same as model, where each integer entry specifies the group
+            each parameter corresponds to. If no grouping is needed pass a list
+            of all distinct numbers (ie range(len(coefs)) to create singleton groups
+            for each parameter.
+        alpha (float):
+            L0 pseudo-norm regularization hyper-parameter.
+        eta (float):
+            L1 regularization hyper-parameter.
+        big_M (float):
+            Upper bound on the norm of coefficients associated with each
+            cluster (groups of coefficients) ||Beta_c||_2
+        hierarchy (list):
+            A list of lists of integers storing hierarchy relations between
+            coefficients.
+            Each sublist contains indices of other coefficients
+            on which the coefficient associated with each element of
+            the list depends. i.e. hierarchy = [[1, 2], [0], []] mean that
+            coefficient 0 depends on 1, and 2; 1 depends on 0, and 2 has no
+            dependence.
+        ignore_psd_check (bool):
+            Whether to ignore cvxpy's PSD checks of matrix used in quadratic
+            form. Default is True to avoid raising errors for poorly
+            conditioned matrices. But if you want to be strict set to False.
+        fit_intercept (bool):
+            Whether the intercept should be estimated or not.
+            If False, the data is assumed to be already centered.
+        copy_X (bool):
+            If True, X will be copied; else, it may be overwritten.
+        warm_start (bool):
+            When set to True, reuse the solution of the previous call to
+            fit as initialization, otherwise, just erase the previous
+            solution.
+        solver (str):
+            cvxpy backend solver to use. Supported solvers are listed here:
+            https://www.cvxpy.org/tutorial/advanced/index.html#solve-method-options
+        solver_options (dict):
+            dictionary of keyword arguments passed to cvxpy solve.
+            See docs in CVXRegressor for more information.
+
+    Attributes:
+        coef_ (NDArray):
+            Parameter vector (:math:`\beta` in the cost function formula) of shape (n_features,).
+        intercept_ (float):
+            Independent term in decision function.
+        canonicals_ (SimpleNamespace):
+            Namespace that contains underlying cvxpy objects used to define
+            the optimization problem. The objects included are the following:
+                - objective - the objective function.
+                - beta - variable to be optimized (corresponds to the estimated coef_ attribute).
+                - parameters - hyper-parameters
+                - auxiliaries - auxiliary variables and expressions
+                - constraints - solution constraints
+
+    Notes:
+        Installation of Gurobi is not a must, but highly recommended. An open source alternative
+        is SCIP. ECOS_BB also works but can be very slow, and has recurring correctness issues.
+        See the Mixed-integer programs section of the cvxpy docs:
+        https://www.cvxpy.org/tutorial/advanced/index.html
     """
 
     def __init__(
@@ -272,50 +352,6 @@ class L1L0(MixedL0):
         solver: str | None = None,
         solver_options: dict | None = None,
     ):
-        """Initialize Regressor.
-
-        Args:
-            groups (ArrayLike):
-                1D array-like of integers specifying groups. Length should be the
-                same as model, where each integer entry specifies the group
-                each parameter corresponds to. If no grouping is needed pass a list
-                of all distinct numbers (ie range(len(coefs)) to create singleton groups
-                for each parameter.
-            alpha (float):
-                L0 pseudo-norm regularization hyper-parameter.
-            eta (float):
-                L1 regularization hyper-parameter.
-            big_M (float):
-                Upper bound on the norm of coefficients associated with each
-                cluster (groups of coefficients) ||Beta_c||_2
-            hierarchy (list):
-                A list of lists of integers storing hierarchy relations between
-                coefficients.
-                Each sublist contains indices of other coefficients
-                on which the coefficient associated with each element of
-                the list depends. i.e. hierarchy = [[1, 2], [0], []] mean that
-                coefficient 0 depends on 1, and 2; 1 depends on 0, and 2 has no
-                dependence.
-            ignore_psd_check (bool):
-                Whether to ignore cvxpy's PSD checks of matrix used in quadratic
-                form. Default is True to avoid raising errors for poorly
-                conditioned matrices. But if you want to be strict set to False.
-            fit_intercept (bool):
-                Whether the intercept should be estimated or not.
-                If False, the data is assumed to be already centered.
-            copy_X (bool):
-                If True, X will be copied; else, it may be overwritten.
-            warm_start (bool):
-                When set to True, reuse the solution of the previous call to
-                fit as initialization, otherwise, just erase the previous
-                solution.
-            solver (str):
-                cvxpy backend solver to use. Supported solvers are listed here:
-                https://www.cvxpy.org/tutorial/advanced/index.html#solve-method-options
-            solver_options (dict):
-                dictionary of keyword arguments passed to cvxpy solve.
-                See docs in CVXRegressor for more information.
-        """
         super().__init__(
             groups=groups,
             eta=eta,
@@ -372,7 +408,7 @@ class L2L0(TikhonovMixin, MixedL0):
     r"""L2L0 regularized Regressor.
 
     Based on Regressor with L2L0 regularization solved with mixed integer programming
-    proposed by Peichen Zhong:
+    proposed in:
 
     https://arxiv.org/abs/2204.13789
 
@@ -383,14 +419,78 @@ class L2L0(TikhonovMixin, MixedL0):
 
     And allows using a Tihkonov matrix in the l2 term.
 
-    Regularized model is:
+    Regularized regression objective:
 
     .. math::
 
-        || X \beta - y ||^2_2 + \alpha \sum_{G} z_G + \eta ||W\beta||^2_2
+        \min_{\beta} || X \beta - y ||^2_2 + \alpha \sum_{G} z_G + \eta ||W\beta||^2_2
 
     Where G represents groups of features/coefficients and :math:`z_G` is are boolean
     valued slack variables. W is a Tikhonov matrix.
+
+    Args:
+        groups (ArrayLike):
+            1D array-like of integers specifying groups. Length should be the
+            same as model, where each integer entry specifies the group
+            each parameter corresponds to. If no grouping is needed pass a list
+            of all distinct numbers (ie range(len(coefs)) to create singleton groups
+            for each parameter.
+        alpha (float):
+            L0 pseudo-norm regularization hyper-parameter.
+        eta (float):
+            L2 regularization hyper-parameter.
+        big_M (float):
+            Upper bound on the norm of coefficients associated with each
+            cluster (groups of coefficients) ||Beta_c||_2
+        hierarchy (list):
+            A list of lists of integers storing hierarchy relations between
+            coefficients.
+            Each sublist contains indices of other coefficients
+            on which the coefficient associated with each element of
+            the list depends. i.e. hierarchy = [[1, 2], [0], []] mean that
+            coefficient 0 depends on 1, and 2; 1 depends on 0, and 2 has no
+            dependence.
+        tikhonov_w (np.array):
+            Matrix to add weights to L2 regularization.
+        ignore_psd_check (bool):
+            Wether to ignore cvxpy's PSD checks of matrix used in quadratic
+            form. Default is True to avoid raising errors for poorly
+            conditioned matrices. But if you want to be strict set to False.
+        fit_intercept (bool):
+            Whether the intercept should be estimated or not.
+            If False, the data is assumed to be already centered.
+        copy_X (bool):
+            If True, X will be copied; else, it may be overwritten.
+        warm_start (bool):
+            When set to True, reuse the solution of the previous call to
+            fit as initialization, otherwise, just erase the previous
+            solution.
+        solver (str):
+            cvxpy backend solver to use. Supported solvers are listed here:
+            https://www.cvxpy.org/tutorial/advanced/index.html#solve-method-options
+        solver_options (dict):
+            dictionary of keyword arguments passed to cvxpy solve.
+            See docs in CVXEstimator for more information.
+
+    Attributes:
+        coef_ (NDArray):
+            Parameter vector (:math:`\beta` in the cost function formula) of shape (n_features,).
+        intercept_ (float):
+            Independent term in decision function.
+        canonicals_ (SimpleNamespace):
+            Namespace that contains underlying cvxpy objects used to define
+            the optimization problem. The objects included are the following:
+                - objective - the objective function.
+                - beta - variable to be optimized (corresponds to the estimated coef_ attribute).
+                - parameters - hyper-parameters
+                - auxiliaries - auxiliary variables and expressions
+                - constraints - solution constraints
+
+    Notes:
+        Installation of Gurobi is not a must, but highly recommended. An open source alternative
+        is SCIP. ECOS_BB also works but can be very slow, and has recurring correctness issues.
+        See the Mixed-integer programs section of the cvxpy docs:
+        https://www.cvxpy.org/tutorial/advanced/index.html
     """
 
     def __init__(
@@ -408,52 +508,6 @@ class L2L0(TikhonovMixin, MixedL0):
         solver: str | None = None,
         solver_options: dict | None = None,
     ):
-        """Initialize L2L0 estimator.
-
-        Args:
-            groups (ArrayLike):
-                1D array-like of integers specifying groups. Length should be the
-                same as model, where each integer entry specifies the group
-                each parameter corresponds to. If no grouping is needed pass a list
-                of all distinct numbers (ie range(len(coefs)) to create singleton groups
-                for each parameter.
-            alpha (float):
-                L0 pseudo-norm regularization hyper-parameter.
-            eta (float):
-                L2 regularization hyper-parameter.
-            big_M (float):
-                Upper bound on the norm of coefficients associated with each
-                cluster (groups of coefficients) ||Beta_c||_2
-            hierarchy (list):
-                A list of lists of integers storing hierarchy relations between
-                coefficients.
-                Each sublist contains indices of other coefficients
-                on which the coefficient associated with each element of
-                the list depends. i.e. hierarchy = [[1, 2], [0], []] mean that
-                coefficient 0 depends on 1, and 2; 1 depends on 0, and 2 has no
-                dependence.
-            tikhonov_w (np.array):
-                Matrix to add weights to L2 regularization.
-            ignore_psd_check (bool):
-                Wether to ignore cvxpy's PSD checks of matrix used in quadratic
-                form. Default is True to avoid raising errors for poorly
-                conditioned matrices. But if you want to be strict set to False.
-            fit_intercept (bool):
-                Whether the intercept should be estimated or not.
-                If False, the data is assumed to be already centered.
-            copy_X (bool):
-                If True, X will be copied; else, it may be overwritten.
-            warm_start (bool):
-                When set to True, reuse the solution of the previous call to
-                fit as initialization, otherwise, just erase the previous
-                solution.
-            solver (str):
-                cvxpy backend solver to use. Supported solvers are listed here:
-                https://www.cvxpy.org/tutorial/advanced/index.html#solve-method-options
-            solver_options (dict):
-                dictionary of keyword arguments passed to cvxpy solve.
-                See docs in CVXEstimator for more information.
-        """
         super().__init__(
             groups=groups,
             alpha=alpha,

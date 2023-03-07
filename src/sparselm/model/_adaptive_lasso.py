@@ -45,13 +45,57 @@ class AdaptiveLasso(Lasso):
     r"""Adaptive Lasso implementation.
 
     Also known as iteratively re-weighted Lasso.
-    Regularized model:
+
+    Regularized regression objective:
 
     .. math::
 
-        || X \beta - y ||^2_2 + \alpha ||w^T \beta||_1
+        \min_{\beta} || X \beta - y ||^2_2 + \alpha ||w^T \beta||_1
 
     Where w represents a vector of weights that is iteratively updated.
+
+    Args:
+        alpha (float):
+            Regularization hyper-parameter.
+        max_iter (int):
+            Maximum number of re-weighting iteration steps.
+        eps (float):
+            Value to add to denominator of weights.
+        tol (float):
+            Absolute convergence tolerance for difference between weights
+            at successive steps.
+        update_function (Callable): optional
+            A function with signature f(beta, eps) used to update the
+            weights at each iteration. Default is 1/(|beta| + eps)
+        fit_intercept (bool):
+            Whether the intercept should be estimated or not.
+            If False, the data is assumed to be already centered.
+        copy_X (bool):
+            If True, X will be copied; else, it may be overwritten.
+        warm_start (bool):
+            When set to True, reuse the solution of the previous call to
+            fit as initialization, otherwise, just erase the previous
+            solution.
+        solver (str):
+            cvxpy backend solver to use. Supported solvers are listed here:
+            https://www.cvxpy.org/tutorial/advanced/index.html#solve-method-options
+        solver_options (dict):
+            dictionary of keyword arguments passed to cvxpy solve.
+            See docs in CVXRegressor for more information.
+
+    Attributes:
+        coef_ (NDArray):
+            Parameter vector (:math:`\beta` in the cost function formula) of shape (n_features,).
+        intercept_ (float):
+            Independent term in decision function.
+        canonicals_ (SimpleNamespace):
+            Namespace that contains underlying cvxpy objects used to define
+            the optimization problem. The objects included are the following:
+                - objective - the objective function.
+                - beta - variable to be optimized (corresponds to the estimated coef_ attribute).
+                - parameters - hyper-parameters
+                - auxiliaries - auxiliary variables and expressions
+                - constraints - solution constraints
     """
 
     _parameter_constraints: dict[str, list[Any]] = {
@@ -76,37 +120,6 @@ class AdaptiveLasso(Lasso):
         solver_options: dict[str, Any] | None = None,
         **kwargs,
     ):
-        """Initialize Regressor.
-
-        Args:
-            alpha (float):
-                Regularization hyper-parameter.
-            max_iter (int):
-                Maximum number of re-weighting iteration steps.
-            eps (float):
-                Value to add to denominator of weights.
-            tol (float):
-                Absolute convergence tolerance for difference between weights
-                at successive steps.
-            update_function (Callable): optional
-                A function with signature f(beta, eps) used to update the
-                weights at each iteration. Default is 1/(|beta| + eps)
-            fit_intercept (bool):
-                Whether the intercept should be estimated or not.
-                If False, the data is assumed to be already centered.
-            copy_X (bool):
-                If True, X will be copied; else, it may be overwritten.
-            warm_start (bool):
-                When set to True, reuse the solution of the previous call to
-                fit as initialization, otherwise, just erase the previous
-                solution.
-            solver (str):
-                cvxpy backend solver to use. Supported solvers are listed here:
-                https://www.cvxpy.org/tutorial/advanced/index.html#solve-method-options
-            solver_options (dict):
-                dictionary of keyword arguments passed to cvxpy solve.
-                See docs in CVXRegressor for more information.
-        """
         super().__init__(
             alpha=alpha,
             fit_intercept=fit_intercept,
@@ -214,13 +227,72 @@ class AdaptiveLasso(Lasso):
 class AdaptiveGroupLasso(AdaptiveLasso, GroupLasso):
     r"""Adaptive Group Lasso, iteratively re-weighted group lasso.
 
-    Regularized model:
+    Regularized regression objective:
 
     .. math::
 
-        || X \beta - y ||^2_2 + \alpha * \sum_{G} w_G ||\beta_G||_2
+        \min_{\beta} || X \beta - y ||^2_2 + \alpha * \sum_{G} w_G ||\beta_G||_2
 
     Where w represents a vector of weights that is iteratively updated.
+
+    Args:
+        groups (list or ndarray):
+            array-like of integers specifying groups. Length should be the
+            same as model, where each integer entry specifies the group
+            each parameter corresponds to.
+        alpha (float):
+            Regularization hyper-parameter.
+        group_weights (ndarray): optional
+            Weights for each group to use in the regularization term.
+            The default is to use the sqrt of the group sizes, however any
+            weight can be specified. The array must be the
+            same length as the groups given. If you need all groups
+            weighted equally just pass an array of ones.
+        max_iter (int):
+            Maximum number of re-weighting iteration steps.
+        eps (float):
+            Value to add to denominator of weights.
+        tol (float):
+            Absolute convergence tolerance for difference between weights
+            at successive steps.
+        update_function (Callable): optional
+            A function with signature f(group_norms, eps) used to update the
+            weights at each iteration. Where group_norms are the norms of
+            the coefficients Beta for each group.
+            Default is 1/(group_norms + eps)
+        standardize (bool): optional
+            Whether to standardize the group regularization penalty using
+            the feature matrix. See the following for reference:
+            http://faculty.washington.edu/nrsimon/standGL.pdf
+        fit_intercept (bool):
+            Whether the intercept should be estimated or not.
+            If False, the data is assumed to be already centered.
+        copy_X (bool):
+            If True, X will be copied; else, it may be overwritten.
+        warm_start (bool):
+            When set to True, reuse the solution of the previous call to
+            fit as initialization, otherwise, just erase the previous
+            solution.
+        solver (str):
+            cvxpy backend solver to use. Supported solvers are listed here:
+            https://www.cvxpy.org/tutorial/advanced/index.html#solve-method-options
+        solver_options (dict):
+            dictionary of keyword arguments passed to cvxpy solve.
+            See docs in CVXRegressor for more information.
+
+    Attributes:
+        coef_ (NDArray):
+            Parameter vector (:math:`\beta` in the cost function formula) of shape (n_features,).
+        intercept_ (float):
+            Independent term in decision function.
+        canonicals_ (SimpleNamespace):
+            Namespace that contains underlying cvxpy objects used to define
+            the optimization problem. The objects included are the following:
+                - objective - the objective function.
+                - beta - variable to be optimized (corresponds to the estimated coef_ attribute).
+                - parameters - hyper-parameters
+                - auxiliaries - auxiliary variables and expressions
+                - constraints - solution constraints
     """
 
     def __init__(
@@ -240,53 +312,6 @@ class AdaptiveGroupLasso(AdaptiveLasso, GroupLasso):
         solver_options: dict[str, Any] | None = None,
         **kwargs,
     ):
-        """Initialize Regressor.
-
-        Args:
-            groups (list or ndarray):
-                array-like of integers specifying groups. Length should be the
-                same as model, where each integer entry specifies the group
-                each parameter corresponds to.
-            alpha (float):
-                Regularization hyper-parameter.
-            group_weights (ndarray): optional
-                Weights for each group to use in the regularization term.
-                The default is to use the sqrt of the group sizes, however any
-                weight can be specified. The array must be the
-                same length as the groups given. If you need all groups
-                weighted equally just pass an array of ones.
-            max_iter (int):
-                Maximum number of re-weighting iteration steps.
-            eps (float):
-                Value to add to denominator of weights.
-            tol (float):
-                Absolute convergence tolerance for difference between weights
-                at successive steps.
-            update_function (Callable): optional
-                A function with signature f(group_norms, eps) used to update the
-                weights at each iteration. Where group_norms are the norms of
-                the coefficients Beta for each group.
-                Default is 1/(group_norms + eps)
-            standardize (bool): optional
-                Whether to standardize the group regularization penalty using
-                the feature matrix. See the following for reference:
-                http://faculty.washington.edu/nrsimon/standGL.pdf
-            fit_intercept (bool):
-                Whether the intercept should be estimated or not.
-                If False, the data is assumed to be already centered.
-            copy_X (bool):
-                If True, X will be copied; else, it may be overwritten.
-            warm_start (bool):
-                When set to True, reuse the solution of the previous call to
-                fit as initialization, otherwise, just erase the previous
-                solution.
-            solver (str):
-                cvxpy backend solver to use. Supported solvers are listed here:
-                https://www.cvxpy.org/tutorial/advanced/index.html#solve-method-options
-            solver_options (dict):
-                dictionary of keyword arguments passed to cvxpy solve.
-                See docs in CVXRegressor for more information.
-        """
         # call with keywords to avoid MRO issues
         super().__init__(
             groups=groups,
@@ -340,14 +365,78 @@ class AdaptiveGroupLasso(AdaptiveLasso, GroupLasso):
 class AdaptiveOverlapGroupLasso(OverlapGroupLasso, AdaptiveGroupLasso):
     r"""Adaptive Overlap Group Lasso implementation.
 
-    Regularized model:
+    Regularized regression objective:
 
     .. math::
 
-        || X \beta - y ||^2_2 + \alpha \sum_{G} w_G ||\beta_G||_2
+        \min_{\beta} || X \beta - y ||^2_2 + \alpha \sum_{G} w_G ||\beta_G||_2
 
     Where G represents groups of features/coefficients, and overlapping groups
     are acceptable. Meaning a coefficients can be in more than one group.
+
+    Args:
+        group_list (list of lists):
+            list of lists of integers specifying groups. The length of the
+            list holding lists should be the same as model. Each inner list
+            has integers specifying the groups the coefficient for that
+            index belongs to. i.e. [[1,2],[2,3],[1,2,3]] means the first
+            coefficient belongs to group 1 and 2, the second to 2, and 3
+            and the third to 1, 2 and 3. In other words the 3 groups would
+            be: (0, 2), (0, 1, 2), (1, 2)
+        alpha (float):
+            Regularization hyper-parameter.
+        group_weights (ndarray): optional
+            Weights for each group to use in the regularization term.
+            The default is to use the sqrt of the group sizes, however any
+            weight can be specified. The array must be the
+            same length as the number of different groups given.
+            If you need all groups weighted equally just pass an array of
+            ones.
+        max_iter (int):
+            Maximum number of re-weighting iteration steps.
+        eps (float):
+            Value to add to denominator of weights.
+        tol (float):
+            Absolute convergence tolerance for difference between weights
+            at successive steps.
+        update_function (Callable): optional
+            A function with signature f(group_norms, eps) used to update the
+            weights at each iteration. Where group_norms are the norms of
+            the coefficients Beta for each group.
+            Default is 1/(group_norms + eps)
+        standardize (bool): optional
+            Whether to standardize the group regularization penalty using
+            the feature matrix. See the following for reference:
+            http://faculty.washington.edu/nrsimon/standGL.pdf
+        fit_intercept (bool):
+            Whether the intercept should be estimated or not.
+            If False, the data is assumed to be already centered.
+        copy_X (bool):
+            If True, X will be copied; else, it may be overwritten.
+        warm_start (bool):
+            When set to True, reuse the solution of the previous call to
+            fit as initialization, otherwise, just erase the previous
+            solution.
+        solver (str):
+            cvxpy backend solver to use. Supported solvers are listed here:
+            https://www.cvxpy.org/tutorial/advanced/index.html#solve-method-options
+        solver_options (dict):
+            dictionary of keyword arguments passed to cvxpy solve.
+            See docs in CVXRegressor for more information.
+
+    Attributes:
+        coef_ (NDArray):
+            Parameter vector (:math:`\beta` in the cost function formula) of shape (n_features,).
+        intercept_ (float):
+            Independent term in decision function.
+        canonicals_ (SimpleNamespace):
+            Namespace that contains underlying cvxpy objects used to define
+            the optimization problem. The objects included are the following:
+                - objective - the objective function.
+                - beta - variable to be optimized (corresponds to the estimated coef_ attribute).
+                - parameters - hyper-parameters
+                - auxiliaries - auxiliary variables and expressions
+                - constraints - solution constraints
     """
 
     def __init__(
@@ -366,58 +455,6 @@ class AdaptiveOverlapGroupLasso(OverlapGroupLasso, AdaptiveGroupLasso):
         solver: str | None = None,
         solver_options: dict[str, Any] | None = None,
     ):
-        """Initialize Regressor.
-
-        Args:
-            group_list (list of lists):
-                list of lists of integers specifying groups. The length of the
-                list holding lists should be the same as model. Each inner list
-                has integers specifying the groups the coefficient for that
-                index belongs to. i.e. [[1,2],[2,3],[1,2,3]] means the first
-                coefficient belongs to group 1 and 2, the second to 2, and 3
-                and the third to 1, 2 and 3. In other words the 3 groups would
-                be: (0, 2), (0, 1, 2), (1, 2)
-            alpha (float):
-                Regularization hyper-parameter.
-            group_weights (ndarray): optional
-                Weights for each group to use in the regularization term.
-                The default is to use the sqrt of the group sizes, however any
-                weight can be specified. The array must be the
-                same length as the number of different groups given.
-                If you need all groups weighted equally just pass an array of
-                ones.
-            max_iter (int):
-                Maximum number of re-weighting iteration steps.
-            eps (float):
-                Value to add to denominator of weights.
-            tol (float):
-                Absolute convergence tolerance for difference between weights
-                at successive steps.
-            update_function (Callable): optional
-                A function with signature f(group_norms, eps) used to update the
-                weights at each iteration. Where group_norms are the norms of
-                the coefficients Beta for each group.
-                Default is 1/(group_norms + eps)
-            standardize (bool): optional
-                Whether to standardize the group regularization penalty using
-                the feature matrix. See the following for reference:
-                http://faculty.washington.edu/nrsimon/standGL.pdf
-            fit_intercept (bool):
-                Whether the intercept should be estimated or not.
-                If False, the data is assumed to be already centered.
-            copy_X (bool):
-                If True, X will be copied; else, it may be overwritten.
-            warm_start (bool):
-                When set to True, reuse the solution of the previous call to
-                fit as initialization, otherwise, just erase the previous
-                solution.
-            solver (str):
-                cvxpy backend solver to use. Supported solvers are listed here:
-                https://www.cvxpy.org/tutorial/advanced/index.html#solve-method-options
-            solver_options (dict):
-                dictionary of keyword arguments passed to cvxpy solve.
-                See docs in CVXRegressor for more information.
-        """
         # call with keywords to avoid MRO issues
         super().__init__(
             group_list=group_list,
@@ -475,16 +512,77 @@ class AdaptiveOverlapGroupLasso(OverlapGroupLasso, AdaptiveGroupLasso):
 class AdaptiveSparseGroupLasso(AdaptiveLasso, SparseGroupLasso):
     r"""Adaptive Sparse Group Lasso, iteratively re-weighted sparse group lasso.
 
-    Regularized model:
+    Regularized regression objective:
 
     .. math::
 
-        || X \beta - y ||^2_2
+        \min_{\beta} || X \beta - y ||^2_2
             + \alpha r ||w^T \beta||_1
             + \alpha (1 - r) \sum_{G} v_G ||\beta_G||_2
 
     Where w, v represent vectors of weights that are iteratively updated.
     And r is the L1 ratio.
+
+    Args:
+        groups (list or ndarray):
+            array-like of integers specifying groups. Length should be the
+            same as model, where each integer entry specifies the group
+            each parameter corresponds to.
+        l1_ratio (float):
+            Mixing parameter between l1 and group lasso regularization.
+        alpha (float):
+            Regularization hyper-parameter.
+        group_weights (ndarray): optional
+            Weights for each group to use in the regularization term.
+            The default is to use the sqrt of the group sizes, however any
+            weight can be specified. The array must be the
+            same length as the groups given. If you need all groups
+            weighted equally just pass an array of ones.
+        max_iter (int):
+            Maximum number of re-weighting iteration steps.
+        eps (float):
+            Value to add to denominator of weights.
+        tol (float):
+            Absolute convergence tolerance for difference between weights
+            at successive steps.
+        update_function (Callable): optional
+            A function with signature f(group_norms, eps) used to update the
+            weights at each iteration. Where group_norms are the norms of
+            the coefficients Beta for each group.
+            Default is 1/(group_norms + eps)
+        standardize (bool): optional
+            Whether to standardize the group regularization penalty using
+            the feature matrix. See the following for reference:
+            http://faculty.washington.edu/nrsimon/standGL.pdf
+        fit_intercept (bool):
+            Whether the intercept should be estimated or not.
+            If False, the data is assumed to be already centered.
+        copy_X (bool):
+            If True, X will be copied; else, it may be overwritten.
+        warm_start (bool):
+            When set to True, reuse the solution of the previous call to
+            fit as initialization, otherwise, just erase the previous
+            solution.
+        solver (str):
+            cvxpy backend solver to use. Supported solvers are listed here:
+            https://www.cvxpy.org/tutorial/advanced/index.html#solve-method-options
+        solver_options (dict):
+            dictionary of keyword arguments passed to cvxpy solve.
+            See docs in CVXRegressor for more information.
+
+    Attributes:
+        coef_ (NDArray):
+            Parameter vector (:math:`\beta` in the cost function formula) of shape (n_features,).
+        intercept_ (float):
+            Independent term in decision function.
+        canonicals_ (SimpleNamespace):
+            Namespace that contains underlying cvxpy objects used to define
+            the optimization problem. The objects included are the following:
+                - objective - the objective function.
+                - beta - variable to be optimized (corresponds to the estimated coef_ attribute).
+                - parameters - hyper-parameters
+                - auxiliaries - auxiliary variables and expressions
+                - constraints - solution constraints
     """
 
     def __init__(
@@ -504,55 +602,6 @@ class AdaptiveSparseGroupLasso(AdaptiveLasso, SparseGroupLasso):
         solver: str | None = None,
         solver_options: dict[str, Any] | None = None,
     ):
-        """Initialize Regressor.
-
-        Args:
-            groups (list or ndarray):
-                array-like of integers specifying groups. Length should be the
-                same as model, where each integer entry specifies the group
-                each parameter corresponds to.
-            l1_ratio (float):
-                Mixing parameter between l1 and group lasso regularization.
-            alpha (float):
-                Regularization hyper-parameter.
-            group_weights (ndarray): optional
-                Weights for each group to use in the regularization term.
-                The default is to use the sqrt of the group sizes, however any
-                weight can be specified. The array must be the
-                same length as the groups given. If you need all groups
-                weighted equally just pass an array of ones.
-            max_iter (int):
-                Maximum number of re-weighting iteration steps.
-            eps (float):
-                Value to add to denominator of weights.
-            tol (float):
-                Absolute convergence tolerance for difference between weights
-                at successive steps.
-            update_function (Callable): optional
-                A function with signature f(group_norms, eps) used to update the
-                weights at each iteration. Where group_norms are the norms of
-                the coefficients Beta for each group.
-                Default is 1/(group_norms + eps)
-            standardize (bool): optional
-                Whether to standardize the group regularization penalty using
-                the feature matrix. See the following for reference:
-                http://faculty.washington.edu/nrsimon/standGL.pdf
-            fit_intercept (bool):
-                Whether the intercept should be estimated or not.
-                If False, the data is assumed to be already centered.
-            copy_X (bool):
-                If True, X will be copied; else, it may be overwritten.
-            warm_start (bool):
-                When set to True, reuse the solution of the previous call to
-                fit as initialization, otherwise, just erase the previous
-                solution.
-            solver (str):
-                cvxpy backend solver to use. Supported solvers are listed here:
-                https://www.cvxpy.org/tutorial/advanced/index.html#solve-method-options
-            solver_options (dict):
-                dictionary of keyword arguments passed to cvxpy solve.
-                See docs in CVXRegressor for more information.
-        """
         # call with keywords to avoid MRO issues
         super().__init__(
             groups=groups,
@@ -659,11 +708,11 @@ class AdaptiveSparseGroupLasso(AdaptiveLasso, SparseGroupLasso):
 class AdaptiveRidgedGroupLasso(AdaptiveGroupLasso, RidgedGroupLasso):
     r"""Adaptive Ridged Group Lasso implementation.
 
-    Regularized model:
+    Regularized regression objective:
 
     .. math::
 
-        || X \beta - y ||^2_2 + \alpha \sum_{G} w_G ||\beta_G||_2
+        \min_{\beta} || X \beta - y ||^2_2 + \alpha \sum_{G} w_G ||\beta_G||_2
                                + \sum_{G} w_l ||\beta_G||^2_2
 
     Where G represents groups of features/coefficients, and w_l represents a
@@ -672,8 +721,65 @@ class AdaptiveRidgedGroupLasso(AdaptiveGroupLasso, RidgedGroupLasso):
     For details on proper standardization refer to:
     http://faculty.washington.edu/nrsimon/standGL.pdf
 
-    * Adaptive iterative weights are only done on the group norm and not the ridge
+    Adaptive iterative weights are only done on the group norm and not the ridge
     portion.
+
+    Args:
+        groups (list or ndarray):
+            array-like of integers specifying groups. Length should be the
+            same as model, where each integer entry specifies the group
+            each parameter corresponds to.
+        alpha (float):
+            Regularization hyper-parameter.
+        delta (ndarray): optional
+            Positive 1D array. Regularization vector for ridge penalty.
+        group_weights (ndarray): optional
+            Weights for each group to use in the regularization term.
+            The default is to use the sqrt of the group sizes, however any
+            weight can be specified. The array must be the
+            same length as the groups given. If you need all groups
+            weighted equally just pass an array of ones.
+        fit_intercept (bool):
+            Whether the intercept should be estimated or not.
+            If False, the data is assumed to be already centered.
+        max_iter (int):
+            Maximum number of re-weighting iteration steps.
+        eps (float):
+            Value to add to denominator of weights.
+        tol (float):
+            Absolute convergence tolerance for difference between weights
+            at successive steps.
+        update_function (Callable): optional
+            A function with signature f(group_norms, eps) used to update the
+            weights at each iteration. Where group_norms are the norms of
+            the coefficients Beta for each group.
+            Default is 1/(group_norms + eps)
+        copy_X (bool):
+            If True, X will be copied; else, it may be overwritten.
+        warm_start (bool):
+            When set to True, reuse the solution of the previous call to
+            fit as initialization, otherwise, just erase the previous
+            solution.
+        solver (str):
+            cvxpy backend solver to use. Supported solvers are listed here:
+            https://www.cvxpy.org/tutorial/advanced/index.html#solve-method-options
+        solver_options (dict):
+            dictionary of keyword arguments passed to cvxpy solve.
+            See docs in CVXRegressor for more information.
+
+    Attributes:
+        coef_ (NDArray):
+            Parameter vector (:math:`\beta` in the cost function formula) of shape (n_features,).
+        intercept_ (float):
+            Independent term in decision function.
+        canonicals_ (SimpleNamespace):
+            Namespace that contains underlying cvxpy objects used to define
+            the optimization problem. The objects included are the following:
+                - objective - the objective function.
+                - beta - variable to be optimized (corresponds to the estimated coef_ attribute).
+                - parameters - hyper-parameters
+                - auxiliaries - auxiliary variables and expressions
+                - constraints - solution constraints
     """
 
     def __init__(
@@ -693,51 +799,6 @@ class AdaptiveRidgedGroupLasso(AdaptiveGroupLasso, RidgedGroupLasso):
         solver: str | None = None,
         solver_options: dict[str, Any] | None = None,
     ):
-        """Initialize Regressor.
-
-        Args:
-            groups (list or ndarray):
-                array-like of integers specifying groups. Length should be the
-                same as model, where each integer entry specifies the group
-                each parameter corresponds to.
-            alpha (float):
-                Regularization hyper-parameter.
-            delta (ndarray): optional
-                Positive 1D array. Regularization vector for ridge penalty.
-            group_weights (ndarray): optional
-                Weights for each group to use in the regularization term.
-                The default is to use the sqrt of the group sizes, however any
-                weight can be specified. The array must be the
-                same length as the groups given. If you need all groups
-                weighted equally just pass an array of ones.
-            fit_intercept (bool):
-                Whether the intercept should be estimated or not.
-                If False, the data is assumed to be already centered.
-            max_iter (int):
-                Maximum number of re-weighting iteration steps.
-            eps (float):
-                Value to add to denominator of weights.
-            tol (float):
-                Absolute convergence tolerance for difference between weights
-                at successive steps.
-            update_function (Callable): optional
-                A function with signature f(group_norms, eps) used to update the
-                weights at each iteration. Where group_norms are the norms of
-                the coefficients Beta for each group.
-                Default is 1/(group_norms + eps)
-            copy_X (bool):
-                If True, X will be copied; else, it may be overwritten.
-            warm_start (bool):
-                When set to True, reuse the solution of the previous call to
-                fit as initialization, otherwise, just erase the previous
-                solution.
-            solver (str):
-                cvxpy backend solver to use. Supported solvers are listed here:
-                https://www.cvxpy.org/tutorial/advanced/index.html#solve-method-options
-            solver_options (dict):
-                dictionary of keyword arguments passed to cvxpy solve.
-                See docs in CVXRegressor for more information.
-        """
         super().__init__(
             groups=groups,
             alpha=alpha,

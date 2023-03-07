@@ -25,6 +25,43 @@ class MIQPl0(CVXRegressor, metaclass=ABCMeta):
     Generalized l0 formulation that allows grouping coefficients, based on:
 
     https://doi.org/10.1287/opre.2015.1436
+
+    Args:
+        groups (list or ndarray):
+            array-like of integers specifying groups. Length should be the
+            same as model, where each integer entry specifies the group
+            each parameter corresponds to. If no grouping is required, simply
+            pass a list of all different numbers, i.e. using range.
+        big_M (float):
+            Upper bound on the norm of coefficients associated with each
+            cluster (groups of coefficients) ||Beta_c||_2
+        hierarchy (list):
+            A list of lists of integers storing hierarchy relations between
+            coefficients.
+            Each sublist contains indices of other coefficients
+            on which the coefficient associated with each element of
+            the list depends. i.e. hierarchy = [[1, 2], [0], []] mean that
+            coefficient 0 depends on 1, and 2; 1 depends on 0, and 2 has no
+            dependence.
+        ignore_psd_check (bool):
+            Whether to ignore cvxpy's PSD checks  of matrix used in quadratic
+            form. Default is True to avoid raising errors for poorly
+            conditioned matrices. But if you want to be strict set to False.
+        fit_intercept (bool):
+            Whether the intercept should be estimated or not.
+            If False, the data is assumed to be already centered.
+        copy_X (bool):
+            If True, X will be copied; else, it may be overwritten.
+        warm_start (bool):
+            When set to True, reuse the solution of the previous call to
+            fit as initialization, otherwise, just erase the previous
+            solution.
+        solver (str):
+            cvxpy backend solver to use. Supported solvers are listed here:
+            https://www.cvxpy.org/tutorial/advanced/index.html#solve-method-options
+        solver_options (dict):
+            dictionary of keyword arguments passed to cvxpy solve.
+            See docs in CVXRegressor for more information.
     """
 
     _parameter_constraints: dict[str, list[Any]] = {
@@ -49,45 +86,6 @@ class MIQPl0(CVXRegressor, metaclass=ABCMeta):
         solver: str | None = None,
         solver_options: dict | None = None,
     ):
-        """Initialize Regressor.
-
-        Args:
-            groups (list or ndarray):
-                array-like of integers specifying groups. Length should be the
-                same as model, where each integer entry specifies the group
-                each parameter corresponds to. If no grouping is required, simply
-                pass a list of all different numbers, i.e. using range.
-            big_M (float):
-                Upper bound on the norm of coefficients associated with each
-                cluster (groups of coefficients) ||Beta_c||_2
-            hierarchy (list):
-                A list of lists of integers storing hierarchy relations between
-                coefficients.
-                Each sublist contains indices of other coefficients
-                on which the coefficient associated with each element of
-                the list depends. i.e. hierarchy = [[1, 2], [0], []] mean that
-                coefficient 0 depends on 1, and 2; 1 depends on 0, and 2 has no
-                dependence.
-            ignore_psd_check (bool):
-                Whether to ignore cvxpy's PSD checks  of matrix used in quadratic
-                form. Default is True to avoid raising errors for poorly
-                conditioned matrices. But if you want to be strict set to False.
-            fit_intercept (bool):
-                Whether the intercept should be estimated or not.
-                If False, the data is assumed to be already centered.
-            copy_X (bool):
-                If True, X will be copied; else, it may be overwritten.
-            warm_start (bool):
-                When set to True, reuse the solution of the previous call to
-                fit as initialization, otherwise, just erase the previous
-                solution.
-            solver (str):
-                cvxpy backend solver to use. Supported solvers are listed here:
-                https://www.cvxpy.org/tutorial/advanced/index.html#solve-method-options
-            solver_options (dict):
-                dictionary of keyword arguments passed to cvxpy solve.
-                See docs in CVXRegressor for more information.
-        """
         super().__init__(
             fit_intercept=fit_intercept,
             copy_X=copy_X,
