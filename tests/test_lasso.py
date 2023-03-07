@@ -22,8 +22,8 @@ ADAPTIVE_ESTIMATORS = [
     AdaptiveOverlapGroupLasso,
     AdaptiveRidgedGroupLasso,
 ]
-# a high threshold since beta from make_regression are always ~ 1E1
-THRESHOLD = 1e-6
+
+THRESHOLD = 1e-8  # relative threshold
 
 
 def test_lasso_toy():
@@ -91,19 +91,11 @@ def test_adaptive_lasso_sparser(random_model):
     "standardize",
     [
         True,
+        False
     ],
 )  # standardize=False leads to failures
 def test_group_lasso(random_model_with_groups, solver, standardize):
     X, y, _, groups = random_model_with_groups
-
-    glasso = GroupLasso(
-        groups=groups,
-        alpha=5.0,
-        fit_intercept=True,
-        standardize=standardize,
-        solver=solver,
-    )
-    glasso.fit(X, y)
 
     aglasso = AdaptiveGroupLasso(
         groups=groups,
@@ -116,12 +108,9 @@ def test_group_lasso(random_model_with_groups, solver, standardize):
 
     # check that if all coefs in groups are consistent
     for gid in np.unique(groups):
-        all_active = (abs(glasso.coef_[groups == gid]) > THRESHOLD).all()
-        all_inactive = (abs(glasso.coef_[groups == gid]) <= THRESHOLD).all()
-        assert all_active or all_inactive
-
-        all_active = (abs(aglasso.coef_[groups == gid]) > THRESHOLD).all()
-        all_inactive = (abs(aglasso.coef_[groups == gid]) <= THRESHOLD).all()
+        m = np.max(abs(aglasso.coef_))
+        all_active = (abs(aglasso.coef_[groups == gid]) > m * THRESHOLD).all()
+        all_inactive = (abs(aglasso.coef_[groups == gid]) <= m * THRESHOLD).all()
         assert all_active or all_inactive
 
 
@@ -130,22 +119,13 @@ def test_group_lasso(random_model_with_groups, solver, standardize):
     "standardize",
     [
         True,
+        False
     ],
 )
 def test_group_lasso_weights(random_model_with_groups, solver, standardize):
     X, y, _, groups = random_model_with_groups
 
     group_weights = np.ones(len(np.unique(groups)))
-
-    glasso = GroupLasso(
-        groups=groups,
-        alpha=5.0,
-        group_weights=group_weights,
-        fit_intercept=True,
-        standardize=standardize,
-        solver=solver,
-    )
-    glasso.fit(X, y)
 
     aglasso = AdaptiveGroupLasso(
         groups=groups,
@@ -169,16 +149,15 @@ def test_group_lasso_weights(random_model_with_groups, solver, standardize):
 
     # check that if all coefs in groups are consistent
     for gid in np.unique(groups):
-        all_active = (abs(glasso.coef_[groups == gid]) > THRESHOLD).all()
-        all_inactive = (abs(glasso.coef_[groups == gid]) <= THRESHOLD).all()
+        m = np.max(abs(aglasso.coef_))
+
+        all_active = (abs(aglasso.coef_[groups == gid]) > m * THRESHOLD).all()
+        all_inactive = (abs(aglasso.coef_[groups == gid]) <= m * THRESHOLD).all()
         assert all_active or all_inactive
 
-        all_active = (abs(aglasso.coef_[groups == gid]) > THRESHOLD).all()
-        all_inactive = (abs(aglasso.coef_[groups == gid]) <= THRESHOLD).all()
-        assert all_active or all_inactive
-
-        all_active = (abs(rglasso.coef_[groups == gid]) > THRESHOLD).all()
-        all_inactive = (abs(rglasso.coef_[groups == gid]) <= THRESHOLD).all()
+        m = np.max(abs(rglasso.coef_))
+        all_active = (abs(rglasso.coef_[groups == gid]) > m * THRESHOLD).all()
+        all_inactive = (abs(rglasso.coef_[groups == gid]) <= m * THRESHOLD).all()
         assert all_active or all_inactive
 
 

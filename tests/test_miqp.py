@@ -57,7 +57,7 @@ def test_perfect_signal_recovery(sparse_coded_signal):
     assert np.linalg.norm(coef) > np.linalg.norm(r_estimator.coef_)
 
     # very sensitive to the value of alpha for exact results
-    estimator = RegularizedL0(alpha=0.02)
+    estimator = RegularizedL0(alpha=0.01)
     estimator.fit(X, y)
 
     npt.assert_array_equal(idx, np.flatnonzero(estimator.coef_))
