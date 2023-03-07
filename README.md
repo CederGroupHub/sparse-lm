@@ -16,17 +16,9 @@ solved by leveraging [cvxpy](https://www.cvxpy.org/).
 
 Available regression models
 ---------------------------
-- Lasso (`sklearn` may be a better option)
-- Group Lasso, Overlap Group Lasso & Sparse Group Lasso
+- Lasso, Group Lasso, Overlap Group Lasso, Sparse Group Lasso & Ridged Group Lasso.
 - Adaptive versions of Lasso, Group Lasso, Overlap Group Lasso, Sparse Group Lasso & Ridged Group Lasso.
 - Best Subset Selection, Ridged Best Subset, L0, L1L0 & L2L0 (all with optional grouping of parameters)
-  (`gurobi` recommended for performance)
-
-Installation
-------------
-From pypi:
-
-    pip install sparse-lm
 
 Usage
 -----
