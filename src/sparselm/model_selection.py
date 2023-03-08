@@ -37,6 +37,124 @@ class GridSearchCV(_GridSearchCV):
     supports "max_score" (default), which is to maximize the score;
     also supports "one_std_score", which is to apply one-standard-error
     rule to the score.
+
+    Args:
+        estimator (Estimator):
+            A object of that type is instantiated for each grid point.
+            This is assumed to implement the scikit-learn estimator
+            interface. Either estimator needs to provide a ``score``
+            function, or ``scoring`` must be passed.
+        param_grid (dict or list[dict]):
+            Dictionary representing grid of hyper-parameters with their
+            names as keys and possible values. If given as a list of
+            multiple dicts, will search on multiple grids in parallel.
+        opt_selection_method (str, default="max_score"):
+            The method to select optimal hyper params. Default to
+            "max_score", which means to maximize the score. Can also choose
+            "one_std_score", which means to apply one standard error rule
+            on scores.
+        scoring (str, callable, list, tuple or dict,
+        default="neg_root_mean_squared_error"):
+            Strategy to evaluate the performance of the cross-validated
+            model on the test set.
+            If `scoring` represents a single score, one can use:
+            - a single string (see :ref:`scoring_parameter`);
+            - a callable (see :ref:`scoring`) that returns a single value.
+            If `scoring` represents multiple scores, one can use:
+            - a list or tuple of unique strings;
+            - a callable returning a dictionary where the keys are the
+            metric names and the values are the metric scores;
+            - a dictionary with metric names as keys and callables a
+            values.
+            See :ref:`multimetric_grid_search` for an example.
+            In sparse-lm, using "neg_root_mean_squared_error" is default
+            because in cluster expansion it is more conventional to
+            analyze and present errors in the root-mean-square error format
+            compared to the r2_score.
+        n_jobs (int, default=None):
+            Number of jobs to run in parallel.
+            ``None`` means 1 unless in a :obj:`joblib.parallel_backend`
+            context.
+            ``-1`` means using all processors. See
+            :term:`Glossary <n_jobs>` for more details.
+        refit (bool, str, or callable, default=True)
+            Refit an estimator using the best found parameters on the whole
+            dataset.
+            For multiple metric evaluation, this needs to be a `str`
+            denoting the scorer that would be used to find the best
+            parameters for refitting the estimator at the end.
+            Where there are considerations other than maximum score in
+            choosing a best estimator, ``refit`` can be set to a function
+            which returns the selected ``best_index_`` given
+            ``cv_results_``.
+            In that case, the ``best_estimator_`` and ``best_params_`` will
+            be set according to the returned ``best_index_`` while the
+            ``best_score_`` attribute will not be available.
+            The refitted estimator is made available at the
+            ``best_estimator_`` attribute and permits using ``predict``
+            directly on this instance.
+            Also for multiple metric evaluation, the attributes
+            ``best_index_``, ``best_score_`` and ``best_params_`` will only
+            be available if ``refit`` is set and all of them will be
+            determined w.r.t this specific scorer.
+            See ``scoring`` parameter to know more about multiple metric
+            evaluation.
+        cv (int, cross-validation generator or an iterable, default=None):
+            Determines the cross-validation splitting strategy.
+            Possible inputs for cv are:
+            - None, to use the default 5-fold cross validation,
+            - integer, to specify the number of folds in a
+            `(Stratified)KFold`,
+            - :term:`CV splitter`,
+            - An iterable yielding (train, test) splits as arrays of
+            indices.
+            For integer/None inputs, if the estimator is a classifier and
+            ``y`` is either binary or multiclass, :class:`StratifiedKFold`
+            is used. In all other cases, :class:`KFold` is used. These
+            splitters are instantiated with `shuffle=False` so the splits
+            will be the same across calls.
+            Refer :ref:`User Guide <cross_validation>` for the various
+            cross-validation strategies that can be used here.
+            Notice that if cv is not specified, KFold(5) will be used, and your
+            training set will not be shuffled in each train-test split. This can
+            be dangerous if your training set has internal relations, for example,
+            structures with similar composition are close to each other in feature
+            rows. In this case, you should use RepeatedKFold as cv instead.
+        verbose (int, default=0):
+            Controls the verbosity: the higher, the more messages.
+            - >1 : the computation time for each fold and parameter
+            candidate is displayed;
+            - >2 : the score is also displayed;
+            - >3 : the fold and candidate parameter indexes are also
+            displayed together with the starting time of the computation.
+        pre_dispatch (int, or str, default='2*n_jobs'):
+            Controls the number of jobs that get dispatched during parallel
+            execution. Reducing this number can be useful to avoid an
+            explosion of memory consumption when more jobs get dispatched
+            than CPUs can process. This parameter can be:
+                - None, in which case all the jobs are immediately
+                  created and spawned. Use this for lightweight and
+                  fast-running jobs, to avoid delays due to on-demand
+                  spawning of the jobs
+                - An int, giving the exact number of total jobs that are
+                  spawned
+                - A str, giving an expression as a function of n_jobs,
+                  as in '2*n_jobs'
+        error_score ('raise' or numeric, default=np.nan):
+            Value to assign to the score if an error occurs in estimator
+            fitting. If set to 'raise', the error is raised. If a numeric
+            value is given, FitFailedWarning is raised. This parameter
+            does not affect the refit step, which will always raise the
+            error.
+        return_train_score (bool, default=False):
+            If ``False``, the ``cv_results_`` attribute will not include
+            training scores.
+            Computing training scores is used to get insights on how
+            different parameter settings impact the
+            overfitting/underfitting trade-off. However, computing the
+            scores on the training set can be computationally expensive and
+            is not strictly required to select the parameters that yield
+            the best generalization performance.
     """
 
     def __init__(
@@ -54,126 +172,6 @@ class GridSearchCV(_GridSearchCV):
         error_score=np.nan,
         return_train_score=False,
     ):
-        """Initialize CVSearch tool.
-
-        Args:
-            estimator (Estimator):
-                A object of that type is instantiated for each grid point.
-                This is assumed to implement the scikit-learn estimator
-                interface. Either estimator needs to provide a ``score``
-                function, or ``scoring`` must be passed.
-            param_grid (dict or list[dict]):
-                Dictionary representing grid of hyper-parameters with their
-                names as keys and possible values. If given as a list of
-                multiple dicts, will search on multiple grids in parallel.
-            opt_selection_method (str, default="max_score"):
-                The method to select optimal hyper params. Default to
-                "max_score", which means to maximize the score. Can also choose
-                "one_std_score", which means to apply one standard error rule
-                on scores.
-            scoring (str, callable, list, tuple or dict,
-            default="neg_root_mean_squared_error"):
-                Strategy to evaluate the performance of the cross-validated
-                model on the test set.
-                If `scoring` represents a single score, one can use:
-                - a single string (see :ref:`scoring_parameter`);
-                - a callable (see :ref:`scoring`) that returns a single value.
-                If `scoring` represents multiple scores, one can use:
-                - a list or tuple of unique strings;
-                - a callable returning a dictionary where the keys are the
-                metric names and the values are the metric scores;
-                - a dictionary with metric names as keys and callables a
-                values.
-                See :ref:`multimetric_grid_search` for an example.
-                In sparse-lm, using "neg_root_mean_squared_error" is default
-                because in cluster expansion it is more conventional to
-                analyze and present errors in the root-mean-square error format
-                compared to the r2_score.
-            n_jobs (int, default=None):
-                Number of jobs to run in parallel.
-                ``None`` means 1 unless in a :obj:`joblib.parallel_backend`
-                context.
-                ``-1`` means using all processors. See
-                :term:`Glossary <n_jobs>` for more details.
-            refit (bool, str, or callable, default=True)
-                Refit an estimator using the best found parameters on the whole
-                dataset.
-                For multiple metric evaluation, this needs to be a `str`
-                denoting the scorer that would be used to find the best
-                parameters for refitting the estimator at the end.
-                Where there are considerations other than maximum score in
-                choosing a best estimator, ``refit`` can be set to a function
-                which returns the selected ``best_index_`` given
-                ``cv_results_``.
-                In that case, the ``best_estimator_`` and ``best_params_`` will
-                be set according to the returned ``best_index_`` while the
-                ``best_score_`` attribute will not be available.
-                The refitted estimator is made available at the
-                ``best_estimator_`` attribute and permits using ``predict``
-                directly on this instance.
-                Also for multiple metric evaluation, the attributes
-                ``best_index_``, ``best_score_`` and ``best_params_`` will only
-                be available if ``refit`` is set and all of them will be
-                determined w.r.t this specific scorer.
-                See ``scoring`` parameter to know more about multiple metric
-                evaluation.
-            cv (int, cross-validation generator or an iterable, default=None):
-                Determines the cross-validation splitting strategy.
-                Possible inputs for cv are:
-                - None, to use the default 5-fold cross validation,
-                - integer, to specify the number of folds in a
-                `(Stratified)KFold`,
-                - :term:`CV splitter`,
-                - An iterable yielding (train, test) splits as arrays of
-                indices.
-                For integer/None inputs, if the estimator is a classifier and
-                ``y`` is either binary or multiclass, :class:`StratifiedKFold`
-                is used. In all other cases, :class:`KFold` is used. These
-                splitters are instantiated with `shuffle=False` so the splits
-                will be the same across calls.
-                Refer :ref:`User Guide <cross_validation>` for the various
-                cross-validation strategies that can be used here.
-                Notice that if cv is not specified, KFold(5) will be used, and your
-                training set will not be shuffled in each train-test split. This can
-                be dangerous if your training set has internal relations, for example,
-                structures with similar composition are close to each other in feature
-                rows. In this case, you should use RepeatedKFold as cv instead.
-            verbose (int, default=0):
-                Controls the verbosity: the higher, the more messages.
-                - >1 : the computation time for each fold and parameter
-                candidate is displayed;
-                - >2 : the score is also displayed;
-                - >3 : the fold and candidate parameter indexes are also
-                displayed together with the starting time of the computation.
-            pre_dispatch (int, or str, default='2*n_jobs'):
-                Controls the number of jobs that get dispatched during parallel
-                execution. Reducing this number can be useful to avoid an
-                explosion of memory consumption when more jobs get dispatched
-                than CPUs can process. This parameter can be:
-                    - None, in which case all the jobs are immediately
-                      created and spawned. Use this for lightweight and
-                      fast-running jobs, to avoid delays due to on-demand
-                      spawning of the jobs
-                    - An int, giving the exact number of total jobs that are
-                      spawned
-                    - A str, giving an expression as a function of n_jobs,
-                      as in '2*n_jobs'
-            error_score ('raise' or numeric, default=np.nan):
-                Value to assign to the score if an error occurs in estimator
-                fitting. If set to 'raise', the error is raised. If a numeric
-                value is given, FitFailedWarning is raised. This parameter
-                does not affect the refit step, which will always raise the
-                error.
-            return_train_score (bool, default=False):
-                If ``False``, the ``cv_results_`` attribute will not include
-                training scores.
-                Computing training scores is used to get insights on how
-                different parameter settings impact the
-                overfitting/underfitting trade-off. However, computing the
-                scores on the training set can be computationally expensive and
-                is not strictly required to select the parameters that yield
-                the best generalization performance.
-        """
         super().__init__(
             estimator=estimator,
             param_grid=param_grid,
@@ -248,9 +246,10 @@ class GridSearchCV(_GridSearchCV):
                 `num_samples` then it will be split across CV groups along with
                 `X` and `y`. For example, the :term:`sample_weight` parameter
                 is split because `len(sample_weights) = len(X)`.
-            Returns:
-                self(GridSearch):
-                    Instance of fitted estimator.
+
+        Returns:
+            self(GridSearch):
+                Instance of fitted estimator.
         """
         estimator = self.estimator
         refit_metric = "score"
@@ -480,7 +479,8 @@ class LineSearchCV(BaseSearchCV):
                 a time in the order of param_grid.
                 n_iter must be at least as large as the number of hyper-params.
                 Default is 2 * number of hyper-params.
-            scoring (str, callable, list, tuple or dict,
+            scoring (str, callable, list, tuple or dict):
+                Strategy to evaluate the performance of the cross-validated model on the test set.
             default="neg_root_mean_squared_error"):
                 Strategy to evaluate the performance of the cross-validated
                 model on the test set.
@@ -504,7 +504,7 @@ class LineSearchCV(BaseSearchCV):
                 context.
                 ``-1`` means using all processors. See
                 :term:`Glossary <n_jobs>` for more details.
-            refit (bool, str, or callable, default=True)
+            refit (bool, str, or callable, default=True):
                 Refit an estimator using the best found parameters on the whole
                 dataset.
                 For multiple metric evaluation, this needs to be a `str`
@@ -623,9 +623,10 @@ class LineSearchCV(BaseSearchCV):
                 `num_samples` then it will be split across CV groups along with
                 `X` and `y`. For example, the :term:`sample_weight` parameter
                 is split because `len(sample_weights) = len(X)`.
-            Returns:
-                self(LineSearch):
-                    Instance of fitted estimator.
+
+        Returns:
+            self (LineSearch):
+                Instance of fitted estimator.
         """
         # Validate parameters.
         if isinstance(self.param_grid[0][0], str) and isinstance(

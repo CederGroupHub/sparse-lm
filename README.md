@@ -7,31 +7,21 @@ Sparse Linear Regression Models
 [![pre-commit.ci status](https://results.pre-commit.ci/badge/github/CederGroupHub/sparse-lm/main.svg)](https://results.pre-commit.ci/latest/github/CederGroupHub/sparse-lm/main)
 [![pypi version](https://img.shields.io/pypi/v/sparse-lm?color=blue)](https://pypi.org/project/sparse-lm)
 
-**sparse-lm**  includes several regularized regression estimators that are absent in the
+**sparse-lm**  includes several (structured) sparse linear regression estimators that are absent in the
 `sklearn.linear_model` module. The estimators in **sparse-lm** are designed to fit right into
-[scikit-lean](https://scikit-learn.org/stable/index.html) by inheriting from their base
-`LinearModel`. But the underlying optimization problem is expressed and solved by
-leveraging [cvxpy](https://www.cvxpy.org/).
+[scikit-lean](https://scikit-learn.org/stable/index.html), but the underlying optimization problem is expressed and
+solved by leveraging [cvxpy](https://www.cvxpy.org/).
 
 ---------------------------------------------------------------------------------------
 
 Available regression models
 ---------------------------
-- Ordinary Least Squares (`sklearn` may be a better option)
-- Lasso (`sklearn` may be a better option)
-- Group Lasso, Overlap Group Lasso & Sparse Group Lasso
+- Lasso, Group Lasso, Overlap Group Lasso, Sparse Group Lasso & Ridged Group Lasso.
 - Adaptive versions of Lasso, Group Lasso, Overlap Group Lasso, Sparse Group Lasso & Ridged Group Lasso.
 - Best Subset Selection, Ridged Best Subset, L0, L1L0 & L2L0 (all with optional grouping of parameters)
-  (`gurobi` recommended for performance)
 
-Installation
-------------
-From pypi:
-
-    pip install sparse-lm
-
-Usage
------
+Basic usage
+-----------
 If you already use **scikit-learn**, using **sparse-lm** will be very easy. Just use any
 model like you would any linear model in **scikit-learn**:
 

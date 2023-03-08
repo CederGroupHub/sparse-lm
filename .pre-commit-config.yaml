@@ -54,23 +54,14 @@ repos:
         - --expand-star-imports
         - --ignore-init-module-imports
 
-# flake8 can not be configured in pytoml, so line lengths will cause many failures
-#- repo: https://github.com/PyCQA/flake8
-#  rev: 5.0.4
-#  hooks:
-#  - id: flake8
-#    files: ^sparselm/
-#    language_version: python3
-#    additional_dependencies:
-#    - flake8-typing-imports==1.10.1
-#    - flake8-rst-docstrings==0.2.3
-#    - flake8-rst==0.8.0
-
 - repo: https://github.com/pycqa/pydocstyle
   rev: 6.3.0  # pick a git hash / tag to point to
   hooks:
   - id: pydocstyle
-    files: ^sparselm/
+    files: ^src/sparselm/
+    args:
+      - --convention=google
+      - --add-ignore=D107
 
 - repo: https://github.com/pre-commit/pygrep-hooks
   rev: v1.10.0

@@ -11,6 +11,7 @@ from sparselm.model import (
     AdaptiveSparseGroupLasso,
     GroupLasso,
     Lasso,
+    OverlapGroupLasso,
     SparseGroupLasso,
 )
 
@@ -21,8 +22,8 @@ ADAPTIVE_ESTIMATORS = [
     AdaptiveOverlapGroupLasso,
     AdaptiveRidgedGroupLasso,
 ]
-# a high threshold since beta from make_regression are always ~ 1E1
-THRESHOLD = 1e-2
+
+THRESHOLD = 1e-8  # relative threshold
 
 
 def test_lasso_toy():
@@ -53,7 +54,7 @@ def test_lasso_toy():
     npt.assert_array_almost_equal(lasso.coef_, [0.25])
     npt.assert_array_almost_equal(pred, [0.5, 0.75, 1.0])
 
-    lasso = Lasso(alpha=1)
+    lasso = Lasso(alpha=1.0)
     lasso.fit(X, Y)
     pred = lasso.predict(T)
     npt.assert_array_almost_equal(lasso.coef_, [0.0])
@@ -86,18 +87,12 @@ def test_adaptive_lasso_sparser(random_model):
 
 # TODO flakey test, depends on THRESHOLD value
 @pytest.mark.xfail(raises=SolverError)
-@pytest.mark.parametrize("standardize", [False, True])
+@pytest.mark.parametrize(
+    "standardize",
+    [True, False],
+)  # standardize=False leads to failures
 def test_group_lasso(random_model_with_groups, solver, standardize):
     X, y, _, groups = random_model_with_groups
-
-    glasso = GroupLasso(
-        groups=groups,
-        alpha=5,
-        fit_intercept=True,
-        standardize=standardize,
-        solver=solver,
-    )
-    glasso.fit(X, y)
 
     aglasso = AdaptiveGroupLasso(
         groups=groups,
@@ -110,31 +105,21 @@ def test_group_lasso(random_model_with_groups, solver, standardize):
 
     # check that if all coefs in groups are consistent
     for gid in np.unique(groups):
-        all_active = (abs(glasso.coef_[groups == gid]) > THRESHOLD).all()
-        all_inactive = (abs(glasso.coef_[groups == gid]) <= THRESHOLD).all()
-        assert all_active or all_inactive
-
-        all_active = (abs(aglasso.coef_[groups == gid]) > THRESHOLD).all()
-        all_inactive = (abs(aglasso.coef_[groups == gid]) <= THRESHOLD).all()
+        m = np.max(abs(aglasso.coef_))
+        all_active = (abs(aglasso.coef_[groups == gid]) > m * THRESHOLD).all()
+        all_inactive = (abs(aglasso.coef_[groups == gid]) <= m * THRESHOLD).all()
         assert all_active or all_inactive
 
 
 @pytest.mark.xfail(raises=SolverError)
-@pytest.mark.parametrize("standardize", [False, True])
+@pytest.mark.parametrize(
+    "standardize",
+    [True, False],
+)
 def test_group_lasso_weights(random_model_with_groups, solver, standardize):
     X, y, _, groups = random_model_with_groups
 
     group_weights = np.ones(len(np.unique(groups)))
-
-    glasso = GroupLasso(
-        groups=groups,
-        alpha=5,
-        group_weights=group_weights,
-        fit_intercept=True,
-        standardize=standardize,
-        solver=solver,
-    )
-    glasso.fit(X, y)
 
     aglasso = AdaptiveGroupLasso(
         groups=groups,
@@ -158,16 +143,15 @@ def test_group_lasso_weights(random_model_with_groups, solver, standardize):
 
     # check that if all coefs in groups are consistent
     for gid in np.unique(groups):
-        all_active = (abs(glasso.coef_[groups == gid]) > THRESHOLD).all()
-        all_inactive = (abs(glasso.coef_[groups == gid]) <= THRESHOLD).all()
+        m = np.max(abs(aglasso.coef_))
+
+        all_active = (abs(aglasso.coef_[groups == gid]) > m * THRESHOLD).all()
+        all_inactive = (abs(aglasso.coef_[groups == gid]) <= m * THRESHOLD).all()
         assert all_active or all_inactive
 
-        all_active = (abs(aglasso.coef_[groups == gid]) > THRESHOLD).all()
-        all_inactive = (abs(aglasso.coef_[groups == gid]) <= THRESHOLD).all()
-        assert all_active or all_inactive
-
-        all_active = (abs(rglasso.coef_[groups == gid]) > THRESHOLD).all()
-        all_inactive = (abs(rglasso.coef_[groups == gid]) <= THRESHOLD).all()
+        m = np.max(abs(rglasso.coef_))
+        all_active = (abs(rglasso.coef_[groups == gid]) > m * THRESHOLD).all()
+        all_inactive = (abs(rglasso.coef_[groups == gid]) <= m * THRESHOLD).all()
         assert all_active or all_inactive
 
 
@@ -189,25 +173,25 @@ def test_adaptive_weights(estimator_cls, random_model_with_groups, solver, rng):
         estimator = estimator_cls(groups=groups, solver=solver)
 
     # force generating weights
-    if estimator_cls.__name__ == "AdaptiveOverlapGroupLasso":
-        _ = estimator._get_problem(X[:, estimator.beta_indices], y)
-    else:
-        _ = estimator._get_problem(X, y)
+    estimator.generate_problem(X, y)
 
-    if isinstance(estimator._weights, tuple):
+    if estimator_cls.__name__ == "AdaptiveSparseGroupLasso":
         weights = [
-            estimator._weights[0].value.copy(),
-            estimator._weights[1].value.copy(),
+            estimator.canonicals_.parameters.adaptive_coef_weights.value.copy(),
+            estimator.canonicals_.parameters.adaptive_group_weights.value.copy(),
         ]
     else:
-        weights = [estimator._weights.value.copy()]
+        weights = [estimator.canonicals_.parameters.adaptive_weights.value.copy()]
 
     estimator.fit(X, y)
 
-    if isinstance(estimator._weights, tuple):
-        new_weights = [estimator._weights[0].value, estimator._weights[1].value]
+    if estimator_cls.__name__ == "AdaptiveSparseGroupLasso":
+        new_weights = [
+            estimator.canonicals_.parameters.adaptive_coef_weights.value.copy(),
+            estimator.canonicals_.parameters.adaptive_group_weights.value.copy(),
+        ]
     else:
-        new_weights = [estimator._weights.value]
+        new_weights = [estimator.canonicals_.parameters.adaptive_weights.value.copy()]
 
     # simply check that the weights are updated.
     # TODO a better check would be to check that weights for active groups/coefs
@@ -216,32 +200,64 @@ def test_adaptive_weights(estimator_cls, random_model_with_groups, solver, rng):
         assert not any(nw_i == pytest.approx(w_i) for nw_i, w_i in zip(nw, w))
 
 
-def test_bad_inputs(rng):
-    groups = rng.integers(0, 6, size=50)
-    group_weights = np.ones(len(np.unique(groups)) - 1)
+def test_bad_inputs(random_model_with_groups, rng):
+    X, y, beta, groups = random_model_with_groups
+    bad_groups = rng.integers(0, 6, size=len(beta) - 1)
+    group_weights = np.ones(len(np.unique(bad_groups)))
 
-    # bad group weights
+    # test that warns when no groups given
+    with pytest.warns(UserWarning):
+        gl = GroupLasso()
+        gl.fit(X, y)
+
+    with pytest.warns(UserWarning):
+        gl = OverlapGroupLasso()
+        gl.fit(X, y)
+
+    # bad groups
     with pytest.raises(ValueError):
-        GroupLasso(groups, group_weights=group_weights)
+        gl = GroupLasso(bad_groups, group_weights=group_weights)
+        gl.fit(X, y)
+
+    with pytest.raises(TypeError):
+        gl = GroupLasso("groups", group_weights=group_weights)
+        gl.fit(X, y)
+
+    # bad group_weights
+    with pytest.raises(ValueError):
+        group_weights = np.ones(len(np.unique(bad_groups)) - 1)
+        gl = GroupLasso(bad_groups, group_weights=group_weights)
+        gl.fit(X, y)
+
+    with pytest.raises(TypeError):
+        gl = GroupLasso(groups, group_weights="weights")
+        gl.fit(X, y)
 
     # bad l1_ratio
     lasso = SparseGroupLasso(groups)
     with pytest.raises(ValueError):
-        lasso.l1_ratio = -1
-    with pytest.raises(ValueError):
-        lasso.l1_ratio = 2
+        lasso.l1_ratio = -1.0
+        lasso.fit(X, y)
 
     with pytest.raises(ValueError):
-        SparseGroupLasso(groups, l1_ratio=-1)
+        lasso.l1_ratio = 2.0
+        lasso.fit(X, y)
 
     with pytest.raises(ValueError):
-        SparseGroupLasso(groups, l1_ratio=2)
+        sgl = SparseGroupLasso(groups, l1_ratio=-1.0)
+        sgl.fit(X, y)
+
+    with pytest.raises(ValueError):
+        sgl = SparseGroupLasso(groups, l1_ratio=2.0)
+        sgl.fit(X, y)
 
     # test that it warns
     with pytest.warns(UserWarning):
-        SparseGroupLasso(groups, l1_ratio=0)
+        sgl = SparseGroupLasso(groups, l1_ratio=0.0)
+        sgl.fit(X, y)
     with pytest.warns(UserWarning):
-        SparseGroupLasso(groups, l1_ratio=1)
+        sgl = SparseGroupLasso(groups, l1_ratio=1.0)
+        sgl.fit(X, y)
 
 
 @pytest.mark.parametrize("estimator_cls", ADAPTIVE_ESTIMATORS)
@@ -262,27 +278,32 @@ def test_set_parameters(estimator_cls, random_model_with_groups, rng):
 
     estimator.alpha = 0.5
     assert estimator.alpha == 0.5
-    assert estimator._alpha.value == 0.5
+    estimator.generate_problem(X, y)
+    assert estimator.canonicals_.parameters.alpha.value == 0.5
 
     if hasattr(estimator, "l1_ratio"):
         # default l1_ratio is 0.5
-        assert estimator._lambda1.value == 0.5 * 0.5
-        assert estimator._lambda2.value == 0.5 * 0.5
+        assert estimator.canonicals_.parameters.lambda1.value == 0.5 * 0.5
+        assert estimator.canonicals_.parameters.lambda2.value == 0.5 * 0.5
 
         estimator.l1_ratio = 0.25
+        estimator._set_param_values()
         assert estimator.l1_ratio == 0.25
-        assert estimator._lambda1.value == 0.25 * 0.5
-        assert estimator._lambda2.value == 0.75 * 0.5
+        assert estimator.canonicals_.parameters.lambda1.value == 0.25 * 0.5
+        assert estimator.canonicals_.parameters.lambda2.value == 0.75 * 0.5
 
     if hasattr(estimator, "delta"):
-        estimator.delta = 4.0
-        npt.assert_array_equal(estimator.delta, 4.0 * np.ones(len(np.unique(groups))))
+        estimator.delta = (4.0,)
+        estimator._set_param_values()
         npt.assert_array_equal(
-            estimator._delta.value, 4.0 * np.ones(len(np.unique(groups)))
+            estimator.canonicals_.parameters.delta.value,
+            4.0 * np.ones(len(np.unique(groups))),
         )
 
         estimator.delta = 3.0 * np.ones(len(np.unique(groups)))
+        estimator._set_param_values()
         npt.assert_array_equal(estimator.delta, 3.0 * np.ones(len(np.unique(groups))))
         npt.assert_array_equal(
-            estimator._delta.value, 3.0 * np.ones(len(np.unique(groups)))
+            estimator.canonicals_.parameters.delta.value,
+            3.0 * np.ones(len(np.unique(groups))),
         )

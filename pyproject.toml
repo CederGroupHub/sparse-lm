@@ -13,7 +13,7 @@ license = {text = "BSD 3-Clause License"}
 dynamic = ["version"]
 dependencies = [
     "numpy >=1.23", "cvxpy >=1.2", "scikit-learn >=1.2.1",
-    "scipy >=1.9", "joblib", "cvxopt"
+    "scipy >=1.9", "joblib"
     ]
 classifiers = [
     "Development Status :: 3 - Alpha",
@@ -32,7 +32,7 @@ classifiers = [
 [project.optional-dependencies]
 dev = ["pre-commit", "black", "isort", "flake8", "pylint", "pydocstyle", "flake8-pyproject"]
 # Gurobipy needed by mixedL0 tests, pandas needed by sklearn convention checks.
-tests = ["pytest >=7.2.0", "pytest-cov >=4.0.0", "coverage", "gurobipy", "pandas"]
+tests = ["pytest >=7.2.0", "pytest-cov >=4.0.0", "coverage", "pandas", "gurobipy", "pyscipopt"]
 docs = ["sphinx>=5.3", "furo", "m2r2"]
 optional = ["gurobipy"]
 
@@ -77,3 +77,7 @@ ignore-words-list = ['nd', 'tread']
 [tool.coverage.run]
 source = ["src/sparselm"]
 omit = ["*/__init__.py"]
+
+[tool.pydocstyle]
+convention = "google"
+add_ignore = ["D107"]

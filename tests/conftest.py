@@ -8,10 +8,10 @@ SEED = 0
 # ECOS sometimes fails for Adaptive group estimators, but is fast
 # SCS and CXVOPT are reliable, but slower
 # GUROBI is best
-CONVEX_SOLVERS = ["GUROBI", "SCS", "CVXOPT"]
+CONVEX_SOLVERS = ["GUROBI", "ECOS"]  # SCS, GUROBI, CVXOPT
 
 # ECOS_BB is open source alternative, but much slower, and can get things wrong
-MIQP_SOLVERS = ["GUROBI"]
+MIQP_SOLVERS = ["GUROBI"]  # SCIP fails some tests...
 
 # Set to small values bc gurobi non-commercial can not solver large model.
 N_FEATURES = [20, 30]  # an overdetermined and underdetermined case
@@ -87,20 +87,41 @@ def sparse_coded_signal(rng):
     return X, y[:, 0], beta[:, 0]
 
 
-# TODO this fixture sometimes causes tests to fail because it does not pick some groups
 @pytest.fixture(params=[4, 6], scope="package")
 def random_model_with_groups(random_model, rng, request):
     """Add a correct set of groups to model."""
     X, y, beta = random_model
-    coef_mask = abs(beta) > 0
     n_groups = request.param
     n_active_groups = n_groups // 3 + 1
+
+    n_features_per_group = len(beta) // n_groups
     active_group_inds = rng.choice(range(n_groups), size=n_active_groups, replace=False)
     inactive_group_inds = np.setdiff1d(range(n_groups), active_group_inds)
 
     groups = np.zeros(len(beta), dtype=int)
-    for i, c in enumerate(coef_mask):
-        groups[i] = (
-            rng.choice(active_group_inds) if c else rng.choice(inactive_group_inds)
-        )
+    active_feature_inds = np.where(abs(beta) > 0)[0]
+    inactive_feature_inds = np.setdiff1d(np.arange(len(beta)), active_feature_inds)
+
+    # set active groups
+    for i in active_group_inds:
+        if len(active_feature_inds) > n_features_per_group:
+            group_inds = rng.choice(
+                active_feature_inds, size=n_features_per_group, replace=False
+            )
+        else:
+            group_inds = active_feature_inds
+        groups[group_inds] = i
+        active_feature_inds = np.setdiff1d(active_feature_inds, group_inds)
+
+    # set inactive_groups
+    for i in inactive_group_inds:
+        if len(inactive_feature_inds) > n_features_per_group:
+            group_inds = rng.choice(
+                inactive_feature_inds, size=n_features_per_group, replace=False
+            )
+        else:
+            group_inds = inactive_feature_inds
+        groups[group_inds] = i
+        inactive_feature_inds = np.setdiff1d(inactive_feature_inds, group_inds)
+
     return X, y, beta, groups

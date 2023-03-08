@@ -1,4 +1,4 @@
-"""Classes implementing generalized linear regression estimators."""
+"""Classes implementing generalized linear regression Regressors."""
 
 from importlib.metadata import PackageNotFoundError, version
 

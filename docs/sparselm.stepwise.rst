@@ -1,7 +1,7 @@
-sparselm.model
-==============
+sparselm.stepwise
+========================
 
-.. automodule:: sparselm.model
+.. automodule:: sparselm.stepwise
    :members:
    :inherited-members:
    :undoc-members:
