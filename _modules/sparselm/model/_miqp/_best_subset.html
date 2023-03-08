@@ -178,9 +178,11 @@
   <p class="caption" role="heading"><span class="caption-text">Getting Started</span></p>
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="../../../../install.html">Install</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../examples.html">Examples</a></li>
 </ul>
 <p class="caption" role="heading"><span class="caption-text">Information</span></p>
 <ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../../contributing.html">Contributing</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../../license.html">License</a></li>
 <li class="toctree-l1"><a class="reference external" href="https://github.com/CederGroupHub/sparse-lm">GitHub</a></li>
 </ul>
@@ -188,6 +190,7 @@
 <ul>
 <li class="toctree-l1 has-children"><a class="reference internal" href="../../../../api.html">API</a><input class="toctree-checkbox" id="toctree-checkbox-1" name="toctree-checkbox-1" role="switch" type="checkbox"/><label for="toctree-checkbox-1"><div class="visually-hidden">Toggle child pages in navigation</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
 <li class="toctree-l2"><a class="reference internal" href="../../../../sparselm.model.html">sparselm.model</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../../sparselm.stepwise.html">sparselm.stepwise</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../../../../sparselm.model_selection.html">sparselm.model_selection</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../../../../sparselm.tools.html">sparselm.tools</a></li>
 </ul>
@@ -232,81 +235,112 @@
 <span class="sd">Allows hierarchy constraints similar to mixed L0 solvers.</span>
 <span class="sd">&quot;&quot;&quot;</span>
 
+<span class="kn">from</span> <span class="nn">__future__</span> <span class="kn">import</span> <span class="n">annotations</span>
+
 <span class="n">__author__</span> <span class="o">=</span> <span class="s2">&quot;Luis Barroso-Luque&quot;</span>
 
+<span class="kn">from</span> <span class="nn">numbers</span> <span class="kn">import</span> <span class="n">Real</span>
+<span class="kn">from</span> <span class="nn">types</span> <span class="kn">import</span> <span class="n">SimpleNamespace</span>
+<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Any</span>
+
 <span class="kn">import</span> <span class="nn">cvxpy</span> <span class="k">as</span> <span class="nn">cp</span>
+<span class="kn">from</span> <span class="nn">numpy.typing</span> <span class="kn">import</span> <span class="n">ArrayLike</span><span class="p">,</span> <span class="n">NDArray</span>
+<span class="kn">from</span> <span class="nn">sklearn.utils._param_validation</span> <span class="kn">import</span> <span class="n">Interval</span>
 
 <span class="kn">from</span> <span class="nn">sparselm.model._base</span> <span class="kn">import</span> <span class="n">TikhonovMixin</span>
 
-<span class="kn">from</span> <span class="nn">._base</span> <span class="kn">import</span> <span class="n">MIQP_L0</span>
+<span class="kn">from</span> <span class="nn">._base</span> <span class="kn">import</span> <span class="n">MIQPl0</span>
 
 
-<div class="viewcode-block" id="BestSubsetSelection"><a class="viewcode-back" href="../../../../sparselm.model.html#sparselm.model.BestSubsetSelection">[docs]</a><span class="k">class</span> <span class="nc">BestSubsetSelection</span><span class="p">(</span><span class="n">MIQP_L0</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;MIQP Best Subset Selection estimator.</span>
+<div class="viewcode-block" id="BestSubsetSelection"><a class="viewcode-back" href="../../../../sparselm.model.html#sparselm.model.BestSubsetSelection">[docs]</a><span class="k">class</span> <span class="nc">BestSubsetSelection</span><span class="p">(</span><span class="n">MIQPl0</span><span class="p">):</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;MIQP Best Subset Selection Regressor.</span>
 
 <span class="sd">    Generalized best subset that allows grouping subsets.</span>
 
-<span class="sd">    WARNING: Even with gurobi solver, this can take a very long time to</span>
-<span class="sd">    converge for large problems and under-determined problems.</span>
+<span class="sd">    Args:</span>
+<span class="sd">        groups (ArrayLike):</span>
+<span class="sd">            array-like of integers specifying groups. Length should be the</span>
+<span class="sd">            same as model, where each integer entry specifies the group</span>
+<span class="sd">            each parameter corresponds to. If no grouping is required,</span>
+<span class="sd">            simply pass a list of all different numbers, i.e. using range.</span>
+<span class="sd">        sparse_bound (int):</span>
+<span class="sd">            Upper bound on sparsity. The upper bound on total number of</span>
+<span class="sd">            nonzero coefficients.</span>
+<span class="sd">        big_M (float):</span>
+<span class="sd">            Upper bound on the norm of coefficients associated with each</span>
+<span class="sd">            cluster (groups of coefficients) ||Beta_c||_2</span>
+<span class="sd">        hierarchy (list):</span>
+<span class="sd">            A list of lists of integers storing hierarchy relations between</span>
+<span class="sd">            coefficients.</span>
+<span class="sd">            Each sublist contains indices of other coefficients</span>
+<span class="sd">            on which the coefficient associated with each element of</span>
+<span class="sd">            the list depends. i.e. hierarchy = [[1, 2], [0], []] mean that</span>
+<span class="sd">            coefficient 0 depends on 1, and 2; 1 depends on 0, and 2 has no</span>
+<span class="sd">            dependence.</span>
+<span class="sd">        ignore_psd_check (bool):</span>
+<span class="sd">            Whether to ignore cvxpy&#39;s PSD checks of matrix used in</span>
+<span class="sd">            quadratic form. Default is True to avoid raising errors for</span>
+<span class="sd">            poorly conditioned matrices. But if you want to be strict set</span>
+<span class="sd">            to False.</span>
+<span class="sd">        fit_intercept (bool):</span>
+<span class="sd">            Whether the intercept should be estimated or not.</span>
+<span class="sd">            If False, the data is assumed to be already centered.</span>
+<span class="sd">        copy_X (bool):</span>
+<span class="sd">            If True, X will be copied; else, it may be overwritten.</span>
+<span class="sd">        warm_start (bool):</span>
+<span class="sd">            When set to True, reuse the solution of the previous call to</span>
+<span class="sd">            fit as initialization, otherwise, just erase the previous</span>
+<span class="sd">            solution.</span>
+<span class="sd">        solver (str):</span>
+<span class="sd">            cvxpy backend solver to use. Supported solvers are listed here:</span>
+<span class="sd">            https://www.cvxpy.org/tutorial/advanced/index.html#solve-method-options</span>
+<span class="sd">        solver_options (dict):</span>
+<span class="sd">            dictionary of keyword arguments passed to cvxpy solve.</span>
+<span class="sd">            See docs in CVXRegressor for more information.</span>
+
+<span class="sd">    Attributes:</span>
+<span class="sd">        coef_ (NDArray):</span>
+<span class="sd">            Parameter vector (:math:`\beta` in the cost function formula) of shape (n_features,).</span>
+<span class="sd">        intercept_ (float):</span>
+<span class="sd">            Independent term in decision function.</span>
+<span class="sd">        canonicals_ (SimpleNamespace):</span>
+<span class="sd">            Namespace that contains underlying cvxpy objects used to define</span>
+<span class="sd">            the optimization problem. The objects included are the following:</span>
+<span class="sd">                - objective - the objective function.</span>
+<span class="sd">                - beta - variable to be optimized (corresponds to the estimated coef_ attribute).</span>
+<span class="sd">                - parameters - hyper-parameters</span>
+<span class="sd">                - auxiliaries - auxiliary variables and expressions</span>
+<span class="sd">                - constraints - solution constraints</span>
+
+<span class="sd">    Notes:</span>
+<span class="sd">        Installation of Gurobi is not a must, but highly recommended. An open source alternative</span>
+<span class="sd">        is SCIP. ECOS_BB also works but can be very slow, and has recurring correctness issues.</span>
+<span class="sd">        See the Mixed-integer programs section of the cvxpy docs:</span>
+<span class="sd">        https://www.cvxpy.org/tutorial/advanced/index.html</span>
+
+<span class="sd">    WARNING:</span>
+<span class="sd">        Even with gurobi solver, this can take a very long time to converge for large problems and under-determined</span>
+<span class="sd">        problems.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">_cvx_parameter_constraints</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">list</span><span class="p">[</span><span class="n">Any</span><span class="p">]]</span> <span class="o">=</span> <span class="p">{</span>
+        <span class="s2">&quot;sparse_bound&quot;</span><span class="p">:</span> <span class="p">[</span><span class="n">Interval</span><span class="p">(</span><span class="nb">type</span><span class="o">=</span><span class="n">Real</span><span class="p">,</span> <span class="n">left</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">right</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">closed</span><span class="o">=</span><span class="s2">&quot;left&quot;</span><span class="p">)],</span>
+        <span class="o">**</span><span class="n">MIQPl0</span><span class="o">.</span><span class="n">_cvx_parameter_constraints</span><span class="p">,</span>
+    <span class="p">}</span>
 
     <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
-        <span class="n">groups</span><span class="p">,</span>
-        <span class="n">sparse_bound</span><span class="p">,</span>
-        <span class="n">big_M</span><span class="o">=</span><span class="mi">100</span><span class="p">,</span>
-        <span class="n">hierarchy</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
-        <span class="n">ignore_psd_check</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
-        <span class="n">fit_intercept</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
-        <span class="n">copy_X</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
-        <span class="n">warm_start</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
-        <span class="n">solver</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
-        <span class="n">solver_options</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
-        <span class="o">**</span><span class="n">kwargs</span><span class="p">,</span>
+        <span class="n">groups</span><span class="p">:</span> <span class="n">ArrayLike</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">sparse_bound</span><span class="o">=</span><span class="mi">100</span><span class="p">,</span>
+        <span class="n">big_M</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">100</span><span class="p">,</span>
+        <span class="n">hierarchy</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">list</span><span class="p">[</span><span class="nb">int</span><span class="p">]]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">ignore_psd_check</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
+        <span class="n">fit_intercept</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+        <span class="n">copy_X</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
+        <span class="n">warm_start</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+        <span class="n">solver</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">solver_options</span><span class="p">:</span> <span class="nb">dict</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="p">):</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Initialize estimator.</span>
-
-<span class="sd">        Args:</span>
-<span class="sd">            groups (list or ndarray):</span>
-<span class="sd">                array-like of integers specifying groups. Length should be the</span>
-<span class="sd">                same as model, where each integer entry specifies the group</span>
-<span class="sd">                each parameter corresponds to. If no grouping is required, simply</span>
-<span class="sd">                pass a list of all different numbers, i.e. using range.</span>
-<span class="sd">            sparse_bound (int):</span>
-<span class="sd">                Upper bound on sparsity. The upper bound on total number of</span>
-<span class="sd">                nonzero coefficients.</span>
-<span class="sd">            big_M (float):</span>
-<span class="sd">                Upper bound on the norm of coefficients associated with each</span>
-<span class="sd">                cluster (groups of coefficients) ||Beta_c||_2</span>
-<span class="sd">            hierarchy (list):</span>
-<span class="sd">                A list of lists of integers storing hierarchy relations between</span>
-<span class="sd">                coefficients.</span>
-<span class="sd">                Each sublist contains indices of other coefficients</span>
-<span class="sd">                on which the coefficient associated with each element of</span>
-<span class="sd">                the list depends. i.e. hierarchy = [[1, 2], [0], []] mean that</span>
-<span class="sd">                coefficient 0 depends on 1, and 2; 1 depends on 0, and 2 has no</span>
-<span class="sd">                dependence.</span>
-<span class="sd">            ignore_psd_check (bool):</span>
-<span class="sd">                Whether to ignore cvxpy&#39;s PSD checks  of matrix used in quadratic</span>
-<span class="sd">                form. Default is True to avoid raising errors for poorly</span>
-<span class="sd">                conditioned matrices. But if you want to be strict set to False.</span>
-<span class="sd">            fit_intercept (bool):</span>
-<span class="sd">                Whether the intercept should be estimated or not.</span>
-<span class="sd">                If False, the data is assumed to be already centered.</span>
-<span class="sd">            copy_X (bool):</span>
-<span class="sd">                If True, X will be copied; else, it may be overwritten.</span>
-<span class="sd">            warm_start (bool):</span>
-<span class="sd">                When set to True, reuse the solution of the previous call to</span>
-<span class="sd">                fit as initialization, otherwise, just erase the previous</span>
-<span class="sd">                solution.</span>
-<span class="sd">            solver (str):</span>
-<span class="sd">                cvxpy backend solver to use. Supported solvers are:</span>
-<span class="sd">                ECOS, ECOS_BB, CVXOPT, SCS, GUROBI, Elemental.</span>
-<span class="sd">                GLPK and GLPK_MI (via CVXOPT GLPK interface)</span>
-<span class="sd">            solver_options:</span>
-<span class="sd">                dictionary of keyword arguments passed to cvxpy solve.</span>
-<span class="sd">                See docs in CVXEstimator for more information.</span>
-<span class="sd">        &quot;&quot;&quot;</span>
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span>
             <span class="n">groups</span><span class="o">=</span><span class="n">groups</span><span class="p">,</span>
             <span class="n">big_M</span><span class="o">=</span><span class="n">big_M</span><span class="p">,</span>
@@ -318,96 +352,115 @@
             <span class="n">solver</span><span class="o">=</span><span class="n">solver</span><span class="p">,</span>
             <span class="n">solver_options</span><span class="o">=</span><span class="n">solver_options</span><span class="p">,</span>
         <span class="p">)</span>
-        <span class="k">if</span> <span class="n">sparse_bound</span> <span class="o">&lt;=</span> <span class="mi">0</span><span class="p">:</span>
-            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;sparse_bound must be &gt; 0&quot;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">sparse_bound</span> <span class="o">=</span> <span class="n">sparse_bound</span>
 
-        <span class="bp">self</span><span class="o">.</span><span class="n">_bound</span> <span class="o">=</span> <span class="n">cp</span><span class="o">.</span><span class="n">Parameter</span><span class="p">(</span><span class="n">nonneg</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">value</span><span class="o">=</span><span class="n">sparse_bound</span><span class="p">)</span>
-
-    <span class="nd">@property</span>
-    <span class="k">def</span> <span class="nf">sparse_bound</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Get sparse bound value.&quot;&quot;&quot;</span>
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_bound</span><span class="o">.</span><span class="n">value</span>
-
-    <span class="nd">@sparse_bound</span><span class="o">.</span><span class="n">setter</span>
-    <span class="k">def</span> <span class="nf">sparse_bound</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">val</span><span class="p">):</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Set sparse bound value.&quot;&quot;&quot;</span>
-        <span class="k">if</span> <span class="n">val</span> <span class="o">&lt;=</span> <span class="mi">0</span><span class="p">:</span>
-            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;sparse_bound must be &gt; 0&quot;</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_bound</span><span class="o">.</span><span class="n">value</span> <span class="o">=</span> <span class="n">val</span>
-
-    <span class="k">def</span> <span class="nf">_gen_constraints</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">,</span> <span class="n">y</span><span class="p">):</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Generate the constraints used to solve l0 regularization.&quot;&quot;&quot;</span>
-        <span class="n">constraints</span> <span class="o">=</span> <span class="p">[</span><span class="n">cp</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_z0</span><span class="p">)</span> <span class="o">&lt;=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_bound</span><span class="p">]</span>
-        <span class="n">constraints</span> <span class="o">+=</span> <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">_gen_constraints</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="n">y</span><span class="p">)</span>
+    <span class="k">def</span> <span class="nf">_generate_constraints</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">X</span><span class="p">:</span> <span class="n">ArrayLike</span><span class="p">,</span>
+        <span class="n">y</span><span class="p">:</span> <span class="n">ArrayLike</span><span class="p">,</span>
+        <span class="n">beta</span><span class="p">:</span> <span class="n">cp</span><span class="o">.</span><span class="n">Variable</span><span class="p">,</span>
+        <span class="n">parameters</span><span class="p">:</span> <span class="n">SimpleNamespace</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">auxiliaries</span><span class="p">:</span> <span class="n">SimpleNamespace</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">cp</span><span class="o">.</span><span class="n">constraints</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Generate the constraints for best subset selection.&quot;&quot;&quot;</span>
+        <span class="n">constraints</span> <span class="o">=</span> <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">_generate_constraints</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">beta</span><span class="p">,</span> <span class="n">parameters</span><span class="p">,</span> <span class="n">auxiliaries</span><span class="p">)</span>
+        <span class="n">constraints</span> <span class="o">+=</span> <span class="p">[</span><span class="n">cp</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">auxiliaries</span><span class="o">.</span><span class="n">z0</span><span class="p">)</span> <span class="o">&lt;=</span> <span class="n">parameters</span><span class="o">.</span><span class="n">sparse_bound</span><span class="p">]</span>
         <span class="k">return</span> <span class="n">constraints</span></div>
 
 
 <div class="viewcode-block" id="RidgedBestSubsetSelection"><a class="viewcode-back" href="../../../../sparselm.model.html#sparselm.model.RidgedBestSubsetSelection">[docs]</a><span class="k">class</span> <span class="nc">RidgedBestSubsetSelection</span><span class="p">(</span><span class="n">TikhonovMixin</span><span class="p">,</span> <span class="n">BestSubsetSelection</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;MIQP  Best subset selection estimator with ridge regularization.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;MIQP best subset selection Regressor with Ridge/Tihkonov regularization.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        groups (ArrayLike):</span>
+<span class="sd">            array-like of integers specifying groups. Length should be the</span>
+<span class="sd">            same as model, where each integer entry specifies the group</span>
+<span class="sd">            each parameter corresponds to. If no grouping is required,</span>
+<span class="sd">            simply pass a list of all different numbers, i.e. using range.</span>
+<span class="sd">        sparse_bound (int):</span>
+<span class="sd">            Upper bound on sparsity. The upper bound on total number of</span>
+<span class="sd">            nonzero coefficients.</span>
+<span class="sd">        eta (float):</span>
+<span class="sd">            L2 regularization hyper-parameter.</span>
+<span class="sd">        big_M (float):</span>
+<span class="sd">            Upper bound on the norm of coefficients associated with each</span>
+<span class="sd">            cluster (groups of coefficients) ||Beta_c||_2</span>
+<span class="sd">        hierarchy (list):</span>
+<span class="sd">            A list of lists of integers storing hierarchy relations between</span>
+<span class="sd">            coefficients.</span>
+<span class="sd">            Each sublist contains indices of other coefficients</span>
+<span class="sd">            on which the coefficient associated with each element of</span>
+<span class="sd">            the list depends. i.e. hierarchy = [[1, 2], [0], []] mean that</span>
+<span class="sd">            coefficient 0 depends on 1, and 2; 1 depends on 0, and 2 has no</span>
+<span class="sd">            dependence.</span>
+<span class="sd">        tikhonov_w (np.array):</span>
+<span class="sd">            Matrix to add weights to L2 regularization.</span>
+<span class="sd">        ignore_psd_check (bool):</span>
+<span class="sd">            Whether to ignore cvxpy&#39;s PSD checks of matrix used in</span>
+<span class="sd">            quadratic form. Default is True to avoid raising errors for</span>
+<span class="sd">            poorly conditioned matrices. But if you want to be strict set</span>
+<span class="sd">            to False.</span>
+<span class="sd">        fit_intercept (bool):</span>
+<span class="sd">            Whether the intercept should be estimated or not.</span>
+<span class="sd">            If False, the data is assumed to be already centered.</span>
+<span class="sd">        copy_X (bool):</span>
+<span class="sd">            If True, X will be copied; else, it may be overwritten.</span>
+<span class="sd">        warm_start (bool):</span>
+<span class="sd">            When set to True, reuse the solution of the previous call to</span>
+<span class="sd">            fit as initialization, otherwise, just erase the previous</span>
+<span class="sd">            solution.</span>
+<span class="sd">        solver (str):</span>
+<span class="sd">            cvxpy backend solver to use. Supported solvers are listed here:</span>
+<span class="sd">            https://www.cvxpy.org/tutorial/advanced/index.html#solve-method-options</span>
+<span class="sd">        solver_options (dict):</span>
+<span class="sd">            dictionary of keyword arguments passed to cvxpy solve.</span>
+<span class="sd">            See docs in CVXRegressor for more information.</span>
+
+<span class="sd">    Attributes:</span>
+<span class="sd">        coef_ (NDArray):</span>
+<span class="sd">            Parameter vector (:math:`\beta` in the cost function formula) of shape (n_features,).</span>
+<span class="sd">        intercept_ (float):</span>
+<span class="sd">            Independent term in decision function.</span>
+<span class="sd">        canonicals_ (SimpleNamespace):</span>
+<span class="sd">            Namespace that contains underlying cvxpy objects used to define</span>
+<span class="sd">            the optimization problem. The objects included are the following:</span>
+<span class="sd">                - objective - the objective function.</span>
+<span class="sd">                - beta - variable to be optimized (corresponds to the estimated coef_ attribute).</span>
+<span class="sd">                - parameters - hyper-parameters</span>
+<span class="sd">                - auxiliaries - auxiliary variables and expressions</span>
+<span class="sd">                - constraints - solution constraints</span>
+
+<span class="sd">    Notes:</span>
+<span class="sd">        Installation of Gurobi is not a must, but highly recommended. An open source alternative</span>
+<span class="sd">        is SCIP. ECOS_BB also works but can be very slow, and has recurring correctness issues.</span>
+<span class="sd">        See the Mixed-integer programs section of the cvxpy docs:</span>
+<span class="sd">        https://www.cvxpy.org/tutorial/advanced/index.html</span>
+
+<span class="sd">    WARNING:</span>
+<span class="sd">        Even with gurobi solver, this can take a very long time to converge for large problems and under-determined</span>
+<span class="sd">        problems.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">_cvx_parameter_constraints</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">list</span><span class="p">[</span><span class="n">Any</span><span class="p">]]</span> <span class="o">=</span> <span class="p">{</span>
+        <span class="s2">&quot;eta&quot;</span><span class="p">:</span> <span class="p">[</span><span class="n">Interval</span><span class="p">(</span><span class="nb">type</span><span class="o">=</span><span class="n">Real</span><span class="p">,</span> <span class="n">left</span><span class="o">=</span><span class="mf">0.0</span><span class="p">,</span> <span class="n">right</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">closed</span><span class="o">=</span><span class="s2">&quot;left&quot;</span><span class="p">)],</span>
+        <span class="o">**</span><span class="n">BestSubsetSelection</span><span class="o">.</span><span class="n">_cvx_parameter_constraints</span><span class="p">,</span>
+    <span class="p">}</span>
 
     <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
-        <span class="n">groups</span><span class="p">,</span>
-        <span class="n">sparse_bound</span><span class="p">,</span>
-        <span class="n">eta</span><span class="o">=</span><span class="mf">1.0</span><span class="p">,</span>
-        <span class="n">big_M</span><span class="o">=</span><span class="mi">100</span><span class="p">,</span>
-        <span class="n">hierarchy</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
-        <span class="n">tikhonov_w</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
-        <span class="n">ignore_psd_check</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
-        <span class="n">fit_intercept</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
-        <span class="n">copy_X</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
-        <span class="n">warm_start</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
-        <span class="n">solver</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
-        <span class="n">solver_options</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
-        <span class="o">**</span><span class="n">kwargs</span><span class="p">,</span>
+        <span class="n">groups</span><span class="p">:</span> <span class="n">ArrayLike</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">sparse_bound</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">100</span><span class="p">,</span>
+        <span class="n">eta</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">1.0</span><span class="p">,</span>
+        <span class="n">big_M</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">100</span><span class="p">,</span>
+        <span class="n">hierarchy</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">list</span><span class="p">[</span><span class="nb">int</span><span class="p">]]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">tikhonov_w</span><span class="p">:</span> <span class="n">NDArray</span><span class="p">[</span><span class="nb">float</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">ignore_psd_check</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
+        <span class="n">fit_intercept</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+        <span class="n">copy_X</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
+        <span class="n">warm_start</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+        <span class="n">solver</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">solver_options</span><span class="p">:</span> <span class="nb">dict</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="p">):</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Initialize estimator.</span>
-
-<span class="sd">        Args:</span>
-<span class="sd">            groups (list or ndarray):</span>
-<span class="sd">                array-like of integers specifying groups. Length should be the</span>
-<span class="sd">                same as model, where each integer entry specifies the group</span>
-<span class="sd">                each parameter corresponds to. If no grouping is required, simply</span>
-<span class="sd">                pass a list of all different numbers, i.e. using range.</span>
-<span class="sd">            sparse_bound (int):</span>
-<span class="sd">                Upper bound on sparsity. The upper bound on total number of</span>
-<span class="sd">                nonzero coefficients.</span>
-<span class="sd">            eta (float):</span>
-<span class="sd">                L2 regularization hyper-parameter.</span>
-<span class="sd">            big_M (float):</span>
-<span class="sd">                Upper bound on the norm of coefficients associated with each</span>
-<span class="sd">                cluster (groups of coefficients) ||Beta_c||_2</span>
-<span class="sd">            hierarchy (list):</span>
-<span class="sd">                A list of lists of integers storing hierarchy relations between</span>
-<span class="sd">                coefficients.</span>
-<span class="sd">                Each sublist contains indices of other coefficients</span>
-<span class="sd">                on which the coefficient associated with each element of</span>
-<span class="sd">                the list depends. i.e. hierarchy = [[1, 2], [0], []] mean that</span>
-<span class="sd">                coefficient 0 depends on 1, and 2; 1 depends on 0, and 2 has no</span>
-<span class="sd">                dependence.</span>
-<span class="sd">            tikhonov_w (np.array):</span>
-<span class="sd">                Matrix to add weights to L2 regularization.</span>
-<span class="sd">            ignore_psd_check (bool):</span>
-<span class="sd">                Whether to ignore cvxpy&#39;s PSD checks  of matrix used in quadratic</span>
-<span class="sd">                form. Default is True to avoid raising errors for poorly</span>
-<span class="sd">                conditioned matrices. But if you want to be strict set to False.</span>
-<span class="sd">            fit_intercept (bool):</span>
-<span class="sd">                Whether the intercept should be estimated or not.</span>
-<span class="sd">                If False, the data is assumed to be already centered.</span>
-<span class="sd">            copy_X (bool):</span>
-<span class="sd">                If True, X will be copied; else, it may be overwritten.</span>
-<span class="sd">            warm_start (bool):</span>
-<span class="sd">                When set to True, reuse the solution of the previous call to</span>
-<span class="sd">                fit as initialization, otherwise, just erase the previous</span>
-<span class="sd">                solution.</span>
-<span class="sd">            solver (str):</span>
-<span class="sd">                cvxpy backend solver to use. Supported solvers are:</span>
-<span class="sd">                ECOS, ECOS_BB, CVXOPT, SCS, GUROBI, Elemental.</span>
-<span class="sd">                GLPK and GLPK_MI (via CVXOPT GLPK interface)</span>
-<span class="sd">            solver_options:</span>
-<span class="sd">                dictionary of keyword arguments passed to cvxpy solve.</span>
-<span class="sd">                See docs in CVXEstimator for more information.</span>
-<span class="sd">        &quot;&quot;&quot;</span>
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span>
             <span class="n">groups</span><span class="o">=</span><span class="n">groups</span><span class="p">,</span>
             <span class="n">sparse_bound</span><span class="o">=</span><span class="n">sparse_bound</span><span class="p">,</span>
@@ -419,20 +472,9 @@
             <span class="n">warm_start</span><span class="o">=</span><span class="n">warm_start</span><span class="p">,</span>
             <span class="n">solver</span><span class="o">=</span><span class="n">solver</span><span class="p">,</span>
             <span class="n">solver_options</span><span class="o">=</span><span class="n">solver_options</span><span class="p">,</span>
-            <span class="o">**</span><span class="n">kwargs</span><span class="p">,</span>
         <span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">tikhonov_w</span> <span class="o">=</span> <span class="n">tikhonov_w</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_eta</span> <span class="o">=</span> <span class="n">cp</span><span class="o">.</span><span class="n">Parameter</span><span class="p">(</span><span class="n">nonneg</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">value</span><span class="o">=</span><span class="n">eta</span><span class="p">)</span>
-
-    <span class="nd">@property</span>
-    <span class="k">def</span> <span class="nf">eta</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Get alpha hyper-parameter value.&quot;&quot;&quot;</span>
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_eta</span><span class="o">.</span><span class="n">value</span>
-
-    <span class="nd">@eta</span><span class="o">.</span><span class="n">setter</span>
-    <span class="k">def</span> <span class="nf">eta</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">val</span><span class="p">):</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Set alpha hyper-parameter value.&quot;&quot;&quot;</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_eta</span><span class="o">.</span><span class="n">value</span> <span class="o">=</span> <span class="n">val</span></div>
+        <span class="bp">self</span><span class="o">.</span><span class="n">eta</span> <span class="o">=</span> <span class="n">eta</span></div>
 </pre></div>
         </article>
       </div>

@@ -179,9 +179,11 @@
   <p class="caption" role="heading"><span class="caption-text">Getting Started</span></p>
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="install.html">Install</a></li>
+<li class="toctree-l1"><a class="reference internal" href="examples.html">Examples</a></li>
 </ul>
 <p class="caption" role="heading"><span class="caption-text">Information</span></p>
 <ul>
+<li class="toctree-l1"><a class="reference internal" href="contributing.html">Contributing</a></li>
 <li class="toctree-l1"><a class="reference internal" href="license.html">License</a></li>
 <li class="toctree-l1"><a class="reference external" href="https://github.com/CederGroupHub/sparse-lm">GitHub</a></li>
 </ul>
@@ -189,6 +191,7 @@
 <ul>
 <li class="toctree-l1 has-children"><a class="reference internal" href="api.html">API</a><input class="toctree-checkbox" id="toctree-checkbox-1" name="toctree-checkbox-1" role="switch" type="checkbox"/><label for="toctree-checkbox-1"><div class="visually-hidden">Toggle child pages in navigation</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
 <li class="toctree-l2"><a class="reference internal" href="sparselm.model.html">sparselm.model</a></li>
+<li class="toctree-l2"><a class="reference internal" href="sparselm.stepwise.html">sparselm.stepwise</a></li>
 <li class="toctree-l2"><a class="reference internal" href="sparselm.model_selection.html">sparselm.model_selection</a></li>
 <li class="toctree-l2"><a class="reference internal" href="sparselm.tools.html">sparselm.tools</a></li>
 </ul>
@@ -241,32 +244,21 @@
 <a class="reference external image-reference" href="https://www.codacy.com/gh/CederGroupHub/sparse-lm/dashboard?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=CederGroupHub/sparse-lm&amp;utm_campaign=Badge_Coverage"><img alt="Codacy Badge" src="https://app.codacy.com/project/badge/Coverage/9b72db506d9c49b2a6c849348de8945e" /></a>
 <a class="reference external image-reference" href="https://results.pre-commit.ci/latest/github/CederGroupHub/sparse-lm/main"><img alt="pre-commit.ci status" src="https://results.pre-commit.ci/badge/github/CederGroupHub/sparse-lm/main.svg" /></a>
 <a class="reference external image-reference" href="https://pypi.org/project/sparse-lm"><img alt="pypi version" src="https://img.shields.io/pypi/v/sparse-lm?color=blue" /></a>
-<p><strong>sparse-lm</strong>  includes several regularized regression estimators that are absent in the
+<p><strong>sparse-lm</strong>  includes several (structured) sparse linear regression estimators that are absent in the
 <code class="docutils literal notranslate"><span class="pre">sklearn.linear_model</span></code> module. The estimators in <strong>sparse-lm</strong> are designed to fit right into
-<a class="reference external" href="https://scikit-learn.org/stable/index.html">scikit-lean</a> by inheriting from their base
-<code class="docutils literal notranslate"><span class="pre">LinearModel</span></code>. But the underlying optimization problem is expressed and solved by
-leveraging <a class="reference external" href="https://www.cvxpy.org/">cvxpy</a>.</p>
+<a class="reference external" href="https://scikit-learn.org/stable/index.html">scikit-lean</a>, but the underlying optimization problem is expressed and
+solved by leveraging <a class="reference external" href="https://www.cvxpy.org/">cvxpy</a>.</p>
 <hr class="docutils" />
 <section id="available-regression-models">
 <h2>Available regression models<a class="headerlink" href="#available-regression-models" title="Permalink to this heading">#</a></h2>
 <ul class="simple">
-<li><p>Ordinary Least Squares (<code class="docutils literal notranslate"><span class="pre">sklearn</span></code> may be a better option)</p></li>
-<li><p>Lasso (<code class="docutils literal notranslate"><span class="pre">sklearn</span></code> may be a better option)</p></li>
-<li><p>Group Lasso, Overlap Group Lasso &amp; Sparse Group Lasso</p></li>
+<li><p>Lasso, Group Lasso, Overlap Group Lasso, Sparse Group Lasso &amp; Ridged Group Lasso.</p></li>
 <li><p>Adaptive versions of Lasso, Group Lasso, Overlap Group Lasso, Sparse Group Lasso &amp; Ridged Group Lasso.</p></li>
-<li><p>Best Subset Selection, Ridged Best Subset, L0, L1L0 &amp; L2L0 (all with optional grouping of parameters)
-(<code class="docutils literal notranslate"><span class="pre">gurobi</span></code> recommended for performance)</p></li>
+<li><p>Best Subset Selection, Ridged Best Subset, L0, L1L0 &amp; L2L0 (all with optional grouping of parameters)</p></li>
 </ul>
 </section>
-<section id="installation">
-<h2>Installation<a class="headerlink" href="#installation" title="Permalink to this heading">#</a></h2>
-<p>From pypi:</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">pip</span> <span class="n">install</span> <span class="n">sparse</span><span class="o">-</span><span class="n">lm</span>
-</pre></div>
-</div>
-</section>
-<section id="usage">
-<h2>Usage<a class="headerlink" href="#usage" title="Permalink to this heading">#</a></h2>
+<section id="basic-usage">
+<h2>Basic usage<a class="headerlink" href="#basic-usage" title="Permalink to this heading">#</a></h2>
 <p>If you already use <strong>scikit-learn</strong>, using <strong>sparse-lm</strong> will be very easy. Just use any
 model like you would any linear model in <strong>scikit-learn</strong>:</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>

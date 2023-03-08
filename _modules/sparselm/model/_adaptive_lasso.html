@@ -178,9 +178,11 @@
   <p class="caption" role="heading"><span class="caption-text">Getting Started</span></p>
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="../../../install.html">Install</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../examples.html">Examples</a></li>
 </ul>
 <p class="caption" role="heading"><span class="caption-text">Information</span></p>
 <ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../contributing.html">Contributing</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../license.html">License</a></li>
 <li class="toctree-l1"><a class="reference external" href="https://github.com/CederGroupHub/sparse-lm">GitHub</a></li>
 </ul>
@@ -188,6 +190,7 @@
 <ul>
 <li class="toctree-l1 has-children"><a class="reference internal" href="../../../api.html">API</a><input class="toctree-checkbox" id="toctree-checkbox-1" name="toctree-checkbox-1" role="switch" type="checkbox"/><label for="toctree-checkbox-1"><div class="visually-hidden">Toggle child pages in navigation</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
 <li class="toctree-l2"><a class="reference internal" href="../../../sparselm.model.html">sparselm.model</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../sparselm.stepwise.html">sparselm.stepwise</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../../../sparselm.model_selection.html">sparselm.model_selection</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../../../sparselm.tools.html">sparselm.tools</a></li>
 </ul>
@@ -227,7 +230,7 @@
         </div>
         <article role="main">
           <h1>Source code for sparselm.model._adaptive_lasso</h1><div class="highlight"><pre>
-<span></span><span class="sd">&quot;&quot;&quot;A set of generalized adaptive lasso estimators.</span>
+<span></span><span class="sd">&quot;&quot;&quot;A set of generalized adaptive lasso Regressors.</span>
 
 <span class="sd">* Adaptive Lasso</span>
 <span class="sd">* Adaptive Group Lasso</span>
@@ -235,7 +238,7 @@
 <span class="sd">* Adaptive Sparse Group Lasso</span>
 <span class="sd">* Adaptive Ridged Group Lasso</span>
 
-<span class="sd">Estimators follow scikit-learn interface, but use cvxpy to set up and solve</span>
+<span class="sd">Regressors follow scikit-learn interface, but use cvxpy to set up and solve</span>
 <span class="sd">optimization problem.</span>
 
 <span class="sd">NOTE: In certain cases these can yield infeasible problems. This can cause</span>
@@ -247,10 +250,19 @@
 <span class="sd">or run with n_jobs=1 (but that may take a while to solve)</span>
 <span class="sd">&quot;&quot;&quot;</span>
 
+<span class="kn">from</span> <span class="nn">__future__</span> <span class="kn">import</span> <span class="n">annotations</span>
+
 <span class="n">__author__</span> <span class="o">=</span> <span class="s2">&quot;Luis Barroso-Luque&quot;</span>
+
+<span class="kn">import</span> <span class="nn">warnings</span>
+<span class="kn">from</span> <span class="nn">numbers</span> <span class="kn">import</span> <span class="n">Integral</span><span class="p">,</span> <span class="n">Real</span>
+<span class="kn">from</span> <span class="nn">types</span> <span class="kn">import</span> <span class="n">SimpleNamespace</span>
+<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Callable</span>
 
 <span class="kn">import</span> <span class="nn">cvxpy</span> <span class="k">as</span> <span class="nn">cp</span>
 <span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span class="kn">from</span> <span class="nn">numpy.typing</span> <span class="kn">import</span> <span class="n">ArrayLike</span><span class="p">,</span> <span class="n">NDArray</span>
+<span class="kn">from</span> <span class="nn">sklearn.utils._param_validation</span> <span class="kn">import</span> <span class="n">Interval</span>
 
 <span class="kn">from</span> <span class="nn">._lasso</span> <span class="kn">import</span> <span class="p">(</span>
     <span class="n">GroupLasso</span><span class="p">,</span>
@@ -265,61 +277,81 @@
 <span class="w">    </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;Adaptive Lasso implementation.</span>
 
 <span class="sd">    Also known as iteratively re-weighted Lasso.</span>
-<span class="sd">    Regularized model:</span>
+
+<span class="sd">    Regularized regression objective:</span>
 
 <span class="sd">    .. math::</span>
 
-<span class="sd">        || X \beta - y ||^2_2 + \alpha ||w^T \beta||_1</span>
+<span class="sd">        \min_{\beta} || X \beta - y ||^2_2 + \alpha ||w^T \beta||_1</span>
 
 <span class="sd">    Where w represents a vector of weights that is iteratively updated.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        alpha (float):</span>
+<span class="sd">            Regularization hyper-parameter.</span>
+<span class="sd">        max_iter (int):</span>
+<span class="sd">            Maximum number of re-weighting iteration steps.</span>
+<span class="sd">        eps (float):</span>
+<span class="sd">            Value to add to denominator of weights.</span>
+<span class="sd">        tol (float):</span>
+<span class="sd">            Absolute convergence tolerance for difference between weights</span>
+<span class="sd">            at successive steps.</span>
+<span class="sd">        update_function (Callable): optional</span>
+<span class="sd">            A function with signature f(beta, eps) used to update the</span>
+<span class="sd">            weights at each iteration. Default is 1/(|beta| + eps)</span>
+<span class="sd">        fit_intercept (bool):</span>
+<span class="sd">            Whether the intercept should be estimated or not.</span>
+<span class="sd">            If False, the data is assumed to be already centered.</span>
+<span class="sd">        copy_X (bool):</span>
+<span class="sd">            If True, X will be copied; else, it may be overwritten.</span>
+<span class="sd">        warm_start (bool):</span>
+<span class="sd">            When set to True, reuse the solution of the previous call to</span>
+<span class="sd">            fit as initialization, otherwise, just erase the previous</span>
+<span class="sd">            solution.</span>
+<span class="sd">        solver (str):</span>
+<span class="sd">            cvxpy backend solver to use. Supported solvers are listed here:</span>
+<span class="sd">            https://www.cvxpy.org/tutorial/advanced/index.html#solve-method-options</span>
+<span class="sd">        solver_options (dict):</span>
+<span class="sd">            dictionary of keyword arguments passed to cvxpy solve.</span>
+<span class="sd">            See docs in CVXRegressor for more information.</span>
+
+<span class="sd">    Attributes:</span>
+<span class="sd">        coef_ (NDArray):</span>
+<span class="sd">            Parameter vector (:math:`\beta` in the cost function formula) of shape (n_features,).</span>
+<span class="sd">        intercept_ (float):</span>
+<span class="sd">            Independent term in decision function.</span>
+<span class="sd">        canonicals_ (SimpleNamespace):</span>
+<span class="sd">            Namespace that contains underlying cvxpy objects used to define</span>
+<span class="sd">            the optimization problem. The objects included are the following:</span>
+<span class="sd">                - objective - the objective function.</span>
+<span class="sd">                - beta - variable to be optimized (corresponds to the estimated coef_ attribute).</span>
+<span class="sd">                - parameters - hyper-parameters</span>
+<span class="sd">                - auxiliaries - auxiliary variables and expressions</span>
+<span class="sd">                - constraints - solution constraints</span>
 <span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">_parameter_constraints</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">list</span><span class="p">[</span><span class="n">Any</span><span class="p">]]</span> <span class="o">=</span> <span class="p">{</span>
+        <span class="s2">&quot;tol&quot;</span><span class="p">:</span> <span class="p">[</span><span class="n">Interval</span><span class="p">(</span><span class="nb">type</span><span class="o">=</span><span class="n">Real</span><span class="p">,</span> <span class="n">left</span><span class="o">=</span><span class="mf">0.0</span><span class="p">,</span> <span class="n">right</span><span class="o">=</span><span class="mf">1.0</span><span class="p">,</span> <span class="n">closed</span><span class="o">=</span><span class="s2">&quot;both&quot;</span><span class="p">)],</span>
+        <span class="s2">&quot;max_iter&quot;</span><span class="p">:</span> <span class="p">[</span><span class="n">Interval</span><span class="p">(</span><span class="nb">type</span><span class="o">=</span><span class="n">Integral</span><span class="p">,</span> <span class="n">left</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">right</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">closed</span><span class="o">=</span><span class="s2">&quot;left&quot;</span><span class="p">)],</span>
+        <span class="s2">&quot;eps&quot;</span><span class="p">:</span> <span class="p">[</span><span class="n">Interval</span><span class="p">(</span><span class="nb">type</span><span class="o">=</span><span class="n">Real</span><span class="p">,</span> <span class="n">left</span><span class="o">=</span><span class="mf">0.0</span><span class="p">,</span> <span class="n">right</span><span class="o">=</span><span class="mf">1.0</span><span class="p">,</span> <span class="n">closed</span><span class="o">=</span><span class="s2">&quot;both&quot;</span><span class="p">)],</span>
+        <span class="s2">&quot;update_function&quot;</span><span class="p">:</span> <span class="p">[</span><span class="n">callable</span><span class="p">,</span> <span class="kc">None</span><span class="p">],</span>
+        <span class="o">**</span><span class="n">Lasso</span><span class="o">.</span><span class="n">_parameter_constraints</span><span class="p">,</span>
+    <span class="p">}</span>
 
     <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
-        <span class="n">alpha</span><span class="o">=</span><span class="mf">1.0</span><span class="p">,</span>
-        <span class="n">max_iter</span><span class="o">=</span><span class="mi">5</span><span class="p">,</span>
-        <span class="n">eps</span><span class="o">=</span><span class="mf">1e-6</span><span class="p">,</span>
-        <span class="n">tol</span><span class="o">=</span><span class="mf">1e-10</span><span class="p">,</span>
-        <span class="n">update_function</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
-        <span class="n">fit_intercept</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
-        <span class="n">copy_X</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
-        <span class="n">warm_start</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
-        <span class="n">solver</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
-        <span class="n">solver_options</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+        <span class="n">alpha</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">1.0</span><span class="p">,</span>
+        <span class="n">max_iter</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">3</span><span class="p">,</span>
+        <span class="n">eps</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">1e-6</span><span class="p">,</span>
+        <span class="n">tol</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">1e-10</span><span class="p">,</span>
+        <span class="n">update_function</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[[</span><span class="nb">float</span><span class="p">,</span> <span class="nb">float</span><span class="p">],</span> <span class="nb">float</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">fit_intercept</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+        <span class="n">copy_X</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
+        <span class="n">warm_start</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
+        <span class="n">solver</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">solver_options</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="o">**</span><span class="n">kwargs</span><span class="p">,</span>
     <span class="p">):</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Initialize estimator.</span>
-
-<span class="sd">        Args:</span>
-<span class="sd">            alpha (float):</span>
-<span class="sd">                Regularization hyper-parameter.</span>
-<span class="sd">            max_iter (int):</span>
-<span class="sd">                Maximum number of re-weighting iteration steps.</span>
-<span class="sd">            eps (float):</span>
-<span class="sd">                Value to add to denominator of weights.</span>
-<span class="sd">            tol (float):</span>
-<span class="sd">                Absolute convergence tolerance for difference between weights</span>
-<span class="sd">                at successive steps.</span>
-<span class="sd">            update_function (Callable): optional</span>
-<span class="sd">                A function with signature f(beta, eps) used to update the</span>
-<span class="sd">                weights at each iteration. Default is 1/(|beta| + eps)</span>
-<span class="sd">            fit_intercept (bool):</span>
-<span class="sd">                Whether the intercept should be estimated or not.</span>
-<span class="sd">                If False, the data is assumed to be already centered.</span>
-<span class="sd">            copy_X (bool):</span>
-<span class="sd">                If True, X will be copied; else, it may be overwritten.</span>
-<span class="sd">            warm_start (bool):</span>
-<span class="sd">                When set to True, reuse the solution of the previous call to</span>
-<span class="sd">                fit as initialization, otherwise, just erase the previous</span>
-<span class="sd">                solution.</span>
-<span class="sd">            solver (str):</span>
-<span class="sd">                cvxpy backend solver to use. Supported solvers are:</span>
-<span class="sd">                ECOS, ECOS_BB, CVXOPT, SCS, GUROBI, Elemental.</span>
-<span class="sd">                GLPK and GLPK_MI (via CVXOPT GLPK interface)</span>
-<span class="sd">            solver_options:</span>
-<span class="sd">                dictionary of keyword arguments passed to cvxpy solve.</span>
-<span class="sd">                See docs in CVXEstimator for more information.</span>
-<span class="sd">        &quot;&quot;&quot;</span>
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span>
             <span class="n">alpha</span><span class="o">=</span><span class="n">alpha</span><span class="p">,</span>
             <span class="n">fit_intercept</span><span class="o">=</span><span class="n">fit_intercept</span><span class="p">,</span>
@@ -332,118 +364,186 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">tol</span> <span class="o">=</span> <span class="n">tol</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">max_iter</span> <span class="o">=</span> <span class="n">max_iter</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">eps</span> <span class="o">=</span> <span class="n">eps</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_weights</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_previous_weights</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">update_function</span> <span class="o">=</span> <span class="n">update_function</span>
 
-        <span class="k">if</span> <span class="n">update_function</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">update_function</span> <span class="o">=</span> <span class="k">lambda</span> <span class="n">beta</span><span class="p">,</span> <span class="n">eps</span><span class="p">:</span> <span class="mf">1.0</span> <span class="o">/</span> <span class="p">(</span><span class="nb">abs</span><span class="p">(</span><span class="n">beta</span><span class="p">)</span> <span class="o">+</span> <span class="n">eps</span><span class="p">)</span>
-        <span class="k">else</span><span class="p">:</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">update_function</span> <span class="o">=</span> <span class="n">update_function</span>
+    <span class="k">def</span> <span class="nf">_validate_params</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">ArrayLike</span><span class="p">,</span> <span class="n">y</span><span class="p">:</span> <span class="n">ArrayLike</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">_validate_params</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="n">y</span><span class="p">)</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">max_iter</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="n">warnings</span><span class="o">.</span><span class="n">warn</span><span class="p">(</span>
+                <span class="s2">&quot;max_iter is set to 1. It should ideally be set &gt; 1, otherwise consider &quot;</span>
+                <span class="s2">&quot;using a non-adaptive Regressor&quot;</span><span class="p">,</span>
+                <span class="ne">UserWarning</span><span class="p">,</span>
+            <span class="p">)</span>
 
-    <span class="k">def</span> <span class="nf">_gen_regularization</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">):</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_weights</span> <span class="o">=</span> <span class="n">cp</span><span class="o">.</span><span class="n">Parameter</span><span class="p">(</span>
+    <span class="k">def</span> <span class="nf">_set_param_values</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Set parameter values.&quot;&quot;&quot;</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">_set_param_values</span><span class="p">()</span>
+        <span class="n">length</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">canonicals_</span><span class="o">.</span><span class="n">parameters</span><span class="o">.</span><span class="n">adaptive_weights</span><span class="o">.</span><span class="n">value</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">canonicals_</span><span class="o">.</span><span class="n">parameters</span><span class="o">.</span><span class="n">adaptive_weights</span><span class="o">.</span><span class="n">value</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">alpha</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">ones</span><span class="p">(</span>
+            <span class="n">length</span>
+        <span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">_generate_params</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">ArrayLike</span><span class="p">,</span> <span class="n">y</span><span class="p">:</span> <span class="n">ArrayLike</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">SimpleNamespace</span> <span class="o">|</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Generate parameters for the problem.&quot;&quot;&quot;</span>
+        <span class="n">parameters</span> <span class="o">=</span> <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">_generate_params</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="n">y</span><span class="p">)</span>
+        <span class="n">parameters</span><span class="o">.</span><span class="n">adaptive_weights</span> <span class="o">=</span> <span class="n">cp</span><span class="o">.</span><span class="n">Parameter</span><span class="p">(</span>
             <span class="n">shape</span><span class="o">=</span><span class="n">X</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="n">nonneg</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">value</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">alpha</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">ones</span><span class="p">(</span><span class="n">X</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>
         <span class="p">)</span>
-        <span class="k">return</span> <span class="n">cp</span><span class="o">.</span><span class="n">norm1</span><span class="p">(</span><span class="n">cp</span><span class="o">.</span><span class="n">multiply</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_weights</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_beta</span><span class="p">))</span>
+        <span class="k">return</span> <span class="n">parameters</span>
 
-    <span class="k">def</span> <span class="nf">_update_weights</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">beta</span><span class="p">):</span>
-        <span class="k">if</span> <span class="n">beta</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">_problem</span><span class="o">.</span><span class="n">value</span> <span class="o">==</span> <span class="o">-</span><span class="n">np</span><span class="o">.</span><span class="n">inf</span><span class="p">:</span>
-            <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">_problem</span><span class="si">}</span><span class="s2"> is infeasible.&quot;</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_previous_weights</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_weights</span><span class="o">.</span><span class="n">value</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_weights</span><span class="o">.</span><span class="n">value</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">alpha</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">update_function</span><span class="p">(</span><span class="nb">abs</span><span class="p">(</span><span class="n">beta</span><span class="p">),</span> <span class="bp">self</span><span class="o">.</span><span class="n">eps</span><span class="p">)</span>
+    <span class="k">def</span> <span class="nf">_generate_regularization</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">X</span><span class="p">:</span> <span class="n">ArrayLike</span><span class="p">,</span>
+        <span class="n">beta</span><span class="p">:</span> <span class="n">cp</span><span class="o">.</span><span class="n">Variable</span><span class="p">,</span>
+        <span class="n">parameters</span><span class="p">:</span> <span class="n">SimpleNamespace</span><span class="p">,</span>
+        <span class="n">auxiliaries</span><span class="p">:</span> <span class="n">SimpleNamespace</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">cp</span><span class="o">.</span><span class="n">Expression</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Generate regularization term.&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="n">cp</span><span class="o">.</span><span class="n">norm1</span><span class="p">(</span><span class="n">cp</span><span class="o">.</span><span class="n">multiply</span><span class="p">(</span><span class="n">parameters</span><span class="o">.</span><span class="n">adaptive_weights</span><span class="p">,</span> <span class="n">beta</span><span class="p">))</span>
 
-    <span class="k">def</span> <span class="nf">_weights_converged</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">linalg</span><span class="o">.</span><span class="n">norm</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_weights</span><span class="o">.</span><span class="n">value</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">_previous_weights</span><span class="p">)</span> <span class="o">&lt;=</span> <span class="bp">self</span><span class="o">.</span><span class="n">tol</span>
+    <span class="k">def</span> <span class="nf">_get_update_function</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Callable</span><span class="p">[[</span><span class="nb">float</span><span class="p">,</span> <span class="nb">float</span><span class="p">],</span> <span class="nb">float</span><span class="p">]:</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">update_function</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">return</span> <span class="k">lambda</span> <span class="n">beta</span><span class="p">,</span> <span class="n">eps</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">alpha</span> <span class="o">/</span> <span class="p">(</span><span class="nb">abs</span><span class="p">(</span><span class="n">beta</span><span class="p">)</span> <span class="o">+</span> <span class="n">eps</span><span class="p">)</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">update_function</span>
 
-    <span class="k">def</span> <span class="nf">_solve</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
-        <span class="n">problem</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_problem</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="n">y</span><span class="p">)</span>
-        <span class="n">problem</span><span class="o">.</span><span class="n">solve</span><span class="p">(</span>
-            <span class="n">solver</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">solver</span><span class="p">,</span> <span class="n">warm_start</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">warm_start</span><span class="p">,</span> <span class="o">**</span><span class="bp">self</span><span class="o">.</span><span class="n">solver_options</span>
-        <span class="p">)</span>
-        <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">max_iter</span> <span class="o">-</span> <span class="mi">1</span><span class="p">):</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">_update_weights</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_beta</span><span class="o">.</span><span class="n">value</span><span class="p">)</span>
-            <span class="n">problem</span><span class="o">.</span><span class="n">solve</span><span class="p">(</span><span class="n">solver</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">solver</span><span class="p">,</span> <span class="n">warm_start</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="o">**</span><span class="bp">self</span><span class="o">.</span><span class="n">solver_options</span><span class="p">)</span>
-            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_weights_converged</span><span class="p">():</span>
+    <span class="nd">@staticmethod</span>
+    <span class="k">def</span> <span class="nf">_get_weights_value</span><span class="p">(</span><span class="n">parameters</span><span class="p">:</span> <span class="n">SimpleNamespace</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">NDArray</span><span class="p">[</span><span class="nb">float</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Simply return a copy of the value of adaptive weights.&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="n">parameters</span><span class="o">.</span><span class="n">adaptive_weights</span><span class="o">.</span><span class="n">value</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+
+    <span class="k">def</span> <span class="nf">_check_convergence</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">parameters</span><span class="p">:</span> <span class="n">SimpleNamespace</span><span class="p">,</span> <span class="n">previous_weights</span><span class="p">:</span> <span class="n">ArrayLike</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Check if weights have converged to set tolerance.&quot;&quot;&quot;</span>
+        <span class="n">current_weights</span> <span class="o">=</span> <span class="n">parameters</span><span class="o">.</span><span class="n">adaptive_weights</span><span class="o">.</span><span class="n">value</span>
+        <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">linalg</span><span class="o">.</span><span class="n">norm</span><span class="p">(</span><span class="n">current_weights</span> <span class="o">-</span> <span class="n">previous_weights</span><span class="p">)</span> <span class="o">&lt;=</span> <span class="bp">self</span><span class="o">.</span><span class="n">tol</span>
+
+    <span class="k">def</span> <span class="nf">_iterative_update</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">beta</span><span class="p">:</span> <span class="n">ArrayLike</span><span class="p">,</span>
+        <span class="n">parameters</span><span class="p">:</span> <span class="n">SimpleNamespace</span><span class="p">,</span>
+        <span class="n">auxiliaries</span><span class="p">:</span> <span class="n">SimpleNamespace</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Update the adaptive weights.&quot;&quot;&quot;</span>
+        <span class="n">update</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_update_function</span><span class="p">()</span>
+        <span class="n">parameters</span><span class="o">.</span><span class="n">adaptive_weights</span><span class="o">.</span><span class="n">value</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">alpha</span> <span class="o">*</span> <span class="n">update</span><span class="p">(</span><span class="n">beta</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">eps</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">_solve</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">ArrayLike</span><span class="p">,</span> <span class="n">y</span><span class="p">:</span> <span class="n">ArrayLike</span><span class="p">,</span> <span class="n">solver_options</span><span class="p">:</span> <span class="nb">dict</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">NDArray</span><span class="p">[</span><span class="nb">float</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Solve Lasso problem iteratively adaptive weights.&quot;&quot;&quot;</span>
+        <span class="n">previous_weights</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_weights_value</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">canonicals_</span><span class="o">.</span><span class="n">parameters</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">max_iter</span><span class="p">):</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">canonicals_</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">solve</span><span class="p">(</span>
+                <span class="n">solver</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">solver</span><span class="p">,</span> <span class="n">warm_start</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">warm_start</span><span class="p">,</span> <span class="o">**</span><span class="n">solver_options</span>
+            <span class="p">)</span>
+            <span class="k">if</span> <span class="p">(</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">canonicals_</span><span class="o">.</span><span class="n">beta</span><span class="o">.</span><span class="n">value</span> <span class="ow">is</span> <span class="kc">None</span>
+                <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">canonicals_</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">value</span> <span class="o">==</span> <span class="o">-</span><span class="n">np</span><span class="o">.</span><span class="n">inf</span>
+            <span class="p">):</span>
+                <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">canonicals_</span><span class="o">.</span><span class="n">problem</span><span class="si">}</span><span class="s2"> is infeasible.&quot;</span><span class="p">)</span>
+
+            <span class="bp">self</span><span class="o">.</span><span class="n">n_iter_</span> <span class="o">=</span> <span class="n">i</span> <span class="o">+</span> <span class="mi">1</span>  <span class="c1"># save number of iterations for sklearn</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_iterative_update</span><span class="p">(</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">canonicals_</span><span class="o">.</span><span class="n">beta</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">canonicals_</span><span class="o">.</span><span class="n">parameters</span><span class="p">,</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">canonicals_</span><span class="o">.</span><span class="n">auxiliaries</span><span class="p">,</span>
+            <span class="p">)</span>
+            <span class="c1"># check convergence</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_check_convergence</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">canonicals_</span><span class="o">.</span><span class="n">parameters</span><span class="p">,</span> <span class="n">previous_weights</span><span class="p">):</span>
                 <span class="k">break</span>
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_beta</span><span class="o">.</span><span class="n">value</span></div>
+            <span class="n">previous_weights</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_weights_value</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">canonicals_</span><span class="o">.</span><span class="n">parameters</span><span class="p">)</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">canonicals_</span><span class="o">.</span><span class="n">beta</span><span class="o">.</span><span class="n">value</span></div>
 
 
 <div class="viewcode-block" id="AdaptiveGroupLasso"><a class="viewcode-back" href="../../../sparselm.model.html#sparselm.model.AdaptiveGroupLasso">[docs]</a><span class="k">class</span> <span class="nc">AdaptiveGroupLasso</span><span class="p">(</span><span class="n">AdaptiveLasso</span><span class="p">,</span> <span class="n">GroupLasso</span><span class="p">):</span>
 <span class="w">    </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;Adaptive Group Lasso, iteratively re-weighted group lasso.</span>
 
-<span class="sd">    Regularized model:</span>
+<span class="sd">    Regularized regression objective:</span>
 
 <span class="sd">    .. math::</span>
 
-<span class="sd">        || X \beta - y ||^2_2 + \alpha * \sum_{G} w_G ||\beta_G||_2</span>
+<span class="sd">        \min_{\beta} || X \beta - y ||^2_2 + \alpha * \sum_{G} w_G ||\beta_G||_2</span>
 
 <span class="sd">    Where w represents a vector of weights that is iteratively updated.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        groups (list or ndarray):</span>
+<span class="sd">            array-like of integers specifying groups. Length should be the</span>
+<span class="sd">            same as model, where each integer entry specifies the group</span>
+<span class="sd">            each parameter corresponds to.</span>
+<span class="sd">        alpha (float):</span>
+<span class="sd">            Regularization hyper-parameter.</span>
+<span class="sd">        group_weights (ndarray): optional</span>
+<span class="sd">            Weights for each group to use in the regularization term.</span>
+<span class="sd">            The default is to use the sqrt of the group sizes, however any</span>
+<span class="sd">            weight can be specified. The array must be the</span>
+<span class="sd">            same length as the groups given. If you need all groups</span>
+<span class="sd">            weighted equally just pass an array of ones.</span>
+<span class="sd">        max_iter (int):</span>
+<span class="sd">            Maximum number of re-weighting iteration steps.</span>
+<span class="sd">        eps (float):</span>
+<span class="sd">            Value to add to denominator of weights.</span>
+<span class="sd">        tol (float):</span>
+<span class="sd">            Absolute convergence tolerance for difference between weights</span>
+<span class="sd">            at successive steps.</span>
+<span class="sd">        update_function (Callable): optional</span>
+<span class="sd">            A function with signature f(group_norms, eps) used to update the</span>
+<span class="sd">            weights at each iteration. Where group_norms are the norms of</span>
+<span class="sd">            the coefficients Beta for each group.</span>
+<span class="sd">            Default is 1/(group_norms + eps)</span>
+<span class="sd">        standardize (bool): optional</span>
+<span class="sd">            Whether to standardize the group regularization penalty using</span>
+<span class="sd">            the feature matrix. See the following for reference:</span>
+<span class="sd">            http://faculty.washington.edu/nrsimon/standGL.pdf</span>
+<span class="sd">        fit_intercept (bool):</span>
+<span class="sd">            Whether the intercept should be estimated or not.</span>
+<span class="sd">            If False, the data is assumed to be already centered.</span>
+<span class="sd">        copy_X (bool):</span>
+<span class="sd">            If True, X will be copied; else, it may be overwritten.</span>
+<span class="sd">        warm_start (bool):</span>
+<span class="sd">            When set to True, reuse the solution of the previous call to</span>
+<span class="sd">            fit as initialization, otherwise, just erase the previous</span>
+<span class="sd">            solution.</span>
+<span class="sd">        solver (str):</span>
+<span class="sd">            cvxpy backend solver to use. Supported solvers are listed here:</span>
+<span class="sd">            https://www.cvxpy.org/tutorial/advanced/index.html#solve-method-options</span>
+<span class="sd">        solver_options (dict):</span>
+<span class="sd">            dictionary of keyword arguments passed to cvxpy solve.</span>
+<span class="sd">            See docs in CVXRegressor for more information.</span>
+
+<span class="sd">    Attributes:</span>
+<span class="sd">        coef_ (NDArray):</span>
+<span class="sd">            Parameter vector (:math:`\beta` in the cost function formula) of shape (n_features,).</span>
+<span class="sd">        intercept_ (float):</span>
+<span class="sd">            Independent term in decision function.</span>
+<span class="sd">        canonicals_ (SimpleNamespace):</span>
+<span class="sd">            Namespace that contains underlying cvxpy objects used to define</span>
+<span class="sd">            the optimization problem. The objects included are the following:</span>
+<span class="sd">                - objective - the objective function.</span>
+<span class="sd">                - beta - variable to be optimized (corresponds to the estimated coef_ attribute).</span>
+<span class="sd">                - parameters - hyper-parameters</span>
+<span class="sd">                - auxiliaries - auxiliary variables and expressions</span>
+<span class="sd">                - constraints - solution constraints</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
-        <span class="n">groups</span><span class="p">,</span>
-        <span class="n">alpha</span><span class="o">=</span><span class="mf">1.0</span><span class="p">,</span>
-        <span class="n">group_weights</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
-        <span class="n">max_iter</span><span class="o">=</span><span class="mi">5</span><span class="p">,</span>
-        <span class="n">eps</span><span class="o">=</span><span class="mf">1e-6</span><span class="p">,</span>
-        <span class="n">tol</span><span class="o">=</span><span class="mf">1e-10</span><span class="p">,</span>
-        <span class="n">update_function</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
-        <span class="n">standardize</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
-        <span class="n">fit_intercept</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
-        <span class="n">copy_X</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
-        <span class="n">warm_start</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
-        <span class="n">solver</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
-        <span class="n">solver_options</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+        <span class="n">groups</span><span class="p">:</span> <span class="n">ArrayLike</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">alpha</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">1.0</span><span class="p">,</span>
+        <span class="n">group_weights</span><span class="p">:</span> <span class="n">ArrayLike</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">max_iter</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">3</span><span class="p">,</span>
+        <span class="n">eps</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">1e-6</span><span class="p">,</span>
+        <span class="n">tol</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">1e-10</span><span class="p">,</span>
+        <span class="n">update_function</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[[</span><span class="nb">float</span><span class="p">,</span> <span class="nb">float</span><span class="p">],</span> <span class="nb">float</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">standardize</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+        <span class="n">fit_intercept</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+        <span class="n">copy_X</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
+        <span class="n">warm_start</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
+        <span class="n">solver</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">solver_options</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="o">**</span><span class="n">kwargs</span><span class="p">,</span>
     <span class="p">):</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Initialize estimator.</span>
-
-<span class="sd">        Args:</span>
-<span class="sd">            groups (list or ndarray):</span>
-<span class="sd">                array-like of integers specifying groups. Length should be the</span>
-<span class="sd">                same as model, where each integer entry specifies the group</span>
-<span class="sd">                each parameter corresponds to.</span>
-<span class="sd">            alpha (float):</span>
-<span class="sd">                Regularization hyper-parameter.</span>
-<span class="sd">            group_weights (ndarray): optional</span>
-<span class="sd">                Weights for each group to use in the regularization term.</span>
-<span class="sd">                The default is to use the sqrt of the group sizes, however any</span>
-<span class="sd">                weight can be specified. The array must be the</span>
-<span class="sd">                same length as the groups given. If you need all groups</span>
-<span class="sd">                weighted equally just pass an array of ones.</span>
-<span class="sd">            max_iter (int):</span>
-<span class="sd">                Maximum number of re-weighting iteration steps.</span>
-<span class="sd">            eps (float):</span>
-<span class="sd">                Value to add to denominator of weights.</span>
-<span class="sd">            tol (float):</span>
-<span class="sd">                Absolute convergence tolerance for difference between weights</span>
-<span class="sd">                at successive steps.</span>
-<span class="sd">            update_function (Callable): optional</span>
-<span class="sd">                A function with signature f(group_norms, eps) used to update the</span>
-<span class="sd">                weights at each iteration. Where group_norms are the norms of</span>
-<span class="sd">                the coefficients Beta for each group.</span>
-<span class="sd">                Default is 1/(group_norms + eps)</span>
-<span class="sd">            standardize (bool): optional</span>
-<span class="sd">                Whether to standardize the group regularization penalty using</span>
-<span class="sd">                the feature matrix. See the following for reference:</span>
-<span class="sd">                http://faculty.washington.edu/nrsimon/standGL.pdf</span>
-<span class="sd">            fit_intercept (bool):</span>
-<span class="sd">                Whether the intercept should be estimated or not.</span>
-<span class="sd">                If False, the data is assumed to be already centered.</span>
-<span class="sd">            copy_X (bool):</span>
-<span class="sd">                If True, X will be copied; else, it may be overwritten.</span>
-<span class="sd">            warm_start (bool):</span>
-<span class="sd">                When set to True, reuse the solution of the previous call to</span>
-<span class="sd">                fit as initialization, otherwise, just erase the previous</span>
-<span class="sd">                solution.</span>
-<span class="sd">            solver (str):</span>
-<span class="sd">                cvxpy backend solver to use. Supported solvers are:</span>
-<span class="sd">                ECOS, ECOS_BB, CVXOPT, SCS, GUROBI, Elemental.</span>
-<span class="sd">                GLPK and GLPK_MI (via CVXOPT GLPK interface)</span>
-<span class="sd">            solver_options:</span>
-<span class="sd">                dictionary of keyword arguments passed to cvxpy solve.</span>
-<span class="sd">                See docs in CVXEstimator for more information.</span>
-<span class="sd">        &quot;&quot;&quot;</span>
         <span class="c1"># call with keywords to avoid MRO issues</span>
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span>
             <span class="n">groups</span><span class="o">=</span><span class="n">groups</span><span class="p">,</span>
@@ -462,104 +562,131 @@
             <span class="o">**</span><span class="n">kwargs</span><span class="p">,</span>
         <span class="p">)</span>
 
-    <span class="k">def</span> <span class="nf">_gen_regularization</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">):</span>
-        <span class="n">grp_norms</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_gen_group_norms</span><span class="p">(</span><span class="n">X</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_weights</span> <span class="o">=</span> <span class="n">cp</span><span class="o">.</span><span class="n">Parameter</span><span class="p">(</span>
-            <span class="n">shape</span><span class="o">=</span><span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">group_masks</span><span class="p">),</span>
+    <span class="k">def</span> <span class="nf">_generate_params</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">ArrayLike</span><span class="p">,</span> <span class="n">y</span><span class="p">:</span> <span class="n">ArrayLike</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">SimpleNamespace</span> <span class="o">|</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="c1"># skip AdaptiveLasso in super</span>
+        <span class="n">parameters</span> <span class="o">=</span> <span class="nb">super</span><span class="p">(</span><span class="n">AdaptiveLasso</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">_generate_params</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="n">y</span><span class="p">)</span>
+        <span class="n">n_groups</span> <span class="o">=</span> <span class="n">X</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">groups</span> <span class="ow">is</span> <span class="kc">None</span> <span class="k">else</span> <span class="nb">len</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">unique</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">groups</span><span class="p">))</span>
+        <span class="n">parameters</span><span class="o">.</span><span class="n">adaptive_weights</span> <span class="o">=</span> <span class="n">cp</span><span class="o">.</span><span class="n">Parameter</span><span class="p">(</span>
+            <span class="n">shape</span><span class="o">=</span><span class="n">n_groups</span><span class="p">,</span>
             <span class="n">nonneg</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
-            <span class="n">value</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">alpha</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">group_weights</span><span class="p">,</span>
+            <span class="n">value</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">alpha</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">ones</span><span class="p">(</span><span class="n">n_groups</span><span class="p">),</span>
         <span class="p">)</span>
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_weights</span> <span class="o">@</span> <span class="n">grp_norms</span>
+        <span class="k">return</span> <span class="n">parameters</span>
 
-    <span class="k">def</span> <span class="nf">_update_weights</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">beta</span><span class="p">):</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_previous_weights</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_weights</span><span class="o">.</span><span class="n">value</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_weights</span><span class="o">.</span><span class="n">value</span> <span class="o">=</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">alpha</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">group_weights</span><span class="p">)</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">update_function</span><span class="p">(</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">_group_norms</span><span class="o">.</span><span class="n">value</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">eps</span>
-        <span class="p">)</span></div>
+    <span class="k">def</span> <span class="nf">_generate_regularization</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">X</span><span class="p">:</span> <span class="n">ArrayLike</span><span class="p">,</span>
+        <span class="n">beta</span><span class="p">:</span> <span class="n">cp</span><span class="o">.</span><span class="n">Variable</span><span class="p">,</span>
+        <span class="n">parameters</span><span class="p">:</span> <span class="n">SimpleNamespace</span><span class="p">,</span>
+        <span class="n">auxiliaries</span><span class="p">:</span> <span class="n">SimpleNamespace</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">cp</span><span class="o">.</span><span class="n">Expression</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">parameters</span><span class="o">.</span><span class="n">adaptive_weights</span> <span class="o">@</span> <span class="n">auxiliaries</span><span class="o">.</span><span class="n">group_norms</span>
+
+    <span class="k">def</span> <span class="nf">_iterative_update</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">beta</span><span class="p">:</span> <span class="n">ArrayLike</span><span class="p">,</span>
+        <span class="n">parameters</span><span class="p">:</span> <span class="n">SimpleNamespace</span><span class="p">,</span>
+        <span class="n">auxiliaries</span><span class="p">:</span> <span class="n">SimpleNamespace</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">update</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_update_function</span><span class="p">()</span>
+        <span class="n">parameters</span><span class="o">.</span><span class="n">adaptive_weights</span><span class="o">.</span><span class="n">value</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">alpha</span> <span class="o">*</span> <span class="n">parameters</span><span class="o">.</span><span class="n">group_weights</span>
+        <span class="p">)</span> <span class="o">*</span> <span class="n">update</span><span class="p">(</span><span class="n">auxiliaries</span><span class="o">.</span><span class="n">group_norms</span><span class="o">.</span><span class="n">value</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">eps</span><span class="p">)</span></div>
 
 
 <div class="viewcode-block" id="AdaptiveOverlapGroupLasso"><a class="viewcode-back" href="../../../sparselm.model.html#sparselm.model.AdaptiveOverlapGroupLasso">[docs]</a><span class="k">class</span> <span class="nc">AdaptiveOverlapGroupLasso</span><span class="p">(</span><span class="n">OverlapGroupLasso</span><span class="p">,</span> <span class="n">AdaptiveGroupLasso</span><span class="p">):</span>
 <span class="w">    </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;Adaptive Overlap Group Lasso implementation.</span>
 
-<span class="sd">    Regularized model:</span>
+<span class="sd">    Regularized regression objective:</span>
 
 <span class="sd">    .. math::</span>
 
-<span class="sd">        || X \beta - y ||^2_2 + \alpha \sum_{G} w_G ||\beta_G||_2</span>
+<span class="sd">        \min_{\beta} || X \beta - y ||^2_2 + \alpha \sum_{G} w_G ||\beta_G||_2</span>
 
 <span class="sd">    Where G represents groups of features/coefficients, and overlapping groups</span>
 <span class="sd">    are acceptable. Meaning a coefficients can be in more than one group.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        group_list (list of lists):</span>
+<span class="sd">            list of lists of integers specifying groups. The length of the</span>
+<span class="sd">            list holding lists should be the same as model. Each inner list</span>
+<span class="sd">            has integers specifying the groups the coefficient for that</span>
+<span class="sd">            index belongs to. i.e. [[1,2],[2,3],[1,2,3]] means the first</span>
+<span class="sd">            coefficient belongs to group 1 and 2, the second to 2, and 3</span>
+<span class="sd">            and the third to 1, 2 and 3. In other words the 3 groups would</span>
+<span class="sd">            be: (0, 2), (0, 1, 2), (1, 2)</span>
+<span class="sd">        alpha (float):</span>
+<span class="sd">            Regularization hyper-parameter.</span>
+<span class="sd">        group_weights (ndarray): optional</span>
+<span class="sd">            Weights for each group to use in the regularization term.</span>
+<span class="sd">            The default is to use the sqrt of the group sizes, however any</span>
+<span class="sd">            weight can be specified. The array must be the</span>
+<span class="sd">            same length as the number of different groups given.</span>
+<span class="sd">            If you need all groups weighted equally just pass an array of</span>
+<span class="sd">            ones.</span>
+<span class="sd">        max_iter (int):</span>
+<span class="sd">            Maximum number of re-weighting iteration steps.</span>
+<span class="sd">        eps (float):</span>
+<span class="sd">            Value to add to denominator of weights.</span>
+<span class="sd">        tol (float):</span>
+<span class="sd">            Absolute convergence tolerance for difference between weights</span>
+<span class="sd">            at successive steps.</span>
+<span class="sd">        update_function (Callable): optional</span>
+<span class="sd">            A function with signature f(group_norms, eps) used to update the</span>
+<span class="sd">            weights at each iteration. Where group_norms are the norms of</span>
+<span class="sd">            the coefficients Beta for each group.</span>
+<span class="sd">            Default is 1/(group_norms + eps)</span>
+<span class="sd">        standardize (bool): optional</span>
+<span class="sd">            Whether to standardize the group regularization penalty using</span>
+<span class="sd">            the feature matrix. See the following for reference:</span>
+<span class="sd">            http://faculty.washington.edu/nrsimon/standGL.pdf</span>
+<span class="sd">        fit_intercept (bool):</span>
+<span class="sd">            Whether the intercept should be estimated or not.</span>
+<span class="sd">            If False, the data is assumed to be already centered.</span>
+<span class="sd">        copy_X (bool):</span>
+<span class="sd">            If True, X will be copied; else, it may be overwritten.</span>
+<span class="sd">        warm_start (bool):</span>
+<span class="sd">            When set to True, reuse the solution of the previous call to</span>
+<span class="sd">            fit as initialization, otherwise, just erase the previous</span>
+<span class="sd">            solution.</span>
+<span class="sd">        solver (str):</span>
+<span class="sd">            cvxpy backend solver to use. Supported solvers are listed here:</span>
+<span class="sd">            https://www.cvxpy.org/tutorial/advanced/index.html#solve-method-options</span>
+<span class="sd">        solver_options (dict):</span>
+<span class="sd">            dictionary of keyword arguments passed to cvxpy solve.</span>
+<span class="sd">            See docs in CVXRegressor for more information.</span>
+
+<span class="sd">    Attributes:</span>
+<span class="sd">        coef_ (NDArray):</span>
+<span class="sd">            Parameter vector (:math:`\beta` in the cost function formula) of shape (n_features,).</span>
+<span class="sd">        intercept_ (float):</span>
+<span class="sd">            Independent term in decision function.</span>
+<span class="sd">        canonicals_ (SimpleNamespace):</span>
+<span class="sd">            Namespace that contains underlying cvxpy objects used to define</span>
+<span class="sd">            the optimization problem. The objects included are the following:</span>
+<span class="sd">                - objective - the objective function.</span>
+<span class="sd">                - beta - variable to be optimized (corresponds to the estimated coef_ attribute).</span>
+<span class="sd">                - parameters - hyper-parameters</span>
+<span class="sd">                - auxiliaries - auxiliary variables and expressions</span>
+<span class="sd">                - constraints - solution constraints</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
-        <span class="n">group_list</span><span class="p">,</span>
-        <span class="n">alpha</span><span class="o">=</span><span class="mf">1.0</span><span class="p">,</span>
-        <span class="n">group_weights</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
-        <span class="n">max_iter</span><span class="o">=</span><span class="mi">5</span><span class="p">,</span>
-        <span class="n">eps</span><span class="o">=</span><span class="mf">1e-6</span><span class="p">,</span>
-        <span class="n">tol</span><span class="o">=</span><span class="mf">1e-10</span><span class="p">,</span>
-        <span class="n">update_function</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
-        <span class="n">standardize</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
-        <span class="n">fit_intercept</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
-        <span class="n">copy_X</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
-        <span class="n">warm_start</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
-        <span class="n">solver</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
-        <span class="n">solver_options</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+        <span class="n">group_list</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">list</span><span class="p">[</span><span class="nb">int</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">alpha</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">1.0</span><span class="p">,</span>
+        <span class="n">group_weights</span><span class="p">:</span> <span class="n">ArrayLike</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">max_iter</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">3</span><span class="p">,</span>
+        <span class="n">eps</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">1e-6</span><span class="p">,</span>
+        <span class="n">tol</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">1e-10</span><span class="p">,</span>
+        <span class="n">update_function</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[[</span><span class="nb">float</span><span class="p">,</span> <span class="nb">float</span><span class="p">],</span> <span class="nb">float</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">standardize</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+        <span class="n">fit_intercept</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+        <span class="n">copy_X</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
+        <span class="n">warm_start</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
+        <span class="n">solver</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">solver_options</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="p">):</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Initialize estimator.</span>
-
-<span class="sd">        Args:</span>
-<span class="sd">            group_list (list of lists):</span>
-<span class="sd">                list of lists of integers specifying groups. The length of the</span>
-<span class="sd">                list holding lists should be the same as model. Each inner list</span>
-<span class="sd">                has integers specifying the groups the coefficient for that</span>
-<span class="sd">                index belongs to. i.e. [[1,2],[2,3],[1,2,3]] means the first</span>
-<span class="sd">                coefficient belongs to group 1 and 2, the second to 2, and 3</span>
-<span class="sd">                and the third to 1, 2 and 3. In other words the 3 groups would</span>
-<span class="sd">                be: (0, 2), (0, 1, 2), (1, 2)</span>
-<span class="sd">            alpha (float):</span>
-<span class="sd">                Regularization hyper-parameter.</span>
-<span class="sd">            group_weights (ndarray): optional</span>
-<span class="sd">                Weights for each group to use in the regularization term.</span>
-<span class="sd">                The default is to use the sqrt of the group sizes, however any</span>
-<span class="sd">                weight can be specified. The array must be the</span>
-<span class="sd">                same length as the number of different groups given.</span>
-<span class="sd">                If you need all groups weighted equally just pass an array of</span>
-<span class="sd">                ones.</span>
-<span class="sd">            max_iter (int):</span>
-<span class="sd">                Maximum number of re-weighting iteration steps.</span>
-<span class="sd">            eps (float):</span>
-<span class="sd">                Value to add to denominator of weights.</span>
-<span class="sd">            tol (float):</span>
-<span class="sd">                Absolute convergence tolerance for difference between weights</span>
-<span class="sd">                at successive steps.</span>
-<span class="sd">            update_function (Callable): optional</span>
-<span class="sd">                A function with signature f(group_norms, eps) used to update the</span>
-<span class="sd">                weights at each iteration. Where group_norms are the norms of</span>
-<span class="sd">                the coefficients Beta for each group.</span>
-<span class="sd">                Default is 1/(group_norms + eps)</span>
-<span class="sd">            standardize (bool): optional</span>
-<span class="sd">                Whether to standardize the group regularization penalty using</span>
-<span class="sd">                the feature matrix. See the following for reference:</span>
-<span class="sd">                http://faculty.washington.edu/nrsimon/standGL.pdf</span>
-<span class="sd">            fit_intercept (bool):</span>
-<span class="sd">                Whether the intercept should be estimated or not.</span>
-<span class="sd">                If False, the data is assumed to be already centered.</span>
-<span class="sd">            copy_X (bool):</span>
-<span class="sd">                If True, X will be copied; else, it may be overwritten.</span>
-<span class="sd">            warm_start (bool):</span>
-<span class="sd">                When set to True, reuse the solution of the previous call to</span>
-<span class="sd">                fit as initialization, otherwise, just erase the previous</span>
-<span class="sd">                solution.</span>
-<span class="sd">            solver (str):</span>
-<span class="sd">                cvxpy backend solver to use. Supported solvers are:</span>
-<span class="sd">                ECOS, ECOS_BB, CVXOPT, SCS, GUROBI, Elemental.</span>
-<span class="sd">                GLPK and GLPK_MI (via CVXOPT GLPK interface)</span>
-<span class="sd">            solver_options:</span>
-<span class="sd">                dictionary of keyword arguments passed to cvxpy solve.</span>
-<span class="sd">                See docs in CVXEstimator for more information.</span>
-<span class="sd">        &quot;&quot;&quot;</span>
         <span class="c1"># call with keywords to avoid MRO issues</span>
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span>
             <span class="n">group_list</span><span class="o">=</span><span class="n">group_list</span><span class="p">,</span>
@@ -577,99 +704,136 @@
             <span class="n">solver_options</span><span class="o">=</span><span class="n">solver_options</span><span class="p">,</span>
         <span class="p">)</span>
 
-    <span class="k">def</span> <span class="nf">_gen_objective</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">,</span> <span class="n">y</span><span class="p">):</span>
-        <span class="k">return</span> <span class="n">AdaptiveGroupLasso</span><span class="o">.</span><span class="n">_gen_objective</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">,</span> <span class="n">y</span><span class="p">)</span>
+    <span class="k">def</span> <span class="nf">_generate_params</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">ArrayLike</span><span class="p">,</span> <span class="n">y</span><span class="p">:</span> <span class="n">ArrayLike</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">SimpleNamespace</span> <span class="o">|</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">parameters</span> <span class="o">=</span> <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">_generate_params</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="n">y</span><span class="p">)</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">group_list</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">n_groups</span> <span class="o">=</span> <span class="n">X</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">n_groups</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">unique</span><span class="p">([</span><span class="n">gid</span> <span class="k">for</span> <span class="n">grp</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">group_list</span> <span class="k">for</span> <span class="n">gid</span> <span class="ow">in</span> <span class="n">grp</span><span class="p">]))</span>
 
-    <span class="k">def</span> <span class="nf">_solve</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
-        <span class="n">beta</span> <span class="o">=</span> <span class="n">AdaptiveGroupLasso</span><span class="o">.</span><span class="n">_solve</span><span class="p">(</span>
-            <span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">[:,</span> <span class="bp">self</span><span class="o">.</span><span class="n">beta_indices</span><span class="p">],</span> <span class="n">y</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span>
+        <span class="n">parameters</span><span class="o">.</span><span class="n">adaptive_weights</span> <span class="o">=</span> <span class="n">cp</span><span class="o">.</span><span class="n">Parameter</span><span class="p">(</span>
+            <span class="n">shape</span><span class="o">=</span><span class="n">n_groups</span><span class="p">,</span>
+            <span class="n">nonneg</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+            <span class="n">value</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">alpha</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">ones</span><span class="p">(</span><span class="n">n_groups</span><span class="p">),</span>
         <span class="p">)</span>
-        <span class="n">beta</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="nb">sum</span><span class="p">(</span><span class="n">beta</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">beta_indices</span> <span class="o">==</span> <span class="n">i</span><span class="p">])</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">X</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">])])</span>
+        <span class="k">return</span> <span class="n">parameters</span>
+
+    <span class="k">def</span> <span class="nf">_generate_objective</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">X</span><span class="p">:</span> <span class="n">ArrayLike</span><span class="p">,</span>
+        <span class="n">y</span><span class="p">:</span> <span class="n">ArrayLike</span><span class="p">,</span>
+        <span class="n">beta</span><span class="p">:</span> <span class="n">cp</span><span class="o">.</span><span class="n">Variable</span><span class="p">,</span>
+        <span class="n">parameters</span><span class="p">:</span> <span class="n">SimpleNamespace</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">auxiliaries</span><span class="p">:</span> <span class="n">SimpleNamespace</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">cp</span><span class="o">.</span><span class="n">Expression</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">AdaptiveGroupLasso</span><span class="o">.</span><span class="n">_generate_objective</span><span class="p">(</span>
+            <span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">beta</span><span class="p">,</span> <span class="n">parameters</span><span class="p">,</span> <span class="n">auxiliaries</span>
+        <span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">_solve</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">ArrayLike</span><span class="p">,</span> <span class="n">y</span><span class="p">:</span> <span class="n">ArrayLike</span><span class="p">,</span> <span class="n">solver_options</span><span class="p">:</span> <span class="nb">dict</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">NDArray</span><span class="p">[</span><span class="nb">float</span><span class="p">]:</span>
+        <span class="n">extended_indices</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">canonicals_</span><span class="o">.</span><span class="n">auxiliaries</span><span class="o">.</span><span class="n">extended_coef_indices</span>
+        <span class="n">beta</span> <span class="o">=</span> <span class="n">AdaptiveGroupLasso</span><span class="o">.</span><span class="n">_solve</span><span class="p">(</span>
+            <span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">[:,</span> <span class="n">extended_indices</span><span class="p">],</span> <span class="n">y</span><span class="p">,</span> <span class="n">solver_options</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span>
+        <span class="p">)</span>
+        <span class="n">beta</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="nb">sum</span><span class="p">(</span><span class="n">beta</span><span class="p">[</span><span class="n">extended_indices</span> <span class="o">==</span> <span class="n">i</span><span class="p">])</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">X</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">])])</span>
         <span class="k">return</span> <span class="n">beta</span></div>
 
 
 <div class="viewcode-block" id="AdaptiveSparseGroupLasso"><a class="viewcode-back" href="../../../sparselm.model.html#sparselm.model.AdaptiveSparseGroupLasso">[docs]</a><span class="k">class</span> <span class="nc">AdaptiveSparseGroupLasso</span><span class="p">(</span><span class="n">AdaptiveLasso</span><span class="p">,</span> <span class="n">SparseGroupLasso</span><span class="p">):</span>
 <span class="w">    </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;Adaptive Sparse Group Lasso, iteratively re-weighted sparse group lasso.</span>
 
-<span class="sd">    Regularized model:</span>
+<span class="sd">    Regularized regression objective:</span>
 
 <span class="sd">    .. math::</span>
 
-<span class="sd">        || X \beta - y ||^2_2</span>
+<span class="sd">        \min_{\beta} || X \beta - y ||^2_2</span>
 <span class="sd">            + \alpha r ||w^T \beta||_1</span>
 <span class="sd">            + \alpha (1 - r) \sum_{G} v_G ||\beta_G||_2</span>
 
 <span class="sd">    Where w, v represent vectors of weights that are iteratively updated.</span>
 <span class="sd">    And r is the L1 ratio.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        groups (list or ndarray):</span>
+<span class="sd">            array-like of integers specifying groups. Length should be the</span>
+<span class="sd">            same as model, where each integer entry specifies the group</span>
+<span class="sd">            each parameter corresponds to.</span>
+<span class="sd">        l1_ratio (float):</span>
+<span class="sd">            Mixing parameter between l1 and group lasso regularization.</span>
+<span class="sd">        alpha (float):</span>
+<span class="sd">            Regularization hyper-parameter.</span>
+<span class="sd">        group_weights (ndarray): optional</span>
+<span class="sd">            Weights for each group to use in the regularization term.</span>
+<span class="sd">            The default is to use the sqrt of the group sizes, however any</span>
+<span class="sd">            weight can be specified. The array must be the</span>
+<span class="sd">            same length as the groups given. If you need all groups</span>
+<span class="sd">            weighted equally just pass an array of ones.</span>
+<span class="sd">        max_iter (int):</span>
+<span class="sd">            Maximum number of re-weighting iteration steps.</span>
+<span class="sd">        eps (float):</span>
+<span class="sd">            Value to add to denominator of weights.</span>
+<span class="sd">        tol (float):</span>
+<span class="sd">            Absolute convergence tolerance for difference between weights</span>
+<span class="sd">            at successive steps.</span>
+<span class="sd">        update_function (Callable): optional</span>
+<span class="sd">            A function with signature f(group_norms, eps) used to update the</span>
+<span class="sd">            weights at each iteration. Where group_norms are the norms of</span>
+<span class="sd">            the coefficients Beta for each group.</span>
+<span class="sd">            Default is 1/(group_norms + eps)</span>
+<span class="sd">        standardize (bool): optional</span>
+<span class="sd">            Whether to standardize the group regularization penalty using</span>
+<span class="sd">            the feature matrix. See the following for reference:</span>
+<span class="sd">            http://faculty.washington.edu/nrsimon/standGL.pdf</span>
+<span class="sd">        fit_intercept (bool):</span>
+<span class="sd">            Whether the intercept should be estimated or not.</span>
+<span class="sd">            If False, the data is assumed to be already centered.</span>
+<span class="sd">        copy_X (bool):</span>
+<span class="sd">            If True, X will be copied; else, it may be overwritten.</span>
+<span class="sd">        warm_start (bool):</span>
+<span class="sd">            When set to True, reuse the solution of the previous call to</span>
+<span class="sd">            fit as initialization, otherwise, just erase the previous</span>
+<span class="sd">            solution.</span>
+<span class="sd">        solver (str):</span>
+<span class="sd">            cvxpy backend solver to use. Supported solvers are listed here:</span>
+<span class="sd">            https://www.cvxpy.org/tutorial/advanced/index.html#solve-method-options</span>
+<span class="sd">        solver_options (dict):</span>
+<span class="sd">            dictionary of keyword arguments passed to cvxpy solve.</span>
+<span class="sd">            See docs in CVXRegressor for more information.</span>
+
+<span class="sd">    Attributes:</span>
+<span class="sd">        coef_ (NDArray):</span>
+<span class="sd">            Parameter vector (:math:`\beta` in the cost function formula) of shape (n_features,).</span>
+<span class="sd">        intercept_ (float):</span>
+<span class="sd">            Independent term in decision function.</span>
+<span class="sd">        canonicals_ (SimpleNamespace):</span>
+<span class="sd">            Namespace that contains underlying cvxpy objects used to define</span>
+<span class="sd">            the optimization problem. The objects included are the following:</span>
+<span class="sd">                - objective - the objective function.</span>
+<span class="sd">                - beta - variable to be optimized (corresponds to the estimated coef_ attribute).</span>
+<span class="sd">                - parameters - hyper-parameters</span>
+<span class="sd">                - auxiliaries - auxiliary variables and expressions</span>
+<span class="sd">                - constraints - solution constraints</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
-        <span class="n">groups</span><span class="p">,</span>
-        <span class="n">l1_ratio</span><span class="o">=</span><span class="mf">0.5</span><span class="p">,</span>
-        <span class="n">alpha</span><span class="o">=</span><span class="mf">1.0</span><span class="p">,</span>
-        <span class="n">group_weights</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
-        <span class="n">max_iter</span><span class="o">=</span><span class="mi">5</span><span class="p">,</span>
-        <span class="n">eps</span><span class="o">=</span><span class="mf">1e-6</span><span class="p">,</span>
-        <span class="n">tol</span><span class="o">=</span><span class="mf">1e-10</span><span class="p">,</span>
-        <span class="n">update_function</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
-        <span class="n">standardize</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
-        <span class="n">fit_intercept</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
-        <span class="n">copy_X</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
-        <span class="n">warm_start</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
-        <span class="n">solver</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
-        <span class="n">solver_options</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+        <span class="n">groups</span><span class="p">:</span> <span class="n">ArrayLike</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">l1_ratio</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.5</span><span class="p">,</span>
+        <span class="n">alpha</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">1.0</span><span class="p">,</span>
+        <span class="n">group_weights</span><span class="p">:</span> <span class="n">ArrayLike</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">max_iter</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">3</span><span class="p">,</span>
+        <span class="n">eps</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">1e-6</span><span class="p">,</span>
+        <span class="n">tol</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">1e-10</span><span class="p">,</span>
+        <span class="n">update_function</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[[</span><span class="nb">float</span><span class="p">,</span> <span class="nb">float</span><span class="p">],</span> <span class="nb">float</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">standardize</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+        <span class="n">fit_intercept</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+        <span class="n">copy_X</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
+        <span class="n">warm_start</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
+        <span class="n">solver</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">solver_options</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="p">):</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Initialize estimator.</span>
-
-<span class="sd">        Args:</span>
-<span class="sd">            groups (list or ndarray):</span>
-<span class="sd">                array-like of integers specifying groups. Length should be the</span>
-<span class="sd">                same as model, where each integer entry specifies the group</span>
-<span class="sd">                each parameter corresponds to.</span>
-<span class="sd">            l1_ratio (float):</span>
-<span class="sd">                Mixing parameter between l1 and group lasso regularization.</span>
-<span class="sd">            alpha (float):</span>
-<span class="sd">                Regularization hyper-parameter.</span>
-<span class="sd">            group_weights (ndarray): optional</span>
-<span class="sd">                Weights for each group to use in the regularization term.</span>
-<span class="sd">                The default is to use the sqrt of the group sizes, however any</span>
-<span class="sd">                weight can be specified. The array must be the</span>
-<span class="sd">                same length as the groups given. If you need all groups</span>
-<span class="sd">                weighted equally just pass an array of ones.</span>
-<span class="sd">            max_iter (int):</span>
-<span class="sd">                Maximum number of re-weighting iteration steps.</span>
-<span class="sd">            eps (float):</span>
-<span class="sd">                Value to add to denominator of weights.</span>
-<span class="sd">            tol (float):</span>
-<span class="sd">                Absolute convergence tolerance for difference between weights</span>
-<span class="sd">                at successive steps.</span>
-<span class="sd">            update_function (Callable): optional</span>
-<span class="sd">                A function with signature f(group_norms, eps) used to update the</span>
-<span class="sd">                weights at each iteration. Where group_norms are the norms of</span>
-<span class="sd">                the coefficients Beta for each group.</span>
-<span class="sd">                Default is 1/(group_norms + eps)</span>
-<span class="sd">            standardize (bool): optional</span>
-<span class="sd">                Whether to standardize the group regularization penalty using</span>
-<span class="sd">                the feature matrix. See the following for reference:</span>
-<span class="sd">                http://faculty.washington.edu/nrsimon/standGL.pdf</span>
-<span class="sd">            fit_intercept (bool):</span>
-<span class="sd">                Whether the intercept should be estimated or not.</span>
-<span class="sd">                If False, the data is assumed to be already centered.</span>
-<span class="sd">            copy_X (bool):</span>
-<span class="sd">                If True, X will be copied; else, it may be overwritten.</span>
-<span class="sd">            warm_start (bool):</span>
-<span class="sd">                When set to True, reuse the solution of the previous call to</span>
-<span class="sd">                fit as initialization, otherwise, just erase the previous</span>
-<span class="sd">                solution.</span>
-<span class="sd">            solver (str):</span>
-<span class="sd">                cvxpy backend solver to use. Supported solvers are:</span>
-<span class="sd">                ECOS, ECOS_BB, CVXOPT, SCS, GUROBI, Elemental.</span>
-<span class="sd">                GLPK and GLPK_MI (via CVXOPT GLPK interface)</span>
-<span class="sd">            solver_options:</span>
-<span class="sd">                dictionary of keyword arguments passed to cvxpy solve.</span>
-<span class="sd">                See docs in CVXEstimator for more information.</span>
-<span class="sd">        &quot;&quot;&quot;</span>
         <span class="c1"># call with keywords to avoid MRO issues</span>
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span>
             <span class="n">groups</span><span class="o">=</span><span class="n">groups</span><span class="p">,</span>
@@ -688,51 +852,99 @@
             <span class="n">solver_options</span><span class="o">=</span><span class="n">solver_options</span><span class="p">,</span>
         <span class="p">)</span>
 
-    <span class="k">def</span> <span class="nf">_gen_regularization</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">):</span>
-        <span class="n">grp_norms</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_gen_group_norms</span><span class="p">(</span><span class="n">X</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_weights</span> <span class="o">=</span> <span class="p">(</span>
-            <span class="n">cp</span><span class="o">.</span><span class="n">Parameter</span><span class="p">(</span>
-                <span class="n">shape</span><span class="o">=</span><span class="n">X</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span>
-                <span class="n">nonneg</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
-                <span class="n">value</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_lambda1</span><span class="o">.</span><span class="n">value</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">ones</span><span class="p">(</span><span class="n">X</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]),</span>
-            <span class="p">),</span>
-            <span class="n">cp</span><span class="o">.</span><span class="n">Parameter</span><span class="p">(</span>
-                <span class="n">shape</span><span class="o">=</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">group_masks</span><span class="p">),),</span>
-                <span class="n">nonneg</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
-                <span class="n">value</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_lambda2</span><span class="o">.</span><span class="n">value</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">group_weights</span><span class="p">,</span>
-            <span class="p">),</span>
+    <span class="k">def</span> <span class="nf">_set_param_values</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">SparseGroupLasso</span><span class="o">.</span><span class="n">_set_param_values</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
+        <span class="n">group_weights</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">canonicals_</span><span class="o">.</span><span class="n">parameters</span><span class="o">.</span><span class="n">adaptive_group_weights</span><span class="o">.</span><span class="n">value</span>
+        <span class="n">group_weights</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">canonicals_</span><span class="o">.</span><span class="n">parameters</span><span class="o">.</span><span class="n">lambda1</span><span class="o">.</span><span class="n">value</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">ones_like</span><span class="p">(</span>
+            <span class="n">group_weights</span>
         <span class="p">)</span>
-        <span class="n">l1_reg</span> <span class="o">=</span> <span class="n">cp</span><span class="o">.</span><span class="n">norm1</span><span class="p">(</span><span class="n">cp</span><span class="o">.</span><span class="n">multiply</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_weights</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="bp">self</span><span class="o">.</span><span class="n">_beta</span><span class="p">))</span>
-        <span class="n">grp_reg</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_weights</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">@</span> <span class="n">grp_norms</span>
-        <span class="k">return</span> <span class="n">l1_reg</span> <span class="o">+</span> <span class="n">grp_reg</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">canonicals_</span><span class="o">.</span><span class="n">parameters</span><span class="o">.</span><span class="n">adaptive_group_weights</span><span class="o">.</span><span class="n">value</span> <span class="o">=</span> <span class="n">group_weights</span>
+        <span class="n">coef_weights</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">canonicals_</span><span class="o">.</span><span class="n">parameters</span><span class="o">.</span><span class="n">adaptive_coef_weights</span><span class="o">.</span><span class="n">value</span>
+        <span class="n">coef_weights</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">canonicals_</span><span class="o">.</span><span class="n">parameters</span><span class="o">.</span><span class="n">lambda1</span><span class="o">.</span><span class="n">value</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">ones_like</span><span class="p">(</span>
+            <span class="n">coef_weights</span>
+        <span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">canonicals_</span><span class="o">.</span><span class="n">parameters</span><span class="o">.</span><span class="n">adaptive_coef_weights</span><span class="o">.</span><span class="n">value</span> <span class="o">=</span> <span class="n">coef_weights</span>
 
-    <span class="k">def</span> <span class="nf">_update_weights</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">beta</span><span class="p">):</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_previous_weights</span> <span class="o">=</span> <span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">_weights</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">value</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_weights</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">value</span><span class="p">]</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_weights</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">value</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_lambda1</span><span class="o">.</span><span class="n">value</span> <span class="o">/</span> <span class="p">(</span><span class="nb">abs</span><span class="p">(</span><span class="n">beta</span><span class="p">)</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">eps</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_weights</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">value</span> <span class="o">=</span> <span class="p">(</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">_lambda2</span><span class="o">.</span><span class="n">value</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">group_weights</span>
-        <span class="p">)</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">update_function</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_group_norms</span><span class="o">.</span><span class="n">value</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">eps</span><span class="p">)</span>
+    <span class="k">def</span> <span class="nf">_generate_params</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">ArrayLike</span><span class="p">,</span> <span class="n">y</span><span class="p">:</span> <span class="n">ArrayLike</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">SimpleNamespace</span> <span class="o">|</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="c1"># skip AdaptiveLasso in super</span>
+        <span class="n">parameters</span> <span class="o">=</span> <span class="n">SparseGroupLasso</span><span class="o">.</span><span class="n">_generate_params</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">,</span> <span class="n">y</span><span class="p">)</span>
+        <span class="n">n_groups</span> <span class="o">=</span> <span class="n">X</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">groups</span> <span class="ow">is</span> <span class="kc">None</span> <span class="k">else</span> <span class="nb">len</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">unique</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">groups</span><span class="p">))</span>
+        <span class="n">parameters</span><span class="o">.</span><span class="n">adaptive_coef_weights</span> <span class="o">=</span> <span class="n">cp</span><span class="o">.</span><span class="n">Parameter</span><span class="p">(</span>
+            <span class="n">shape</span><span class="o">=</span><span class="n">X</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span>
+            <span class="n">nonneg</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+            <span class="n">value</span><span class="o">=</span><span class="n">parameters</span><span class="o">.</span><span class="n">lambda1</span><span class="o">.</span><span class="n">value</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">ones</span><span class="p">(</span><span class="n">X</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]),</span>
+        <span class="p">)</span>
+        <span class="n">parameters</span><span class="o">.</span><span class="n">adaptive_group_weights</span> <span class="o">=</span> <span class="n">cp</span><span class="o">.</span><span class="n">Parameter</span><span class="p">(</span>
+            <span class="n">shape</span><span class="o">=</span><span class="n">n_groups</span><span class="p">,</span>
+            <span class="n">nonneg</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+            <span class="n">value</span><span class="o">=</span><span class="n">parameters</span><span class="o">.</span><span class="n">lambda2</span><span class="o">.</span><span class="n">value</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">ones</span><span class="p">(</span><span class="n">n_groups</span><span class="p">),</span>
+        <span class="p">)</span>
+        <span class="k">return</span> <span class="n">parameters</span>
 
-    <span class="k">def</span> <span class="nf">_weights_converged</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="n">l1_converged</span> <span class="o">=</span> <span class="p">(</span>
-            <span class="n">np</span><span class="o">.</span><span class="n">linalg</span><span class="o">.</span><span class="n">norm</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_weights</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">value</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">_previous_weights</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
-            <span class="o">&lt;=</span> <span class="bp">self</span><span class="o">.</span><span class="n">tol</span>
+    <span class="k">def</span> <span class="nf">_generate_regularization</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">X</span><span class="p">:</span> <span class="n">ArrayLike</span><span class="p">,</span>
+        <span class="n">beta</span><span class="p">:</span> <span class="n">cp</span><span class="o">.</span><span class="n">Variable</span><span class="p">,</span>
+        <span class="n">parameters</span><span class="p">:</span> <span class="n">SimpleNamespace</span><span class="p">,</span>
+        <span class="n">auxiliaries</span><span class="p">:</span> <span class="n">SimpleNamespace</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">cp</span><span class="o">.</span><span class="n">Expression</span><span class="p">:</span>
+        <span class="n">group_regularization</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="n">parameters</span><span class="o">.</span><span class="n">adaptive_group_weights</span> <span class="o">@</span> <span class="n">auxiliaries</span><span class="o">.</span><span class="n">group_norms</span>
         <span class="p">)</span>
-        <span class="n">group_converged</span> <span class="o">=</span> <span class="p">(</span>
-            <span class="n">np</span><span class="o">.</span><span class="n">linalg</span><span class="o">.</span><span class="n">norm</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_weights</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">value</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">_previous_weights</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>
-            <span class="o">&lt;=</span> <span class="bp">self</span><span class="o">.</span><span class="n">tol</span>
+        <span class="n">l1_regularization</span> <span class="o">=</span> <span class="n">cp</span><span class="o">.</span><span class="n">norm1</span><span class="p">(</span>
+            <span class="n">cp</span><span class="o">.</span><span class="n">multiply</span><span class="p">(</span><span class="n">parameters</span><span class="o">.</span><span class="n">adaptive_coef_weights</span><span class="p">,</span> <span class="n">beta</span><span class="p">)</span>
         <span class="p">)</span>
-        <span class="k">return</span> <span class="n">l1_converged</span> <span class="ow">and</span> <span class="n">group_converged</span></div>
+        <span class="k">return</span> <span class="n">group_regularization</span> <span class="o">+</span> <span class="n">l1_regularization</span>
+
+    <span class="nd">@staticmethod</span>
+    <span class="k">def</span> <span class="nf">_get_weights_value</span><span class="p">(</span><span class="n">parameters</span><span class="p">:</span> <span class="n">SimpleNamespace</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">NDArray</span><span class="p">[</span><span class="nb">float</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Simply return a copy of the value of adaptive weights.&quot;&quot;&quot;</span>
+        <span class="c1"># does concatenate copy?</span>
+        <span class="n">concat_weights</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">concatenate</span><span class="p">(</span>
+            <span class="p">(</span>
+                <span class="n">parameters</span><span class="o">.</span><span class="n">adaptive_group_weights</span><span class="o">.</span><span class="n">value</span><span class="o">.</span><span class="n">copy</span><span class="p">(),</span>
+                <span class="n">parameters</span><span class="o">.</span><span class="n">adaptive_coef_weights</span><span class="o">.</span><span class="n">value</span><span class="o">.</span><span class="n">copy</span><span class="p">(),</span>
+            <span class="p">)</span>
+        <span class="p">)</span>
+        <span class="k">return</span> <span class="n">concat_weights</span>
+
+    <span class="k">def</span> <span class="nf">_check_convergence</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">parameters</span><span class="p">:</span> <span class="n">SimpleNamespace</span><span class="p">,</span> <span class="n">previous_weights</span><span class="p">:</span> <span class="n">ArrayLike</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Check if weights have converged to set tolerance.&quot;&quot;&quot;</span>
+        <span class="c1"># This will technically check the norm of the concatenation instead of the sum</span>
+        <span class="c1"># of the norm of each weight vector, so it&#39;s a bit of tighter tolerance.</span>
+        <span class="n">current_weights</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">concatenate</span><span class="p">(</span>
+            <span class="p">(</span>
+                <span class="n">parameters</span><span class="o">.</span><span class="n">adaptive_group_weights</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
+                <span class="n">parameters</span><span class="o">.</span><span class="n">adaptive_coef_weights</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
+            <span class="p">)</span>
+        <span class="p">)</span>
+        <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">linalg</span><span class="o">.</span><span class="n">norm</span><span class="p">(</span><span class="n">current_weights</span> <span class="o">-</span> <span class="n">previous_weights</span><span class="p">)</span> <span class="o">&lt;=</span> <span class="bp">self</span><span class="o">.</span><span class="n">tol</span>
+
+    <span class="k">def</span> <span class="nf">_iterative_update</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">beta</span><span class="p">:</span> <span class="n">ArrayLike</span><span class="p">,</span>
+        <span class="n">parameters</span><span class="p">:</span> <span class="n">SimpleNamespace</span><span class="p">,</span>
+        <span class="n">auxiliaries</span><span class="p">:</span> <span class="n">SimpleNamespace</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">update</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_update_function</span><span class="p">()</span>
+        <span class="n">parameters</span><span class="o">.</span><span class="n">adaptive_coef_weights</span><span class="o">.</span><span class="n">value</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">canonicals_</span><span class="o">.</span><span class="n">parameters</span><span class="o">.</span><span class="n">lambda1</span><span class="o">.</span><span class="n">value</span> <span class="o">*</span> <span class="n">update</span><span class="p">(</span><span class="n">beta</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">eps</span><span class="p">)</span>
+        <span class="p">)</span>
+        <span class="n">parameters</span><span class="o">.</span><span class="n">adaptive_group_weights</span><span class="o">.</span><span class="n">value</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">canonicals_</span><span class="o">.</span><span class="n">parameters</span><span class="o">.</span><span class="n">lambda2</span><span class="o">.</span><span class="n">value</span> <span class="o">*</span> <span class="n">parameters</span><span class="o">.</span><span class="n">group_weights</span>
+        <span class="p">)</span> <span class="o">*</span> <span class="n">update</span><span class="p">(</span><span class="n">auxiliaries</span><span class="o">.</span><span class="n">group_norms</span><span class="o">.</span><span class="n">value</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">eps</span><span class="p">)</span></div>
 
 
 <div class="viewcode-block" id="AdaptiveRidgedGroupLasso"><a class="viewcode-back" href="../../../sparselm.model.html#sparselm.model.AdaptiveRidgedGroupLasso">[docs]</a><span class="k">class</span> <span class="nc">AdaptiveRidgedGroupLasso</span><span class="p">(</span><span class="n">AdaptiveGroupLasso</span><span class="p">,</span> <span class="n">RidgedGroupLasso</span><span class="p">):</span>
 <span class="w">    </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;Adaptive Ridged Group Lasso implementation.</span>
 
-<span class="sd">    Regularized model:</span>
+<span class="sd">    Regularized regression objective:</span>
 
 <span class="sd">    .. math::</span>
 
-<span class="sd">        || X \beta - y ||^2_2 + \alpha \sum_{G} w_G ||\beta_G||_2</span>
+<span class="sd">        \min_{\beta} || X \beta - y ||^2_2 + \alpha \sum_{G} w_G ||\beta_G||_2</span>
 <span class="sd">                               + \sum_{G} w_l ||\beta_G||^2_2</span>
 
 <span class="sd">    Where G represents groups of features/coefficients, and w_l represents a</span>
@@ -741,73 +953,84 @@
 <span class="sd">    For details on proper standardization refer to:</span>
 <span class="sd">    http://faculty.washington.edu/nrsimon/standGL.pdf</span>
 
-<span class="sd">    * Adaptive iterative weights are only done on the group norm and not the ridge</span>
+<span class="sd">    Adaptive iterative weights are only done on the group norm and not the ridge</span>
 <span class="sd">    portion.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        groups (list or ndarray):</span>
+<span class="sd">            array-like of integers specifying groups. Length should be the</span>
+<span class="sd">            same as model, where each integer entry specifies the group</span>
+<span class="sd">            each parameter corresponds to.</span>
+<span class="sd">        alpha (float):</span>
+<span class="sd">            Regularization hyper-parameter.</span>
+<span class="sd">        delta (ndarray): optional</span>
+<span class="sd">            Positive 1D array. Regularization vector for ridge penalty.</span>
+<span class="sd">        group_weights (ndarray): optional</span>
+<span class="sd">            Weights for each group to use in the regularization term.</span>
+<span class="sd">            The default is to use the sqrt of the group sizes, however any</span>
+<span class="sd">            weight can be specified. The array must be the</span>
+<span class="sd">            same length as the groups given. If you need all groups</span>
+<span class="sd">            weighted equally just pass an array of ones.</span>
+<span class="sd">        fit_intercept (bool):</span>
+<span class="sd">            Whether the intercept should be estimated or not.</span>
+<span class="sd">            If False, the data is assumed to be already centered.</span>
+<span class="sd">        max_iter (int):</span>
+<span class="sd">            Maximum number of re-weighting iteration steps.</span>
+<span class="sd">        eps (float):</span>
+<span class="sd">            Value to add to denominator of weights.</span>
+<span class="sd">        tol (float):</span>
+<span class="sd">            Absolute convergence tolerance for difference between weights</span>
+<span class="sd">            at successive steps.</span>
+<span class="sd">        update_function (Callable): optional</span>
+<span class="sd">            A function with signature f(group_norms, eps) used to update the</span>
+<span class="sd">            weights at each iteration. Where group_norms are the norms of</span>
+<span class="sd">            the coefficients Beta for each group.</span>
+<span class="sd">            Default is 1/(group_norms + eps)</span>
+<span class="sd">        copy_X (bool):</span>
+<span class="sd">            If True, X will be copied; else, it may be overwritten.</span>
+<span class="sd">        warm_start (bool):</span>
+<span class="sd">            When set to True, reuse the solution of the previous call to</span>
+<span class="sd">            fit as initialization, otherwise, just erase the previous</span>
+<span class="sd">            solution.</span>
+<span class="sd">        solver (str):</span>
+<span class="sd">            cvxpy backend solver to use. Supported solvers are listed here:</span>
+<span class="sd">            https://www.cvxpy.org/tutorial/advanced/index.html#solve-method-options</span>
+<span class="sd">        solver_options (dict):</span>
+<span class="sd">            dictionary of keyword arguments passed to cvxpy solve.</span>
+<span class="sd">            See docs in CVXRegressor for more information.</span>
+
+<span class="sd">    Attributes:</span>
+<span class="sd">        coef_ (NDArray):</span>
+<span class="sd">            Parameter vector (:math:`\beta` in the cost function formula) of shape (n_features,).</span>
+<span class="sd">        intercept_ (float):</span>
+<span class="sd">            Independent term in decision function.</span>
+<span class="sd">        canonicals_ (SimpleNamespace):</span>
+<span class="sd">            Namespace that contains underlying cvxpy objects used to define</span>
+<span class="sd">            the optimization problem. The objects included are the following:</span>
+<span class="sd">                - objective - the objective function.</span>
+<span class="sd">                - beta - variable to be optimized (corresponds to the estimated coef_ attribute).</span>
+<span class="sd">                - parameters - hyper-parameters</span>
+<span class="sd">                - auxiliaries - auxiliary variables and expressions</span>
+<span class="sd">                - constraints - solution constraints</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
-        <span class="n">groups</span><span class="p">,</span>
-        <span class="n">alpha</span><span class="o">=</span><span class="mf">1.0</span><span class="p">,</span>
-        <span class="n">delta</span><span class="o">=</span><span class="mf">1.0</span><span class="p">,</span>
-        <span class="n">group_weights</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
-        <span class="n">max_iter</span><span class="o">=</span><span class="mi">5</span><span class="p">,</span>
-        <span class="n">eps</span><span class="o">=</span><span class="mf">1e-6</span><span class="p">,</span>
-        <span class="n">tol</span><span class="o">=</span><span class="mf">1e-10</span><span class="p">,</span>
-        <span class="n">update_function</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
-        <span class="n">standardize</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
-        <span class="n">fit_intercept</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
-        <span class="n">copy_X</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
-        <span class="n">warm_start</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
-        <span class="n">solver</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
-        <span class="n">solver_options</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+        <span class="n">groups</span><span class="p">:</span> <span class="n">ArrayLike</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">alpha</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">1.0</span><span class="p">,</span>
+        <span class="n">delta</span><span class="p">:</span> <span class="n">ArrayLike</span> <span class="o">=</span> <span class="p">(</span><span class="mf">1.0</span><span class="p">,),</span>
+        <span class="n">group_weights</span><span class="p">:</span> <span class="n">ArrayLike</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">max_iter</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">3</span><span class="p">,</span>
+        <span class="n">eps</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">1e-6</span><span class="p">,</span>
+        <span class="n">tol</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">1e-10</span><span class="p">,</span>
+        <span class="n">update_function</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[[</span><span class="nb">float</span><span class="p">,</span> <span class="nb">float</span><span class="p">],</span> <span class="nb">float</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">standardize</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+        <span class="n">fit_intercept</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+        <span class="n">copy_X</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
+        <span class="n">warm_start</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
+        <span class="n">solver</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">solver_options</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="p">):</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Initialize estimator.</span>
-
-<span class="sd">        Args:</span>
-<span class="sd">            groups (list or ndarray):</span>
-<span class="sd">                array-like of integers specifying groups. Length should be the</span>
-<span class="sd">                same as model, where each integer entry specifies the group</span>
-<span class="sd">                each parameter corresponds to.</span>
-<span class="sd">            alpha (float):</span>
-<span class="sd">                Regularization hyper-parameter.</span>
-<span class="sd">            delta (ndarray): optional</span>
-<span class="sd">                Positive 1D array. Regularization vector for ridge penalty.</span>
-<span class="sd">            group_weights (ndarray): optional</span>
-<span class="sd">                Weights for each group to use in the regularization term.</span>
-<span class="sd">                The default is to use the sqrt of the group sizes, however any</span>
-<span class="sd">                weight can be specified. The array must be the</span>
-<span class="sd">                same length as the groups given. If you need all groups</span>
-<span class="sd">                weighted equally just pass an array of ones.</span>
-<span class="sd">            fit_intercept (bool):</span>
-<span class="sd">                Whether the intercept should be estimated or not.</span>
-<span class="sd">                If False, the data is assumed to be already centered.</span>
-<span class="sd">            max_iter (int):</span>
-<span class="sd">                Maximum number of re-weighting iteration steps.</span>
-<span class="sd">            eps (float):</span>
-<span class="sd">                Value to add to denominator of weights.</span>
-<span class="sd">            tol (float):</span>
-<span class="sd">                Absolute convergence tolerance for difference between weights</span>
-<span class="sd">                at successive steps.</span>
-<span class="sd">            update_function (Callable): optional</span>
-<span class="sd">                A function with signature f(group_norms, eps) used to update the</span>
-<span class="sd">                weights at each iteration. Where group_norms are the norms of</span>
-<span class="sd">                the coefficients Beta for each group.</span>
-<span class="sd">                Default is 1/(group_norms + eps)</span>
-<span class="sd">            copy_X (bool):</span>
-<span class="sd">                If True, X will be copied; else, it may be overwritten.</span>
-<span class="sd">            warm_start (bool):</span>
-<span class="sd">                When set to True, reuse the solution of the previous call to</span>
-<span class="sd">                fit as initialization, otherwise, just erase the previous</span>
-<span class="sd">                solution.</span>
-<span class="sd">            solver (str):</span>
-<span class="sd">                cvxpy backend solver to use. Supported solvers are:</span>
-<span class="sd">                ECOS, ECOS_BB, CVXOPT, SCS, GUROBI, Elemental.</span>
-<span class="sd">                GLPK and GLPK_MI (via CVXOPT GLPK interface)</span>
-<span class="sd">            solver_options:</span>
-<span class="sd">                dictionary of keyword arguments passed to cvxpy solve.</span>
-<span class="sd">                See docs in CVXEstimator for more information.</span>
-<span class="sd">        &quot;&quot;&quot;</span>
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span>
             <span class="n">groups</span><span class="o">=</span><span class="n">groups</span><span class="p">,</span>
             <span class="n">alpha</span><span class="o">=</span><span class="n">alpha</span><span class="p">,</span>
@@ -825,15 +1048,25 @@
             <span class="n">solver_options</span><span class="o">=</span><span class="n">solver_options</span><span class="p">,</span>
         <span class="p">)</span>
 
-    <span class="k">def</span> <span class="nf">_gen_group_norms</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">):</span>
-        <span class="k">return</span> <span class="n">RidgedGroupLasso</span><span class="o">.</span><span class="n">_gen_group_norms</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">)</span>
+    <span class="k">def</span> <span class="nf">_generate_params</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">ArrayLike</span><span class="p">,</span> <span class="n">y</span><span class="p">:</span> <span class="n">ArrayLike</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">SimpleNamespace</span> <span class="o">|</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">return</span> <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">_generate_params</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="n">y</span><span class="p">)</span>
 
-    <span class="k">def</span> <span class="nf">_gen_regularization</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">):</span>
-        <span class="n">reg</span> <span class="o">=</span> <span class="n">AdaptiveGroupLasso</span><span class="o">.</span><span class="n">_gen_regularization</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">)</span>
-        <span class="n">ridge</span> <span class="o">=</span> <span class="n">cp</span><span class="o">.</span><span class="n">hstack</span><span class="p">(</span>
-            <span class="p">[</span><span class="n">cp</span><span class="o">.</span><span class="n">sum_squares</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_beta</span><span class="p">[</span><span class="n">mask</span><span class="p">])</span> <span class="k">for</span> <span class="n">mask</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">group_masks</span><span class="p">]</span>
+    <span class="k">def</span> <span class="nf">_generate_regularization</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">X</span><span class="p">:</span> <span class="n">ArrayLike</span><span class="p">,</span>
+        <span class="n">beta</span><span class="p">:</span> <span class="n">cp</span><span class="o">.</span><span class="n">Variable</span><span class="p">,</span>
+        <span class="n">parameters</span><span class="p">:</span> <span class="n">SimpleNamespace</span><span class="p">,</span>
+        <span class="n">auxiliaries</span><span class="p">:</span> <span class="n">SimpleNamespace</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">cp</span><span class="o">.</span><span class="n">Expression</span><span class="p">:</span>
+        <span class="n">group_regularization</span> <span class="o">=</span> <span class="n">AdaptiveGroupLasso</span><span class="o">.</span><span class="n">_generate_regularization</span><span class="p">(</span>
+            <span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">,</span> <span class="n">beta</span><span class="p">,</span> <span class="n">parameters</span><span class="p">,</span> <span class="n">auxiliaries</span>
         <span class="p">)</span>
-        <span class="k">return</span> <span class="n">reg</span> <span class="o">+</span> <span class="mf">0.5</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">_delta</span> <span class="o">@</span> <span class="n">ridge</span></div>
+        <span class="c1"># repetitive code...</span>
+        <span class="n">groups</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="n">X</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">groups</span> <span class="ow">is</span> <span class="kc">None</span> <span class="k">else</span> <span class="bp">self</span><span class="o">.</span><span class="n">groups</span>
+        <span class="n">group_masks</span> <span class="o">=</span> <span class="p">[</span><span class="n">groups</span> <span class="o">==</span> <span class="n">i</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">np</span><span class="o">.</span><span class="n">sort</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">unique</span><span class="p">(</span><span class="n">groups</span><span class="p">))]</span>
+        <span class="n">ridge</span> <span class="o">=</span> <span class="n">cp</span><span class="o">.</span><span class="n">hstack</span><span class="p">([</span><span class="n">cp</span><span class="o">.</span><span class="n">sum_squares</span><span class="p">(</span><span class="n">beta</span><span class="p">[</span><span class="n">mask</span><span class="p">])</span> <span class="k">for</span> <span class="n">mask</span> <span class="ow">in</span> <span class="n">group_masks</span><span class="p">])</span>
+        <span class="n">ridge_regularization</span> <span class="o">=</span> <span class="mf">0.5</span> <span class="o">*</span> <span class="n">parameters</span><span class="o">.</span><span class="n">delta</span> <span class="o">@</span> <span class="n">ridge</span>
+        <span class="k">return</span> <span class="n">group_regularization</span> <span class="o">+</span> <span class="n">ridge_regularization</span></div>
 </pre></div>
         </article>
       </div>

@@ -1,0 +1,488 @@
+<!doctype html>
+<html class="no-js" lang="en">
+  <head><meta charset="utf-8"/>
+    <meta name="viewport" content="width=device-width,initial-scale=1"/>
+    <meta name="color-scheme" content="light dark"><meta name="generator" content="Docutils 0.19: https://docutils.sourceforge.io/" />
+<link rel="index" title="Index" href="genindex.html" /><link rel="search" title="Search" href="search.html" /><link rel="next" title="sparselm.model_selection" href="sparselm.model_selection.html" /><link rel="prev" title="sparselm.model" href="sparselm.model.html" />
+
+    <!-- Generated with Sphinx 6.1.3 and Furo 2022.12.07 -->
+        <title>sparselm.stepwise - sparse-lm</title>
+      <link rel="stylesheet" type="text/css" href="_static/pygments.css" />
+    <link rel="stylesheet" type="text/css" href="_static/styles/furo.css?digest=91d0f0d1c444bdcb17a68e833c7a53903343c195" />
+    <link rel="stylesheet" type="text/css" href="_static/styles/furo-extensions.css?digest=30d1aed668e5c3a91c3e3bf6a60b675221979f0e" />
+    <link rel="stylesheet" type="text/css" href="_static/custom.css" />
+    
+    
+
+
+<style>
+  body {
+    --color-code-background: #eeffcc;
+  --color-code-foreground: black;
+  --admonition-font-size: 92%;
+  --admonition-title-font-size: 92%;
+  --font-stack: Lato,-apple-system,BlinkMacSystemFont,Segoe UI,Helvetica,Arial,sans-serif,Apple Color Emoji,Segoe UI Emoji;
+  --font-size--small: 92%;
+  --font-size--small--2: 87.5%;
+  --font-size--small--3: 87.5%;
+  --font-size--small--4: 87.5%;
+  
+  }
+  @media not print {
+    body[data-theme="dark"] {
+      --color-code-background: #272822;
+  --color-code-foreground: #f8f8f2;
+  --admonition-font-size: 92%;
+  --admonition-title-font-size: 92%;
+  --font-stack: Lato,-apple-system,BlinkMacSystemFont,Segoe UI,Helvetica,Arial,sans-serif,Apple Color Emoji,Segoe UI Emoji;
+  --font-size--small: 92%;
+  --font-size--small--2: 87.5%;
+  --font-size--small--3: 87.5%;
+  --font-size--small--4: 87.5%;
+  
+    }
+    @media (prefers-color-scheme: dark) {
+      body:not([data-theme="light"]) {
+        --color-code-background: #272822;
+  --color-code-foreground: #f8f8f2;
+  --admonition-font-size: 92%;
+  --admonition-title-font-size: 92%;
+  --font-stack: Lato,-apple-system,BlinkMacSystemFont,Segoe UI,Helvetica,Arial,sans-serif,Apple Color Emoji,Segoe UI Emoji;
+  --font-size--small: 92%;
+  --font-size--small--2: 87.5%;
+  --font-size--small--3: 87.5%;
+  --font-size--small--4: 87.5%;
+  
+      }
+    }
+  }
+</style></head>
+  <body>
+    
+    <script>
+      document.body.dataset.theme = localStorage.getItem("theme") || "auto";
+    </script>
+    
+
+<svg xmlns="http://www.w3.org/2000/svg" style="display: none;">
+  <symbol id="svg-toc" viewBox="0 0 24 24">
+    <title>Contents</title>
+    <svg stroke="currentColor" fill="currentColor" stroke-width="0" viewBox="0 0 1024 1024">
+      <path d="M408 442h480c4.4 0 8-3.6 8-8v-56c0-4.4-3.6-8-8-8H408c-4.4 0-8 3.6-8 8v56c0 4.4 3.6 8 8 8zm-8 204c0 4.4 3.6 8 8 8h480c4.4 0 8-3.6 8-8v-56c0-4.4-3.6-8-8-8H408c-4.4 0-8 3.6-8 8v56zm504-486H120c-4.4 0-8 3.6-8 8v56c0 4.4 3.6 8 8 8h784c4.4 0 8-3.6 8-8v-56c0-4.4-3.6-8-8-8zm0 632H120c-4.4 0-8 3.6-8 8v56c0 4.4 3.6 8 8 8h784c4.4 0 8-3.6 8-8v-56c0-4.4-3.6-8-8-8zM115.4 518.9L271.7 642c5.8 4.6 14.4.5 14.4-6.9V388.9c0-7.4-8.5-11.5-14.4-6.9L115.4 505.1a8.74 8.74 0 0 0 0 13.8z"/>
+    </svg>
+  </symbol>
+  <symbol id="svg-menu" viewBox="0 0 24 24">
+    <title>Menu</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather-menu">
+      <line x1="3" y1="12" x2="21" y2="12"></line>
+      <line x1="3" y1="6" x2="21" y2="6"></line>
+      <line x1="3" y1="18" x2="21" y2="18"></line>
+    </svg>
+  </symbol>
+  <symbol id="svg-arrow-right" viewBox="0 0 24 24">
+    <title>Expand</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather-chevron-right">
+      <polyline points="9 18 15 12 9 6"></polyline>
+    </svg>
+  </symbol>
+  <symbol id="svg-sun" viewBox="0 0 24 24">
+    <title>Light mode</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="feather-sun">
+      <circle cx="12" cy="12" r="5"></circle>
+      <line x1="12" y1="1" x2="12" y2="3"></line>
+      <line x1="12" y1="21" x2="12" y2="23"></line>
+      <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+      <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+      <line x1="1" y1="12" x2="3" y2="12"></line>
+      <line x1="21" y1="12" x2="23" y2="12"></line>
+      <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+      <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+    </svg>
+  </symbol>
+  <symbol id="svg-moon" viewBox="0 0 24 24">
+    <title>Dark mode</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="icon-tabler-moon">
+      <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+      <path d="M12 3c.132 0 .263 0 .393 0a7.5 7.5 0 0 0 7.92 12.446a9 9 0 1 1 -8.313 -12.454z" />
+    </svg>
+  </symbol>
+  <symbol id="svg-sun-half" viewBox="0 0 24 24">
+    <title>Auto light/dark mode</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="icon-tabler-shadow">
+      <path stroke="none" d="M0 0h24v24H0z" fill="none"/>
+      <circle cx="12" cy="12" r="9" />
+      <path d="M13 12h5" />
+      <path d="M13 15h4" />
+      <path d="M13 18h1" />
+      <path d="M13 9h4" />
+      <path d="M13 6h1" />
+    </svg>
+  </symbol>
+</svg>
+
+<input type="checkbox" class="sidebar-toggle" name="__navigation" id="__navigation">
+<input type="checkbox" class="sidebar-toggle" name="__toc" id="__toc">
+<label class="overlay sidebar-overlay" for="__navigation">
+  <div class="visually-hidden">Hide navigation sidebar</div>
+</label>
+<label class="overlay toc-overlay" for="__toc">
+  <div class="visually-hidden">Hide table of contents sidebar</div>
+</label>
+
+
+
+<div class="page">
+  <header class="mobile-header">
+    <div class="header-left">
+      <label class="nav-overlay-icon" for="__navigation">
+        <div class="visually-hidden">Toggle site navigation sidebar</div>
+        <i class="icon"><svg><use href="#svg-menu"></use></svg></i>
+      </label>
+    </div>
+    <div class="header-center">
+      <a href="index.html"><div class="brand">sparse-lm</div></a>
+    </div>
+    <div class="header-right">
+      <div class="theme-toggle-container theme-toggle-header">
+        <button class="theme-toggle">
+          <div class="visually-hidden">Toggle Light / Dark / Auto color theme</div>
+          <svg class="theme-icon-when-auto"><use href="#svg-sun-half"></use></svg>
+          <svg class="theme-icon-when-dark"><use href="#svg-moon"></use></svg>
+          <svg class="theme-icon-when-light"><use href="#svg-sun"></use></svg>
+        </button>
+      </div>
+      <label class="toc-overlay-icon toc-header-icon" for="__toc">
+        <div class="visually-hidden">Toggle table of contents sidebar</div>
+        <i class="icon"><svg><use href="#svg-toc"></use></svg></i>
+      </label>
+    </div>
+  </header>
+  <aside class="sidebar-drawer">
+    <div class="sidebar-container">
+      
+      <div class="sidebar-sticky"><a class="sidebar-brand" href="index.html">
+  
+  
+  <span class="sidebar-brand-text">sparse-lm</span>
+  
+</a><form class="sidebar-search-container" method="get" action="search.html" role="search">
+  <input class="sidebar-search" placeholder="Search" name="q" aria-label="Search">
+  <input type="hidden" name="check_keywords" value="yes">
+  <input type="hidden" name="area" value="default">
+</form>
+<div id="searchbox"></div><div class="sidebar-scroll"><div class="sidebar-tree">
+  <p class="caption" role="heading"><span class="caption-text">Getting Started</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="install.html">Install</a></li>
+<li class="toctree-l1"><a class="reference internal" href="examples.html">Examples</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Information</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="contributing.html">Contributing</a></li>
+<li class="toctree-l1"><a class="reference internal" href="license.html">License</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://github.com/CederGroupHub/sparse-lm">GitHub</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Reference</span></p>
+<ul class="current">
+<li class="toctree-l1 current has-children"><a class="reference internal" href="api.html">API</a><input checked="" class="toctree-checkbox" id="toctree-checkbox-1" name="toctree-checkbox-1" role="switch" type="checkbox"/><label for="toctree-checkbox-1"><div class="visually-hidden">Toggle child pages in navigation</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="sparselm.model.html">sparselm.model</a></li>
+<li class="toctree-l2 current current-page"><a class="current reference internal" href="#">sparselm.stepwise</a></li>
+<li class="toctree-l2"><a class="reference internal" href="sparselm.model_selection.html">sparselm.model_selection</a></li>
+<li class="toctree-l2"><a class="reference internal" href="sparselm.tools.html">sparselm.tools</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="genindex.html">Index</a></li>
+</ul>
+
+</div>
+</div>
+
+      </div>
+      
+    </div>
+  </aside>
+  <div class="main">
+    <div class="content">
+      <div class="article-container">
+        <a href="#" class="back-to-top muted-link">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+            <path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8v12z"></path>
+          </svg>
+          <span>Back to top</span>
+        </a>
+        <div class="content-icon-container">
+          
+<div class="theme-toggle-container theme-toggle-content">
+            <button class="theme-toggle">
+              <div class="visually-hidden">Toggle Light / Dark / Auto color theme</div>
+              <svg class="theme-icon-when-auto"><use href="#svg-sun-half"></use></svg>
+              <svg class="theme-icon-when-dark"><use href="#svg-moon"></use></svg>
+              <svg class="theme-icon-when-light"><use href="#svg-sun"></use></svg>
+            </button>
+          </div>
+          <label class="toc-overlay-icon toc-content-icon" for="__toc">
+            <div class="visually-hidden">Toggle table of contents sidebar</div>
+            <i class="icon"><svg><use href="#svg-toc"></use></svg></i>
+          </label>
+        </div>
+        <article role="main">
+          <section id="module-sparselm.stepwise">
+<span id="sparselm-stepwise"></span><h1>sparselm.stepwise<a class="headerlink" href="#module-sparselm.stepwise" title="Permalink to this heading">#</a></h1>
+<p>Stepwise model selection for piece-wise fitting.</p>
+<dl class="py class">
+<dt class="sig sig-object py" id="sparselm.stepwise.StepwiseEstimator">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">sparselm.stepwise.</span></span><span class="sig-name descname"><span class="pre">StepwiseEstimator</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">steps</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">estimator_feature_indices</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/sparselm/stepwise.html#StepwiseEstimator"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#sparselm.stepwise.StepwiseEstimator" title="Permalink to this definition">#</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">_BaseComposition</span></code>, <a class="reference external" href="https://scikit-learn.org/stable/modules/generated/sklearn.base.RegressorMixin.html#sklearn.base.RegressorMixin" title="(in scikit-learn v1.2)"><code class="xref py py-class docutils literal notranslate"><span class="pre">RegressorMixin</span></code></a>, <code class="xref py py-class docutils literal notranslate"><span class="pre">LinearModel</span></code></p>
+<p>A composite estimator used to do stepwise fitting.</p>
+<p>The first estimator in the composite will be used to fit
+certain features (a piece of the feature matrix) to the
+target vector, and the residuals are fitted to the rest
+of features by using the next estimators in the composite.</p>
+<p>Each estimator can be either a CVXEstimator, a GridSearchCV or
+a LineSearchCV.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>steps</strong> (<a class="reference external" href="https://docs.python.org/3.9/library/stdtypes.html#list" title="(in Python v3.9)"><em>list</em></a><em>[</em><em>(</em><a class="reference external" href="https://docs.python.org/3.9/library/stdtypes.html#str" title="(in Python v3.9)"><em>str</em></a><em>, </em><em>CVXEstimator</em><em>)</em><em>]</em>) – A list of step names and the CVXEstimators to use
+for each step. StepwiseEstimator cannot be used as
+a member of StepwiseEstimator.
+An estimator will fit the residuals of the previous
+estimator fits in the list.</p></li>
+<li><p><strong>estimator_feature_indices</strong> (<a class="reference external" href="https://docs.python.org/3.9/library/stdtypes.html#tuple" title="(in Python v3.9)"><em>tuple</em></a><em>[</em><a class="reference external" href="https://docs.python.org/3.9/library/stdtypes.html#tuple" title="(in Python v3.9)"><em>tuple</em></a><em>[</em><a class="reference external" href="https://docs.python.org/3.9/library/functions.html#int" title="(in Python v3.9)"><em>int</em></a><em>]</em><em>]</em>) – <p>Scope of each estimator, which means the indices of
+features in the scope (features[:, scope]) will be
+fitted to the residual using the corresponding estimator.
+Notice:</p>
+<blockquote>
+<div><p>If estimators in the composite requires hierarchy
+or groups, the indices in the groups or hierarchy
+must be adjusted such that they correspond to the groups
+or hierarchy relations in the part of features sliced
+by scope.
+For example, consider original groups = [0, 1, 1, 2, 2],
+and an estimator has scope = [3, 4], then the estimator
+should be initialized with group = [0, 0].
+You are fully responsible to initialize the estimators
+with correct hierarchy, groups and other parameters before
+wrapping them up with the composite!</p>
+</div></blockquote>
+</p></li>
+</ul>
+</dd>
+</dl>
+<p class="rubric">Notes</p>
+<ol class="arabic simple">
+<li><p>Do not use GridSearchCV or LineSearchCV to search a StepwiseEstimator!</p></li>
+</ol>
+<p>2. No nesting is allowed for StepwiseEstimator, which means no step of a
+StepwiseEstimator can be a StepwiseEstimator.</p>
+<p>3. Since stepwise estimator requires specifying a list of feature indices for
+each step estimator, it requires fixing <a href="#id1"><span class="problematic" id="id2">n_features_in_</span></a> before fitting, which
+violates sklearn convention for a regressor. Therefore, StepwiseEstimator is
+not checked by sklearn check_estimator method, and there is no guarantee that it
+is fully compatible with all scikit-learn features.</p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="sparselm.stepwise.StepwiseEstimator.steps">
+<span class="sig-name descname"><span class="pre">steps</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3.9/library/typing.html#typing.List" title="(in Python v3.9)"><span class="pre">List</span></a><span class="p"><span class="pre">[</span></span><a class="reference external" href="https://docs.python.org/3.9/library/typing.html#typing.Any" title="(in Python v3.9)"><span class="pre">Any</span></a><span class="p"><span class="pre">]</span></span></em><a class="headerlink" href="#sparselm.stepwise.StepwiseEstimator.steps" title="Permalink to this definition">#</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sparselm.stepwise.StepwiseEstimator.get_params">
+<span class="sig-name descname"><span class="pre">get_params</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">deep</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/sparselm/stepwise.html#StepwiseEstimator.get_params"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#sparselm.stepwise.StepwiseEstimator.get_params" title="Permalink to this definition">#</a></dt>
+<dd><p>Get parameters of all estimators in the composite.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>deep</strong> (<a class="reference external" href="https://docs.python.org/3.9/library/functions.html#bool" title="(in Python v3.9)"><em>bool</em></a>) – If True, will return the parameters for estimators in
+composite, and their contained sub-objects if they are
+also estimators.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sparselm.stepwise.StepwiseEstimator.set_params">
+<span class="sig-name descname"><span class="pre">set_params</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">params</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/sparselm/stepwise.html#StepwiseEstimator.set_params"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#sparselm.stepwise.StepwiseEstimator.set_params" title="Permalink to this definition">#</a></dt>
+<dd><p>Set parameters for each estimator in the composite.</p>
+<p>This will be called when model selection optimizes
+all hyper parameters.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>params</strong> – A Dictionary of parameters. Each parameter</p></li>
+<li><p><strong>specify</strong> (<em>name must end with an underscore and a number to</em>) – </p></li>
+<li><p><strong>is</strong> (<em>on which estimator in the composite the parameter</em>) – </p></li>
+<li><p><strong>set.</strong> (<em>going to be</em>) – </p></li>
+<li><p><strong>optimize!</strong> (<em>Remember only to set params you wish to</em>) – </p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sparselm.stepwise.StepwiseEstimator.fit">
+<span class="sig-name descname"><span class="pre">fit</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">X</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">y</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sample_weight</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/sparselm/stepwise.html#StepwiseEstimator.fit"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#sparselm.stepwise.StepwiseEstimator.fit" title="Permalink to this definition">#</a></dt>
+<dd><p>Prepare fit input with sklearn help then call fit method.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>X</strong> (<em>ArrayLike</em>) – Training data of shape (n_samples, n_features).</p></li>
+<li><p><strong>y</strong> (<em>ArrayLike</em>) – Target values. Will be cast to X’s dtype if necessary
+of shape (n_samples,) or (n_samples, n_targets)</p></li>
+<li><p><strong>sample_weight</strong> (<em>ArrayLike</em>) – Individual weights for each sample of shape (n_samples,)
+default=None</p></li>
+<li><p><strong>*args</strong> – Positional arguments passed to _fit method</p></li>
+<li><p><strong>**kwargs</strong> – Keyword arguments passed to _fit method</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>instance of self</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sparselm.stepwise.StepwiseEstimator.predict">
+<span class="sig-name descname"><span class="pre">predict</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">X</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sparselm.stepwise.StepwiseEstimator.predict" title="Permalink to this definition">#</a></dt>
+<dd><p>Predict using the linear model.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>X</strong> (<em>array-like</em><em> or </em><em>sparse matrix</em><em>, </em><em>shape</em><em> (</em><em>n_samples</em><em>, </em><em>n_features</em><em>)</em>) – Samples.</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p><strong>C</strong> – Returns predicted values.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>array, shape (n_samples,)</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sparselm.stepwise.StepwiseEstimator.score">
+<span class="sig-name descname"><span class="pre">score</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">X</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">y</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sample_weight</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sparselm.stepwise.StepwiseEstimator.score" title="Permalink to this definition">#</a></dt>
+<dd><p>Return the coefficient of determination of the prediction.</p>
+<p>The coefficient of determination <span class="math notranslate nohighlight">\(R^2\)</span> is defined as
+<span class="math notranslate nohighlight">\((1 - \frac{u}{v})\)</span>, where <span class="math notranslate nohighlight">\(u\)</span> is the residual
+sum of squares <code class="docutils literal notranslate"><span class="pre">((y_true</span> <span class="pre">-</span> <span class="pre">y_pred)**</span> <span class="pre">2).sum()</span></code> and <span class="math notranslate nohighlight">\(v\)</span>
+is the total sum of squares <code class="docutils literal notranslate"><span class="pre">((y_true</span> <span class="pre">-</span> <span class="pre">y_true.mean())</span> <span class="pre">**</span> <span class="pre">2).sum()</span></code>.
+The best possible score is 1.0 and it can be negative (because the
+model can be arbitrarily worse). A constant model that always predicts
+the expected value of <cite>y</cite>, disregarding the input features, would get
+a <span class="math notranslate nohighlight">\(R^2\)</span> score of 0.0.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>X</strong> (<em>array-like</em><em> of </em><em>shape</em><em> (</em><em>n_samples</em><em>, </em><em>n_features</em><em>)</em>) – Test samples. For some estimators this may be a precomputed
+kernel matrix or a list of generic objects instead with shape
+<code class="docutils literal notranslate"><span class="pre">(n_samples,</span> <span class="pre">n_samples_fitted)</span></code>, where <code class="docutils literal notranslate"><span class="pre">n_samples_fitted</span></code>
+is the number of samples used in the fitting for the estimator.</p></li>
+<li><p><strong>y</strong> (<em>array-like</em><em> of </em><em>shape</em><em> (</em><em>n_samples</em><em>,</em><em>) or </em><em>(</em><em>n_samples</em><em>, </em><em>n_outputs</em><em>)</em>) – True values for <cite>X</cite>.</p></li>
+<li><p><strong>sample_weight</strong> (<em>array-like</em><em> of </em><em>shape</em><em> (</em><em>n_samples</em><em>,</em><em>)</em><em>, </em><em>default=None</em>) – Sample weights.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p><strong>score</strong> – <span class="math notranslate nohighlight">\(R^2\)</span> of <code class="docutils literal notranslate"><span class="pre">self.predict(X)</span></code> wrt. <cite>y</cite>.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3.9/library/functions.html#float" title="(in Python v3.9)">float</a></p>
+</dd>
+</dl>
+<p class="rubric">Notes</p>
+<p>The <span class="math notranslate nohighlight">\(R^2\)</span> score used when calling <code class="docutils literal notranslate"><span class="pre">score</span></code> on a regressor uses
+<code class="docutils literal notranslate"><span class="pre">multioutput='uniform_average'</span></code> from version 0.23 to keep consistent
+with default value of <a class="reference external" href="https://scikit-learn.org/stable/modules/generated/sklearn.metrics.r2_score.html#sklearn.metrics.r2_score" title="(in scikit-learn v1.2)"><code class="xref py py-func docutils literal notranslate"><span class="pre">r2_score()</span></code></a>.
+This influences the <code class="docutils literal notranslate"><span class="pre">score</span></code> method of all the multioutput
+regressors (except for
+<a class="reference external" href="https://scikit-learn.org/stable/modules/generated/sklearn.multioutput.MultiOutputRegressor.html#sklearn.multioutput.MultiOutputRegressor" title="(in scikit-learn v1.2)"><code class="xref py py-class docutils literal notranslate"><span class="pre">MultiOutputRegressor</span></code></a>).</p>
+</dd></dl>
+
+</dd></dl>
+
+</section>
+
+        </article>
+      </div>
+      <footer>
+        
+        <div class="related-pages">
+          <a class="next-page" href="sparselm.model_selection.html">
+              <div class="page-info">
+                <div class="context">
+                  <span>Next</span>
+                </div>
+                <div class="title">sparselm.model_selection</div>
+              </div>
+              <svg class="furo-related-icon"><use href="#svg-arrow-right"></use></svg>
+            </a>
+          <a class="prev-page" href="sparselm.model.html">
+              <svg class="furo-related-icon"><use href="#svg-arrow-right"></use></svg>
+              <div class="page-info">
+                <div class="context">
+                  <span>Previous</span>
+                </div>
+                
+                <div class="title">sparselm.model</div>
+                
+              </div>
+            </a>
+        </div>
+        <div class="bottom-of-page">
+          <div class="left-details">
+            <div class="copyright">
+                Copyright &#169; 2022-2023, Ceder Group
+            </div>
+            Made with 
+            <a href="https://github.com/pradyunsg/furo">Furo</a>
+            
+          </div>
+          <div class="right-details">
+            
+          </div>
+        </div>
+        
+      </footer>
+    </div>
+    <aside class="toc-drawer">
+      
+      
+      <div class="toc-sticky toc-scroll">
+        <div class="toc-title-container">
+          <span class="toc-title">
+            On this page
+          </span>
+        </div>
+        <div class="toc-tree-container">
+          <div class="toc-tree">
+            <ul>
+<li><a class="reference internal" href="#">sparselm.stepwise</a><ul>
+<li><a class="reference internal" href="#sparselm.stepwise.StepwiseEstimator"><code class="docutils literal notranslate"><span class="pre">StepwiseEstimator</span></code></a><ul>
+<li><a class="reference internal" href="#sparselm.stepwise.StepwiseEstimator.steps"><code class="docutils literal notranslate"><span class="pre">StepwiseEstimator.steps</span></code></a></li>
+<li><a class="reference internal" href="#sparselm.stepwise.StepwiseEstimator.get_params"><code class="docutils literal notranslate"><span class="pre">StepwiseEstimator.get_params()</span></code></a></li>
+<li><a class="reference internal" href="#sparselm.stepwise.StepwiseEstimator.set_params"><code class="docutils literal notranslate"><span class="pre">StepwiseEstimator.set_params()</span></code></a></li>
+<li><a class="reference internal" href="#sparselm.stepwise.StepwiseEstimator.fit"><code class="docutils literal notranslate"><span class="pre">StepwiseEstimator.fit()</span></code></a></li>
+<li><a class="reference internal" href="#sparselm.stepwise.StepwiseEstimator.predict"><code class="docutils literal notranslate"><span class="pre">StepwiseEstimator.predict()</span></code></a></li>
+<li><a class="reference internal" href="#sparselm.stepwise.StepwiseEstimator.score"><code class="docutils literal notranslate"><span class="pre">StepwiseEstimator.score()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+
+          </div>
+        </div>
+      </div>
+      
+      
+    </aside>
+  </div>
+</div><script data-url_root="./" id="documentation_options" src="_static/documentation_options.js"></script>
+    <script src="_static/doctools.js"></script>
+    <script src="_static/sphinx_highlight.js"></script>
+    <script src="_static/scripts/furo.js"></script>
+    <script async="async" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    </body>
+</html>

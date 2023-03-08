@@ -178,9 +178,11 @@
   <p class="caption" role="heading"><span class="caption-text">Getting Started</span></p>
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="../../../../install.html">Install</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../examples.html">Examples</a></li>
 </ul>
 <p class="caption" role="heading"><span class="caption-text">Information</span></p>
 <ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../../contributing.html">Contributing</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../../license.html">License</a></li>
 <li class="toctree-l1"><a class="reference external" href="https://github.com/CederGroupHub/sparse-lm">GitHub</a></li>
 </ul>
@@ -188,6 +190,7 @@
 <ul>
 <li class="toctree-l1 has-children"><a class="reference internal" href="../../../../api.html">API</a><input class="toctree-checkbox" id="toctree-checkbox-1" name="toctree-checkbox-1" role="switch" type="checkbox"/><label for="toctree-checkbox-1"><div class="visually-hidden">Toggle child pages in navigation</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
 <li class="toctree-l2"><a class="reference internal" href="../../../../sparselm.model.html">sparselm.model</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../../sparselm.stepwise.html">sparselm.stepwise</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../../../../sparselm.model_selection.html">sparselm.model_selection</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../../../../sparselm.tools.html">sparselm.tools</a></li>
 </ul>
@@ -241,95 +244,124 @@
 
 <span class="sd">    https://journals.aps.org/prb/abstract/10.1103/PhysRevB.106.024203</span>
 
-<span class="sd">Estimators allow optional inclusion of hierarchical constraints at the single coefficient</span>
+<span class="sd">Regressors allow optional inclusion of hierarchical constraints at the single coefficient</span>
 <span class="sd">or group of coefficients level.</span>
 <span class="sd">&quot;&quot;&quot;</span>
+
+<span class="kn">from</span> <span class="nn">__future__</span> <span class="kn">import</span> <span class="n">annotations</span>
 
 <span class="n">__author__</span> <span class="o">=</span> <span class="s2">&quot;Luis Barroso-Luque, Fengyu Xie&quot;</span>
 
 
 <span class="kn">from</span> <span class="nn">abc</span> <span class="kn">import</span> <span class="n">ABCMeta</span><span class="p">,</span> <span class="n">abstractmethod</span>
+<span class="kn">from</span> <span class="nn">numbers</span> <span class="kn">import</span> <span class="n">Real</span>
+<span class="kn">from</span> <span class="nn">types</span> <span class="kn">import</span> <span class="n">SimpleNamespace</span>
+<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Any</span>
 
 <span class="kn">import</span> <span class="nn">cvxpy</span> <span class="k">as</span> <span class="nn">cp</span>
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span class="kn">from</span> <span class="nn">numpy.typing</span> <span class="kn">import</span> <span class="n">ArrayLike</span><span class="p">,</span> <span class="n">NDArray</span>
+<span class="kn">from</span> <span class="nn">sklearn.utils._param_validation</span> <span class="kn">import</span> <span class="n">Interval</span>
 
 <span class="kn">from</span> <span class="nn">sparselm.model._base</span> <span class="kn">import</span> <span class="n">TikhonovMixin</span>
 
-<span class="kn">from</span> <span class="nn">._base</span> <span class="kn">import</span> <span class="n">MIQP_L0</span>
+<span class="kn">from</span> <span class="nn">._base</span> <span class="kn">import</span> <span class="n">MIQPl0</span>
 
 
-<div class="viewcode-block" id="RegularizedL0"><a class="viewcode-back" href="../../../../sparselm.model.html#sparselm.model.RegularizedL0">[docs]</a><span class="k">class</span> <span class="nc">RegularizedL0</span><span class="p">(</span><span class="n">MIQP_L0</span><span class="p">):</span>
-<span class="w">    </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;Implementation of mixed-integer quadratic programming l0 regularized estimator.</span>
+<div class="viewcode-block" id="RegularizedL0"><a class="viewcode-back" href="../../../../sparselm.model.html#sparselm.model.RegularizedL0">[docs]</a><span class="k">class</span> <span class="nc">RegularizedL0</span><span class="p">(</span><span class="n">MIQPl0</span><span class="p">):</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;Implementation of mixed-integer quadratic programming l0 regularized Regressor.</span>
 
 <span class="sd">    Supports grouping parameters and group-level hierarchy, but requires groups as a</span>
 <span class="sd">    compulsory argument.</span>
 
-<span class="sd">    Regularized model:</span>
+<span class="sd">    Regularized regression objective:</span>
 
 <span class="sd">    .. math::</span>
 
-<span class="sd">        || X \beta - y ||^2_2 + \alpha \sum_{G} z_G</span>
+<span class="sd">        \min_{\beta} || X \beta - y ||^2_2 + \alpha \sum_{G} z_G</span>
 
 <span class="sd">    Where G represents groups of features/coefficients and :math:`z_G` is are boolean</span>
 <span class="sd">    valued slack variables.</span>
 
+<span class="sd">    Args:</span>
+<span class="sd">        groups (ArrayLike):</span>
+<span class="sd">            1D array-like of integers specifying groups. Length should be the</span>
+<span class="sd">            same as model, where each integer entry specifies the group</span>
+<span class="sd">            each parameter corresponds to. If no grouping is needed pass a list</span>
+<span class="sd">            of all distinct numbers (ie range(len(coefs)) to create singleton groups</span>
+<span class="sd">            for each parameter.</span>
+<span class="sd">        alpha (float):</span>
+<span class="sd">            L0 pseudo-norm regularization hyper-parameter.</span>
+<span class="sd">        big_M (float):</span>
+<span class="sd">            Upper bound on the norm of coefficients associated with each</span>
+<span class="sd">            cluster (groups of coefficients) ||Beta_c||_2</span>
+<span class="sd">        hierarchy (list):</span>
+<span class="sd">            A list of lists of integers storing hierarchy relations between</span>
+<span class="sd">            groups.</span>
+<span class="sd">            Each sublist contains indices of other groups</span>
+<span class="sd">            on which the group associated with each element of</span>
+<span class="sd">            the list depends. i.e. hierarchy = [[1, 2], [0], []] mean that</span>
+<span class="sd">            group 0 depends on 1, and 2; 1 depends on 0, and 2 has no</span>
+<span class="sd">            dependence.</span>
+<span class="sd">        ignore_psd_check (bool):</span>
+<span class="sd">            Whether to ignore cvxpy&#39;s PSD checks  of matrix used in quadratic</span>
+<span class="sd">            form. Default is True to avoid raising errors for poorly</span>
+<span class="sd">            conditioned matrices. But if you want to be strict set to False.</span>
+<span class="sd">        fit_intercept (bool):</span>
+<span class="sd">            Whether the intercept should be estimated or not.</span>
+<span class="sd">            If False, the data is assumed to be already centered.</span>
+<span class="sd">        copy_X (bool):</span>
+<span class="sd">            If True, X will be copied; else, it may be overwritten.</span>
+<span class="sd">        warm_start (bool):</span>
+<span class="sd">            When set to True, reuse the solution of the previous call to</span>
+<span class="sd">            fit as initialization, otherwise, just erase the previous</span>
+<span class="sd">            solution.</span>
+<span class="sd">        solver (str):</span>
+<span class="sd">            cvxpy backend solver to use. Supported solvers are listed here:</span>
+<span class="sd">            https://www.cvxpy.org/tutorial/advanced/index.html#solve-method-options</span>
+<span class="sd">        solver_options (dict):</span>
+<span class="sd">            dictionary of keyword arguments passed to cvxpy solve.</span>
+<span class="sd">            See docs in CVXRegressor for more information.</span>
+
+<span class="sd">    Attributes:</span>
+<span class="sd">        coef_ (NDArray):</span>
+<span class="sd">            Parameter vector (:math:`\beta` in the cost function formula) of shape (n_features,).</span>
+<span class="sd">        intercept_ (float):</span>
+<span class="sd">            Independent term in decision function.</span>
+<span class="sd">        canonicals_ (SimpleNamespace):</span>
+<span class="sd">            Namespace that contains underlying cvxpy objects used to define</span>
+<span class="sd">            the optimization problem. The objects included are the following:</span>
+<span class="sd">                - objective - the objective function.</span>
+<span class="sd">                - beta - variable to be optimized (corresponds to the estimated coef_ attribute).</span>
+<span class="sd">                - parameters - hyper-parameters</span>
+<span class="sd">                - auxiliaries - auxiliary variables and expressions</span>
+<span class="sd">                - constraints - solution constraints</span>
+
+<span class="sd">    Notes:</span>
+<span class="sd">        Installation of Gurobi is not a must, but highly recommended. An open source alternative</span>
+<span class="sd">        is SCIP. ECOS_BB also works but can be very slow, and has recurring correctness issues.</span>
+<span class="sd">        See the Mixed-integer programs section of the cvxpy docs:</span>
+<span class="sd">        https://www.cvxpy.org/tutorial/advanced/index.html</span>
 <span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">_cvx_parameter_constraints</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">list</span><span class="p">[</span><span class="n">Any</span><span class="p">]]</span> <span class="o">=</span> <span class="p">{</span>
+        <span class="s2">&quot;alpha&quot;</span><span class="p">:</span> <span class="p">[</span><span class="n">Interval</span><span class="p">(</span><span class="nb">type</span><span class="o">=</span><span class="n">Real</span><span class="p">,</span> <span class="n">left</span><span class="o">=</span><span class="mf">0.0</span><span class="p">,</span> <span class="n">right</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">closed</span><span class="o">=</span><span class="s2">&quot;left&quot;</span><span class="p">)],</span>
+        <span class="o">**</span><span class="n">MIQPl0</span><span class="o">.</span><span class="n">_cvx_parameter_constraints</span><span class="p">,</span>
+    <span class="p">}</span>
 
     <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
-        <span class="n">groups</span><span class="p">,</span>
-        <span class="n">alpha</span><span class="o">=</span><span class="mf">1.0</span><span class="p">,</span>
-        <span class="n">big_M</span><span class="o">=</span><span class="mi">100</span><span class="p">,</span>
-        <span class="n">hierarchy</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
-        <span class="n">ignore_psd_check</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
-        <span class="n">fit_intercept</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
-        <span class="n">copy_X</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
-        <span class="n">warm_start</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
-        <span class="n">solver</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
-        <span class="n">solver_options</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+        <span class="n">groups</span><span class="p">:</span> <span class="n">ArrayLike</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">alpha</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">1.0</span><span class="p">,</span>
+        <span class="n">big_M</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">100</span><span class="p">,</span>
+        <span class="n">hierarchy</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">list</span><span class="p">[</span><span class="nb">int</span><span class="p">]]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">ignore_psd_check</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
+        <span class="n">fit_intercept</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+        <span class="n">copy_X</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
+        <span class="n">warm_start</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+        <span class="n">solver</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">solver_options</span><span class="p">:</span> <span class="nb">dict</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="p">):</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Initialize estimator.</span>
-
-<span class="sd">        Args:</span>
-<span class="sd">            groups (list or ndarray):</span>
-<span class="sd">                1D array-like of integers specifying groups. Length should be the</span>
-<span class="sd">                same as model, where each integer entry specifies the group</span>
-<span class="sd">                each parameter corresponds to. If no grouping is needed pass a list</span>
-<span class="sd">                of all distinct numbers (ie range(len(coefs)) to create singleton groups</span>
-<span class="sd">                for each parameter.</span>
-<span class="sd">            alpha (float):</span>
-<span class="sd">                L0 pseudo-norm regularization hyper-parameter.</span>
-<span class="sd">            big_M (float):</span>
-<span class="sd">                Upper bound on the norm of coefficients associated with each</span>
-<span class="sd">                cluster (groups of coefficients) ||Beta_c||_2</span>
-<span class="sd">            hierarchy (list):</span>
-<span class="sd">                A list of lists of integers storing hierarchy relations between</span>
-<span class="sd">                groups.</span>
-<span class="sd">                Each sublist contains indices of other groups</span>
-<span class="sd">                on which the group associated with each element of</span>
-<span class="sd">                the list depends. i.e. hierarchy = [[1, 2], [0], []] mean that</span>
-<span class="sd">                group 0 depends on 1, and 2; 1 depends on 0, and 2 has no</span>
-<span class="sd">                dependence.</span>
-<span class="sd">            ignore_psd_check (bool):</span>
-<span class="sd">                Whether to ignore cvxpy&#39;s PSD checks  of matrix used in quadratic</span>
-<span class="sd">                form. Default is True to avoid raising errors for poorly</span>
-<span class="sd">                conditioned matrices. But if you want to be strict set to False.</span>
-<span class="sd">            fit_intercept (bool):</span>
-<span class="sd">                Whether the intercept should be estimated or not.</span>
-<span class="sd">                If False, the data is assumed to be already centered.</span>
-<span class="sd">            copy_X (bool):</span>
-<span class="sd">                If True, X will be copied; else, it may be overwritten.</span>
-<span class="sd">            warm_start (bool):</span>
-<span class="sd">                When set to True, reuse the solution of the previous call to</span>
-<span class="sd">                fit as initialization, otherwise, just erase the previous</span>
-<span class="sd">                solution.</span>
-<span class="sd">            solver (str):</span>
-<span class="sd">                cvxpy backend solver to use. Supported solvers are:</span>
-<span class="sd">                ECOS, ECOS_BB, CVXOPT, SCS, GUROBI, Elemental.</span>
-<span class="sd">                GLPK and GLPK_MI (via CVXOPT GLPK interface)</span>
-<span class="sd">            solver_options (dict):</span>
-<span class="sd">                dictionary of keyword arguments passed to cvxpy solve.</span>
-<span class="sd">                See docs in CVXEstimator for more information.</span>
-<span class="sd">        &quot;&quot;&quot;</span>
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span>
             <span class="n">groups</span><span class="o">=</span><span class="n">groups</span><span class="p">,</span>
             <span class="n">big_M</span><span class="o">=</span><span class="n">big_M</span><span class="p">,</span>
@@ -341,46 +373,50 @@
             <span class="n">solver</span><span class="o">=</span><span class="n">solver</span><span class="p">,</span>
             <span class="n">solver_options</span><span class="o">=</span><span class="n">solver_options</span><span class="p">,</span>
         <span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_alpha</span> <span class="o">=</span> <span class="n">cp</span><span class="o">.</span><span class="n">Parameter</span><span class="p">(</span><span class="n">nonneg</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">value</span><span class="o">=</span><span class="n">alpha</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">alpha</span> <span class="o">=</span> <span class="n">alpha</span>
 
-    <span class="nd">@property</span>
-    <span class="k">def</span> <span class="nf">alpha</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Get alpha hyperparameter value.&quot;&quot;&quot;</span>
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_alpha</span><span class="o">.</span><span class="n">value</span>
-
-    <span class="nd">@alpha</span><span class="o">.</span><span class="n">setter</span>
-    <span class="k">def</span> <span class="nf">alpha</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">val</span><span class="p">):</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Set alpha hyperparameter value.&quot;&quot;&quot;</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_alpha</span><span class="o">.</span><span class="n">value</span> <span class="o">=</span> <span class="n">val</span>
-
-    <span class="k">def</span> <span class="nf">_gen_objective</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">,</span> <span class="n">y</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">_generate_objective</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">X</span><span class="p">:</span> <span class="n">ArrayLike</span><span class="p">,</span>
+        <span class="n">y</span><span class="p">:</span> <span class="n">ArrayLike</span><span class="p">,</span>
+        <span class="n">beta</span><span class="p">:</span> <span class="n">cp</span><span class="o">.</span><span class="n">Variable</span><span class="p">,</span>
+        <span class="n">parameters</span><span class="p">:</span> <span class="n">SimpleNamespace</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">auxiliaries</span><span class="p">:</span> <span class="n">SimpleNamespace</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">cp</span><span class="o">.</span><span class="n">Expression</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Generate the quadratic form and l0 regularization portion of objective.&quot;&quot;&quot;</span>
         <span class="n">c0</span> <span class="o">=</span> <span class="mi">2</span> <span class="o">*</span> <span class="n">X</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>  <span class="c1"># keeps hyperparameter scale independent</span>
-        <span class="n">objective</span> <span class="o">=</span> <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">_gen_objective</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="n">y</span><span class="p">)</span> <span class="o">+</span> <span class="n">c0</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">_alpha</span> <span class="o">*</span> <span class="n">cp</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_z0</span><span class="p">)</span>
+        <span class="n">objective</span> <span class="o">=</span> <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">_generate_objective</span><span class="p">(</span>
+            <span class="n">X</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">beta</span><span class="p">,</span> <span class="n">parameters</span><span class="p">,</span> <span class="n">auxiliaries</span>
+        <span class="p">)</span> <span class="o">+</span> <span class="n">c0</span> <span class="o">*</span> <span class="n">parameters</span><span class="o">.</span><span class="n">alpha</span> <span class="o">*</span> <span class="n">cp</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">auxiliaries</span><span class="o">.</span><span class="n">z0</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">objective</span></div>
 
 
 <span class="k">class</span> <span class="nc">MixedL0</span><span class="p">(</span><span class="n">RegularizedL0</span><span class="p">,</span> <span class="n">metaclass</span><span class="o">=</span><span class="n">ABCMeta</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Abstract base class for mixed L0 regularization models: L1L0 and L2L0.&quot;&quot;&quot;</span>
 
+    <span class="n">_cvx_parameter_constraints</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">list</span><span class="p">[</span><span class="n">Any</span><span class="p">]]</span> <span class="o">=</span> <span class="p">{</span>
+        <span class="s2">&quot;eta&quot;</span><span class="p">:</span> <span class="p">[</span><span class="n">Interval</span><span class="p">(</span><span class="nb">type</span><span class="o">=</span><span class="n">Real</span><span class="p">,</span> <span class="n">left</span><span class="o">=</span><span class="mf">0.0</span><span class="p">,</span> <span class="n">right</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">closed</span><span class="o">=</span><span class="s2">&quot;left&quot;</span><span class="p">)],</span>
+        <span class="o">**</span><span class="n">RegularizedL0</span><span class="o">.</span><span class="n">_cvx_parameter_constraints</span><span class="p">,</span>
+    <span class="p">}</span>
+
     <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
-        <span class="n">groups</span><span class="p">,</span>
-        <span class="n">alpha</span><span class="o">=</span><span class="mf">1.0</span><span class="p">,</span>
-        <span class="n">eta</span><span class="o">=</span><span class="mf">1.0</span><span class="p">,</span>
-        <span class="n">big_M</span><span class="o">=</span><span class="mi">100</span><span class="p">,</span>
-        <span class="n">hierarchy</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
-        <span class="n">ignore_psd_check</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
-        <span class="n">fit_intercept</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
-        <span class="n">copy_X</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
-        <span class="n">warm_start</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
-        <span class="n">solver</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
-        <span class="n">solver_options</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+        <span class="n">groups</span><span class="p">:</span> <span class="n">ArrayLike</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">alpha</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">1.0</span><span class="p">,</span>
+        <span class="n">eta</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">1.0</span><span class="p">,</span>
+        <span class="n">big_M</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">100</span><span class="p">,</span>
+        <span class="n">hierarchy</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">list</span><span class="p">[</span><span class="nb">int</span><span class="p">]]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">ignore_psd_check</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
+        <span class="n">fit_intercept</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+        <span class="n">copy_X</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
+        <span class="n">warm_start</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+        <span class="n">solver</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">solver_options</span><span class="p">:</span> <span class="nb">dict</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="p">):</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Initialize estimator.</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Initialize Regressor.</span>
 
 <span class="sd">        Args:</span>
-<span class="sd">            groups (list or ndarray):</span>
+<span class="sd">            groups (ArrayLike):</span>
 <span class="sd">                1D array-like of integers specifying groups. Length should be the</span>
 <span class="sd">                same as model, where each integer entry specifies the group</span>
 <span class="sd">                each parameter corresponds to. If no grouping is needed pass a list</span>
@@ -415,12 +451,11 @@
 <span class="sd">                fit as initialization, otherwise, just erase the previous</span>
 <span class="sd">                solution.</span>
 <span class="sd">            solver (str):</span>
-<span class="sd">                cvxpy backend solver to use. Supported solvers are:</span>
-<span class="sd">                ECOS, ECOS_BB, CVXOPT, SCS, GUROBI, Elemental.</span>
-<span class="sd">                GLPK and GLPK_MI (via CVXOPT GLPK interface)</span>
+<span class="sd">                cvxpy backend solver to use. Supported solvers are listed here:</span>
+<span class="sd">                https://www.cvxpy.org/tutorial/advanced/index.html#solve-method-options</span>
 <span class="sd">            solver_options (dict):</span>
 <span class="sd">                dictionary of keyword arguments passed to cvxpy solve.</span>
-<span class="sd">                See docs in CVXEstimator for more information.</span>
+<span class="sd">                See docs in CVXRegressor for more information.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span>
             <span class="n">groups</span><span class="o">=</span><span class="n">groups</span><span class="p">,</span>
@@ -434,105 +469,121 @@
             <span class="n">solver</span><span class="o">=</span><span class="n">solver</span><span class="p">,</span>
             <span class="n">solver_options</span><span class="o">=</span><span class="n">solver_options</span><span class="p">,</span>
         <span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_eta</span> <span class="o">=</span> <span class="n">cp</span><span class="o">.</span><span class="n">Parameter</span><span class="p">(</span><span class="n">nonneg</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">value</span><span class="o">=</span><span class="n">eta</span><span class="p">)</span>
-
-    <span class="nd">@property</span>
-    <span class="k">def</span> <span class="nf">eta</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Get eta hyperparameter value.&quot;&quot;&quot;</span>
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_eta</span><span class="o">.</span><span class="n">value</span>
-
-    <span class="nd">@eta</span><span class="o">.</span><span class="n">setter</span>
-    <span class="k">def</span> <span class="nf">eta</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">val</span><span class="p">):</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Set eta hyperparameter values.&quot;&quot;&quot;</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_eta</span><span class="o">.</span><span class="n">val</span> <span class="o">=</span> <span class="n">val</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">eta</span> <span class="o">=</span> <span class="n">eta</span>
 
     <span class="nd">@abstractmethod</span>
-    <span class="k">def</span> <span class="nf">_gen_objective</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">,</span> <span class="n">y</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">_generate_objective</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">X</span><span class="p">:</span> <span class="n">ArrayLike</span><span class="p">,</span>
+        <span class="n">y</span><span class="p">:</span> <span class="n">ArrayLike</span><span class="p">,</span>
+        <span class="n">beta</span><span class="p">:</span> <span class="n">cp</span><span class="o">.</span><span class="n">Variable</span><span class="p">,</span>
+        <span class="n">parameters</span><span class="p">:</span> <span class="n">SimpleNamespace</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">auxiliaries</span><span class="p">:</span> <span class="n">SimpleNamespace</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">cp</span><span class="o">.</span><span class="n">Expression</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Generate optimization objective.&quot;&quot;&quot;</span>
-        <span class="k">return</span> <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">_gen_objective</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="n">y</span><span class="p">)</span>
+        <span class="c1"># implement in derived classes using super to call MIQP_L0 objective</span>
+        <span class="k">return</span> <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">_generate_objective</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">beta</span><span class="p">,</span> <span class="n">parameters</span><span class="p">,</span> <span class="n">auxiliaries</span><span class="p">)</span>
 
 
 <div class="viewcode-block" id="L1L0"><a class="viewcode-back" href="../../../../sparselm.model.html#sparselm.model.L1L0">[docs]</a><span class="k">class</span> <span class="nc">L1L0</span><span class="p">(</span><span class="n">MixedL0</span><span class="p">):</span>
-<span class="w">    </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;L1L0 regularized estimator.</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;L1L0 regularized Regressor.</span>
 
-<span class="sd">    Estimator with L1L0 regularization solved with mixed integer programming</span>
+<span class="sd">    Regressor with L1L0 regularization solved with mixed integer programming</span>
 <span class="sd">    as discussed in:</span>
 
 <span class="sd">    https://arxiv.org/abs/1807.10753</span>
 
-<span class="sd">    Installation of Gurobi is not a must, but highly recommended.</span>
-<span class="sd">    You can get a free academic gurobi license...</span>
-<span class="sd">    ECOS_BB also works but can be very slow.</span>
+<span class="sd">    Extended to allow grouping of coefficients and group-level hierarchy as described</span>
+<span class="sd">    in:</span>
 
-<span class="sd">    Regularized model is:</span>
+<span class="sd">    https://doi.org/10.1287/opre.2015.1436</span>
+
+<span class="sd">    Regularized regression objective:</span>
 
 <span class="sd">    .. math::</span>
 
-<span class="sd">        || X \beta - y ||^2_2 + \alpha \sum_{G} z_G + \eta ||\beta||_1</span>
+<span class="sd">        \min_{\beta} || X \beta - y ||^2_2 + \alpha \sum_{G} z_G + \eta ||\beta||_1</span>
 
 <span class="sd">    Where G represents groups of features/coefficients and :math:`z_G` is are boolean</span>
 <span class="sd">    valued slack variables.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        groups (ArrayLike):</span>
+<span class="sd">            1D array-like of integers specifying groups. Length should be the</span>
+<span class="sd">            same as model, where each integer entry specifies the group</span>
+<span class="sd">            each parameter corresponds to. If no grouping is needed pass a list</span>
+<span class="sd">            of all distinct numbers (ie range(len(coefs)) to create singleton groups</span>
+<span class="sd">            for each parameter.</span>
+<span class="sd">        alpha (float):</span>
+<span class="sd">            L0 pseudo-norm regularization hyper-parameter.</span>
+<span class="sd">        eta (float):</span>
+<span class="sd">            L1 regularization hyper-parameter.</span>
+<span class="sd">        big_M (float):</span>
+<span class="sd">            Upper bound on the norm of coefficients associated with each</span>
+<span class="sd">            cluster (groups of coefficients) ||Beta_c||_2</span>
+<span class="sd">        hierarchy (list):</span>
+<span class="sd">            A list of lists of integers storing hierarchy relations between</span>
+<span class="sd">            coefficients.</span>
+<span class="sd">            Each sublist contains indices of other coefficients</span>
+<span class="sd">            on which the coefficient associated with each element of</span>
+<span class="sd">            the list depends. i.e. hierarchy = [[1, 2], [0], []] mean that</span>
+<span class="sd">            coefficient 0 depends on 1, and 2; 1 depends on 0, and 2 has no</span>
+<span class="sd">            dependence.</span>
+<span class="sd">        ignore_psd_check (bool):</span>
+<span class="sd">            Whether to ignore cvxpy&#39;s PSD checks of matrix used in quadratic</span>
+<span class="sd">            form. Default is True to avoid raising errors for poorly</span>
+<span class="sd">            conditioned matrices. But if you want to be strict set to False.</span>
+<span class="sd">        fit_intercept (bool):</span>
+<span class="sd">            Whether the intercept should be estimated or not.</span>
+<span class="sd">            If False, the data is assumed to be already centered.</span>
+<span class="sd">        copy_X (bool):</span>
+<span class="sd">            If True, X will be copied; else, it may be overwritten.</span>
+<span class="sd">        warm_start (bool):</span>
+<span class="sd">            When set to True, reuse the solution of the previous call to</span>
+<span class="sd">            fit as initialization, otherwise, just erase the previous</span>
+<span class="sd">            solution.</span>
+<span class="sd">        solver (str):</span>
+<span class="sd">            cvxpy backend solver to use. Supported solvers are listed here:</span>
+<span class="sd">            https://www.cvxpy.org/tutorial/advanced/index.html#solve-method-options</span>
+<span class="sd">        solver_options (dict):</span>
+<span class="sd">            dictionary of keyword arguments passed to cvxpy solve.</span>
+<span class="sd">            See docs in CVXRegressor for more information.</span>
+
+<span class="sd">    Attributes:</span>
+<span class="sd">        coef_ (NDArray):</span>
+<span class="sd">            Parameter vector (:math:`\beta` in the cost function formula) of shape (n_features,).</span>
+<span class="sd">        intercept_ (float):</span>
+<span class="sd">            Independent term in decision function.</span>
+<span class="sd">        canonicals_ (SimpleNamespace):</span>
+<span class="sd">            Namespace that contains underlying cvxpy objects used to define</span>
+<span class="sd">            the optimization problem. The objects included are the following:</span>
+<span class="sd">                - objective - the objective function.</span>
+<span class="sd">                - beta - variable to be optimized (corresponds to the estimated coef_ attribute).</span>
+<span class="sd">                - parameters - hyper-parameters</span>
+<span class="sd">                - auxiliaries - auxiliary variables and expressions</span>
+<span class="sd">                - constraints - solution constraints</span>
+
+<span class="sd">    Notes:</span>
+<span class="sd">        Installation of Gurobi is not a must, but highly recommended. An open source alternative</span>
+<span class="sd">        is SCIP. ECOS_BB also works but can be very slow, and has recurring correctness issues.</span>
+<span class="sd">        See the Mixed-integer programs section of the cvxpy docs:</span>
+<span class="sd">        https://www.cvxpy.org/tutorial/advanced/index.html</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
-        <span class="n">groups</span><span class="p">,</span>
-        <span class="n">alpha</span><span class="o">=</span><span class="mf">1.0</span><span class="p">,</span>
-        <span class="n">eta</span><span class="o">=</span><span class="mf">1.0</span><span class="p">,</span>
-        <span class="n">big_M</span><span class="o">=</span><span class="mi">100</span><span class="p">,</span>
-        <span class="n">hierarchy</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
-        <span class="n">ignore_psd_check</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
-        <span class="n">fit_intercept</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
-        <span class="n">copy_X</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
-        <span class="n">warm_start</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
-        <span class="n">solver</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
-        <span class="n">solver_options</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+        <span class="n">groups</span><span class="p">:</span> <span class="n">ArrayLike</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">alpha</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">1.0</span><span class="p">,</span>
+        <span class="n">eta</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">1.0</span><span class="p">,</span>
+        <span class="n">big_M</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">100</span><span class="p">,</span>
+        <span class="n">hierarchy</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">list</span><span class="p">[</span><span class="nb">int</span><span class="p">]]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">ignore_psd_check</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
+        <span class="n">fit_intercept</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+        <span class="n">copy_X</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
+        <span class="n">warm_start</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+        <span class="n">solver</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">solver_options</span><span class="p">:</span> <span class="nb">dict</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="p">):</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Initialize estimator.</span>
-
-<span class="sd">        Args:</span>
-<span class="sd">            groups (list or ndarray):</span>
-<span class="sd">                1D array-like of integers specifying groups. Length should be the</span>
-<span class="sd">                same as model, where each integer entry specifies the group</span>
-<span class="sd">                each parameter corresponds to. If no grouping is needed pass a list</span>
-<span class="sd">                of all distinct numbers (ie range(len(coefs)) to create singleton groups</span>
-<span class="sd">                for each parameter.</span>
-<span class="sd">            alpha (float):</span>
-<span class="sd">                L0 pseudo-norm regularization hyper-parameter.</span>
-<span class="sd">            eta (float):</span>
-<span class="sd">                L1 regularization hyper-parameter.</span>
-<span class="sd">            big_M (float):</span>
-<span class="sd">                Upper bound on the norm of coefficients associated with each</span>
-<span class="sd">                cluster (groups of coefficients) ||Beta_c||_2</span>
-<span class="sd">            hierarchy (list):</span>
-<span class="sd">                A list of lists of integers storing hierarchy relations between</span>
-<span class="sd">                coefficients.</span>
-<span class="sd">                Each sublist contains indices of other coefficients</span>
-<span class="sd">                on which the coefficient associated with each element of</span>
-<span class="sd">                the list depends. i.e. hierarchy = [[1, 2], [0], []] mean that</span>
-<span class="sd">                coefficient 0 depends on 1, and 2; 1 depends on 0, and 2 has no</span>
-<span class="sd">                dependence.</span>
-<span class="sd">            ignore_psd_check (bool):</span>
-<span class="sd">                Whether to ignore cvxpy&#39;s PSD checks of matrix used in quadratic</span>
-<span class="sd">                form. Default is True to avoid raising errors for poorly</span>
-<span class="sd">                conditioned matrices. But if you want to be strict set to False.</span>
-<span class="sd">            fit_intercept (bool):</span>
-<span class="sd">                Whether the intercept should be estimated or not.</span>
-<span class="sd">                If False, the data is assumed to be already centered.</span>
-<span class="sd">            copy_X (bool):</span>
-<span class="sd">                If True, X will be copied; else, it may be overwritten.</span>
-<span class="sd">            warm_start (bool):</span>
-<span class="sd">                When set to True, reuse the solution of the previous call to</span>
-<span class="sd">                fit as initialization, otherwise, just erase the previous</span>
-<span class="sd">                solution.</span>
-<span class="sd">            solver (str):</span>
-<span class="sd">                cvxpy backend solver to use. Supported solvers are:</span>
-<span class="sd">                ECOS, ECOS_BB, CVXOPT, SCS, GUROBI, Elemental.</span>
-<span class="sd">                GLPK and GLPK_MI (via CVXOPT GLPK interface)</span>
-<span class="sd">            solver_options (dict):</span>
-<span class="sd">                dictionary of keyword arguments passed to cvxpy solve.</span>
-<span class="sd">                See docs in CVXEstimator for more information.</span>
-<span class="sd">        &quot;&quot;&quot;</span>
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span>
             <span class="n">groups</span><span class="o">=</span><span class="n">groups</span><span class="p">,</span>
             <span class="n">eta</span><span class="o">=</span><span class="n">eta</span><span class="p">,</span>
@@ -546,28 +597,50 @@
             <span class="n">solver</span><span class="o">=</span><span class="n">solver</span><span class="p">,</span>
             <span class="n">solver_options</span><span class="o">=</span><span class="n">solver_options</span><span class="p">,</span>
         <span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_z1</span> <span class="o">=</span> <span class="kc">None</span>
 
-    <span class="k">def</span> <span class="nf">_gen_constraints</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">,</span> <span class="n">y</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">_generate_auxiliaries</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">ArrayLike</span><span class="p">,</span> <span class="n">y</span><span class="p">:</span> <span class="n">ArrayLike</span><span class="p">,</span> <span class="n">beta</span><span class="p">:</span> <span class="n">cp</span><span class="o">.</span><span class="n">Variable</span><span class="p">,</span> <span class="n">parameters</span><span class="p">:</span> <span class="n">SimpleNamespace</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">SimpleNamespace</span> <span class="o">|</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Generate the boolean slack variable.&quot;&quot;&quot;</span>
+        <span class="n">auxiliaries</span> <span class="o">=</span> <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">_generate_auxiliaries</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">beta</span><span class="p">,</span> <span class="n">parameters</span><span class="p">)</span>
+        <span class="n">X</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">groups</span> <span class="ow">is</span> <span class="kc">None</span> <span class="k">else</span> <span class="nb">len</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">unique</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">groups</span><span class="p">))</span>
+        <span class="n">auxiliaries</span><span class="o">.</span><span class="n">z1</span> <span class="o">=</span> <span class="n">cp</span><span class="o">.</span><span class="n">Variable</span><span class="p">(</span><span class="n">X</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>
+        <span class="k">return</span> <span class="n">auxiliaries</span>
+
+    <span class="k">def</span> <span class="nf">_generate_constraints</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">X</span><span class="p">:</span> <span class="n">ArrayLike</span><span class="p">,</span>
+        <span class="n">y</span><span class="p">:</span> <span class="n">ArrayLike</span><span class="p">,</span>
+        <span class="n">beta</span><span class="p">:</span> <span class="n">cp</span><span class="o">.</span><span class="n">Variable</span><span class="p">,</span>
+        <span class="n">parameters</span><span class="p">:</span> <span class="n">SimpleNamespace</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">auxiliaries</span><span class="p">:</span> <span class="n">SimpleNamespace</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">cp</span><span class="o">.</span><span class="n">constraints</span><span class="p">]:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Generate the constraints used to solve l1l0 regularization.&quot;&quot;&quot;</span>
-        <span class="n">constraints</span> <span class="o">=</span> <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">_gen_constraints</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="n">y</span><span class="p">)</span>
+        <span class="n">constraints</span> <span class="o">=</span> <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">_generate_constraints</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">beta</span><span class="p">,</span> <span class="n">parameters</span><span class="p">,</span> <span class="n">auxiliaries</span><span class="p">)</span>
         <span class="c1"># L1 constraints (why not do an l1 norm in the objective instead?)</span>
-        <span class="n">constraints</span> <span class="o">+=</span> <span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">_z1</span> <span class="o">&gt;=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_beta</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_z1</span> <span class="o">&gt;=</span> <span class="o">-</span><span class="mf">1.0</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">_beta</span><span class="p">]</span>
+        <span class="n">constraints</span> <span class="o">+=</span> <span class="p">[</span><span class="o">-</span><span class="n">auxiliaries</span><span class="o">.</span><span class="n">z1</span> <span class="o">&lt;=</span> <span class="n">beta</span><span class="p">,</span> <span class="n">beta</span> <span class="o">&lt;=</span> <span class="n">auxiliaries</span><span class="o">.</span><span class="n">z1</span><span class="p">]</span>
         <span class="k">return</span> <span class="n">constraints</span>
 
-    <span class="k">def</span> <span class="nf">_gen_objective</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">,</span> <span class="n">y</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">_generate_objective</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">X</span><span class="p">:</span> <span class="n">ArrayLike</span><span class="p">,</span>
+        <span class="n">y</span><span class="p">:</span> <span class="n">ArrayLike</span><span class="p">,</span>
+        <span class="n">beta</span><span class="p">:</span> <span class="n">cp</span><span class="o">.</span><span class="n">Variable</span><span class="p">,</span>
+        <span class="n">parameters</span><span class="p">:</span> <span class="n">SimpleNamespace</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">auxiliaries</span><span class="p">:</span> <span class="n">SimpleNamespace</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">cp</span><span class="o">.</span><span class="n">Expression</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Generate the objective function used in l1l0 regression model.&quot;&quot;&quot;</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_z1</span> <span class="o">=</span> <span class="n">cp</span><span class="o">.</span><span class="n">Variable</span><span class="p">(</span><span class="n">X</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>
         <span class="n">c0</span> <span class="o">=</span> <span class="mi">2</span> <span class="o">*</span> <span class="n">X</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>  <span class="c1"># keeps hyperparameter scale independent</span>
-        <span class="n">objective</span> <span class="o">=</span> <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">_gen_objective</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="n">y</span><span class="p">)</span> <span class="o">+</span> <span class="n">c0</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">_eta</span> <span class="o">*</span> <span class="n">cp</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_z1</span><span class="p">)</span>
+        <span class="n">objective</span> <span class="o">=</span> <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">_generate_objective</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">beta</span><span class="p">,</span> <span class="n">parameters</span><span class="p">,</span> <span class="n">auxiliaries</span><span class="p">)</span>
+        <span class="n">objective</span> <span class="o">+=</span> <span class="n">c0</span> <span class="o">*</span> <span class="n">parameters</span><span class="o">.</span><span class="n">eta</span> <span class="o">*</span> <span class="n">cp</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">auxiliaries</span><span class="o">.</span><span class="n">z1</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">objective</span></div>
 
 
 <div class="viewcode-block" id="L2L0"><a class="viewcode-back" href="../../../../sparselm.model.html#sparselm.model.L2L0">[docs]</a><span class="k">class</span> <span class="nc">L2L0</span><span class="p">(</span><span class="n">TikhonovMixin</span><span class="p">,</span> <span class="n">MixedL0</span><span class="p">):</span>
-<span class="w">    </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;L2L0 regularized estimator.</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;L2L0 regularized Regressor.</span>
 
-<span class="sd">    Based on estimator with L2L0 regularization solved with mixed integer programming</span>
-<span class="sd">    proposed by Peichen Zhong:</span>
+<span class="sd">    Based on Regressor with L2L0 regularization solved with mixed integer programming</span>
+<span class="sd">    proposed in:</span>
 
 <span class="sd">    https://arxiv.org/abs/2204.13789</span>
 
@@ -578,78 +651,95 @@
 
 <span class="sd">    And allows using a Tihkonov matrix in the l2 term.</span>
 
-<span class="sd">    Regularized model is:</span>
+<span class="sd">    Regularized regression objective:</span>
 
 <span class="sd">    .. math::</span>
 
-<span class="sd">        || X \beta - y ||^2_2 + \alpha \sum_{G} z_G + \eta ||W\beta||^2_2</span>
+<span class="sd">        \min_{\beta} || X \beta - y ||^2_2 + \alpha \sum_{G} z_G + \eta ||W\beta||^2_2</span>
 
 <span class="sd">    Where G represents groups of features/coefficients and :math:`z_G` is are boolean</span>
 <span class="sd">    valued slack variables. W is a Tikhonov matrix.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        groups (ArrayLike):</span>
+<span class="sd">            1D array-like of integers specifying groups. Length should be the</span>
+<span class="sd">            same as model, where each integer entry specifies the group</span>
+<span class="sd">            each parameter corresponds to. If no grouping is needed pass a list</span>
+<span class="sd">            of all distinct numbers (ie range(len(coefs)) to create singleton groups</span>
+<span class="sd">            for each parameter.</span>
+<span class="sd">        alpha (float):</span>
+<span class="sd">            L0 pseudo-norm regularization hyper-parameter.</span>
+<span class="sd">        eta (float):</span>
+<span class="sd">            L2 regularization hyper-parameter.</span>
+<span class="sd">        big_M (float):</span>
+<span class="sd">            Upper bound on the norm of coefficients associated with each</span>
+<span class="sd">            cluster (groups of coefficients) ||Beta_c||_2</span>
+<span class="sd">        hierarchy (list):</span>
+<span class="sd">            A list of lists of integers storing hierarchy relations between</span>
+<span class="sd">            coefficients.</span>
+<span class="sd">            Each sublist contains indices of other coefficients</span>
+<span class="sd">            on which the coefficient associated with each element of</span>
+<span class="sd">            the list depends. i.e. hierarchy = [[1, 2], [0], []] mean that</span>
+<span class="sd">            coefficient 0 depends on 1, and 2; 1 depends on 0, and 2 has no</span>
+<span class="sd">            dependence.</span>
+<span class="sd">        tikhonov_w (np.array):</span>
+<span class="sd">            Matrix to add weights to L2 regularization.</span>
+<span class="sd">        ignore_psd_check (bool):</span>
+<span class="sd">            Wether to ignore cvxpy&#39;s PSD checks of matrix used in quadratic</span>
+<span class="sd">            form. Default is True to avoid raising errors for poorly</span>
+<span class="sd">            conditioned matrices. But if you want to be strict set to False.</span>
+<span class="sd">        fit_intercept (bool):</span>
+<span class="sd">            Whether the intercept should be estimated or not.</span>
+<span class="sd">            If False, the data is assumed to be already centered.</span>
+<span class="sd">        copy_X (bool):</span>
+<span class="sd">            If True, X will be copied; else, it may be overwritten.</span>
+<span class="sd">        warm_start (bool):</span>
+<span class="sd">            When set to True, reuse the solution of the previous call to</span>
+<span class="sd">            fit as initialization, otherwise, just erase the previous</span>
+<span class="sd">            solution.</span>
+<span class="sd">        solver (str):</span>
+<span class="sd">            cvxpy backend solver to use. Supported solvers are listed here:</span>
+<span class="sd">            https://www.cvxpy.org/tutorial/advanced/index.html#solve-method-options</span>
+<span class="sd">        solver_options (dict):</span>
+<span class="sd">            dictionary of keyword arguments passed to cvxpy solve.</span>
+<span class="sd">            See docs in CVXEstimator for more information.</span>
+
+<span class="sd">    Attributes:</span>
+<span class="sd">        coef_ (NDArray):</span>
+<span class="sd">            Parameter vector (:math:`\beta` in the cost function formula) of shape (n_features,).</span>
+<span class="sd">        intercept_ (float):</span>
+<span class="sd">            Independent term in decision function.</span>
+<span class="sd">        canonicals_ (SimpleNamespace):</span>
+<span class="sd">            Namespace that contains underlying cvxpy objects used to define</span>
+<span class="sd">            the optimization problem. The objects included are the following:</span>
+<span class="sd">                - objective - the objective function.</span>
+<span class="sd">                - beta - variable to be optimized (corresponds to the estimated coef_ attribute).</span>
+<span class="sd">                - parameters - hyper-parameters</span>
+<span class="sd">                - auxiliaries - auxiliary variables and expressions</span>
+<span class="sd">                - constraints - solution constraints</span>
+
+<span class="sd">    Notes:</span>
+<span class="sd">        Installation of Gurobi is not a must, but highly recommended. An open source alternative</span>
+<span class="sd">        is SCIP. ECOS_BB also works but can be very slow, and has recurring correctness issues.</span>
+<span class="sd">        See the Mixed-integer programs section of the cvxpy docs:</span>
+<span class="sd">        https://www.cvxpy.org/tutorial/advanced/index.html</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
-        <span class="n">groups</span><span class="p">,</span>
-        <span class="n">alpha</span><span class="o">=</span><span class="mf">1.0</span><span class="p">,</span>
-        <span class="n">eta</span><span class="o">=</span><span class="mf">1.0</span><span class="p">,</span>
-        <span class="n">big_M</span><span class="o">=</span><span class="mi">100</span><span class="p">,</span>
-        <span class="n">hierarchy</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
-        <span class="n">tikhonov_w</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
-        <span class="n">ignore_psd_check</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
-        <span class="n">fit_intercept</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
-        <span class="n">copy_X</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
-        <span class="n">warm_start</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
-        <span class="n">solver</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
-        <span class="n">solver_options</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+        <span class="n">groups</span><span class="p">:</span> <span class="n">ArrayLike</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">alpha</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">1.0</span><span class="p">,</span>
+        <span class="n">eta</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">1.0</span><span class="p">,</span>
+        <span class="n">big_M</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">100</span><span class="p">,</span>
+        <span class="n">hierarchy</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">list</span><span class="p">[</span><span class="nb">int</span><span class="p">]]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">tikhonov_w</span><span class="p">:</span> <span class="n">NDArray</span><span class="p">[</span><span class="nb">float</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">ignore_psd_check</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
+        <span class="n">fit_intercept</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+        <span class="n">copy_X</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
+        <span class="n">warm_start</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+        <span class="n">solver</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">solver_options</span><span class="p">:</span> <span class="nb">dict</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="p">):</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Initialize L2L0 estimator.</span>
-
-<span class="sd">        Args:</span>
-<span class="sd">            groups (list or ndarray):</span>
-<span class="sd">                1D array-like of integers specifying groups. Length should be the</span>
-<span class="sd">                same as model, where each integer entry specifies the group</span>
-<span class="sd">                each parameter corresponds to. If no grouping is needed pass a list</span>
-<span class="sd">                of all distinct numbers (ie range(len(coefs)) to create singleton groups</span>
-<span class="sd">                for each parameter.</span>
-<span class="sd">            alpha (float):</span>
-<span class="sd">                L0 pseudo-norm regularization hyper-parameter.</span>
-<span class="sd">            eta (float):</span>
-<span class="sd">                L2 regularization hyper-parameter.</span>
-<span class="sd">            big_M (float):</span>
-<span class="sd">                Upper bound on the norm of coefficients associated with each</span>
-<span class="sd">                cluster (groups of coefficients) ||Beta_c||_2</span>
-<span class="sd">            hierarchy (list):</span>
-<span class="sd">                A list of lists of integers storing hierarchy relations between</span>
-<span class="sd">                coefficients.</span>
-<span class="sd">                Each sublist contains indices of other coefficients</span>
-<span class="sd">                on which the coefficient associated with each element of</span>
-<span class="sd">                the list depends. i.e. hierarchy = [[1, 2], [0], []] mean that</span>
-<span class="sd">                coefficient 0 depends on 1, and 2; 1 depends on 0, and 2 has no</span>
-<span class="sd">                dependence.</span>
-<span class="sd">            tikhonov_w (np.array):</span>
-<span class="sd">                Matrix to add weights to L2 regularization.</span>
-<span class="sd">            ignore_psd_check (bool):</span>
-<span class="sd">                Wether to ignore cvxpy&#39;s PSD checks of matrix used in quadratic</span>
-<span class="sd">                form. Default is True to avoid raising errors for poorly</span>
-<span class="sd">                conditioned matrices. But if you want to be strict set to False.</span>
-<span class="sd">            fit_intercept (bool):</span>
-<span class="sd">                Whether the intercept should be estimated or not.</span>
-<span class="sd">                If False, the data is assumed to be already centered.</span>
-<span class="sd">            copy_X (bool):</span>
-<span class="sd">                If True, X will be copied; else, it may be overwritten.</span>
-<span class="sd">            warm_start (bool):</span>
-<span class="sd">                When set to True, reuse the solution of the previous call to</span>
-<span class="sd">                fit as initialization, otherwise, just erase the previous</span>
-<span class="sd">                solution.</span>
-<span class="sd">            solver (str):</span>
-<span class="sd">                cvxpy backend solver to use. Supported solvers are:</span>
-<span class="sd">                ECOS, ECOS_BB, CVXOPT, SCS, GUROBI, Elemental.</span>
-<span class="sd">                GLPK and GLPK_MI (via CVXOPT GLPK interface)</span>
-<span class="sd">            solver_options (dict):</span>
-<span class="sd">                dictionary of keyword arguments passed to cvxpy solve.</span>
-<span class="sd">                See docs in CVXEstimator for more information.</span>
-<span class="sd">        &quot;&quot;&quot;</span>
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span>
             <span class="n">groups</span><span class="o">=</span><span class="n">groups</span><span class="p">,</span>
             <span class="n">alpha</span><span class="o">=</span><span class="n">alpha</span><span class="p">,</span>

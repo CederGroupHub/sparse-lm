@@ -179,9 +179,11 @@
   <p class="caption" role="heading"><span class="caption-text">Getting Started</span></p>
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="install.html">Install</a></li>
+<li class="toctree-l1"><a class="reference internal" href="examples.html">Examples</a></li>
 </ul>
 <p class="caption" role="heading"><span class="caption-text">Information</span></p>
 <ul>
+<li class="toctree-l1"><a class="reference internal" href="contributing.html">Contributing</a></li>
 <li class="toctree-l1"><a class="reference internal" href="license.html">License</a></li>
 <li class="toctree-l1"><a class="reference external" href="https://github.com/CederGroupHub/sparse-lm">GitHub</a></li>
 </ul>
@@ -189,6 +191,7 @@
 <ul class="current">
 <li class="toctree-l1 current has-children"><a class="reference internal" href="api.html">API</a><input checked="" class="toctree-checkbox" id="toctree-checkbox-1" name="toctree-checkbox-1" role="switch" type="checkbox"/><label for="toctree-checkbox-1"><div class="visually-hidden">Toggle child pages in navigation</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul class="current">
 <li class="toctree-l2"><a class="reference internal" href="sparselm.model.html">sparselm.model</a></li>
+<li class="toctree-l2"><a class="reference internal" href="sparselm.stepwise.html">sparselm.stepwise</a></li>
 <li class="toctree-l2"><a class="reference internal" href="sparselm.model_selection.html">sparselm.model_selection</a></li>
 <li class="toctree-l2 current current-page"><a class="current reference internal" href="#">sparselm.tools</a></li>
 </ul>
@@ -230,7 +233,7 @@
         <article role="main">
           <section id="module-sparselm.tools">
 <span id="sparselm-tools"></span><h1>sparselm.tools<a class="headerlink" href="#module-sparselm.tools" title="Permalink to this heading">#</a></h1>
-<p>A variety of tools for fitting linear regression models to polish CE fits.</p>
+<p>A variety of tools for fitting linear regression models to polish CE.</p>
 <dl class="py function">
 <dt class="sig sig-object py" id="sparselm.tools.constrain_coefficients">
 <span class="sig-prename descclassname"><span class="pre">sparselm.tools.</span></span><span class="sig-name descname"><span class="pre">constrain_coefficients</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">indices</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">high</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">low</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/sparselm/tools.html#constrain_coefficients"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#sparselm.tools.constrain_coefficients" title="Permalink to this definition">#</a></dt>
@@ -239,7 +242,8 @@
 contains an EwaldTerm to constrain the dielectric constant to be positive
 and below the supplied value.</p>
 <p>Use this as a standard decorator with parameters:
-- At runtime: coefs = constrain_coefficients(indices, high, low)(fit_method)(X, y)
+- At runtime:
+coefs = constrain_coefficients(indices, high, low)(fit_method)(X, y)
 - In fit_method definitions:</p>
 <blockquote>
 <div><p>&#64;constrain_coefficients(indices, high, low)
@@ -264,13 +268,16 @@ def your_fit_method(X, y):</p>
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>score</strong> (<a class="reference external" href="https://docs.python.org/3.9/library/functions.html#float" title="(in Python v3.9)"><em>float</em></a>) – An r2 score obtained from cross validation.</p></li>
-<li><p><strong>y</strong> (<em>1d arrayLike</em>) – The target vector.</p></li>
-<li><p><strong>y_pred</strong> (<em>1d arrayLike</em>) – The fitted vector.</p></li>
-<li><p><strong>weights</strong> (<em>1d arrayLike</em>) – The weights of each sample. Default to 1.</p></li>
+<li><p><strong>y</strong> (<em>ArrayLike</em>) – 1D
+The target vector.</p></li>
+<li><p><strong>y_pred</strong> (<em>ArrayLike</em>) – 1D
+The fitted vector.</p></li>
+<li><p><strong>weights</strong> (<em>ArrayLike</em>) – 1D
+The weights of each sample. Default to 1.</p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><p>The CV error, in eV per site.</p>
+<dd class="field-even"><p>The CV error</p>
 </dd>
 <dt class="field-odd">Return type<span class="colon">:</span></dt>
 <dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3.9/library/functions.html#float" title="(in Python v3.9)">float</a></p>

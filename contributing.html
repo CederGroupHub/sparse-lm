@@ -3,10 +3,10 @@
   <head><meta charset="utf-8"/>
     <meta name="viewport" content="width=device-width,initial-scale=1"/>
     <meta name="color-scheme" content="light dark"><meta name="generator" content="Docutils 0.19: https://docutils.sourceforge.io/" />
-<link rel="index" title="Index" href="genindex.html" /><link rel="search" title="Search" href="search.html" /><link rel="next" title="License" href="license.html" /><link rel="prev" title="Install" href="install.html" />
+<link rel="index" title="Index" href="genindex.html" /><link rel="search" title="Search" href="search.html" /><link rel="next" title="License" href="license.html" /><link rel="prev" title="Examples" href="examples.html" />
 
     <!-- Generated with Sphinx 6.1.3 and Furo 2022.12.07 -->
-        <title>&lt;no title&gt; - sparse-lm</title>
+        <title>Contributing - sparse-lm</title>
       <link rel="stylesheet" type="text/css" href="_static/pygments.css" />
     <link rel="stylesheet" type="text/css" href="_static/styles/furo.css?digest=91d0f0d1c444bdcb17a68e833c7a53903343c195" />
     <link rel="stylesheet" type="text/css" href="_static/styles/furo-extensions.css?digest=30d1aed668e5c3a91c3e3bf6a60b675221979f0e" />
@@ -156,7 +156,7 @@
           <svg class="theme-icon-when-light"><use href="#svg-sun"></use></svg>
         </button>
       </div>
-      <label class="toc-overlay-icon toc-header-icon no-toc" for="__toc">
+      <label class="toc-overlay-icon toc-header-icon" for="__toc">
         <div class="visually-hidden">Toggle table of contents sidebar</div>
         <i class="icon"><svg><use href="#svg-toc"></use></svg></i>
       </label>
@@ -179,9 +179,11 @@
   <p class="caption" role="heading"><span class="caption-text">Getting Started</span></p>
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="install.html">Install</a></li>
+<li class="toctree-l1"><a class="reference internal" href="examples.html">Examples</a></li>
 </ul>
 <p class="caption" role="heading"><span class="caption-text">Information</span></p>
-<ul>
+<ul class="current">
+<li class="toctree-l1 current current-page"><a class="current reference internal" href="#">Contributing</a></li>
 <li class="toctree-l1"><a class="reference internal" href="license.html">License</a></li>
 <li class="toctree-l1"><a class="reference external" href="https://github.com/CederGroupHub/sparse-lm">GitHub</a></li>
 </ul>
@@ -189,6 +191,7 @@
 <ul>
 <li class="toctree-l1 has-children"><a class="reference internal" href="api.html">API</a><input class="toctree-checkbox" id="toctree-checkbox-1" name="toctree-checkbox-1" role="switch" type="checkbox"/><label for="toctree-checkbox-1"><div class="visually-hidden">Toggle child pages in navigation</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
 <li class="toctree-l2"><a class="reference internal" href="sparselm.model.html">sparselm.model</a></li>
+<li class="toctree-l2"><a class="reference internal" href="sparselm.stepwise.html">sparselm.stepwise</a></li>
 <li class="toctree-l2"><a class="reference internal" href="sparselm.model_selection.html">sparselm.model_selection</a></li>
 <li class="toctree-l2"><a class="reference internal" href="sparselm.tools.html">sparselm.tools</a></li>
 </ul>
@@ -222,13 +225,99 @@
               <svg class="theme-icon-when-light"><use href="#svg-sun"></use></svg>
             </button>
           </div>
-          <label class="toc-overlay-icon toc-content-icon no-toc" for="__toc">
+          <label class="toc-overlay-icon toc-content-icon" for="__toc">
             <div class="visually-hidden">Toggle table of contents sidebar</div>
             <i class="icon"><svg><use href="#svg-toc"></use></svg></i>
           </label>
         </div>
         <article role="main">
-          
+          <section id="contributing">
+<h1>Contributing<a class="headerlink" href="#contributing" title="Permalink to this heading">#</a></h1>
+<p>We welcome all forms of contribution, please consider contributing in any way you can!</p>
+<section id="bugs-issues-input-and-questions">
+<h2>Bugs, issues, input, and questions<a class="headerlink" href="#bugs-issues-input-and-questions" title="Permalink to this heading">#</a></h2>
+<p>Please use the
+<a class="reference external" href="https://github.com/CederGroupHub/sparse-lm/issues">issue tracker</a> to share any
+of the following:</p>
+<ul class="simple">
+<li><p>Bugs</p></li>
+<li><p>Issues</p></li>
+<li><p>Questions</p></li>
+<li><p>Feature requests</p></li>
+<li><p>Ideas</p></li>
+<li><p>Input</p></li>
+</ul>
+<p>Having these reported and saved in the issue tracker is very helpful to make
+sure that they are properly addressed. Please make sure to be as descriptive
+and neat as possible when opening up an issue.</p>
+</section>
+<section id="developing-guidelines">
+<h2>Developing guidelines<a class="headerlink" href="#developing-guidelines" title="Permalink to this heading">#</a></h2>
+<p>If you have written code or want to start writing new code that you think will improve <strong>sparse-lm</strong> then please follow
+the steps below to make a contribution.</p>
+<ul class="simple">
+<li><p>All code should have unit tests.</p></li>
+<li><p>Code should be well documented following <a class="reference external" href="https://google.github.io/styleguide/pyguide.html">google style</a>  docstrings.</p></li>
+<li><p>All code should pass the pre-commit hook. The code follows the <a class="reference external" href="https://black.readthedocs.io/en/stable/">black code style</a>.</p></li>
+<li><p>Estimators should follow scikit-learn’s <a class="reference external" href="https://scikit-learn.org/stable/developers/develop.html">developing estimator guidelines</a>.</p></li>
+</ul>
+</section>
+<section id="adding-code-contributions">
+<h2>Adding code contributions<a class="headerlink" href="#adding-code-contributions" title="Permalink to this heading">#</a></h2>
+<ol class="arabic">
+<li><p>If you are contributing for the first time:</p>
+<ul>
+<li><p><em>Fork</em> the repository and then <em>clone</em> your fork to your local workspace.</p></li>
+<li><p>Make sure to add the <em>upstream</em> repository as a remote:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">git</span> <span class="n">remote</span> <span class="n">add</span> <span class="n">upstream</span> <span class="n">https</span><span class="p">:</span><span class="o">//</span><span class="n">github</span><span class="o">.</span><span class="n">com</span><span class="o">/</span><span class="n">CederGroupHub</span><span class="o">/</span><span class="n">sparse</span><span class="o">-</span><span class="n">lm</span><span class="o">.</span><span class="n">git</span>
+</pre></div>
+</div>
+</li>
+<li><p>You should always keep your <code class="docutils literal notranslate"><span class="pre">main</span></code> branch or any feature branch up to date
+with the upstream repository <code class="docutils literal notranslate"><span class="pre">main</span></code> branch. Be good about doing <em>fast forward</em>
+merges of the upstream <code class="docutils literal notranslate"><span class="pre">main</span></code> into your fork branches while developing.</p></li>
+</ul>
+</li>
+<li><p>In order to have changes available without having to re-install the package:</p>
+<ul>
+<li><p>Install the package in <em>editable</em> mode:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">pip</span> <span class="n">install</span> <span class="o">-</span><span class="n">e</span> <span class="o">.</span>
+</pre></div>
+</div>
+</li>
+</ul>
+</li>
+<li><p>To develop your contributions you are free to do so in your <em>main</em> branch or any feature
+branch in your fork.</p>
+<ul class="simple">
+<li><p>We recommend to only your forks <em>main</em> branch for short/easy fixes and additions.</p></li>
+<li><p>For more complex features, try to use a feature branch with a descriptive name.</p></li>
+<li><p>For very complex feautres feel free to open up a PR even before your contribution is finished with
+[WIP] in its name, and optionally mark it as a <em>draft</em>.</p></li>
+</ul>
+</li>
+<li><p>While developing we recommend you use the pre-commit hook that is setup to ensure that your
+code will satisfy all lint, documentation and black requirements. To do so install pre-commit, and run
+in your clones top directory:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">pre</span><span class="o">-</span><span class="n">commit</span> <span class="n">install</span>
+</pre></div>
+</div>
+<ul class="simple">
+<li><p>All code should use <a class="reference external" href="https://google.github.io/styleguide/pyguide.html">google style</a> docstrings
+and <a class="reference external" href="https://black.readthedocs.io/en/stable/?badge=stable">black</a> style formatting.</p></li>
+</ul>
+</li>
+<li><p>Make sure to test your contribution and write unit tests for any new features. All tests should go in the
+<code class="docutils literal notranslate"><span class="pre">sparse-lm\tests</span></code> directory. The CI will run tests upon opening a PR, but running them locally will help find
+problems before:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">pytests</span> <span class="n">tests</span>
+</pre></div>
+</div>
+</li>
+</ol>
+</section>
+</section>
+
         </article>
       </div>
       <footer>
@@ -243,14 +332,14 @@
               </div>
               <svg class="furo-related-icon"><use href="#svg-arrow-right"></use></svg>
             </a>
-          <a class="prev-page" href="install.html">
+          <a class="prev-page" href="examples.html">
               <svg class="furo-related-icon"><use href="#svg-arrow-right"></use></svg>
               <div class="page-info">
                 <div class="context">
                   <span>Previous</span>
                 </div>
                 
-                <div class="title">Install</div>
+                <div class="title">Examples</div>
                 
               </div>
             </a>
@@ -271,8 +360,29 @@
         
       </footer>
     </div>
-    <aside class="toc-drawer no-toc">
+    <aside class="toc-drawer">
       
+      
+      <div class="toc-sticky toc-scroll">
+        <div class="toc-title-container">
+          <span class="toc-title">
+            On this page
+          </span>
+        </div>
+        <div class="toc-tree-container">
+          <div class="toc-tree">
+            <ul>
+<li><a class="reference internal" href="#">Contributing</a><ul>
+<li><a class="reference internal" href="#bugs-issues-input-and-questions">Bugs, issues, input, and questions</a></li>
+<li><a class="reference internal" href="#developing-guidelines">Developing guidelines</a></li>
+<li><a class="reference internal" href="#adding-code-contributions">Adding code contributions</a></li>
+</ul>
+</li>
+</ul>
+
+          </div>
+        </div>
+      </div>
       
       
     </aside>

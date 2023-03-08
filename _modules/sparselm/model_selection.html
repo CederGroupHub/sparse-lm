@@ -178,9 +178,11 @@
   <p class="caption" role="heading"><span class="caption-text">Getting Started</span></p>
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="../../install.html">Install</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../examples.html">Examples</a></li>
 </ul>
 <p class="caption" role="heading"><span class="caption-text">Information</span></p>
 <ul>
+<li class="toctree-l1"><a class="reference internal" href="../../contributing.html">Contributing</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../license.html">License</a></li>
 <li class="toctree-l1"><a class="reference external" href="https://github.com/CederGroupHub/sparse-lm">GitHub</a></li>
 </ul>
@@ -188,6 +190,7 @@
 <ul>
 <li class="toctree-l1 has-children"><a class="reference internal" href="../../api.html">API</a><input class="toctree-checkbox" id="toctree-checkbox-1" name="toctree-checkbox-1" role="switch" type="checkbox"/><label for="toctree-checkbox-1"><div class="visually-hidden">Toggle child pages in navigation</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
 <li class="toctree-l2"><a class="reference internal" href="../../sparselm.model.html">sparselm.model</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../sparselm.stepwise.html">sparselm.stepwise</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../../sparselm.model_selection.html">sparselm.model_selection</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../../sparselm.tools.html">sparselm.tools</a></li>
 </ul>
@@ -233,13 +236,11 @@
 <span class="kn">import</span> <span class="nn">numbers</span>
 <span class="kn">import</span> <span class="nn">re</span>
 <span class="kn">import</span> <span class="nn">time</span>
-<span class="kn">import</span> <span class="nn">warnings</span>
 <span class="kn">from</span> <span class="nn">collections</span> <span class="kn">import</span> <span class="n">defaultdict</span>
 <span class="kn">from</span> <span class="nn">copy</span> <span class="kn">import</span> <span class="n">deepcopy</span>
 <span class="kn">from</span> <span class="nn">itertools</span> <span class="kn">import</span> <span class="n">product</span>
 
 <span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
-<span class="kn">from</span> <span class="nn">joblib</span> <span class="kn">import</span> <span class="n">Parallel</span>
 <span class="kn">from</span> <span class="nn">sklearn.base</span> <span class="kn">import</span> <span class="n">clone</span><span class="p">,</span> <span class="n">is_classifier</span>
 <span class="kn">from</span> <span class="nn">sklearn.metrics</span> <span class="kn">import</span> <span class="n">check_scoring</span>
 <span class="kn">from</span> <span class="nn">sklearn.metrics._scorer</span> <span class="kn">import</span> <span class="n">_check_multimetric_scoring</span>
@@ -251,7 +252,7 @@
     <span class="n">_insert_error_scores</span><span class="p">,</span>
     <span class="n">_warn_or_raise_about_fit_failures</span><span class="p">,</span>
 <span class="p">)</span>
-<span class="kn">from</span> <span class="nn">sklearn.utils.fixes</span> <span class="kn">import</span> <span class="n">delayed</span>
+<span class="kn">from</span> <span class="nn">sklearn.utils.parallel</span> <span class="kn">import</span> <span class="n">Parallel</span><span class="p">,</span> <span class="n">delayed</span>  <span class="c1"># sklearn&gt;=1.2.1</span>
 <span class="kn">from</span> <span class="nn">sklearn.utils.validation</span> <span class="kn">import</span> <span class="n">_check_fit_params</span><span class="p">,</span> <span class="n">indexable</span>
 
 
@@ -268,6 +269,124 @@
 <span class="sd">    supports &quot;max_score&quot; (default), which is to maximize the score;</span>
 <span class="sd">    also supports &quot;one_std_score&quot;, which is to apply one-standard-error</span>
 <span class="sd">    rule to the score.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        estimator (Estimator):</span>
+<span class="sd">            A object of that type is instantiated for each grid point.</span>
+<span class="sd">            This is assumed to implement the scikit-learn estimator</span>
+<span class="sd">            interface. Either estimator needs to provide a ``score``</span>
+<span class="sd">            function, or ``scoring`` must be passed.</span>
+<span class="sd">        param_grid (dict or list[dict]):</span>
+<span class="sd">            Dictionary representing grid of hyper-parameters with their</span>
+<span class="sd">            names as keys and possible values. If given as a list of</span>
+<span class="sd">            multiple dicts, will search on multiple grids in parallel.</span>
+<span class="sd">        opt_selection_method (str, default=&quot;max_score&quot;):</span>
+<span class="sd">            The method to select optimal hyper params. Default to</span>
+<span class="sd">            &quot;max_score&quot;, which means to maximize the score. Can also choose</span>
+<span class="sd">            &quot;one_std_score&quot;, which means to apply one standard error rule</span>
+<span class="sd">            on scores.</span>
+<span class="sd">        scoring (str, callable, list, tuple or dict,</span>
+<span class="sd">        default=&quot;neg_root_mean_squared_error&quot;):</span>
+<span class="sd">            Strategy to evaluate the performance of the cross-validated</span>
+<span class="sd">            model on the test set.</span>
+<span class="sd">            If `scoring` represents a single score, one can use:</span>
+<span class="sd">            - a single string (see :ref:`scoring_parameter`);</span>
+<span class="sd">            - a callable (see :ref:`scoring`) that returns a single value.</span>
+<span class="sd">            If `scoring` represents multiple scores, one can use:</span>
+<span class="sd">            - a list or tuple of unique strings;</span>
+<span class="sd">            - a callable returning a dictionary where the keys are the</span>
+<span class="sd">            metric names and the values are the metric scores;</span>
+<span class="sd">            - a dictionary with metric names as keys and callables a</span>
+<span class="sd">            values.</span>
+<span class="sd">            See :ref:`multimetric_grid_search` for an example.</span>
+<span class="sd">            In sparse-lm, using &quot;neg_root_mean_squared_error&quot; is default</span>
+<span class="sd">            because in cluster expansion it is more conventional to</span>
+<span class="sd">            analyze and present errors in the root-mean-square error format</span>
+<span class="sd">            compared to the r2_score.</span>
+<span class="sd">        n_jobs (int, default=None):</span>
+<span class="sd">            Number of jobs to run in parallel.</span>
+<span class="sd">            ``None`` means 1 unless in a :obj:`joblib.parallel_backend`</span>
+<span class="sd">            context.</span>
+<span class="sd">            ``-1`` means using all processors. See</span>
+<span class="sd">            :term:`Glossary &lt;n_jobs&gt;` for more details.</span>
+<span class="sd">        refit (bool, str, or callable, default=True)</span>
+<span class="sd">            Refit an estimator using the best found parameters on the whole</span>
+<span class="sd">            dataset.</span>
+<span class="sd">            For multiple metric evaluation, this needs to be a `str`</span>
+<span class="sd">            denoting the scorer that would be used to find the best</span>
+<span class="sd">            parameters for refitting the estimator at the end.</span>
+<span class="sd">            Where there are considerations other than maximum score in</span>
+<span class="sd">            choosing a best estimator, ``refit`` can be set to a function</span>
+<span class="sd">            which returns the selected ``best_index_`` given</span>
+<span class="sd">            ``cv_results_``.</span>
+<span class="sd">            In that case, the ``best_estimator_`` and ``best_params_`` will</span>
+<span class="sd">            be set according to the returned ``best_index_`` while the</span>
+<span class="sd">            ``best_score_`` attribute will not be available.</span>
+<span class="sd">            The refitted estimator is made available at the</span>
+<span class="sd">            ``best_estimator_`` attribute and permits using ``predict``</span>
+<span class="sd">            directly on this instance.</span>
+<span class="sd">            Also for multiple metric evaluation, the attributes</span>
+<span class="sd">            ``best_index_``, ``best_score_`` and ``best_params_`` will only</span>
+<span class="sd">            be available if ``refit`` is set and all of them will be</span>
+<span class="sd">            determined w.r.t this specific scorer.</span>
+<span class="sd">            See ``scoring`` parameter to know more about multiple metric</span>
+<span class="sd">            evaluation.</span>
+<span class="sd">        cv (int, cross-validation generator or an iterable, default=None):</span>
+<span class="sd">            Determines the cross-validation splitting strategy.</span>
+<span class="sd">            Possible inputs for cv are:</span>
+<span class="sd">            - None, to use the default 5-fold cross validation,</span>
+<span class="sd">            - integer, to specify the number of folds in a</span>
+<span class="sd">            `(Stratified)KFold`,</span>
+<span class="sd">            - :term:`CV splitter`,</span>
+<span class="sd">            - An iterable yielding (train, test) splits as arrays of</span>
+<span class="sd">            indices.</span>
+<span class="sd">            For integer/None inputs, if the estimator is a classifier and</span>
+<span class="sd">            ``y`` is either binary or multiclass, :class:`StratifiedKFold`</span>
+<span class="sd">            is used. In all other cases, :class:`KFold` is used. These</span>
+<span class="sd">            splitters are instantiated with `shuffle=False` so the splits</span>
+<span class="sd">            will be the same across calls.</span>
+<span class="sd">            Refer :ref:`User Guide &lt;cross_validation&gt;` for the various</span>
+<span class="sd">            cross-validation strategies that can be used here.</span>
+<span class="sd">            Notice that if cv is not specified, KFold(5) will be used, and your</span>
+<span class="sd">            training set will not be shuffled in each train-test split. This can</span>
+<span class="sd">            be dangerous if your training set has internal relations, for example,</span>
+<span class="sd">            structures with similar composition are close to each other in feature</span>
+<span class="sd">            rows. In this case, you should use RepeatedKFold as cv instead.</span>
+<span class="sd">        verbose (int, default=0):</span>
+<span class="sd">            Controls the verbosity: the higher, the more messages.</span>
+<span class="sd">            - &gt;1 : the computation time for each fold and parameter</span>
+<span class="sd">            candidate is displayed;</span>
+<span class="sd">            - &gt;2 : the score is also displayed;</span>
+<span class="sd">            - &gt;3 : the fold and candidate parameter indexes are also</span>
+<span class="sd">            displayed together with the starting time of the computation.</span>
+<span class="sd">        pre_dispatch (int, or str, default=&#39;2*n_jobs&#39;):</span>
+<span class="sd">            Controls the number of jobs that get dispatched during parallel</span>
+<span class="sd">            execution. Reducing this number can be useful to avoid an</span>
+<span class="sd">            explosion of memory consumption when more jobs get dispatched</span>
+<span class="sd">            than CPUs can process. This parameter can be:</span>
+<span class="sd">                - None, in which case all the jobs are immediately</span>
+<span class="sd">                  created and spawned. Use this for lightweight and</span>
+<span class="sd">                  fast-running jobs, to avoid delays due to on-demand</span>
+<span class="sd">                  spawning of the jobs</span>
+<span class="sd">                - An int, giving the exact number of total jobs that are</span>
+<span class="sd">                  spawned</span>
+<span class="sd">                - A str, giving an expression as a function of n_jobs,</span>
+<span class="sd">                  as in &#39;2*n_jobs&#39;</span>
+<span class="sd">        error_score (&#39;raise&#39; or numeric, default=np.nan):</span>
+<span class="sd">            Value to assign to the score if an error occurs in estimator</span>
+<span class="sd">            fitting. If set to &#39;raise&#39;, the error is raised. If a numeric</span>
+<span class="sd">            value is given, FitFailedWarning is raised. This parameter</span>
+<span class="sd">            does not affect the refit step, which will always raise the</span>
+<span class="sd">            error.</span>
+<span class="sd">        return_train_score (bool, default=False):</span>
+<span class="sd">            If ``False``, the ``cv_results_`` attribute will not include</span>
+<span class="sd">            training scores.</span>
+<span class="sd">            Computing training scores is used to get insights on how</span>
+<span class="sd">            different parameter settings impact the</span>
+<span class="sd">            overfitting/underfitting trade-off. However, computing the</span>
+<span class="sd">            scores on the training set can be computationally expensive and</span>
+<span class="sd">            is not strictly required to select the parameters that yield</span>
+<span class="sd">            the best generalization performance.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
@@ -285,110 +404,6 @@
         <span class="n">error_score</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">nan</span><span class="p">,</span>
         <span class="n">return_train_score</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
     <span class="p">):</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Initialize CVSearch tool.</span>
-
-<span class="sd">        Args:</span>
-<span class="sd">            estimator (Estimator):</span>
-<span class="sd">                A object of that type is instantiated for each grid point.</span>
-<span class="sd">                This is assumed to implement the scikit-learn estimator interface.</span>
-<span class="sd">                Either estimator needs to provide a ``score`` function,</span>
-<span class="sd">                or ``scoring`` must be passed.</span>
-<span class="sd">            param_grid (dict or list[dict]):</span>
-<span class="sd">                Dictionary representing grid of hyper-parameters with their names</span>
-<span class="sd">                as keys and possible values. If given as a list of multiple dicts,</span>
-<span class="sd">                will search on multiple grids in parallel.</span>
-<span class="sd">            opt_selection_method (str, default=&quot;max_score&quot;):</span>
-<span class="sd">                The method to select optimal hyper params. Default to &quot;max_score&quot;, which</span>
-<span class="sd">                means to maximize the score. Can also choose &quot;one_std_score&quot;, which means</span>
-<span class="sd">                to apply one standard error rule on scores.</span>
-<span class="sd">            scoring (str, callable, list, tuple or dict, default=&quot;neg_root_mean_squared_error&quot;):</span>
-<span class="sd">                Strategy to evaluate the performance of the cross-validated model on</span>
-<span class="sd">                the test set.</span>
-<span class="sd">                If `scoring` represents a single score, one can use:</span>
-<span class="sd">                - a single string (see :ref:`scoring_parameter`);</span>
-<span class="sd">                - a callable (see :ref:`scoring`) that returns a single value.</span>
-<span class="sd">                If `scoring` represents multiple scores, one can use:</span>
-<span class="sd">                - a list or tuple of unique strings;</span>
-<span class="sd">                - a callable returning a dictionary where the keys are the metric</span>
-<span class="sd">                  names and the values are the metric scores;</span>
-<span class="sd">                - a dictionary with metric names as keys and callables a values.</span>
-<span class="sd">                See :ref:`multimetric_grid_search` for an example.</span>
-<span class="sd">                Note: In sparse-lm, using &quot;neg_root_mean_squared_error&quot; is default</span>
-<span class="sd">                because in cluster expansion it is more conventional to analyze and present</span>
-<span class="sd">                errors in the root-mean-square error format compared to the r2_score.</span>
-<span class="sd">            n_jobs (int, default=None):</span>
-<span class="sd">                Number of jobs to run in parallel.</span>
-<span class="sd">                ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.</span>
-<span class="sd">                ``-1`` means using all processors. See :term:`Glossary &lt;n_jobs&gt;`</span>
-<span class="sd">                for more details.</span>
-<span class="sd">            refit (bool, str, or callable, default=True)</span>
-<span class="sd">                Refit an estimator using the best found parameters on the whole</span>
-<span class="sd">                dataset.</span>
-<span class="sd">                For multiple metric evaluation, this needs to be a `str` denoting the</span>
-<span class="sd">                scorer that would be used to find the best parameters for refitting</span>
-<span class="sd">                the estimator at the end.</span>
-<span class="sd">                Where there are considerations other than maximum score in</span>
-<span class="sd">                choosing a best estimator, ``refit`` can be set to a function which</span>
-<span class="sd">                returns the selected ``best_index_`` given ``cv_results_``. In that</span>
-<span class="sd">                case, the ``best_estimator_`` and ``best_params_`` will be set</span>
-<span class="sd">                according to the returned ``best_index_`` while the ``best_score_``</span>
-<span class="sd">                attribute will not be available.</span>
-<span class="sd">                The refitted estimator is made available at the ``best_estimator_``</span>
-<span class="sd">                attribute and permits using ``predict`` directly on this</span>
-<span class="sd">                instance.</span>
-<span class="sd">                Also for multiple metric evaluation, the attributes ``best_index_``,</span>
-<span class="sd">                ``best_score_`` and ``best_params_`` will only be available if</span>
-<span class="sd">                ``refit`` is set and all of them will be determined w.r.t this specific</span>
-<span class="sd">                scorer.</span>
-<span class="sd">                See ``scoring`` parameter to know more about multiple metric</span>
-<span class="sd">                evaluation.</span>
-<span class="sd">            cv (int, cross-validation generator or an iterable, default=None):</span>
-<span class="sd">                Determines the cross-validation splitting strategy.</span>
-<span class="sd">                Possible inputs for cv are:</span>
-<span class="sd">                - None, to use the default 5-fold cross validation,</span>
-<span class="sd">                - integer, to specify the number of folds in a `(Stratified)KFold`,</span>
-<span class="sd">                - :term:`CV splitter`,</span>
-<span class="sd">                - An iterable yielding (train, test) splits as arrays of indices.</span>
-<span class="sd">                For integer/None inputs, if the estimator is a classifier and ``y`` is</span>
-<span class="sd">                either binary or multiclass, :class:`StratifiedKFold` is used. In all</span>
-<span class="sd">                other cases, :class:`KFold` is used. These splitters are instantiated</span>
-<span class="sd">                with `shuffle=False` so the splits will be the same across calls.</span>
-<span class="sd">                Refer :ref:`User Guide &lt;cross_validation&gt;` for the various</span>
-<span class="sd">                cross-validation strategies that can be used here.</span>
-<span class="sd">            verbose (int, default=0):</span>
-<span class="sd">                Controls the verbosity: the higher, the more messages.</span>
-<span class="sd">                - &gt;1 : the computation time for each fold and parameter candidate is</span>
-<span class="sd">                  displayed;</span>
-<span class="sd">                - &gt;2 : the score is also displayed;</span>
-<span class="sd">                - &gt;3 : the fold and candidate parameter indexes are also displayed</span>
-<span class="sd">                  together with the starting time of the computation.</span>
-<span class="sd">            pre_dispatch (int, or str, default=&#39;2*n_jobs&#39;):</span>
-<span class="sd">                Controls the number of jobs that get dispatched during parallel</span>
-<span class="sd">                execution. Reducing this number can be useful to avoid an</span>
-<span class="sd">                explosion of memory consumption when more jobs get dispatched</span>
-<span class="sd">                than CPUs can process. This parameter can be:</span>
-<span class="sd">                    - None, in which case all the jobs are immediately</span>
-<span class="sd">                      created and spawned. Use this for lightweight and</span>
-<span class="sd">                      fast-running jobs, to avoid delays due to on-demand</span>
-<span class="sd">                      spawning of the jobs</span>
-<span class="sd">                    - An int, giving the exact number of total jobs that are</span>
-<span class="sd">                      spawned</span>
-<span class="sd">                    - A str, giving an expression as a function of n_jobs,</span>
-<span class="sd">                      as in &#39;2*n_jobs&#39;</span>
-<span class="sd">            error_score (&#39;raise&#39; or numeric, default=np.nan):</span>
-<span class="sd">                Value to assign to the score if an error occurs in estimator fitting.</span>
-<span class="sd">                If set to &#39;raise&#39;, the error is raised. If a numeric value is given,</span>
-<span class="sd">                FitFailedWarning is raised. This parameter does not affect the refit</span>
-<span class="sd">                step, which will always raise the error.</span>
-<span class="sd">            return_train_score (bool, default=False):</span>
-<span class="sd">                If ``False``, the ``cv_results_`` attribute will not include training</span>
-<span class="sd">                scores.</span>
-<span class="sd">                Computing training scores is used to get insights on how different</span>
-<span class="sd">                parameter settings impact the overfitting/underfitting trade-off.</span>
-<span class="sd">                However, computing the scores on the training set can be computationally</span>
-<span class="sd">                expensive and is not strictly required to select the parameters that</span>
-<span class="sd">                yield the best generalization performance.</span>
-<span class="sd">        &quot;&quot;&quot;</span>
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span>
             <span class="n">estimator</span><span class="o">=</span><span class="n">estimator</span><span class="p">,</span>
             <span class="n">param_grid</span><span class="o">=</span><span class="n">param_grid</span><span class="p">,</span>
@@ -424,8 +439,8 @@
             <span class="n">metrics</span> <span class="o">=</span> <span class="n">results</span><span class="p">[</span><span class="sa">f</span><span class="s2">&quot;mean_test_</span><span class="si">{</span><span class="n">refit_metric</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">]</span>
             <span class="n">param_names</span> <span class="o">=</span> <span class="p">[</span><span class="n">key</span> <span class="k">for</span> <span class="n">key</span> <span class="ow">in</span> <span class="n">results</span> <span class="k">if</span> <span class="n">re</span><span class="o">.</span><span class="n">match</span><span class="p">(</span><span class="sa">r</span><span class="s2">&quot;^param_(\w+)&quot;</span><span class="p">,</span> <span class="n">key</span><span class="p">)]</span>
             <span class="n">params</span> <span class="o">=</span> <span class="p">[]</span>
-            <span class="c1"># Will only apply one std rule on numerical, all positive parameters,</span>
-            <span class="c1"># which are usually regularization factors.</span>
+            <span class="c1"># Will only apply one std rule on numerical, all positive</span>
+            <span class="c1"># parameters, which are usually regularization factors.</span>
             <span class="c1"># All parameters are equally treated in grid and line search.</span>
             <span class="k">for</span> <span class="n">name</span> <span class="ow">in</span> <span class="n">param_names</span><span class="p">:</span>
                 <span class="k">if</span> <span class="nb">all</span><span class="p">(</span><span class="nb">isinstance</span><span class="p">(</span><span class="n">val</span><span class="p">,</span> <span class="n">numbers</span><span class="o">.</span><span class="n">Number</span><span class="p">)</span> <span class="k">for</span> <span class="n">val</span> <span class="ow">in</span> <span class="n">results</span><span class="p">[</span><span class="n">name</span><span class="p">]):</span>
@@ -448,22 +463,25 @@
 <span class="sd">            X(array-like of shape (n_samples, n_features)):</span>
 <span class="sd">                Training vector, where `n_samples` is the number of samples and</span>
 <span class="sd">                `n_features` is the number of features.</span>
-<span class="sd">            y(array-like of shape (n_samples, n_output) or (n_samples,), default=None):</span>
+<span class="sd">            y(array-like of shape (n_samples, n_output) or (n_samples,),</span>
+<span class="sd">            default=None):</span>
 <span class="sd">                Target relative to X for classification or regression;</span>
 <span class="sd">                None for unsupervised learning.</span>
 <span class="sd">            groups(array-like of shape (n_samples,), default=None):</span>
-<span class="sd">                Group labels for the samples used while splitting the dataset into</span>
-<span class="sd">                train/test set. Only used in conjunction with a &quot;Group&quot; :term:`cv`</span>
-<span class="sd">                instance (e.g., :class:`~sklearn.model_selection.GroupKFold`).</span>
+<span class="sd">                Group labels for the samples used while splitting the dataset</span>
+<span class="sd">                into train/test set. Only used in conjunction with a &quot;Group&quot;</span>
+<span class="sd">                :term:`cv` instance</span>
+<span class="sd">                (e.g., :class:`~sklearn.model_selection.GroupKFold`).</span>
 <span class="sd">            **fit_params:</span>
 <span class="sd">                Parameters passed to the `fit` method of the estimator.</span>
 <span class="sd">                If a fit parameter is an array-like whose length is equal to</span>
-<span class="sd">                `num_samples` then it will be split across CV groups along with `X`</span>
-<span class="sd">                and `y`. For example, the :term:`sample_weight` parameter is split</span>
-<span class="sd">                because `len(sample_weights) = len(X)`.</span>
-<span class="sd">            Returns:</span>
-<span class="sd">                self(GridSearch):</span>
-<span class="sd">                    Instance of fitted estimator.</span>
+<span class="sd">                `num_samples` then it will be split across CV groups along with</span>
+<span class="sd">                `X` and `y`. For example, the :term:`sample_weight` parameter</span>
+<span class="sd">                is split because `len(sample_weights) = len(X)`.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            self(GridSearch):</span>
+<span class="sd">                Instance of fitted estimator.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="n">estimator</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">estimator</span>
         <span class="n">refit_metric</span> <span class="o">=</span> <span class="s2">&quot;score&quot;</span>
@@ -528,8 +546,12 @@
                         <span class="n">candidate_progress</span><span class="o">=</span><span class="p">(</span><span class="n">cand_idx</span><span class="p">,</span> <span class="n">n_candidates</span><span class="p">),</span>
                         <span class="o">**</span><span class="n">fit_and_score_kwargs</span><span class="p">,</span>
                     <span class="p">)</span>
-                    <span class="k">for</span> <span class="p">(</span><span class="n">cand_idx</span><span class="p">,</span> <span class="n">parameters</span><span class="p">),</span> <span class="p">(</span><span class="n">split_idx</span><span class="p">,</span> <span class="p">(</span><span class="n">train</span><span class="p">,</span> <span class="n">test</span><span class="p">))</span> <span class="ow">in</span> <span class="n">product</span><span class="p">(</span>
-                        <span class="nb">enumerate</span><span class="p">(</span><span class="n">candidate_params</span><span class="p">),</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">cv</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">groups</span><span class="p">))</span>
+                    <span class="k">for</span> <span class="p">(</span><span class="n">cand_idx</span><span class="p">,</span> <span class="n">parameters</span><span class="p">),</span> <span class="p">(</span>
+                        <span class="n">split_idx</span><span class="p">,</span>
+                        <span class="p">(</span><span class="n">train</span><span class="p">,</span> <span class="n">test</span><span class="p">),</span>
+                    <span class="p">)</span> <span class="ow">in</span> <span class="n">product</span><span class="p">(</span>
+                        <span class="nb">enumerate</span><span class="p">(</span><span class="n">candidate_params</span><span class="p">),</span>
+                        <span class="nb">enumerate</span><span class="p">(</span><span class="n">cv</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">groups</span><span class="p">)),</span>
                     <span class="p">)</span>
                 <span class="p">)</span>
 
@@ -664,90 +686,106 @@
 <span class="sd">        Args:</span>
 <span class="sd">            estimator (Estimator):</span>
 <span class="sd">                A object of that type is instantiated for each grid point.</span>
-<span class="sd">                This is assumed to implement the scikit-learn estimator interface.</span>
-<span class="sd">                Either estimator needs to provide a ``score`` function,</span>
-<span class="sd">                or ``scoring`` must be passed.</span>
+<span class="sd">                This is assumed to implement the scikit-learn estimator</span>
+<span class="sd">                interface. Either estimator needs to provide a ``score``</span>
+<span class="sd">                function, or ``scoring`` must be passed.</span>
 <span class="sd">            param_grid (list[tuple]):</span>
 <span class="sd">                List of tuples with parameters names (`str`) as first element</span>
 <span class="sd">                and lists of parameter settings to try as the second element.</span>
-<span class="sd">                In LineSearch, the hyper-params given first will be searched first</span>
-<span class="sd">                in a cycle. Multiple grids search is NOT supported!</span>
+<span class="sd">                In LineSearch, the hyper-params given first will be searched</span>
+<span class="sd">                first in a cycle. Multiple grids search is NOT supported!</span>
 <span class="sd">            opt_selection_method (list(str) or str, default=&quot;max_score&quot;):</span>
-<span class="sd">                The method to select optimal hyper params. Default to &quot;max_score&quot;, which</span>
-<span class="sd">                means to maximize score score. Can also choose &quot;one_std_score&quot;, which means</span>
-<span class="sd">                to apply one standard error rule on score scores.</span>
-<span class="sd">                In line search, this argument can also be given as a list of str. This</span>
-<span class="sd">                will allow different selection methods for corresponding hyper-params in</span>
-<span class="sd">                the param_grid. For example, a good practice when using L2L0 estimator</span>
-<span class="sd">                shall be opt_selection_method = [&quot;one_std_score&quot;, &quot;max_score&quot;] for &quot;alpha&quot;</span>
-<span class="sd">                and &quot;l0_ratio&quot;, respectively.</span>
+<span class="sd">                The method to select optimal hyper params. Default to</span>
+<span class="sd">                &quot;max_score&quot;, which means to maximize score score. Can also</span>
+<span class="sd">                choose &quot;one_std_score&quot;, which means to apply one standard</span>
+<span class="sd">                error rule on score scores.</span>
+<span class="sd">                In line search, this argument can also be given as a list</span>
+<span class="sd">                of str. This will allow different selection methods for the</span>
+<span class="sd">                corresponding hyper-params in ``param_grid``. For example,</span>
+<span class="sd">                a good practice when using L2L0 estimator could be</span>
+<span class="sd">                ``opt_selection_method`` = [&quot;one_std_score&quot;, &quot;max_score&quot;]</span>
+<span class="sd">                for &quot;alpha&quot; and &quot;l0_ratio&quot;, respectively.</span>
 <span class="sd">            n_iter (int, default=None):</span>
-<span class="sd">                Number of iterations to perform. One iteration means a 1D search on</span>
-<span class="sd">                one hyper-param, and we scan one hyper-param at a time in the order of</span>
-<span class="sd">                param_grid.</span>
-<span class="sd">                n_iter must be at least as large as the number of hyper-params. Default</span>
-<span class="sd">                is 2 * number of hyper-params.</span>
-<span class="sd">            scoring (str, callable, list, tuple or dict, default=&quot;neg_root_mean_squared_error&quot;):</span>
-<span class="sd">                Strategy to evaluate the performance of the cross-validated model on</span>
-<span class="sd">                the test set.</span>
+<span class="sd">                Number of iterations to perform. One iteration means a 1D</span>
+<span class="sd">                search on one hyper-param, and we scan one hyper-param at</span>
+<span class="sd">                a time in the order of param_grid.</span>
+<span class="sd">                n_iter must be at least as large as the number of hyper-params.</span>
+<span class="sd">                Default is 2 * number of hyper-params.</span>
+<span class="sd">            scoring (str, callable, list, tuple or dict):</span>
+<span class="sd">                Strategy to evaluate the performance of the cross-validated model on the test set.</span>
+<span class="sd">            default=&quot;neg_root_mean_squared_error&quot;):</span>
+<span class="sd">                Strategy to evaluate the performance of the cross-validated</span>
+<span class="sd">                model on the test set.</span>
 <span class="sd">                If `scoring` represents a single score, one can use:</span>
 <span class="sd">                - a single string (see :ref:`scoring_parameter`);</span>
 <span class="sd">                - a callable (see :ref:`scoring`) that returns a single value.</span>
 <span class="sd">                If `scoring` represents multiple scores, one can use:</span>
 <span class="sd">                - a list or tuple of unique strings;</span>
-<span class="sd">                - a callable returning a dictionary where the keys are the metric</span>
-<span class="sd">                  names and the values are the metric scores;</span>
-<span class="sd">                - a dictionary with metric names as keys and callables a values.</span>
+<span class="sd">                - a callable returning a dictionary where the keys are the</span>
+<span class="sd">                metric names and the values are the metric scores;</span>
+<span class="sd">                - a dictionary with metric names as keys and callables a</span>
+<span class="sd">                values.</span>
 <span class="sd">                See :ref:`multimetric_grid_search` for an example.</span>
-<span class="sd">                Note: In sparse-lm, using &quot;neg_root_mean_squared_error&quot; is default</span>
-<span class="sd">                because in cluster expansion it is more conventional to analyze and present</span>
-<span class="sd">                errors in the root-mean-square error format compared to the r2_score.</span>
+<span class="sd">                In sparse-lm, using &quot;neg_root_mean_squared_error&quot; is default</span>
+<span class="sd">                because in cluster expansion it is more conventional to</span>
+<span class="sd">                analyze and present errors in the root-mean-square error format</span>
+<span class="sd">                compared to the r2_score.</span>
 <span class="sd">            n_jobs (int, default=None):</span>
 <span class="sd">                Number of jobs to run in parallel.</span>
-<span class="sd">                ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.</span>
-<span class="sd">                ``-1`` means using all processors. See :term:`Glossary &lt;n_jobs&gt;`</span>
-<span class="sd">                for more details.</span>
-<span class="sd">            refit (bool, str, or callable, default=True)</span>
+<span class="sd">                ``None`` means 1 unless in a :obj:`joblib.parallel_backend`</span>
+<span class="sd">                context.</span>
+<span class="sd">                ``-1`` means using all processors. See</span>
+<span class="sd">                :term:`Glossary &lt;n_jobs&gt;` for more details.</span>
+<span class="sd">            refit (bool, str, or callable, default=True):</span>
 <span class="sd">                Refit an estimator using the best found parameters on the whole</span>
 <span class="sd">                dataset.</span>
-<span class="sd">                For multiple metric evaluation, this needs to be a `str` denoting the</span>
-<span class="sd">                scorer that would be used to find the best parameters for refitting</span>
-<span class="sd">                the estimator at the end.</span>
+<span class="sd">                For multiple metric evaluation, this needs to be a `str`</span>
+<span class="sd">                denoting the scorer that would be used to find the best</span>
+<span class="sd">                parameters for refitting the estimator at the end.</span>
 <span class="sd">                Where there are considerations other than maximum score in</span>
-<span class="sd">                choosing a best estimator, ``refit`` can be set to a function which</span>
-<span class="sd">                returns the selected ``best_index_`` given ``cv_results_``. In that</span>
-<span class="sd">                case, the ``best_estimator_`` and ``best_params_`` will be set</span>
-<span class="sd">                according to the returned ``best_index_`` while the ``best_score_``</span>
-<span class="sd">                attribute will not be available.</span>
-<span class="sd">                The refitted estimator is made available at the ``best_estimator_``</span>
-<span class="sd">                attribute and permits using ``predict`` directly on this</span>
-<span class="sd">                instance.</span>
-<span class="sd">                Also for multiple metric evaluation, the attributes ``best_index_``,</span>
-<span class="sd">                ``best_score_`` and ``best_params_`` will only be available if</span>
-<span class="sd">                ``refit`` is set and all of them will be determined w.r.t this specific</span>
-<span class="sd">                scorer.</span>
+<span class="sd">                choosing a best estimator, ``refit`` can be set to a function</span>
+<span class="sd">                which returns the selected ``best_index_`` given</span>
+<span class="sd">                ``cv_results_``.</span>
+<span class="sd">                In that case, the ``best_estimator_`` and ``best_params_`` will</span>
+<span class="sd">                be set according to the returned ``best_index_`` while the</span>
+<span class="sd">                ``best_score_`` attribute will not be available.</span>
+<span class="sd">                The refitted estimator is made available at the</span>
+<span class="sd">                ``best_estimator_`` attribute and permits using ``predict``</span>
+<span class="sd">                directly on this instance.</span>
+<span class="sd">                Also for multiple metric evaluation, the attributes</span>
+<span class="sd">                ``best_index_``, ``best_score_`` and ``best_params_`` will only</span>
+<span class="sd">                be available if ``refit`` is set and all of them will be</span>
+<span class="sd">                determined w.r.t this specific scorer.</span>
 <span class="sd">                See ``scoring`` parameter to know more about multiple metric</span>
 <span class="sd">                evaluation.</span>
 <span class="sd">            cv (int, cross-validation generator or an iterable, default=None):</span>
 <span class="sd">                Determines the cross-validation splitting strategy.</span>
 <span class="sd">                Possible inputs for cv are:</span>
 <span class="sd">                - None, to use the default 5-fold cross validation,</span>
-<span class="sd">                - integer, to specify the number of folds in a `(Stratified)KFold`,</span>
+<span class="sd">                - integer, to specify the number of folds in a</span>
+<span class="sd">                `(Stratified)KFold`,</span>
 <span class="sd">                - :term:`CV splitter`,</span>
-<span class="sd">                - An iterable yielding (train, test) splits as arrays of indices.</span>
-<span class="sd">                For integer/None inputs, if the estimator is a classifier and ``y`` is</span>
-<span class="sd">                either binary or multiclass, :class:`StratifiedKFold` is used. In all</span>
-<span class="sd">                other cases, :class:`KFold` is used. These splitters are instantiated</span>
-<span class="sd">                with `shuffle=False` so the splits will be the same across calls.</span>
+<span class="sd">                - An iterable yielding (train, test) splits as arrays of</span>
+<span class="sd">                indices.</span>
+<span class="sd">                For integer/None inputs, if the estimator is a classifier and</span>
+<span class="sd">                ``y`` is either binary or multiclass, :class:`StratifiedKFold`</span>
+<span class="sd">                is used. In all other cases, :class:`KFold` is used. These</span>
+<span class="sd">                splitters are instantiated with `shuffle=False` so the splits</span>
+<span class="sd">                will be the same across calls.</span>
 <span class="sd">                Refer :ref:`User Guide &lt;cross_validation&gt;` for the various</span>
 <span class="sd">                cross-validation strategies that can be used here.</span>
+<span class="sd">                Notice that if cv is not specified, KFold(5) will be used, and your</span>
+<span class="sd">                training set will not be shuffled in each train-test split. This can</span>
+<span class="sd">                be dangerous if your training set has internal relations, for example,</span>
+<span class="sd">                structures with similar composition are close to each other in feature</span>
+<span class="sd">                rows. In this case, you should use RepeatedKFold as cv instead.</span>
 <span class="sd">            verbose (int, default=0):</span>
 <span class="sd">                Controls the verbosity: the higher, the more messages.</span>
-<span class="sd">                - &gt;1 : the computation time for each fold and parameter candidate is</span>
-<span class="sd">                  displayed;</span>
+<span class="sd">                - &gt;1 : the computation time for each fold and parameter</span>
+<span class="sd">                candidate is displayed;</span>
 <span class="sd">                - &gt;2 : the score is also displayed;</span>
-<span class="sd">                - &gt;3 : the fold and candidate parameter indexes are also displayed</span>
-<span class="sd">                  together with the starting time of the computation.</span>
+<span class="sd">                - &gt;3 : the fold and candidate parameter indexes are also</span>
+<span class="sd">                displayed together with the starting time of the computation.</span>
 <span class="sd">            pre_dispatch (int, or str, default=&#39;2*n_jobs&#39;):</span>
 <span class="sd">                Controls the number of jobs that get dispatched during parallel</span>
 <span class="sd">                execution. Reducing this number can be useful to avoid an</span>
@@ -762,64 +800,38 @@
 <span class="sd">                    - A str, giving an expression as a function of n_jobs,</span>
 <span class="sd">                      as in &#39;2*n_jobs&#39;</span>
 <span class="sd">            error_score (&#39;raise&#39; or numeric, default=np.nan):</span>
-<span class="sd">                Value to assign to the score if an error occurs in estimator fitting.</span>
-<span class="sd">                If set to &#39;raise&#39;, the error is raised. If a numeric value is given,</span>
-<span class="sd">                FitFailedWarning is raised. This parameter does not affect the refit</span>
-<span class="sd">                step, which will always raise the error.</span>
+<span class="sd">                Value to assign to the score if an error occurs in estimator</span>
+<span class="sd">                fitting. If set to &#39;raise&#39;, the error is raised. If a numeric</span>
+<span class="sd">                value is given, FitFailedWarning is raised. This parameter</span>
+<span class="sd">                does not affect the refit step, which will always raise the</span>
+<span class="sd">                error.</span>
 <span class="sd">            return_train_score (bool, default=False):</span>
-<span class="sd">                If ``False``, the ``cv_results_`` attribute will not include training</span>
-<span class="sd">                scores.</span>
-<span class="sd">                Computing training scores is used to get insights on how different</span>
-<span class="sd">                parameter settings impact the overfitting/underfitting trade-off.</span>
-<span class="sd">                However, computing the scores on the training set can be computationally</span>
-<span class="sd">                expensive and is not strictly required to select the parameters that</span>
-<span class="sd">                yield the best generalization performance.</span>
+<span class="sd">                If ``False``, the ``cv_results_`` attribute will not include</span>
+<span class="sd">                training scores.</span>
+<span class="sd">                Computing training scores is used to get insights on how</span>
+<span class="sd">                different parameter settings impact the</span>
+<span class="sd">                overfitting/underfitting trade-off. However, computing the</span>
+<span class="sd">                scores on the training set can be computationally expensive and</span>
+<span class="sd">                is not strictly required to select the parameters that yield</span>
+<span class="sd">                the best generalization performance.</span>
+
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="c1"># These are equally passed into GridSearchCV objects at each iteration.</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">estimator</span> <span class="o">=</span> <span class="n">estimator</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">scoring</span> <span class="o">=</span> <span class="n">scoring</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">n_jobs</span> <span class="o">=</span> <span class="n">n_jobs</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">refit</span> <span class="o">=</span> <span class="n">refit</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">cv</span> <span class="o">=</span> <span class="n">cv</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">verbose</span> <span class="o">=</span> <span class="n">verbose</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">pre_dispatch</span> <span class="o">=</span> <span class="n">pre_dispatch</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">error_score</span> <span class="o">=</span> <span class="n">error_score</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">return_train_score</span> <span class="o">=</span> <span class="n">return_train_score</span>
-
-        <span class="bp">self</span><span class="o">.</span><span class="n">param_grid</span> <span class="o">=</span> <span class="n">param_grid</span>
-        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">param_grid</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="mi">0</span><span class="p">],</span> <span class="nb">str</span><span class="p">)</span> <span class="ow">and</span> <span class="nb">isinstance</span><span class="p">(</span>
-            <span class="n">param_grid</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="p">(</span><span class="nb">tuple</span><span class="p">,</span> <span class="nb">list</span><span class="p">)</span>
-        <span class="p">):</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">n_params</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">param_grid</span><span class="p">)</span>
-        <span class="k">else</span><span class="p">:</span>
-            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Parameters grid not given in the correct format!&quot;</span><span class="p">)</span>
-
-        <span class="k">if</span> <span class="n">opt_selection_method</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">opt_selection_methods</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;max_score&quot;</span> <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">n_params</span><span class="p">)]</span>
-        <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">opt_selection_method</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">opt_selection_methods</span> <span class="o">=</span> <span class="p">[</span>
-                <span class="n">opt_selection_method</span> <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">n_params</span><span class="p">)</span>
-            <span class="p">]</span>
-        <span class="k">elif</span> <span class="p">(</span>
-            <span class="nb">isinstance</span><span class="p">(</span><span class="n">opt_selection_method</span><span class="p">,</span> <span class="p">(</span><span class="nb">list</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">))</span>
-            <span class="ow">and</span> <span class="nb">all</span><span class="p">(</span><span class="nb">isinstance</span><span class="p">(</span><span class="n">m</span><span class="p">,</span> <span class="nb">str</span><span class="p">)</span> <span class="k">for</span> <span class="n">m</span> <span class="ow">in</span> <span class="n">opt_selection_method</span><span class="p">)</span>
-            <span class="ow">and</span> <span class="nb">len</span><span class="p">(</span><span class="n">opt_selection_method</span><span class="p">)</span> <span class="o">==</span> <span class="bp">self</span><span class="o">.</span><span class="n">n_params</span>
-        <span class="p">):</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">opt_selection_methods</span> <span class="o">=</span> <span class="n">opt_selection_method</span>
-        <span class="k">else</span><span class="p">:</span>
-            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
-                <span class="s2">&quot;Optimal hyperparams selection method&quot;</span>
-                <span class="s2">&quot; should either not be given, or given as a single string,&quot;</span>
-                <span class="s2">&quot; or as a list or strings with the same length as parameters!&quot;</span>
-            <span class="p">)</span>
-
-        <span class="c1"># Set a proper value for this, not too large or too small.</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">n_iter</span> <span class="o">=</span> <span class="p">(</span>
-            <span class="n">n_iter</span> <span class="k">if</span> <span class="p">(</span><span class="n">n_iter</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">n_iter</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">)</span> <span class="k">else</span> <span class="mi">2</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">n_params</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span>
+            <span class="n">estimator</span><span class="o">=</span><span class="n">estimator</span><span class="p">,</span>
+            <span class="n">scoring</span><span class="o">=</span><span class="n">scoring</span><span class="p">,</span>
+            <span class="n">n_jobs</span><span class="o">=</span><span class="n">n_jobs</span><span class="p">,</span>
+            <span class="n">refit</span><span class="o">=</span><span class="n">refit</span><span class="p">,</span>
+            <span class="n">cv</span><span class="o">=</span><span class="n">cv</span><span class="p">,</span>
+            <span class="n">verbose</span><span class="o">=</span><span class="n">verbose</span><span class="p">,</span>
+            <span class="n">pre_dispatch</span><span class="o">=</span><span class="n">pre_dispatch</span><span class="p">,</span>
+            <span class="n">error_score</span><span class="o">=</span><span class="n">error_score</span><span class="p">,</span>
+            <span class="n">return_train_score</span><span class="o">=</span><span class="n">return_train_score</span><span class="p">,</span>
         <span class="p">)</span>
-
-        <span class="c1"># Stores GridSearch object at each iteration</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_history</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">param_grid</span> <span class="o">=</span> <span class="n">param_grid</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">opt_selection_method</span> <span class="o">=</span> <span class="n">opt_selection_method</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">n_iter</span> <span class="o">=</span> <span class="n">n_iter</span>
+        <span class="c1"># Do not validate parameters in init.</span>
 
 <div class="viewcode-block" id="LineSearchCV.fit"><a class="viewcode-back" href="../../sparselm.model_selection.html#sparselm.model_selection.LineSearchCV.fit">[docs]</a>    <span class="k">def</span> <span class="nf">fit</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">,</span> <span class="n">y</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">groups</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="o">**</span><span class="n">fit_params</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Run fit with all sets of parameters.</span>
@@ -828,30 +840,65 @@
 <span class="sd">            X(array-like of shape (n_samples, n_features)):</span>
 <span class="sd">                Training vector, where `n_samples` is the number of samples and</span>
 <span class="sd">                `n_features` is the number of features.</span>
-<span class="sd">            y(array-like of shape (n_samples, n_output) or (n_samples,), default=None):</span>
+<span class="sd">            y(array-like of shape (n_samples, n_output) or (n_samples,),</span>
+<span class="sd">            default=None):</span>
 <span class="sd">                Target relative to X for classification or regression;</span>
 <span class="sd">                None for unsupervised learning.</span>
 <span class="sd">            groups(array-like of shape (n_samples,), default=None):</span>
-<span class="sd">                Group labels for the samples used while splitting the dataset into</span>
-<span class="sd">                train/test set. Only used in conjunction with a &quot;Group&quot; :term:`cv`</span>
-<span class="sd">                instance (e.g., :class:`~sklearn.model_selection.GroupKFold`).</span>
+<span class="sd">                Group labels for the samples used while splitting the dataset</span>
+<span class="sd">                into train/test set. Only used in conjunction with a &quot;Group&quot;</span>
+<span class="sd">                :term:`cv` instance</span>
+<span class="sd">                (e.g., :class:`~sklearn.model_selection.GroupKFold`).</span>
 <span class="sd">            **fit_params:</span>
 <span class="sd">                Parameters passed to the `fit` method of the estimator.</span>
 <span class="sd">                If a fit parameter is an array-like whose length is equal to</span>
-<span class="sd">                `num_samples` then it will be split across CV groups along with `X`</span>
-<span class="sd">                and `y`. For example, the :term:`sample_weight` parameter is split</span>
-<span class="sd">                because `len(sample_weights) = len(X)`.</span>
-<span class="sd">            Returns:</span>
-<span class="sd">                self(LineSearch):</span>
-<span class="sd">                    Instance of fitted estimator.</span>
+<span class="sd">                `num_samples` then it will be split across CV groups along with</span>
+<span class="sd">                `X` and `y`. For example, the :term:`sample_weight` parameter</span>
+<span class="sd">                is split because `len(sample_weights) = len(X)`.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            self (LineSearch):</span>
+<span class="sd">                Instance of fitted estimator.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_history</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
-            <span class="n">warnings</span><span class="o">.</span><span class="n">warn</span><span class="p">(</span><span class="s2">&quot;Overwrite existing fit history!&quot;</span><span class="p">)</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">_history</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="c1"># Validate parameters.</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">param_grid</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="mi">0</span><span class="p">],</span> <span class="nb">str</span><span class="p">)</span> <span class="ow">and</span> <span class="nb">isinstance</span><span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">param_grid</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="p">(</span><span class="nb">tuple</span><span class="p">,</span> <span class="nb">list</span><span class="p">)</span>
+        <span class="p">):</span>
+            <span class="n">n_params_</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">param_grid</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Parameter grid is not given in the correct format!&quot;</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">opt_selection_method</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">opt_selection_methods</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;max_score&quot;</span> <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">n_params_</span><span class="p">)]</span>
+        <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">opt_selection_method</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
+            <span class="n">opt_selection_methods</span> <span class="o">=</span> <span class="p">[</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">opt_selection_method</span> <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">n_params_</span><span class="p">)</span>
+            <span class="p">]</span>
+        <span class="k">elif</span> <span class="p">(</span>
+            <span class="nb">isinstance</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">opt_selection_method</span><span class="p">,</span> <span class="p">(</span><span class="nb">list</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">))</span>
+            <span class="ow">and</span> <span class="nb">all</span><span class="p">(</span><span class="nb">isinstance</span><span class="p">(</span><span class="n">m</span><span class="p">,</span> <span class="nb">str</span><span class="p">)</span> <span class="k">for</span> <span class="n">m</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">opt_selection_method</span><span class="p">)</span>
+            <span class="ow">and</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">opt_selection_method</span><span class="p">)</span> <span class="o">==</span> <span class="n">n_params_</span>
+        <span class="p">):</span>
+            <span class="n">opt_selection_methods</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">opt_selection_method</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="s2">&quot;Optimal hyperparams selection methods should be given as a&quot;</span>
+                <span class="s2">&quot; single string, or as a list of strings with the same&quot;</span>
+                <span class="s2">&quot; amount of parameters!&quot;</span>
+            <span class="p">)</span>
+
+        <span class="c1"># Need a proper value for n_iter, not too large or too small.</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">n_iter</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">n_iter</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="n">n_iter</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">n_iter</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">n_iter</span> <span class="o">=</span> <span class="mi">2</span> <span class="o">*</span> <span class="n">n_params_</span>
+
+        <span class="c1"># Stores GridSearch object at each iteration</span>
+        <span class="n">history_</span> <span class="o">=</span> <span class="p">[]</span>
 
         <span class="n">best_line_params_</span> <span class="o">=</span> <span class="kc">None</span>
-        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">n_iter</span><span class="p">):</span>
-            <span class="n">param_id</span> <span class="o">=</span> <span class="n">i</span> <span class="o">%</span> <span class="bp">self</span><span class="o">.</span><span class="n">n_params</span>
+        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">n_iter</span><span class="p">):</span>
+            <span class="n">param_id</span> <span class="o">=</span> <span class="n">i</span> <span class="o">%</span> <span class="n">n_params_</span>
             <span class="k">if</span> <span class="n">best_line_params_</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
                 <span class="n">last_params</span> <span class="o">=</span> <span class="p">[</span><span class="n">values</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="n">values</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">param_grid</span><span class="p">]</span>
             <span class="k">else</span><span class="p">:</span>
@@ -868,7 +915,7 @@
             <span class="n">grid_search</span> <span class="o">=</span> <span class="n">GridSearchCV</span><span class="p">(</span>
                 <span class="n">estimator</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">estimator</span><span class="p">,</span>
                 <span class="n">param_grid</span><span class="o">=</span><span class="n">param_line</span><span class="p">,</span>
-                <span class="n">opt_selection_method</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">opt_selection_methods</span><span class="p">[</span><span class="n">param_id</span><span class="p">],</span>
+                <span class="n">opt_selection_method</span><span class="o">=</span><span class="n">opt_selection_methods</span><span class="p">[</span><span class="n">param_id</span><span class="p">],</span>
                 <span class="n">scoring</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">scoring</span><span class="p">,</span>
                 <span class="n">n_jobs</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">n_jobs</span><span class="p">,</span>
                 <span class="n">refit</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">refit</span><span class="p">,</span>
@@ -880,16 +927,14 @@
             <span class="p">)</span>
             <span class="n">grid_search</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">X</span><span class="o">=</span><span class="n">X</span><span class="p">,</span> <span class="n">y</span><span class="o">=</span><span class="n">y</span><span class="p">,</span> <span class="n">groups</span><span class="o">=</span><span class="n">groups</span><span class="p">,</span> <span class="o">**</span><span class="n">fit_params</span><span class="p">)</span>
             <span class="n">best_line_params_</span> <span class="o">=</span> <span class="n">deepcopy</span><span class="p">(</span><span class="n">grid_search</span><span class="o">.</span><span class="n">best_params_</span><span class="p">)</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">_history</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">grid_search</span><span class="p">)</span>
+            <span class="n">history_</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">grid_search</span><span class="p">)</span>
 
         <span class="c1"># Buffer fitted attributes into LineSearch object.</span>
         <span class="n">attrs</span> <span class="o">=</span> <span class="p">[</span>
-            <span class="n">v</span>
-            <span class="k">for</span> <span class="n">v</span> <span class="ow">in</span> <span class="nb">vars</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_history</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">])</span>
-            <span class="k">if</span> <span class="n">v</span><span class="o">.</span><span class="n">endswith</span><span class="p">(</span><span class="s2">&quot;_&quot;</span><span class="p">)</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">v</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s2">&quot;__&quot;</span><span class="p">)</span>
+            <span class="n">v</span> <span class="k">for</span> <span class="n">v</span> <span class="ow">in</span> <span class="nb">vars</span><span class="p">(</span><span class="n">history_</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">])</span> <span class="k">if</span> <span class="n">v</span><span class="o">.</span><span class="n">endswith</span><span class="p">(</span><span class="s2">&quot;_&quot;</span><span class="p">)</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">v</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s2">&quot;__&quot;</span><span class="p">)</span>
         <span class="p">]</span>
         <span class="k">for</span> <span class="n">attr</span> <span class="ow">in</span> <span class="n">attrs</span><span class="p">:</span>
-            <span class="nb">setattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">attr</span><span class="p">,</span> <span class="nb">getattr</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_history</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">],</span> <span class="n">attr</span><span class="p">))</span>
+            <span class="nb">setattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">attr</span><span class="p">,</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">history_</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">],</span> <span class="n">attr</span><span class="p">))</span>
         <span class="k">return</span> <span class="bp">self</span></div>
 
     <span class="k">def</span> <span class="nf">_run_search</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">evaluate_candidates</span><span class="p">):</span>
