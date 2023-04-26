@@ -9,7 +9,7 @@ Sparse Linear Regression Models
 
 **sparse-lm**  includes several (structured) sparse linear regression estimators that are absent in the
 `sklearn.linear_model` module. The estimators in **sparse-lm** are designed to fit right into
-[scikit-lean](https://scikit-learn.org/stable/index.html), but the underlying optimization problem is expressed and
+[scikit-learn](https://scikit-learn.org/stable/index.html), but the underlying optimization problem is expressed and
 solved by leveraging [cvxpy](https://www.cvxpy.org/).
 
 ---------------------------------------------------------------------------------------
