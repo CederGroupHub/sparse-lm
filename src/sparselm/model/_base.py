@@ -427,6 +427,41 @@ class CVXRegressor(RegressorMixin, LinearModel, metaclass=ABCMeta):
             constraints=constraints,
         )
 
+    def add_constraint(self, constraint: cp.constraint | cp.expressions) -> None:
+        """Add a constraint to the problem.
+
+        Args:
+            constraint (cp.constraint | cp.expressions):
+                cvxpy constraint to add to the problem
+        """
+        if not hasattr(self, "canonicals_"):
+            raise RuntimeError(
+                "Problem has not been generated. Please call generate_problem before"
+                " adding constraints."
+            )
+        self.canonicals_.constraints.append(constraint)
+        # need to reset problem to update constraints
+        self._reset_problem()
+
+    def _reset_problem(self) -> None:
+        """Reset the cvxpy problem."""
+        if not hasattr(self, "canonicals_"):
+            raise RuntimeError(
+                "Problem has not been generated. Please call generate_problem before"
+                " resetting."
+            )
+        problem = cp.Problem(
+            cp.Minimize(self.canonicals_.objective), self.canonicals_.constraints
+        )
+        self.canonicals_ = CVXCanonicals(
+            problem=problem,
+            objective=self.canonicals_.objective,
+            beta=self.canonicals_.beta,
+            parameters=self.canonicals_.parameters,
+            auxiliaries=self.canonicals_.auxiliaries,
+            constraints=self.canonicals_.constraints,
+        )
+
     def _solve(
         self, X: ArrayLike, y: ArrayLike, solver_options: dict, *args, **kwargs
     ) -> NDArray[float]:
