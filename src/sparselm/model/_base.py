@@ -66,8 +66,8 @@ class CVXRegressor(RegressorMixin, LinearModel, metaclass=ABCMeta):
     r"""Abstract base class for Regressors using cvxpy with a sklearn interface.
 
     Note cvxpy can use one of many 3rd party solvers, default is most often
-    CVXOPT or ECOS. For integer and mixed integer problems options include SCIP (open source)
-    and Gurobi, among other commercial solvers.
+    CVXOPT or ECOS. For integer and mixed integer problems options include
+    SCIP (open source) and Gurobi, among other commercial solvers.
 
     The solver can be specified by setting the solver keyword argument.
     And can solver specific settings can be set by passing a dictionary of
@@ -95,14 +95,16 @@ class CVXRegressor(RegressorMixin, LinearModel, metaclass=ABCMeta):
 
     Attributes:
         coef_ (NDArray):
-            Parameter vector (:math:`\beta` in the cost function formula) of shape (n_features,).
+            Parameter vector (:math:`\beta` in the cost function formula) of shape
+            (n_features,).
         intercept_ (float):
             Independent term in decision function.
         canonicals_ (SimpleNamespace):
             Namespace that contains underlying cvxpy objects used to define
             the optimization problem. The objects included are the following:
                 - objective - the objective function.
-                - beta - variable to be optimized (corresponds to the estimated coef_ attribute).
+                - beta - variable to be optimized (corresponds to the estimated
+                         coef_ attribute).
                 - parameters - hyper-parameters
                 - auxiliaries - auxiliary variables and expressions
                 - constraints - solution constraints
@@ -143,8 +145,9 @@ class CVXRegressor(RegressorMixin, LinearModel, metaclass=ABCMeta):
     ):
         """Fit the linear model coefficients.
 
-        Prepares the  fit data input, generates cvxpy objects to represent the minimization
-        objective, and solves the regression problem using the given solver.
+        Prepares the  fit data input, generates cvxpy objects to represent the
+        minimization objective, and solves the regression problem using the given
+        solver.
 
         Args:
             X (ArrayLike):
@@ -274,8 +277,8 @@ class CVXRegressor(RegressorMixin, LinearModel, metaclass=ABCMeta):
                 for constraint in cvx_constraints[param_name]
             ]
 
-            # For now we will only set nonneg, nonpos, neg, pos, integer, boolean and/or shape
-            # of the cvxpy Parameter objects.
+            # For now we will only set nonneg, nonpos, neg, pos, integer, boolean and/or
+            # shape of the cvxpy Parameter objects.
             # TODO cxvpy only allows a single one of these to be set (except bool and integer)
             param_kwargs = {}
             for constraint in constraints:
@@ -322,7 +325,7 @@ class CVXRegressor(RegressorMixin, LinearModel, metaclass=ABCMeta):
     def _generate_auxiliaries(
         self, X: ArrayLike, y: ArrayLike, beta: cp.Variable, parameters: SimpleNamespace
     ) -> SimpleNamespace | None:
-        """Generate any auxiliary variables or expressions necessary in defining the objective.
+        """Generate any auxiliary variables/expressions necessary to define objective.
 
         Args:
             X (ArrayLike):
@@ -399,12 +402,13 @@ class CVXRegressor(RegressorMixin, LinearModel, metaclass=ABCMeta):
     def generate_problem(self, X: ArrayLike, y: ArrayLike) -> None:
         """Generate regression problem and auxiliary cvxpy objects.
 
-        This initializes the minimization problem, the objective, coefficient variable (beta), problem parameters,
-        solution constraints, and auxiliary variables/terms.
+        This initializes the minimization problem, the objective, coefficient variable
+        (beta), problem parameters, solution constraints, and auxiliary variables/terms.
 
-        This is (almost always) called in the fit method, and not directly. However, it can be called directly if
-        further control over the problem is needed by accessing the canonicals_ objects. For example to add additional
-        constraints on problem variables.
+        This is (almost always) called in the fit method, and not directly. However, it
+        can be called directly if further control over the problem is needed by
+        accessing the canonicals_ objects. For example to add additional constraints on
+        problem variables.
 
         Args:
             X (ArrayLike):
@@ -477,9 +481,9 @@ class CVXRegressor(RegressorMixin, LinearModel, metaclass=ABCMeta):
 class TikhonovMixin:
     """Mixin class to add a Tihhonov/ridge regularization term.
 
-    When using this Mixin, a cvxpy parameter named "eta" should be saved in the parameters
-    SimpleNamespace an attribute tikhonov_w can be added to allow a matrix otherwise simple l2/Ridge
-    is used.
+    When using this Mixin, a cvxpy parameter named "eta" should be saved in the
+    parameters SimpleNamespace an attribute tikhonov_w can be added to allow a matrix
+    otherwise simple l2/Ridge is used.
     """
 
     def _generate_objective(
