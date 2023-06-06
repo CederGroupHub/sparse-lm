@@ -437,6 +437,11 @@ class CVXRegressor(RegressorMixin, LinearModel, metaclass=ABCMeta):
     ) -> None:
         """Add a constraint to the problem.
 
+        .. warning::
+            Adding constraints will not work with any sklearn class that relies on
+            cloning the estimator (ie GridSearchCV, etc) . This is because a new cvxpy
+            problem is generated for any cloned estimator.
+
         Args:
             constraints (list of cp.constraint or cp.expressions):
                 cvxpy constraint to add to the problem
