@@ -7,13 +7,13 @@ from __future__ import annotations
 
 __author__ = "Luis Barroso-Luque, Fengyu Xie"
 
+import warnings
 from abc import ABCMeta, abstractmethod
 from collections.abc import Sequence
 from numbers import Integral
 from types import SimpleNamespace
 from typing import Any, NamedTuple
 
-import warnings
 import cvxpy as cp
 import numpy as np
 from numpy.typing import ArrayLike, NDArray
@@ -380,7 +380,7 @@ class CVXRegressor(RegressorMixin, LinearModel, metaclass=ABCMeta):
         beta: cp.Variable,
         parameters: SimpleNamespace | None = None,
         auxiliaries: SimpleNamespace | None = None,
-    ) -> list[cp.constraints] | None:
+    ) -> list[cp.constraints]:
         """Generate constraints for optimization problem.
 
         Args:
@@ -398,7 +398,7 @@ class CVXRegressor(RegressorMixin, LinearModel, metaclass=ABCMeta):
         Returns:
             list of cvxpy constraints
         """
-        return None
+        return []
 
     def generate_problem(self, X: ArrayLike, y: ArrayLike) -> None:
         """Generate regression problem and auxiliary cvxpy objects.
@@ -452,10 +452,10 @@ class CVXRegressor(RegressorMixin, LinearModel, metaclass=ABCMeta):
             warnings.warn(
                 "Warm start is set to False. It will be set to True so that the added "
                 "constraints are not reset.",
-                UserWarning
+                UserWarning,
             )
+        self.canonicals_.constraints.extend(list(constraints))
 
-        self.canonicals_.constraints += constraints
         # need to reset problem to update constraints
         self._reset_problem()
 
