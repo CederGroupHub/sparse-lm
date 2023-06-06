@@ -13,6 +13,7 @@ from numbers import Integral
 from types import SimpleNamespace
 from typing import Any, NamedTuple
 
+import warnings
 import cvxpy as cp
 import numpy as np
 from numpy.typing import ArrayLike, NDArray
@@ -445,6 +446,15 @@ class CVXRegressor(RegressorMixin, LinearModel, metaclass=ABCMeta):
                 "Problem has not been generated. Please call generate_problem before"
                 " adding constraints."
             )
+
+        if self.warm_start is False:
+            self.warm_start = True
+            warnings.warn(
+                "Warm start is set to False. It will be set to True so that the added "
+                "constraints are not reset.",
+                UserWarning
+            )
+
         self.canonicals_.constraints += constraints
         # need to reset problem to update constraints
         self._reset_problem()
