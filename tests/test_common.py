@@ -81,6 +81,7 @@ def test_add_constraints(estimator, random_model):
     estimator.add_constraints([estimator.canonicals_.beta >= 0])
     assert len(estimator.canonicals_.constraints) == n_constraints + 1
 
+
 def test_sklearn_compatible(estimator):
     """Test sklearn compatibility with no parameter inputs."""
     check_estimator(estimator)
