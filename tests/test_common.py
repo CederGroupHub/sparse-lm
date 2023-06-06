@@ -5,6 +5,7 @@ Simply check that they execute successfully on random data.
 
 from inspect import getmembers, isclass, signature
 
+import cvxpy as cp
 import numpy as np
 import pytest
 from sklearn.utils.estimator_checks import check_estimator
@@ -62,6 +63,23 @@ def test_general_fit(estimator_cls, random_model, rng):
     assert len(estimator.coef_) == len(beta)
     assert len(estimator.predict(X)) == len(y)
     assert estimator.intercept_ != 0.0
+
+
+def test_add_constraints(estimator, random_model):
+    with pytest.raises(RuntimeError):
+        estimator.add_constraints([cp.Variable(1) >= 0])
+
+    X, y, beta = random_model
+    estimator.generate_problem(X, y)
+    estimator.warm_start = False
+    with pytest.warns(UserWarning):
+        estimator.add_constraints([estimator.canonicals_.beta >= 0])
+
+    estimator.generate_problem(X, y)
+    estimator.warm_start = True
+    n_constraints = len(estimator.canonicals_.constraints)
+    estimator.add_constraints([estimator.canonicals_.beta >= 0])
+    assert len(estimator.canonicals_.constraints) == n_constraints + 1
 
 
 def test_sklearn_compatible(estimator):

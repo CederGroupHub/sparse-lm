@@ -29,6 +29,10 @@
     :width: 700
     :class: only-dark
 
+.. image:: _static/logo-light.png
+   :width: 700
+   :class: only-light
+
 ===============================
 Sparse Linear Regression Models
 ===============================
