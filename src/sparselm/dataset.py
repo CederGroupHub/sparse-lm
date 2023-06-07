@@ -1,13 +1,11 @@
-"""
-Generate synthemetic datasets akin to sklearn.datasets
-"""
+"""Generate synthemetic datasets akin to sklearn.datasets."""
 
 from typing import Sequence
 
 import numpy as np
 from numpy.random import RandomState
 from sklearn.datasets import make_regression
-from sklearn.utils import check_random_state, shuffle as sk_shuffle
+from sklearn.utils import check_random_state
 
 
 def make_group_regression(
@@ -24,8 +22,7 @@ def make_group_regression(
     coef: bool = False,
     random_state: int | RandomState | None = None,
 ) -> tuple[np.ndarray, np.ndarray, np.ndarray, ...]:
-    """
-    Generate a random regression problem with grouped covariates.
+    """Generate a random regression problem with grouped covariates.
 
     Args:
         n_samples (int, optional):
@@ -69,9 +66,7 @@ def make_group_regression(
     )
     if isinstance(n_features_per_group, int):
         n_features = n_features_per_group * n_groups
-        n_informative_in_group = round(
-            frac_informative_in_group * n_features_per_group
-        )
+        n_informative_in_group = round(frac_informative_in_group * n_features_per_group)
         n_informative = n_informative_in_group * n_informative_groups
         # make n_features_per_group a list of length n_groups
         n_features_per_group = [n_features_per_group] * n_groups
@@ -112,7 +107,7 @@ def make_group_regression(
         ii = informative_coef_inds[:nifg] + other_coef_inds[: nfg - nifg]
         # remove assigned indices
         informative_coef_inds = informative_coef_inds[nifg:]
-        other_coef_inds = other_coef_inds[nfg - nifg:]
+        other_coef_inds = other_coef_inds[nfg - nifg :]
 
         # assign group ids
         groups[ii] = i
