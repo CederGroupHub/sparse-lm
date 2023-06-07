@@ -1,5 +1,6 @@
 """Generate synthemetic datasets akin to sklearn.datasets."""
 
+import warnings
 from typing import Sequence
 
 import numpy as np
@@ -61,9 +62,8 @@ def make_group_regression(
     """
     generator = check_random_state(random_state)
 
-    informative_groups = generator.choice(
-        range(n_groups), n_informative_groups, replace=False
-    )
+    informative_groups = list(range(n_informative_groups))
+
     if isinstance(n_features_per_group, int):
         n_features = n_features_per_group * n_groups
         n_informative_in_group = round(frac_informative_in_group * n_features_per_group)
@@ -85,6 +85,13 @@ def make_group_regression(
                 "equal to n_groups."
             )
 
+    if any(n < 1 for n in n_informative_per_group):
+        warnings.warn(
+            "The number of features and fraction of informative features per group resulted in "
+            "informative groups having no informative features.",
+            UserWarning,
+        )
+
     X, y, coefs = make_regression(
         n_samples=n_samples,
         n_features=n_features,
@@ -103,11 +110,16 @@ def make_group_regression(
     informative_coef_inds = np.nonzero(coefs > noise)[0].tolist()
     other_coef_inds = np.nonzero(coefs <= noise)[0].tolist()
 
-    for i, (nfg, nifg) in enumerate(zip(n_features_per_group, n_informative_per_group)):
-        ii = informative_coef_inds[:nifg] + other_coef_inds[: nfg - nifg]
-        # remove assigned indices
-        informative_coef_inds = informative_coef_inds[nifg:]
-        other_coef_inds = other_coef_inds[nfg - nifg :]
+    for i, nfg in enumerate(n_features_per_group):
+        if i in informative_groups:
+            nifg = n_informative_per_group[informative_groups.index(i)]
+            ii = informative_coef_inds[:nifg] + other_coef_inds[: nfg - nifg]
+            # remove assigned indices
+            informative_coef_inds = informative_coef_inds[nifg:]
+            other_coef_inds = other_coef_inds[nfg - nifg :]
+        else:
+            ii = other_coef_inds[:nfg]
+            other_coef_inds = other_coef_inds[nfg:]
 
         # assign group ids
         groups[ii] = i
