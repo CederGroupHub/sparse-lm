@@ -73,7 +73,9 @@ def test_add_constraints(estimator, random_model):
     estimator.generate_problem(X, y)
     n_constraints = len(estimator.canonicals_.constraints)
     estimator.add_constraints([estimator.canonicals_.beta >= 0])
-    assert len(estimator.canonicals_.constraints) == n_constraints + 1
+    assert len(estimator.canonicals_.problem.constraints) == n_constraints + 1
+    assert len(estimator.canonicals_.user_constraints) == 1
+    assert len(estimator.canonicals_.constraints) == n_constraints
 
 
 def test_sklearn_compatible(estimator):

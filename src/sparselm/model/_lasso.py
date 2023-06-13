@@ -452,6 +452,7 @@ class OverlapGroupLasso(GroupLasso):
             parameters=parameters,
             auxiliaries=auxiliaries,
             constraints=constraints,
+            user_constraints=[],
         )
 
     def _solve(self, X, y, solver_options, *args, **kwargs) -> NDArray[float]:

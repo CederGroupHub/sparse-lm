@@ -51,7 +51,9 @@ class CVXCanonicals(NamedTuple):
             SimpleNamespace with auxiliary cp.Variable or cp.Expression objects.
             The namespace should be defined by the Regressor generating it.
         constraints (list of cp.Constaint):
-            List of constraints.
+            List of constraints intrinsic to regression problem.
+        user_constraints (list of cp.Constaint):
+            List of user-defined constraints.
     """
 
     problem: cp.Problem
@@ -59,7 +61,8 @@ class CVXCanonicals(NamedTuple):
     beta: cp.Variable
     parameters: SimpleNamespace | None
     auxiliaries: SimpleNamespace | None
-    constraints: list[cp.Expression] | None
+    constraints: list[cp.Expression | cp.Constraint] | None
+    user_constraints: list[cp.Expression | cp.Constraint] | None
 
 
 class CVXRegressor(RegressorMixin, LinearModel, metaclass=ABCMeta):
@@ -431,6 +434,7 @@ class CVXRegressor(RegressorMixin, LinearModel, metaclass=ABCMeta):
             parameters=parameters,
             auxiliaries=auxiliaries,
             constraints=constraints,
+            user_constraints=[],
         )
 
     def add_constraints(
@@ -452,8 +456,7 @@ class CVXRegressor(RegressorMixin, LinearModel, metaclass=ABCMeta):
                 "Problem has not been generated. Please call generate_problem before"
                 " adding constraints."
             )
-        self.canonicals_.constraints.extend(list(constraints))
-
+        self.canonicals_.user_constraints.extend(list(constraints))
         # need to reset problem to update constraints
         self._reset_problem()
 
@@ -464,8 +467,10 @@ class CVXRegressor(RegressorMixin, LinearModel, metaclass=ABCMeta):
                 "Problem has not been generated. Please call generate_problem before"
                 " resetting."
             )
+
         problem = cp.Problem(
-            cp.Minimize(self.canonicals_.objective), self.canonicals_.constraints
+            cp.Minimize(self.canonicals_.objective),
+            self.canonicals_.constraints + self.canonicals_.user_constraints,
         )
         self.canonicals_ = CVXCanonicals(
             problem=problem,
@@ -474,6 +479,7 @@ class CVXRegressor(RegressorMixin, LinearModel, metaclass=ABCMeta):
             parameters=self.canonicals_.parameters,
             auxiliaries=self.canonicals_.auxiliaries,
             constraints=self.canonicals_.constraints,
+            user_constraints=self.canonicals_.user_constraints,
         )
 
     def _solve(
