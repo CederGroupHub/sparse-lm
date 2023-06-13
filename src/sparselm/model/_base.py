@@ -189,23 +189,19 @@ class CVXRegressor(RegressorMixin, LinearModel, metaclass=ABCMeta):
 
         self._validate_params(X, y)
 
-        if not hasattr(self, "canonicals_") or self.warm_start is False:
+        if not hasattr(self, "cached_X_"):
+            self.cached_X_ = X
+        if not hasattr(self, "cached_y_"):
+            self.cached_y_ = y
+
+        if (
+            not hasattr(self, "canonicals_")
+            or not np.array_equal(self.cached_X_, X)
+            or not np.array_equal(self.cached_y_, y)
+        ):
             self.generate_problem(X, y)
 
-        if self.warm_start is True:
-            # cache training data
-            if not hasattr(self, "cached_X_"):
-                self.cached_X_ = X
-            if not hasattr(self, "cached_y_"):
-                self.cached_y_ = y
-
-            # check if input data has changed and force reset accordingly
-            if not np.array_equal(self.cached_X_, X) or not np.array_equal(
-                self.cached_y_, y
-            ):
-                self.generate_problem(X, y)
-            else:
-                self._set_param_values()  # set parameter values
+        self._set_param_values()  # set parameter values
 
         solver_options = self.solver_options if self.solver_options is not None else {}
         if not isinstance(solver_options, dict):
@@ -450,14 +446,6 @@ class CVXRegressor(RegressorMixin, LinearModel, metaclass=ABCMeta):
             raise RuntimeError(
                 "Problem has not been generated. Please call generate_problem before"
                 " adding constraints."
-            )
-
-        if self.warm_start is False:
-            self.warm_start = True
-            warnings.warn(
-                "Warm start is set to False. It will be set to True so that the added "
-                "constraints are not reset.",
-                UserWarning,
             )
         self.canonicals_.constraints.extend(list(constraints))
 

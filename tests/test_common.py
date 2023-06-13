@@ -71,12 +71,6 @@ def test_add_constraints(estimator, random_model):
 
     X, y, beta = random_model
     estimator.generate_problem(X, y)
-    estimator.warm_start = False
-    with pytest.warns(UserWarning):
-        estimator.add_constraints([estimator.canonicals_.beta >= 0])
-
-    estimator.generate_problem(X, y)
-    estimator.warm_start = True
     n_constraints = len(estimator.canonicals_.constraints)
     estimator.add_constraints([estimator.canonicals_.beta >= 0])
     assert len(estimator.canonicals_.constraints) == n_constraints + 1
