@@ -7,6 +7,7 @@ from __future__ import annotations
 
 __author__ = "Luis Barroso-Luque, Fengyu Xie"
 
+import warnings
 from abc import ABCMeta, abstractmethod
 from collections.abc import Sequence
 from numbers import Integral
@@ -197,13 +198,21 @@ class CVXRegressor(RegressorMixin, LinearModel, metaclass=ABCMeta):
             self.cached_X_ = X
             self.cached_y_ = y
 
-        if (
-            not hasattr(self, "canonicals_")
-            or not np.array_equal(self.cached_X_, X)
-            or not np.array_equal(self.cached_y_, y)
-        ):
+        if not hasattr(self, "canonicals_"):
             self.generate_problem(X, y)
             self.cached_X_ = X  # reset
+            self.cached_y_ = y
+        elif not np.array_equal(self.cached_X_, X) or not np.array_equal(
+            self.cached_y_, y
+        ):
+            if self.canonicals_.user_constraints:
+                warnings.warn(
+                    "User constraints are set on a problem with different data (X, y). "
+                    "These constraints will be ignored.",
+                    UserWarning,
+                )
+            self.generate_problem(X, y)
+            self.cached_X_ = X
             self.cached_y_ = y
         else:
             self._set_param_values()  # set parameter values
