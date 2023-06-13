@@ -7,7 +7,6 @@ from __future__ import annotations
 
 __author__ = "Luis Barroso-Luque, Fengyu Xie"
 
-import warnings
 from abc import ABCMeta, abstractmethod
 from collections.abc import Sequence
 from numbers import Integral
@@ -189,9 +188,10 @@ class CVXRegressor(RegressorMixin, LinearModel, metaclass=ABCMeta):
 
         self._validate_params(X, y)
 
-        if not hasattr(self, "cached_X_"):
+        # these are cached to avoid re-generating problem if fit is called again with
+        # same data
+        if not hasattr(self, "cached_X_") or not hasattr(self, "cached_y_"):
             self.cached_X_ = X
-        if not hasattr(self, "cached_y_"):
             self.cached_y_ = y
 
         if (
@@ -200,8 +200,10 @@ class CVXRegressor(RegressorMixin, LinearModel, metaclass=ABCMeta):
             or not np.array_equal(self.cached_y_, y)
         ):
             self.generate_problem(X, y)
-
-        self._set_param_values()  # set parameter values
+            self.cached_X_ = X  # reset
+            self.cached_y_ = y
+        else:
+            self._set_param_values()  # set parameter values
 
         solver_options = self.solver_options if self.solver_options is not None else {}
         if not isinstance(solver_options, dict):
@@ -233,6 +235,9 @@ class CVXRegressor(RegressorMixin, LinearModel, metaclass=ABCMeta):
 
     def _set_param_values(self) -> None:
         """Set the values of cvxpy parameters from param attributes for warm starts."""
+        if self._cvx_parameter_constraints is None:
+            return
+
         for parameter, value in self.get_params(deep=False).items():
             if parameter in self._cvx_parameter_constraints:
                 cvx_parameter = getattr(self.canonicals_.parameters, parameter)
