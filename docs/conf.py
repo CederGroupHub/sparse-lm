@@ -37,9 +37,7 @@ extensions = [
     "sphinx.ext.autosummary",
     "sphinx.ext.mathjax",
     "m2r2",
-    # "nbsphinx",
-    # "nbsphinx_link",
-    # "sphinxcontrib.autodoc_pydantic",
+    "sphinx_gallery.gen_gallery",
 ]
 
 # Add any paths that contain templates here, relative to this directory.
@@ -125,4 +123,11 @@ intersphinx_mapping = {
     "scikit-learn": ("https://scikit-learn.org/stable", None),
     "numpy": ("https://numpy.org/doc/stable/", None),
     "cvxpy": ("https://www.cvxpy.org/en/latest/", None),
+}
+
+# -- Options for sphinx gallery extension  ---------------------------------------
+
+sphinx_gallery_conf = {
+     'examples_dirs': '../examples',   # path to your example scripts
+     'gallery_dirs': 'auto_examples',  # path to where to save gallery generated output
 }
