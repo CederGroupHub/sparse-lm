@@ -1,5 +1,7 @@
 """Generate synthemetic datasets akin to sklearn.datasets."""
 
+from __future__ import annotations
+
 import warnings
 from typing import Sequence
 
