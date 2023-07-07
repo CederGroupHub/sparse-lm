@@ -174,6 +174,39 @@ class CVXRegressor(RegressorMixin, LinearModel, metaclass=ABCMeta):
             X, y, accept_sparse=False, y_numeric=True, multi_output=False
         )
 
+        X, y, X_offset, y_offset, X_scale = self._preprocess_data(X, y, sample_weight)
+
+        self._validate_params(X, y)
+
+        # TODO test theses cases
+        if not hasattr(self, "canonicals_"):
+            self.generate_problem(X, y)
+        elif not np.array_equal(self.cached_X_, X) or not np.array_equal(
+            self.cached_y_, y
+        ):
+            if self.canonicals_.user_constraints:
+                warnings.warn(
+                    "User constraints are set on a problem with different data (X, y). "
+                    "These constraints will be ignored.",
+                    UserWarning,
+                )
+            self.generate_problem(X, y)
+        else:
+            self._set_param_values()  # set parameter values
+
+        solver_options = self.solver_options if self.solver_options is not None else {}
+        if not isinstance(solver_options, dict):
+            raise TypeError("solver_options must be a dictionary")
+
+        self.coef_ = self._solve(X, y, solver_options, *args, **kwargs)
+        self._set_intercept(X_offset, y_offset, X_scale)
+
+        # return self for chaining fit and predict calls
+        return self
+
+    def _preprocess_data(self, X: ArrayLike, y: ArrayLike, sample_weight: ArrayLike | None = None
+                         ) -> tuple[ArrayLike, ArrayLike, ArrayLike, ArrayLike, ArrayLike]:
+        """Preprocess data for fitting."""
         if sample_weight is not None:
             sample_weight = _check_sample_weight(sample_weight, X, dtype=X.dtype)
             # rescale sample_weight to sum to number of samples
@@ -190,42 +223,7 @@ class CVXRegressor(RegressorMixin, LinearModel, metaclass=ABCMeta):
         if sample_weight is not None:
             X, y, _ = _rescale_data(X, y, sample_weight)
 
-        self._validate_params(X, y)
-
-        # these are cached to avoid re-generating problem if fit is called again with
-        # same data
-        if not hasattr(self, "cached_X_") or not hasattr(self, "cached_y_"):
-            self.cached_X_ = X
-            self.cached_y_ = y
-
-        if not hasattr(self, "canonicals_"):
-            self.generate_problem(X, y)
-            self.cached_X_ = X  # reset
-            self.cached_y_ = y
-        elif not np.array_equal(self.cached_X_, X) or not np.array_equal(
-            self.cached_y_, y
-        ):
-            if self.canonicals_.user_constraints:
-                warnings.warn(
-                    "User constraints are set on a problem with different data (X, y). "
-                    "These constraints will be ignored.",
-                    UserWarning,
-                )
-            self.generate_problem(X, y)
-            self.cached_X_ = X
-            self.cached_y_ = y
-        else:
-            self._set_param_values()  # set parameter values
-
-        solver_options = self.solver_options if self.solver_options is not None else {}
-        if not isinstance(solver_options, dict):
-            raise TypeError("solver_options must be a dictionary")
-
-        self.coef_ = self._solve(X, y, solver_options, *args, **kwargs)
-        self._set_intercept(X_offset, y_offset, X_scale)
-
-        # return self for chaining fit and predict calls
-        return self
+        return X, y, X_offset, y_offset, X_scale
 
     def _validate_params(self, X: ArrayLike, y: ArrayLike) -> None:
         """Validate hyperparameter values.
@@ -413,7 +411,8 @@ class CVXRegressor(RegressorMixin, LinearModel, metaclass=ABCMeta):
         """
         return []
 
-    def generate_problem(self, X: ArrayLike, y: ArrayLike) -> None:
+    def generate_problem(self, X: ArrayLike, y: ArrayLike, preprocess_data: bool = True,
+                         sample_weight: ArrayLike | None = None) -> None:
         """Generate regression problem and auxiliary cvxpy objects.
 
         This initializes the minimization problem, the objective, coefficient variable
@@ -429,6 +428,14 @@ class CVXRegressor(RegressorMixin, LinearModel, metaclass=ABCMeta):
                 Covariate/Feature matrix
             y (ArrayLike):
                 Target vector
+            preprocess_data (bool):
+                Whether to preprocess the data before generating the problem. If calling
+                generate_problem directly, this should be kept as True to ensure the
+                problem is generated correctly for a subsequent call to fit.
+            sample_weight (ArrayLike):
+                Individual weights for each sample of shape (n_samples,)
+                default=None. Only used if preprocess_data=True to rescale the data
+                accordingly.
         """
         beta = cp.Variable(X.shape[1])
         parameters = self._generate_params(X, y)
