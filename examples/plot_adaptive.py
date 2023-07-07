@@ -8,12 +8,13 @@ feature selection properties over the standard Lasso and Group Lasso extensions.
 this example we compare the performance of the standard Lasso with adaptive Lasso.
 """
 
-import numpy as np
 import matplotlib.pyplot as plt
+import numpy as np
 from sklearn.datasets import make_regression
-from sklearn.metrics import r2_score, mean_squared_error
-from sklearn.model_selection import GridSearchCV, KFold, train_test_split
 from sklearn.linear_model import Lasso
+from sklearn.metrics import mean_squared_error, r2_score
+from sklearn.model_selection import GridSearchCV, KFold, train_test_split
+
 from sparselm.model import AdaptiveLasso
 
 X, y, coef = make_regression(

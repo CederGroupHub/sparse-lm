@@ -128,6 +128,6 @@ intersphinx_mapping = {
 # -- Options for sphinx gallery extension  ---------------------------------------
 
 sphinx_gallery_conf = {
-     'examples_dirs': '../examples',   # path to your example scripts
-     'gallery_dirs': 'auto_examples',  # path to where to save gallery generated output
+    "examples_dirs": "../examples",  # path to your example scripts
+    "gallery_dirs": "auto_examples",  # path to where to save gallery generated output
 }
