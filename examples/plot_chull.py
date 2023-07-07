@@ -1,7 +1,7 @@
 """
-==============================
-Including solution constraints
-==============================
+===========================
+Adding solution constraints
+===========================
 
 **sparse-lm** allows including external solution constraints to the regression objective
 by exposing the underlying **cvxpy** problem objects. This is useful to solve regression
@@ -64,19 +64,19 @@ for i, structure in enumerate(structures):
 
 # plot the training (true) phase diagram
 training_pd = pd.PhaseDiagram(training_entries)
-pplotter = pd.PDPlotter(training_pd, backend='matplotlib', show_unstable=1, markersize=1, linewidth=2)
+pplotter = pd.PDPlotter(training_pd, backend='matplotlib', show_unstable=0)
 pplotter.show(label_unstable=False)
 
 # plot the phase diagram based on the energies predicted by the Lasso fit
 lasso_y = lasso_regressor.predict(X)
 lasso_pd = pd.PhaseDiagram([pd.PDEntry(s_i.composition, y_i * len(s_i)) for s_i, y_i in zip(structures, lasso_y)])
-pplotter = pd.PDPlotter(lasso_pd, backend='matplotlib', show_unstable=1, markersize=1, linewidth=2)
+pplotter = pd.PDPlotter(lasso_pd, backend='matplotlib', show_unstable=0)
 pplotter.show(label_unstable=False)
 
 # plot the phase diagram based on the energies predicted by the L2L0 fit
 l2l0_y = l2l0_regressor.predict(X)
 l2l0_pd = pd.PhaseDiagram([pd.PDEntry(s_i.composition, y_i * len(s_i)) for s_i, y_i in zip(structures, l2l0_y)])
-pplotter = pd.PDPlotter(l2l0_pd, backend='matplotlib', show_unstable=1, markersize=1, linewidth=2)
+pplotter = pd.PDPlotter(l2l0_pd, backend='matplotlib', show_unstable=0)
 pplotter.show(label_unstable=False)
 
 # we notice that both the Lasso fit and the L2L0 fit miss the ground-state Ag5Pd3
@@ -140,7 +140,7 @@ constrained_regressor.fit(X, y)
 # look at the phase diagram based on the energies predicted by the L2L0 fit
 l2l0c_y = constrained_regressor.predict(X)
 constrained_pd = pd.PhaseDiagram([pd.PDEntry(s_i.composition, y_i * len(s_i)) for s_i, y_i in zip(structures, l2l0c_y)])
-pplotter = pd.PDPlotter(constrained_pd, backend='matplotlib', show_unstable=1, markersize=1, linewidth=2)
+pplotter = pd.PDPlotter(constrained_pd, backend='matplotlib', show_unstable=0)
 pplotter.show(label_unstable=False)
 # the constraints now force the fitted model to respect the trainind convex-hull
 
