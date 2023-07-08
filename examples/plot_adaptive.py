@@ -39,32 +39,32 @@ alasso = AdaptiveLasso(max_iter=5, fit_intercept=True)
 cv5 = KFold(n_splits=5, shuffle=True, random_state=0)
 params = {"alpha": np.logspace(-1, 1, 10)}
 
-gs_lasso = GridSearchCV(lasso, params, cv=cv5, n_jobs=-1)
-gs_alasso = GridSearchCV(alasso, params, cv=cv5, n_jobs=-1)
+lasso_cv = GridSearchCV(lasso, params, cv=cv5, n_jobs=-1)
+alasso_cv = GridSearchCV(alasso, params, cv=cv5, n_jobs=-1)
 
 # fit models on training data
-gs_lasso.fit(X_train, y_train)
-gs_alasso.fit(X_train, y_train)
+lasso_cv.fit(X_train, y_train)
+alasso_cv.fit(X_train, y_train)
 
 # calculate model performance on test and train data
 lasso_train = {
-    "r2": r2_score(y_train, gs_lasso.predict(X_train)),
-    "rmse": np.sqrt(mean_squared_error(y_train, gs_lasso.predict(X_train))),
+    "r2": r2_score(y_train, lasso_cv.predict(X_train)),
+    "rmse": np.sqrt(mean_squared_error(y_train, lasso_cv.predict(X_train))),
 }
 
 lasso_test = {
-    "r2": r2_score(y_test, gs_lasso.predict(X_test)),
-    "rmse": np.sqrt(mean_squared_error(y_test, gs_lasso.predict(X_test))),
+    "r2": r2_score(y_test, lasso_cv.predict(X_test)),
+    "rmse": np.sqrt(mean_squared_error(y_test, lasso_cv.predict(X_test))),
 }
 
 alasso_train = {
-    "r2": r2_score(y_train, gs_alasso.predict(X_train)),
-    "rmse": np.sqrt(mean_squared_error(y_train, gs_alasso.predict(X_train))),
+    "r2": r2_score(y_train, alasso_cv.predict(X_train)),
+    "rmse": np.sqrt(mean_squared_error(y_train, alasso_cv.predict(X_train))),
 }
 
 alasso_test = {
-    "r2": r2_score(y_test, gs_alasso.predict(X_test)),
-    "rmse": np.sqrt(mean_squared_error(y_test, gs_alasso.predict(X_test))),
+    "r2": r2_score(y_test, alasso_cv.predict(X_test)),
+    "rmse": np.sqrt(mean_squared_error(y_test, alasso_cv.predict(X_test))),
 }
 
 print("Lasso performance metrics:")
@@ -81,19 +81,19 @@ print(f"    test rmse: {alasso_test['rmse']:.3f}")
 
 # plot predicted values
 fig, ax = plt.subplots()
-ax.plot(y_test, gs_lasso.predict(X_test), "o", label="Lasso", alpha=0.5)
-ax.plot(y_test, gs_alasso.predict(X_test), "o", label="Adaptive Lasso", alpha=0.5)
+ax.plot(y_test, lasso_cv.predict(X_test), "o", label="lasso", alpha=0.5)
+ax.plot(y_test, alasso_cv.predict(X_test), "o", label="adaptive lasso", alpha=0.5)
 ax.plot([y_test.min(), y_test.max()], [y_test.min(), y_test.max()], "k--")
-ax.set_xlabel("True values")
-ax.set_ylabel("Predicted values")
+ax.set_xlabel("true values")
+ax.set_ylabel("predicted values")
 ax.legend()
 fig.show()
 
 # plot model coefficients
 fig, ax = plt.subplots()
 ax.plot(coef, "o", label="True coefficients")
-ax.plot(gs_lasso.best_estimator_.coef_, "o", label="Lasso", alpha=0.5)
-ax.plot(gs_alasso.best_estimator_.coef_, "o", label="Adaptive Lasso", alpha=0.5)
-ax.set_xlabel("Covariate index")
-ax.set_ylabel("Coefficient value")
+ax.plot(lasso_cv.best_estimator_.coef_, "o", label="Lasso", alpha=0.5)
+ax.plot(alasso_cv.best_estimator_.coef_, "o", label="Adaptive Lasso", alpha=0.5)
+ax.set_xlabel("covariate index")
+ax.set_ylabel("coefficient value")
 fig.show()

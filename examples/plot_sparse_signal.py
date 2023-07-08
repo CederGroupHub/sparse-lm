@@ -1,10 +1,10 @@
 """
-=====================
-Best subset selection
-=====================
+=========================
+Recovering sparse signals
+=========================
 
-In this example we compare the results obtained from BestSubsetSelection with
-those obtained using the OrthogonalMatchingPursuit regressor from scikit-learn.
+In this example we compare the results obtained from `BestSubsetSelection` with
+those obtained using the `OrthogonalMatchingPursuit` regressor from **scikit-learn**.
 
 This example is adapted from the scikit-learn documentation:
 https://scikit-learn.org/stable/auto_examples/linear_model/plot_omp.html#sphx-glr-auto-examples-linear-model-plot-omp-py
