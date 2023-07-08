@@ -19,7 +19,7 @@ composition graph) remain on the convex-hull. Similarly, it is often important t
 ensure that the predicted formation energies that are not "ground-states" in the
 training data remain above the predicted convex-hull.
 
-This example requires **plotly** and the **pymatgen** materials analysis package to be
+This example requires the **pymatgen** materials analysis package to be
 installed to easily plot convex-hulls: https://pymatgen.org/installation.html
 
 The training data used in this example is taken from this
@@ -48,7 +48,9 @@ structures = [Structure.from_dict(s) for s in structures]
 # create regressors (the hyperparameters have already been tuned)
 lasso_regressor = Lasso(fit_intercept=True, alpha=1.29E-5)
 # alpha is the pseudo-l0 norm hyperparameter and eta is the l2-norm hyperparameter
-l2l0_regressor = L2L0(fit_intercept=True, alpha=3.16E-7, eta=1.66E-6, solver="GUROBI", solver_options={"Threads": 4})
+l2l0_regressor = L2L0(
+    fit_intercept=True, alpha=3.16E-7, eta=1.66E-6, solver="GUROBI", solver_options={"Threads": 4}
+)
 
 # fit models
 lasso_regressor.fit(X, y)
@@ -104,9 +106,7 @@ for i, entry in enumerate(training_pd.unstable_entries):
 # and the weighted correlation matrix of decomposition products if the ground state was not a ground-state
 X_stable = np.zeros(shape=(len(training_pd.stable_entries), X.shape[1]))
 X_gsdecomp = np.zeros_like(X_stable)
-
 gs_pd = pd.PhaseDiagram(training_pd.stable_entries)
-
 for i, entry in enumerate(gs_pd.stable_entries):
     if entry.is_element:
         continue
