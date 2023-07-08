@@ -28,13 +28,15 @@ tutorial: https://icet.materialsmodeling.org/tutorial.zip for the
 """
 
 import json
-import numpy as np
+
 import matplotlib.pyplot as plt
-from sklearn.metrics import mean_squared_error
-from sklearn.linear_model import Lasso
-from sparselm.model import L2L0
-from pymatgen.core import Structure
+import numpy as np
 import pymatgen.analysis.phase_diagram as pd
+from pymatgen.core import Structure
+from sklearn.linear_model import Lasso
+from sklearn.metrics import mean_squared_error
+
+from sparselm.model import L2L0
 
 # load training data
 X, y = np.load("corr.npy"), np.load("energy.npy")
@@ -46,10 +48,14 @@ with open("structures.json") as fp:
 structures = [Structure.from_dict(s) for s in structures]
 
 # create regressors (the hyperparameters have already been tuned)
-lasso_regressor = Lasso(fit_intercept=True, alpha=1.29E-5)
+lasso_regressor = Lasso(fit_intercept=True, alpha=1.29e-5)
 # alpha is the pseudo-l0 norm hyperparameter and eta is the l2-norm hyperparameter
 l2l0_regressor = L2L0(
-    fit_intercept=True, alpha=3.16E-7, eta=1.66E-6, solver="GUROBI", solver_options={"Threads": 4}
+    fit_intercept=True,
+    alpha=3.16e-7,
+    eta=1.66e-6,
+    solver="GUROBI",
+    solver_options={"Threads": 4},
 )
 
 # fit models
@@ -59,26 +65,44 @@ l2l0_regressor.fit(X, y)
 # create phase diagram entries with training data
 training_entries = []
 for i, structure in enumerate(structures):
-    corrs = X[i]  # in this problem the features of a sample are referred to as correlation vectors
-    energy = y[i] * len(structure)  # the energy must be scaled by size to create the phase diagram
-    entry = pd.PDEntry(structure.composition, energy, attribute={"corrs": corrs, "size": len(structure)})
+    corrs = X[
+        i
+    ]  # in this problem the features of a sample are referred to as correlation vectors
+    energy = y[i] * len(
+        structure
+    )  # the energy must be scaled by size to create the phase diagram
+    entry = pd.PDEntry(
+        structure.composition,
+        energy,
+        attribute={"corrs": corrs, "size": len(structure)},
+    )
     training_entries.append(entry)
 
 # plot the training (true) phase diagram
 training_pd = pd.PhaseDiagram(training_entries)
-pplotter = pd.PDPlotter(training_pd, backend='matplotlib', show_unstable=0)
+pplotter = pd.PDPlotter(training_pd, backend="matplotlib", show_unstable=0)
 pplotter.show(label_unstable=False)
 
 # plot the phase diagram based on the energies predicted by the Lasso fit
 lasso_y = lasso_regressor.predict(X)
-lasso_pd = pd.PhaseDiagram([pd.PDEntry(s_i.composition, y_i * len(s_i)) for s_i, y_i in zip(structures, lasso_y)])
-pplotter = pd.PDPlotter(lasso_pd, backend='matplotlib', show_unstable=0)
+lasso_pd = pd.PhaseDiagram(
+    [
+        pd.PDEntry(s_i.composition, y_i * len(s_i))
+        for s_i, y_i in zip(structures, lasso_y)
+    ]
+)
+pplotter = pd.PDPlotter(lasso_pd, backend="matplotlib", show_unstable=0)
 pplotter.show(label_unstable=False)
 
 # plot the phase diagram based on the energies predicted by the L2L0 fit
 l2l0_y = l2l0_regressor.predict(X)
-l2l0_pd = pd.PhaseDiagram([pd.PDEntry(s_i.composition, y_i * len(s_i)) for s_i, y_i in zip(structures, l2l0_y)])
-pplotter = pd.PDPlotter(l2l0_pd, backend='matplotlib', show_unstable=0)
+l2l0_pd = pd.PhaseDiagram(
+    [
+        pd.PDEntry(s_i.composition, y_i * len(s_i))
+        for s_i, y_i in zip(structures, l2l0_y)
+    ]
+)
+pplotter = pd.PDPlotter(l2l0_pd, backend="matplotlib", show_unstable=0)
 pplotter.show(label_unstable=False)
 
 # we notice that both the Lasso fit and the L2L0 fit miss the ground-state Ag5Pd3
@@ -99,7 +123,12 @@ for i, entry in enumerate(training_pd.unstable_entries):
     X_unstable[i] = entry.attribute["corrs"]
     decomp_entries, ehull = training_pd.get_decomp_and_e_above_hull(entry)
     for dentry, amount in decomp_entries.items():
-        ratio = amount * (entry.composition.num_atoms / dentry.composition.num_atoms) * dentry.attribute["size"] / entry.attribute["size"]
+        ratio = (
+            amount
+            * (entry.composition.num_atoms / dentry.composition.num_atoms)
+            * dentry.attribute["size"]
+            / entry.attribute["size"]
+        )
         X_decomp[i] += ratio * dentry.attribute["corrs"]
 
 # 2) compute the ground-state correlation matrix
@@ -113,17 +142,30 @@ for i, entry in enumerate(gs_pd.stable_entries):
     X_stable[i] = entry.attribute["corrs"]
     decomp_entries, ehull = gs_pd.get_decomp_and_phase_separation_energy(entry)
     for dentry, amount in decomp_entries.items():
-        ratio = amount * (entry.composition.num_atoms / dentry.composition.num_atoms) * dentry.attribute["size"] / entry.attribute["size"]
+        ratio = (
+            amount
+            * (entry.composition.num_atoms / dentry.composition.num_atoms)
+            * dentry.attribute["size"]
+            / entry.attribute["size"]
+        )
         X_gsdecomp[i] += ratio * dentry.attribute["corrs"]
 
 
-constrained_regressor = L2L0(fit_intercept=True, alpha=3.16E-7, eta=1.66E-6, solver="GUROBI", solver_options={"Threads": 4})
+constrained_regressor = L2L0(
+    fit_intercept=True,
+    alpha=3.16e-7,
+    eta=1.66e-6,
+    solver="GUROBI",
+    solver_options={"Threads": 4},
+)
 
 # now create the constraints by accessing the underlying cvxpy objects
 # if regressor.fit has not been called with the gigen data, we must call generate_problem to generate
 # the cvxpy objects that represent the regressino objective
 constrained_regressor.generate_problem(X, y)
-J = constrained_regressor.canonicals_.beta  # this is the cvxpy variable representing the coefficients
+J = (
+    constrained_regressor.canonicals_.beta
+)  # this is the cvxpy variable representing the coefficients
 
 # 1) add constraint to keep unstable structures above hull, ie no new ground states
 epsilon = 0.0005  # solutions will be very sensitive to the size of this margin
@@ -139,8 +181,13 @@ constrained_regressor.fit(X, y)
 
 # look at the phase diagram based on the energies predicted by the L2L0 fit
 l2l0c_y = constrained_regressor.predict(X)
-constrained_pd = pd.PhaseDiagram([pd.PDEntry(s_i.composition, y_i * len(s_i)) for s_i, y_i in zip(structures, l2l0c_y)])
-pplotter = pd.PDPlotter(constrained_pd, backend='matplotlib', show_unstable=0)
+constrained_pd = pd.PhaseDiagram(
+    [
+        pd.PDEntry(s_i.composition, y_i * len(s_i))
+        for s_i, y_i in zip(structures, l2l0c_y)
+    ]
+)
+pplotter = pd.PDPlotter(constrained_pd, backend="matplotlib", show_unstable=0)
 pplotter.show(label_unstable=False)
 # the constraints now force the fitted model to respect the trainind convex-hull
 

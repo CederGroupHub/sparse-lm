@@ -15,8 +15,8 @@ from sklearn.linear_model import Lasso
 from sklearn.metrics import mean_squared_error, r2_score
 from sklearn.model_selection import GridSearchCV, KFold, train_test_split
 
-from sparselm.model import GroupLasso, SparseGroupLasso
 from sparselm.dataset import make_group_regression
+from sparselm.model import GroupLasso, SparseGroupLasso
 
 warnings.filterwarnings("ignore", category=UserWarning)  # ignore convergence warnings
 
@@ -30,26 +30,31 @@ X, y, groups, coefs = make_group_regression(
     bias=-10.0,
     noise=200.0,
     coef=True,
-    random_state=0
+    random_state=0,
 )
 
 # split data into train and test sets
-X_train, X_test, y_train, y_test = train_test_split(
-    X, y, test_size=0.2, random_state=0
-)
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=0)
 
 # create estimators
 cv5 = KFold(n_splits=5, shuffle=True, random_state=0)
-lasso_cv = GridSearchCV(Lasso(fit_intercept=True), {"alpha": np.logspace(0, 2, 5)}, cv=cv5, n_jobs=-1)
+lasso_cv = GridSearchCV(
+    Lasso(fit_intercept=True), {"alpha": np.logspace(0, 2, 5)}, cv=cv5, n_jobs=-1
+)
 lasso_cv.fit(X_train, y_train)
 glasso_cv = GridSearchCV(
-    GroupLasso(groups=groups, fit_intercept=True), {"alpha": np.logspace(0, 2, 5)}, cv=cv5, n_jobs=-1
+    GroupLasso(groups=groups, fit_intercept=True),
+    {"alpha": np.logspace(0, 2, 5)},
+    cv=cv5,
+    n_jobs=-1,
 )
 glasso_cv.fit(X_train, y_train)
 
 # Plot predicted values
 fig, ax = plt.subplots()
-ax.plot(y_test, glasso_cv.predict(X_test), marker="o", ls="", alpha=0.5, label="group lasso")
+ax.plot(
+    y_test, glasso_cv.predict(X_test), marker="o", ls="", alpha=0.5, label="group lasso"
+)
 ax.plot(y_test, lasso_cv.predict(X_test), marker="o", ls="", alpha=0.5, label="lasso")
 ax.plot([y_test.min(), y_test.max()], [y_test.min(), y_test.max()], "k--")
 ax.legend()
@@ -102,28 +107,40 @@ X, y, groups, coefs = make_group_regression(
     bias=-10.0,
     noise=100.0,
     coef=True,
-    random_state=0
+    random_state=0,
 )
 
 # split data into train and test sets
-X_train, X_test, y_train, y_test = train_test_split(
-    X, y, test_size=0.2, random_state=0
-)
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=0)
 
 glasso_cv = GridSearchCV(
-    GroupLasso(groups=groups, fit_intercept=True), {"alpha": np.logspace(0, 2, 5)}, cv=cv5, n_jobs=-1
+    GroupLasso(groups=groups, fit_intercept=True),
+    {"alpha": np.logspace(0, 2, 5)},
+    cv=cv5,
+    n_jobs=-1,
 )
 sglasso_cv = GridSearchCV(
     SparseGroupLasso(groups=groups, fit_intercept=True),
-    {"alpha": np.logspace(0, 2, 5), "l1_ratio": np.arange(0.3, 0.8, 0.1)}, cv=cv5, n_jobs=-1
+    {"alpha": np.logspace(0, 2, 5), "l1_ratio": np.arange(0.3, 0.8, 0.1)},
+    cv=cv5,
+    n_jobs=-1,
 )
 glasso_cv.fit(X_train, y_train)
 sglasso_cv.fit(X_train, y_train)
 
 # Plot predicted values
 fig, ax = plt.subplots()
-ax.plot(y_test, glasso_cv.predict(X_test), marker="o", ls="", alpha=0.5, label="group lasso")
-ax.plot(y_test, sglasso_cv.predict(X_test), marker="o", ls="", alpha=0.5, label="sparse group lasso")
+ax.plot(
+    y_test, glasso_cv.predict(X_test), marker="o", ls="", alpha=0.5, label="group lasso"
+)
+ax.plot(
+    y_test,
+    sglasso_cv.predict(X_test),
+    marker="o",
+    ls="",
+    alpha=0.5,
+    label="sparse group lasso",
+)
 ax.plot([y_test.min(), y_test.max()], [y_test.min(), y_test.max()], "k--")
 ax.legend()
 ax.set_xlabel("true values")
@@ -152,7 +169,9 @@ sglasso_test = {
 }
 
 
-print("------- Performance metrics for signal with group and within group sparsity -------\n")
+print(
+    "------- Performance metrics for signal with group and within group sparsity -------\n"
+)
 
 print("Group Lasso performance metrics:")
 print(f"    train r2: {glasso_train['r2']:.3f}")

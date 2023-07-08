@@ -12,11 +12,10 @@ https://scikit-learn.org/stable/auto_examples/linear_model/plot_omp.html#sphx-gl
 
 import matplotlib.pyplot as plt
 import numpy as np
-
 from sklearn.datasets import make_sparse_coded_signal
 from sklearn.linear_model import OrthogonalMatchingPursuit
-from sparselm.model import BestSubsetSelection
 
+from sparselm.model import BestSubsetSelection
 
 n_components, n_features = 60, 20
 n_nonzero_coefs = 8
@@ -52,7 +51,9 @@ plt.xlim(0, n_components)
 plt.title("Orthogonal Matching Pursuit (noise-free measurements)")
 plt.stem(idx_r, coef[idx_r])
 
-bss = BestSubsetSelection(sparse_bound=n_nonzero_coefs, solver="GUROBI", solver_options={"Threads": 8})
+bss = BestSubsetSelection(
+    sparse_bound=n_nonzero_coefs, solver="GUROBI", solver_options={"Threads": 8}
+)
 bss.fit(X, y)
 coef = bss.coef_
 (idx_r,) = coef.nonzero()
