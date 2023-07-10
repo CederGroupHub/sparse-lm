@@ -43,7 +43,7 @@ def test_perfect_signal_recovery(sparse_coded_signal):
     r_estimator = RidgedBestSubsetSelection(sparse_bound=np.count_nonzero(beta))
 
     # very low regularization should be the same
-    r_estimator.eta = 1e-10
+    r_estimator.eta = 1e-12
     r_estimator.fit(X, y)
     npt.assert_array_almost_equal(beta, r_estimator.coef_)
     assert all(i in np.flatnonzero(r_estimator.coef_) for i in idx)
