@@ -19,6 +19,9 @@ composition graph) remain on the convex-hull. Similarly, it is often important t
 ensure that the predicted formation energies that are not "ground-states" in the
 training data remain above the predicted convex-hull.
 
+The example follows the methodology described in this paper:
+https://www.nature.com/articles/s41524-017-0032-0
+
 This example requires the **pymatgen** materials analysis package to be
 installed to easily plot convex-hulls: https://pymatgen.org/installation.html
 
