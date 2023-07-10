@@ -400,8 +400,13 @@ class OverlapGroupLasso(GroupLasso):
         parameters.group_weights = group_weights
         return parameters
 
-    def generate_problem(self, X: ArrayLike, y: ArrayLike, preprocess_data: bool = True,
-        sample_weight: ArrayLike | None = None) -> None:
+    def generate_problem(
+        self,
+        X: ArrayLike,
+        y: ArrayLike,
+        preprocess_data: bool = True,
+        sample_weight: ArrayLike | None = None,
+    ) -> None:
         """Initialize cvxpy problem from the generated objective function.
 
         Args:
