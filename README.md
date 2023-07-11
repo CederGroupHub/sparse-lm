@@ -39,3 +39,5 @@ cvsearch = GridSearchCV(alasso, param_grid)
 cvsearch.fit(X, y)
 print(cvsearch.best_params_)
 ```
+
+For more details on use and functionality see the [documentation](https://cedergrouphub.github.io/sparse-lm/).

@@ -271,7 +271,7 @@ class GroupLasso(Lasso):
         return parameters.alpha * (parameters.group_weights @ auxiliaries.group_norms)
 
 
-# TODO this implementation is not efficient, reimplement.
+# TODO this implementation is not efficient, reimplement, or simply deprecate.
 class OverlapGroupLasso(GroupLasso):
     r"""Overlap Group Lasso implementation.
 
@@ -400,7 +400,13 @@ class OverlapGroupLasso(GroupLasso):
         parameters.group_weights = group_weights
         return parameters
 
-    def generate_problem(self, X: ArrayLike, y: ArrayLike) -> None:
+    def generate_problem(
+        self,
+        X: ArrayLike,
+        y: ArrayLike,
+        preprocess_data: bool = True,
+        sample_weight: ArrayLike | None = None,
+    ) -> None:
         """Initialize cvxpy problem from the generated objective function.
 
         Args:
@@ -408,7 +414,23 @@ class OverlapGroupLasso(GroupLasso):
                 Covariate/Feature matrix
             y (ArrayLike):
                 Target vector
+            preprocess_data (bool):
+                Whether to preprocess the data before generating the problem. If calling
+                generate_problem directly, this should be kept as True to ensure the
+                problem is generated correctly for a subsequent call to fit.
+            sample_weight (ArrayLike):
+                Individual weights for each sample of shape (n_samples,)
+                default=None. Only used if preprocess_data=True to rescale the data
+                accordingly.
         """
+        if preprocess_data is True:
+            X, y, _, _, _ = self._preprocess_data(X, y, sample_weight)
+
+        # X, y are cached to avoid re-generating problem if fit is called again with
+        # same data
+        self.cached_X_ = X
+        self.cached_y_ = y
+
         # need to generate the auxiliaries here since the problem data is "augmented"
         # based on them
         if self.group_list is None:
@@ -452,6 +474,7 @@ class OverlapGroupLasso(GroupLasso):
             parameters=parameters,
             auxiliaries=auxiliaries,
             constraints=constraints,
+            user_constraints=[],
         )
 
     def _solve(self, X, y, solver_options, *args, **kwargs) -> NDArray[float]:

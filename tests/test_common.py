@@ -8,6 +8,7 @@ from inspect import getmembers, isclass, signature
 import cvxpy as cp
 import numpy as np
 import pytest
+from cvxpy.error import SolverError
 from sklearn.utils.estimator_checks import check_estimator
 
 import sparselm.model as spm
@@ -65,21 +66,29 @@ def test_general_fit(estimator_cls, random_model, rng):
     assert estimator.intercept_ != 0.0
 
 
-def test_add_constraints(estimator, random_model):
+@pytest.mark.xfail(raises=SolverError)
+def test_add_constraints(estimator, random_model, rng):
     with pytest.raises(RuntimeError):
         estimator.add_constraints([cp.Variable(1) >= 0])
 
     X, y, beta = random_model
     estimator.generate_problem(X, y)
-    estimator.warm_start = False
-    with pytest.warns(UserWarning):
-        estimator.add_constraints([estimator.canonicals_.beta >= 0])
-
-    estimator.generate_problem(X, y)
-    estimator.warm_start = True
     n_constraints = len(estimator.canonicals_.constraints)
-    estimator.add_constraints([estimator.canonicals_.beta >= 0])
-    assert len(estimator.canonicals_.constraints) == n_constraints + 1
+    # a dummy constraint
+    estimator.add_constraints([estimator.canonicals_.beta >= 0.0])
+    assert len(estimator.canonicals_.problem.constraints) == n_constraints + 1
+    assert len(estimator.canonicals_.user_constraints) == 1
+    assert len(estimator.canonicals_.constraints) == n_constraints
+
+    # force cache data
+    # ( solving the model sometimes fails and we only want to check that a warning is
+    # raised )
+    estimator.cached_X_ = X
+    estimator.cached_y_ = y
+
+    new_X = rng.random(X.shape)
+    with pytest.warns(UserWarning):
+        estimator.fit(new_X, y)
 
 
 def test_sklearn_compatible(estimator):

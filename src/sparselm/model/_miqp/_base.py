@@ -20,7 +20,7 @@ from .._base import CVXRegressor
 
 
 class MIQPl0(CVXRegressor, metaclass=ABCMeta):
-    """Base class for mixed-integer quadratic programming (MIQP) Regressors.
+    r"""Base class for mixed-integer quadratic programming (MIQP) Regressors.
 
     Generalized l0 formulation that allows grouping coefficients, based on:
 
@@ -34,7 +34,7 @@ class MIQPl0(CVXRegressor, metaclass=ABCMeta):
             pass a list of all different numbers, i.e. using range.
         big_M (float):
             Upper bound on the norm of coefficients associated with each
-            cluster (groups of coefficients) ||Beta_c||_2
+            groups of coefficients :math:`||\beta_c||_2`.
         hierarchy (list):
             A list of lists of integers storing hierarchy relations between
             coefficients.

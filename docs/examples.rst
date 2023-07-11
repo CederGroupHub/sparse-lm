@@ -1,5 +1,0 @@
-Examples
-========
-
-.. note::
-    Under construction...
