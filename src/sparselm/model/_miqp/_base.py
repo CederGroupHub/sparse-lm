@@ -20,7 +20,7 @@ from .._base import CVXRegressor
 
 
 class MIQPl0(CVXRegressor, metaclass=ABCMeta):
-    """Base class for mixed-integer quadratic programming (MIQP) Regressors.
+    r"""Base class for mixed-integer quadratic programming (MIQP) Regressors.
 
     Generalized l0 formulation that allows grouping coefficients, based on:
 
