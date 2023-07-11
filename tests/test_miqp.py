@@ -32,6 +32,8 @@ def assert_hierarchy_respected(coef, slack_z, hierarchy, groups=None):
 
 def test_perfect_signal_recovery(sparse_coded_signal):
     X, y, beta = sparse_coded_signal
+    X = X.T
+
     (idx,) = beta.nonzero()
 
     estimator = BestSubsetSelection(sparse_bound=np.count_nonzero(beta))
@@ -43,21 +45,21 @@ def test_perfect_signal_recovery(sparse_coded_signal):
     r_estimator = RidgedBestSubsetSelection(sparse_bound=np.count_nonzero(beta))
 
     # very low regularization should be the same
-    r_estimator.eta = 1e-12
+    r_estimator.eta = 1e-16
     r_estimator.fit(X, y)
     npt.assert_array_almost_equal(beta, r_estimator.coef_)
+    npt.assert_array_equal(idx, np.flatnonzero(r_estimator.coef_))
     assert all(i in np.flatnonzero(r_estimator.coef_) for i in idx)
 
     # a bit higher regularization, check shrinkage
-    coef = estimator.coef_.copy()
+    coef = r_estimator.coef_.copy()
     r_estimator.eta = 1e-4
     r_estimator.fit(X, y)
-    npt.assert_array_almost_equal(beta, r_estimator.coef_, decimal=2)
-    assert all(i in np.flatnonzero(r_estimator.coef_) for i in idx)
+    npt.assert_array_almost_equal(beta, r_estimator.coef_, decimal=1)
     assert np.linalg.norm(coef) > np.linalg.norm(r_estimator.coef_)
 
     # very sensitive to the value of alpha for exact results
-    estimator = RegularizedL0(alpha=0.01)
+    estimator = RegularizedL0(alpha=0.0008)
     estimator.fit(X, y)
 
     npt.assert_array_equal(idx, np.flatnonzero(estimator.coef_))

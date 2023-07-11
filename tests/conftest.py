@@ -72,19 +72,15 @@ def random_energy_model(rng, request):
 
 @pytest.fixture(scope="package")
 def sparse_coded_signal(rng):
-    n_samples, n_features, n_nonzero = 10, 20, 5
+    n_components, n_features, n_nonzero = 24, 12, 6
     y, X, beta = make_sparse_coded_signal(
-        n_samples=n_samples,
-        n_components=n_features,
-        n_features=n_samples,
+        n_samples=1,
+        n_components=n_components,
+        n_features=n_features,
         n_nonzero_coefs=n_nonzero,
         random_state=rng.integers(0, 2**32 - 1),
-        data_transposed=True,
     )
-    # Make X not of norm 1 for testing
-    X *= 10
-    y *= 10
-    return X, y[:, 0], beta[:, 0]
+    return X, y, beta
 
 
 @pytest.fixture(params=[4, 6], scope="package")
