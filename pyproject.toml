@@ -33,7 +33,7 @@ classifiers = [
 dev = ["pre-commit", "black", "isort", "flake8", "pylint", "pydocstyle", "flake8-pyproject"]
 # Gurobipy needed by mixedL0 tests, pandas needed by sklearn convention checks.
 tests = ["pytest >=7.2.0", "pytest-cov >=4.0.0", "coverage", "pandas", "gurobipy", "pyscipopt"]
-docs = ["sphinx>=5.3", "furo", "m2r2", "sphinx-gallery"]
+docs = ["sphinx>=5.3", "furo", "m2r2", "sphinx-gallery", "matplotlib"]
 optional = ["gurobipy"]
 
 # pyproject.toml
