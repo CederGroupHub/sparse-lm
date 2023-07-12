@@ -2,13 +2,17 @@
 <html class="no-js" lang="en">
   <head><meta charset="utf-8"/>
     <meta name="viewport" content="width=device-width,initial-scale=1"/>
-    <meta name="color-scheme" content="light dark"><meta name="generator" content="Docutils 0.19: https://docutils.sourceforge.io/" />
+    <meta name="color-scheme" content="light dark"><meta name="viewport" content="width=device-width, initial-scale=1" />
 <link rel="index" title="Index" href="genindex.html" /><link rel="search" title="Search" href="search.html" /><link rel="next" title="sparselm.tools" href="sparselm.tools.html" /><link rel="prev" title="sparselm.stepwise" href="sparselm.stepwise.html" />
 
-    <!-- Generated with Sphinx 6.1.3 and Furo 2022.12.07 -->
+    <!-- Generated with Sphinx 7.0.1 and Furo 2023.05.20 -->
         <title>sparselm.model_selection - sparse-lm</title>
       <link rel="stylesheet" type="text/css" href="_static/pygments.css" />
-    <link rel="stylesheet" type="text/css" href="_static/styles/furo.css?digest=91d0f0d1c444bdcb17a68e833c7a53903343c195" />
+    <link rel="stylesheet" type="text/css" href="_static/styles/furo.css?digest=e6660623a769aa55fea372102b9bf3151b292993" />
+    <link rel="stylesheet" type="text/css" href="_static/sg_gallery.css" />
+    <link rel="stylesheet" type="text/css" href="_static/sg_gallery-binder.css" />
+    <link rel="stylesheet" type="text/css" href="_static/sg_gallery-dataframe.css" />
+    <link rel="stylesheet" type="text/css" href="_static/sg_gallery-rendered-html.css" />
     <link rel="stylesheet" type="text/css" href="_static/styles/furo-extensions.css?digest=30d1aed668e5c3a91c3e3bf6a60b675221979f0e" />
     <link rel="stylesheet" type="text/css" href="_static/custom.css" />
     
@@ -179,7 +183,13 @@
   <p class="caption" role="heading"><span class="caption-text">Getting Started</span></p>
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="install.html">Install</a></li>
-<li class="toctree-l1"><a class="reference internal" href="examples.html">Examples</a></li>
+<li class="toctree-l1 has-children"><a class="reference internal" href="auto_examples/index.html">Examples</a><input class="toctree-checkbox" id="toctree-checkbox-1" name="toctree-checkbox-1" role="switch" type="checkbox"/><label for="toctree-checkbox-1"><div class="visually-hidden">Toggle navigation of Examples</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
+<li class="toctree-l2"><a class="reference internal" href="auto_examples/plot_sparse_signal.html">Recovering sparse signals</a></li>
+<li class="toctree-l2"><a class="reference internal" href="auto_examples/plot_adaptive.html">Using adaptive regularization</a></li>
+<li class="toctree-l2"><a class="reference internal" href="auto_examples/plot_gl_sgl.html">(Sparse) Group regression</a></li>
+<li class="toctree-l2"><a class="reference internal" href="auto_examples/plot_chull.html">Adding solution constraints</a></li>
+</ul>
+</li>
 </ul>
 <p class="caption" role="heading"><span class="caption-text">Information</span></p>
 <ul>
@@ -189,7 +199,7 @@
 </ul>
 <p class="caption" role="heading"><span class="caption-text">Reference</span></p>
 <ul class="current">
-<li class="toctree-l1 current has-children"><a class="reference internal" href="api.html">API</a><input checked="" class="toctree-checkbox" id="toctree-checkbox-1" name="toctree-checkbox-1" role="switch" type="checkbox"/><label for="toctree-checkbox-1"><div class="visually-hidden">Toggle child pages in navigation</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul class="current">
+<li class="toctree-l1 current has-children"><a class="reference internal" href="api.html">API</a><input checked="" class="toctree-checkbox" id="toctree-checkbox-2" name="toctree-checkbox-2" role="switch" type="checkbox"/><label for="toctree-checkbox-2"><div class="visually-hidden">Toggle navigation of API</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul class="current">
 <li class="toctree-l2"><a class="reference internal" href="sparselm.model.html">sparselm.model</a></li>
 <li class="toctree-l2"><a class="reference internal" href="sparselm.stepwise.html">sparselm.stepwise</a></li>
 <li class="toctree-l2 current current-page"><a class="current reference internal" href="#">sparselm.model_selection</a></li>
@@ -237,11 +247,11 @@
 <dl class="py class">
 <dt class="sig sig-object py" id="sparselm.model_selection.GridSearchCV">
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">sparselm.model_selection.</span></span><span class="sig-name descname"><span class="pre">GridSearchCV</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">estimator</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">param_grid</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">*</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">opt_selection_method</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'max_score'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">scoring</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'neg_root_mean_squared_error'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">n_jobs</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">refit</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">cv</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">verbose</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">pre_dispatch</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'2*n_jobs'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">error_score</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">nan</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">return_train_score</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/sparselm/model_selection.html#GridSearchCV"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#sparselm.model_selection.GridSearchCV" title="Permalink to this definition">#</a></dt>
-<dd><p>Bases: <a class="reference external" href="https://scikit-learn.org/stable/modules/generated/sklearn.model_selection.GridSearchCV.html#sklearn.model_selection.GridSearchCV" title="(in scikit-learn v1.2)"><code class="xref py py-class docutils literal notranslate"><span class="pre">GridSearchCV</span></code></a></p>
+<dd><p>Bases: <a class="reference external" href="https://scikit-learn.org/stable/modules/generated/sklearn.model_selection.GridSearchCV.html#sklearn.model_selection.GridSearchCV" title="(in scikit-learn v1.3)"><code class="xref py py-class docutils literal notranslate"><span class="pre">GridSearchCV</span></code></a></p>
 <p>Exhaustive search over specified parameter values for an estimator.</p>
 <p>Same as GridSearchCV but allows to use one standard error rule on all
 non-negative numerical hyper-parameters, in order to get a
-robust sparce estimation. Same documentation as scikit-learn’s
+robust sparse estimation. Same documentation as scikit-learn’s
 GridSearchCV.</p>
 <p>An additional class variable opt_selection named opt_selection
 is added to allow switching hyper params selection mode. Currently,
@@ -274,19 +284,17 @@ on scores.</p></li>
 <blockquote>
 <div><p>model on the test set.
 If <cite>scoring</cite> represents a single score, one can use:
-- a single string (see <a class="reference external" href="https://scikit-learn.org/stable/modules/model_evaluation.html#scoring-parameter" title="(in scikit-learn v1.2)"><span>The scoring parameter: defining model evaluation rules</span></a>);
-- a callable (see <a class="reference external" href="https://scikit-learn.org/stable/modules/model_evaluation.html#scoring" title="(in scikit-learn v1.2)"><span>Defining your scoring strategy from metric functions</span></a>) that returns a single value.
+- a single string (see <a class="reference external" href="https://scikit-learn.org/stable/modules/model_evaluation.html#scoring-parameter" title="(in scikit-learn v1.3)"><span>The scoring parameter: defining model evaluation rules</span></a>);
+- a callable (see <a class="reference external" href="https://scikit-learn.org/stable/modules/model_evaluation.html#scoring" title="(in scikit-learn v1.3)"><span>Defining your scoring strategy from metric functions</span></a>) that returns a single value.
 If <cite>scoring</cite> represents multiple scores, one can use:
 - a list or tuple of unique strings;
 - a callable returning a dictionary where the keys are the
 metric names and the values are the metric scores;
 - a dictionary with metric names as keys and callables a
 values.
-See <a class="reference external" href="https://scikit-learn.org/stable/modules/grid_search.html#multimetric-grid-search" title="(in scikit-learn v1.2)"><span>Specifying multiple metrics for evaluation</span></a> for an example.
+See <a class="reference external" href="https://scikit-learn.org/stable/modules/grid_search.html#multimetric-grid-search" title="(in scikit-learn v1.3)"><span>Specifying multiple metrics for evaluation</span></a> for an example.
 In sparse-lm, using “neg_root_mean_squared_error” is default
-because in cluster expansion it is more conventional to
-analyze and present errors in the root-mean-square error format
-compared to the r2_score.</p>
+in contrast to r2_score used in scikit-learn.</p>
 </div></blockquote>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
@@ -295,7 +303,7 @@ compared to the r2_score.</p>
 <code class="docutils literal notranslate"><span class="pre">None</span></code> means 1 unless in a <code class="xref py py-obj docutils literal notranslate"><span class="pre">joblib.parallel_backend</span></code>
 context.
 <code class="docutils literal notranslate"><span class="pre">-1</span></code> means using all processors. See
-<a class="reference external" href="https://scikit-learn.org/stable/glossary.html#term-n_jobs" title="(in scikit-learn v1.2)"><span class="xref std std-term">Glossary</span></a> for more details.</p></li>
+<a class="reference external" href="https://scikit-learn.org/stable/glossary.html#term-n_jobs" title="(in scikit-learn v1.3)"><span class="xref std std-term">Glossary</span></a> for more details.</p></li>
 <li><p><strong>refit</strong> (<a class="reference external" href="https://docs.python.org/3.9/library/functions.html#bool" title="(in Python v3.9)"><em>bool</em></a><em>, </em><a class="reference external" href="https://docs.python.org/3.9/library/stdtypes.html#str" title="(in Python v3.9)"><em>str</em></a><em>, or </em><em>callable</em><em>, </em><em>default=True</em>) – Refit an estimator using the best found parameters on the whole
 dataset.
 For multiple metric evaluation, this needs to be a <cite>str</cite>
@@ -322,7 +330,7 @@ Possible inputs for cv are:
 - None, to use the default 5-fold cross validation,
 - integer, to specify the number of folds in a
 <cite>(Stratified)KFold</cite>,
-- <a class="reference external" href="https://scikit-learn.org/stable/glossary.html#term-CV-splitter" title="(in scikit-learn v1.2)"><span class="xref std std-term">CV splitter</span></a>,
+- <a class="reference external" href="https://scikit-learn.org/stable/glossary.html#term-CV-splitter" title="(in scikit-learn v1.3)"><span class="xref std std-term">CV splitter</span></a>,
 - An iterable yielding (train, test) splits as arrays of
 indices.
 For integer/None inputs, if the estimator is a classifier and
@@ -330,7 +338,7 @@ For integer/None inputs, if the estimator is a classifier and
 is used. In all other cases, <code class="xref py py-class docutils literal notranslate"><span class="pre">KFold</span></code> is used. These
 splitters are instantiated with <cite>shuffle=False</cite> so the splits
 will be the same across calls.
-Refer <a class="reference external" href="https://scikit-learn.org/stable/modules/cross_validation.html#cross-validation" title="(in scikit-learn v1.2)"><span class="xref std std-ref">User Guide</span></a> for the various
+Refer <a class="reference external" href="https://scikit-learn.org/stable/modules/cross_validation.html#cross-validation" title="(in scikit-learn v1.3)"><span class="xref std std-ref">User Guide</span></a> for the various
 cross-validation strategies that can be used here.
 Notice that if cv is not specified, KFold(5) will be used, and your
 training set will not be shuffled in each train-test split. This can
@@ -390,12 +398,12 @@ the best generalization performance.</p></li>
 None for unsupervised learning.</p></li>
 <li><p><strong>groups</strong> (<em>array-like</em><em> of </em><em>shape</em><em> (</em><em>n_samples</em><em>,</em><em>)</em><em>, </em><em>default=None</em>) – Group labels for the samples used while splitting the dataset
 into train/test set. Only used in conjunction with a “Group”
-<a class="reference external" href="https://scikit-learn.org/stable/glossary.html#term-cv" title="(in scikit-learn v1.2)"><span class="xref std std-term">cv</span></a> instance
-(e.g., <a class="reference external" href="https://scikit-learn.org/stable/modules/generated/sklearn.model_selection.GroupKFold.html#sklearn.model_selection.GroupKFold" title="(in scikit-learn v1.2)"><code class="xref py py-class docutils literal notranslate"><span class="pre">GroupKFold</span></code></a>).</p></li>
+<a class="reference external" href="https://scikit-learn.org/stable/glossary.html#term-cv" title="(in scikit-learn v1.3)"><span class="xref std std-term">cv</span></a> instance
+(e.g., <a class="reference external" href="https://scikit-learn.org/stable/modules/generated/sklearn.model_selection.GroupKFold.html#sklearn.model_selection.GroupKFold" title="(in scikit-learn v1.3)"><code class="xref py py-class docutils literal notranslate"><span class="pre">GroupKFold</span></code></a>).</p></li>
 <li><p><strong>**fit_params</strong> – Parameters passed to the <cite>fit</cite> method of the estimator.
 If a fit parameter is an array-like whose length is equal to
 <cite>num_samples</cite> then it will be split across CV groups along with
-<cite>X</cite> and <cite>y</cite>. For example, the <a class="reference external" href="https://scikit-learn.org/stable/glossary.html#term-sample_weight" title="(in scikit-learn v1.2)"><span class="xref std std-term">sample_weight</span></a> parameter
+<cite>X</cite> and <cite>y</cite>. For example, the <a class="reference external" href="https://scikit-learn.org/stable/glossary.html#term-sample_weight" title="(in scikit-learn v1.3)"><span class="xref std std-term">sample_weight</span></a> parameter
 is split because <cite>len(sample_weights) = len(X)</cite>.</p></li>
 </ul>
 </dd>
@@ -432,6 +440,23 @@ the best found parameters.</p>
 </dd>
 <dt class="field-odd">Return type<span class="colon">:</span></dt>
 <dd class="field-odd"><p>ndarray of shape (n_samples,) or (n_samples, n_classes)                 or (n_samples, n_classes * (n_classes-1) / 2)</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sparselm.model_selection.GridSearchCV.get_metadata_routing">
+<span class="sig-name descname"><span class="pre">get_metadata_routing</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#sparselm.model_selection.GridSearchCV.get_metadata_routing" title="Permalink to this definition">#</a></dt>
+<dd><p>Get metadata routing of this object.</p>
+<p>Please check <a class="reference external" href="https://scikit-learn.org/stable/metadata_routing.html#metadata-routing" title="(in scikit-learn v1.3)"><span class="xref std std-ref">User Guide</span></a> on how the routing
+mechanism works.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>routing</strong> – A <code class="xref py py-class docutils literal notranslate"><span class="pre">MetadataRequest</span></code> encapsulating
+routing information.</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>MetadataRequest</p>
 </dd>
 </dl>
 </dd></dl>
@@ -478,7 +503,7 @@ estimator with the best found parameters.</p>
 <dl class="py property">
 <dt class="sig sig-object py" id="sparselm.model_selection.GridSearchCV.n_features_in_">
 <em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">n_features_in_</span></span><a class="headerlink" href="#sparselm.model_selection.GridSearchCV.n_features_in_" title="Permalink to this definition">#</a></dt>
-<dd><p>Number of features seen during <a class="reference external" href="https://scikit-learn.org/stable/glossary.html#term-fit" title="(in scikit-learn v1.2)"><span class="xref std std-term">fit</span></a>.</p>
+<dd><p>Number of features seen during <a class="reference external" href="https://scikit-learn.org/stable/glossary.html#term-fit" title="(in scikit-learn v1.3)"><span class="xref std std-term">fit</span></a>.</p>
 <p>Only available when <cite>refit=True</cite>.</p>
 </dd></dl>
 
@@ -517,7 +542,7 @@ underlying estimator.</p>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
 <dd class="field-even"><p><strong>y_pred</strong> – Predicted class log-probabilities for <cite>X</cite> based on the estimator
 with the best found parameters. The order of the classes
-corresponds to that in the fitted attribute <a class="reference external" href="https://scikit-learn.org/stable/glossary.html#term-classes_" title="(in scikit-learn v1.2)"><span class="xref std std-term">classes_</span></a>.</p>
+corresponds to that in the fitted attribute <a class="reference external" href="https://scikit-learn.org/stable/glossary.html#term-classes_" title="(in scikit-learn v1.3)"><span class="xref std std-term">classes_</span></a>.</p>
 </dd>
 <dt class="field-odd">Return type<span class="colon">:</span></dt>
 <dd class="field-odd"><p>ndarray of shape (n_samples,) or (n_samples, n_classes)</p>
@@ -539,7 +564,7 @@ underlying estimator.</p>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
 <dd class="field-even"><p><strong>y_pred</strong> – Predicted class probabilities for <cite>X</cite> based on the estimator with
 the best found parameters. The order of the classes corresponds
-to that in the fitted attribute <a class="reference external" href="https://scikit-learn.org/stable/glossary.html#term-classes_" title="(in scikit-learn v1.2)"><span class="xref std std-term">classes_</span></a>.</p>
+to that in the fitted attribute <a class="reference external" href="https://scikit-learn.org/stable/glossary.html#term-classes_" title="(in scikit-learn v1.3)"><span class="xref std std-term">classes_</span></a>.</p>
 </dd>
 <dt class="field-odd">Return type<span class="colon">:</span></dt>
 <dd class="field-odd"><p>ndarray of shape (n_samples,) or (n_samples, n_classes)</p>
@@ -596,11 +621,54 @@ of the underlying estimator.</p>
 </dd></dl>
 
 <dl class="py method">
+<dt class="sig sig-object py" id="sparselm.model_selection.GridSearchCV.set_fit_request">
+<span class="sig-name descname"><span class="pre">set_fit_request</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">groups</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'$UNCHANGED$'</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sparselm.model_selection.GridSearchCV.set_fit_request" title="Permalink to this definition">#</a></dt>
+<dd><p>Request metadata passed to the <code class="docutils literal notranslate"><span class="pre">fit</span></code> method.</p>
+<p>Note that this method is only relevant if
+<code class="docutils literal notranslate"><span class="pre">enable_metadata_routing=True</span></code> (see <a class="reference external" href="https://scikit-learn.org/stable/modules/generated/sklearn.set_config.html#sklearn.set_config" title="(in scikit-learn v1.3)"><code class="xref py py-func docutils literal notranslate"><span class="pre">sklearn.set_config()</span></code></a>).
+Please see <a class="reference external" href="https://scikit-learn.org/stable/metadata_routing.html#metadata-routing" title="(in scikit-learn v1.3)"><span class="xref std std-ref">User Guide</span></a> on how the routing
+mechanism works.</p>
+<p>The options for each parameter are:</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">True</span></code>: metadata is requested, and passed to <code class="docutils literal notranslate"><span class="pre">fit</span></code> if provided. The request is ignored if metadata is not provided.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">False</span></code>: metadata is not requested and the meta-estimator will not pass it to <code class="docutils literal notranslate"><span class="pre">fit</span></code>.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">None</span></code>: metadata is not requested, and the meta-estimator will raise an error if the user provides it.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">str</span></code>: metadata should be passed to the meta-estimator with this given alias instead of the original name.</p></li>
+</ul>
+<p>The default (<code class="docutils literal notranslate"><span class="pre">sklearn.utils.metadata_routing.UNCHANGED</span></code>) retains the
+existing request. This allows you to change the request for some
+parameters and not others.</p>
+<div class="versionadded">
+<p><span class="versionmodified added">New in version 1.3.</span></p>
+</div>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>This method is only relevant if this estimator is used as a
+sub-estimator of a meta-estimator, e.g. used inside a
+<code class="xref py py-class docutils literal notranslate"><span class="pre">pipeline.Pipeline</span></code>. Otherwise it has no effect.</p>
+</div>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>groups</strong> (<a class="reference external" href="https://docs.python.org/3.9/library/stdtypes.html#str" title="(in Python v3.9)"><em>str</em></a><em>, </em><em>True</em><em>, </em><em>False</em><em>, or </em><em>None</em><em>,                     </em><em>default=sklearn.utils.metadata_routing.UNCHANGED</em>) – Metadata routing for <code class="docutils literal notranslate"><span class="pre">groups</span></code> parameter in <code class="docutils literal notranslate"><span class="pre">fit</span></code>.</p></li>
+<li><p><strong>self</strong> (<a class="reference internal" href="#sparselm.model_selection.GridSearchCV" title="sparselm.model_selection.GridSearchCV"><em>GridSearchCV</em></a>) – </p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p><strong>self</strong> – The updated object.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3.9/library/functions.html#object" title="(in Python v3.9)">object</a></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
 <dt class="sig sig-object py" id="sparselm.model_selection.GridSearchCV.set_params">
 <span class="sig-name descname"><span class="pre">set_params</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">params</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sparselm.model_selection.GridSearchCV.set_params" title="Permalink to this definition">#</a></dt>
 <dd><p>Set the parameters of this estimator.</p>
 <p>The method works on simple estimators as well as on nested objects
-(such as <a class="reference external" href="https://scikit-learn.org/stable/modules/generated/sklearn.pipeline.Pipeline.html#sklearn.pipeline.Pipeline" title="(in scikit-learn v1.2)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Pipeline</span></code></a>). The latter have
+(such as <a class="reference external" href="https://scikit-learn.org/stable/modules/generated/sklearn.pipeline.Pipeline.html#sklearn.pipeline.Pipeline" title="(in scikit-learn v1.3)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Pipeline</span></code></a>). The latter have
 parameters of the form <code class="docutils literal notranslate"><span class="pre">&lt;component&gt;__&lt;parameter&gt;</span></code> so that it’s
 possible to update each component of a nested object.</p>
 <dl class="field-list simple">
@@ -678,24 +746,22 @@ Default is 2 * number of hyper-params.</p></li>
 <li><p><strong>default=&quot;neg_root_mean_squared_error&quot;</strong><strong>)</strong> – Strategy to evaluate the performance of the cross-validated
 model on the test set.
 If <cite>scoring</cite> represents a single score, one can use:
-- a single string (see <a class="reference external" href="https://scikit-learn.org/stable/modules/model_evaluation.html#scoring-parameter" title="(in scikit-learn v1.2)"><span>The scoring parameter: defining model evaluation rules</span></a>);
-- a callable (see <a class="reference external" href="https://scikit-learn.org/stable/modules/model_evaluation.html#scoring" title="(in scikit-learn v1.2)"><span>Defining your scoring strategy from metric functions</span></a>) that returns a single value.
+- a single string (see <a class="reference external" href="https://scikit-learn.org/stable/modules/model_evaluation.html#scoring-parameter" title="(in scikit-learn v1.3)"><span>The scoring parameter: defining model evaluation rules</span></a>);
+- a callable (see <a class="reference external" href="https://scikit-learn.org/stable/modules/model_evaluation.html#scoring" title="(in scikit-learn v1.3)"><span>Defining your scoring strategy from metric functions</span></a>) that returns a single value.
 If <cite>scoring</cite> represents multiple scores, one can use:
 - a list or tuple of unique strings;
 - a callable returning a dictionary where the keys are the
 metric names and the values are the metric scores;
 - a dictionary with metric names as keys and callables a
 values.
-See <a class="reference external" href="https://scikit-learn.org/stable/modules/grid_search.html#multimetric-grid-search" title="(in scikit-learn v1.2)"><span>Specifying multiple metrics for evaluation</span></a> for an example.
+See <a class="reference external" href="https://scikit-learn.org/stable/modules/grid_search.html#multimetric-grid-search" title="(in scikit-learn v1.3)"><span>Specifying multiple metrics for evaluation</span></a> for an example.
 In sparse-lm, using “neg_root_mean_squared_error” is default
-because in cluster expansion it is more conventional to
-analyze and present errors in the root-mean-square error format
-compared to the r2_score.</p></li>
+in contrast to r2_score used in scikit-learn.</p></li>
 <li><p><strong>n_jobs</strong> (<a class="reference external" href="https://docs.python.org/3.9/library/functions.html#int" title="(in Python v3.9)"><em>int</em></a><em>, </em><em>default=None</em>) – Number of jobs to run in parallel.
 <code class="docutils literal notranslate"><span class="pre">None</span></code> means 1 unless in a <code class="xref py py-obj docutils literal notranslate"><span class="pre">joblib.parallel_backend</span></code>
 context.
 <code class="docutils literal notranslate"><span class="pre">-1</span></code> means using all processors. See
-<a class="reference external" href="https://scikit-learn.org/stable/glossary.html#term-n_jobs" title="(in scikit-learn v1.2)"><span class="xref std std-term">Glossary</span></a> for more details.</p></li>
+<a class="reference external" href="https://scikit-learn.org/stable/glossary.html#term-n_jobs" title="(in scikit-learn v1.3)"><span class="xref std std-term">Glossary</span></a> for more details.</p></li>
 <li><p><strong>refit</strong> (<a class="reference external" href="https://docs.python.org/3.9/library/functions.html#bool" title="(in Python v3.9)"><em>bool</em></a><em>, </em><a class="reference external" href="https://docs.python.org/3.9/library/stdtypes.html#str" title="(in Python v3.9)"><em>str</em></a><em>, or </em><em>callable</em><em>, </em><em>default=True</em>) – Refit an estimator using the best found parameters on the whole
 dataset.
 For multiple metric evaluation, this needs to be a <cite>str</cite>
@@ -722,7 +788,7 @@ Possible inputs for cv are:
 - None, to use the default 5-fold cross validation,
 - integer, to specify the number of folds in a
 <cite>(Stratified)KFold</cite>,
-- <a class="reference external" href="https://scikit-learn.org/stable/glossary.html#term-CV-splitter" title="(in scikit-learn v1.2)"><span class="xref std std-term">CV splitter</span></a>,
+- <a class="reference external" href="https://scikit-learn.org/stable/glossary.html#term-CV-splitter" title="(in scikit-learn v1.3)"><span class="xref std std-term">CV splitter</span></a>,
 - An iterable yielding (train, test) splits as arrays of
 indices.
 For integer/None inputs, if the estimator is a classifier and
@@ -730,7 +796,7 @@ For integer/None inputs, if the estimator is a classifier and
 is used. In all other cases, <code class="xref py py-class docutils literal notranslate"><span class="pre">KFold</span></code> is used. These
 splitters are instantiated with <cite>shuffle=False</cite> so the splits
 will be the same across calls.
-Refer <a class="reference external" href="https://scikit-learn.org/stable/modules/cross_validation.html#cross-validation" title="(in scikit-learn v1.2)"><span class="xref std std-ref">User Guide</span></a> for the various
+Refer <a class="reference external" href="https://scikit-learn.org/stable/modules/cross_validation.html#cross-validation" title="(in scikit-learn v1.3)"><span class="xref std std-ref">User Guide</span></a> for the various
 cross-validation strategies that can be used here.
 Notice that if cv is not specified, KFold(5) will be used, and your
 training set will not be shuffled in each train-test split. This can
@@ -790,12 +856,12 @@ the best generalization performance.</p></li>
 None for unsupervised learning.</p></li>
 <li><p><strong>groups</strong> (<em>array-like</em><em> of </em><em>shape</em><em> (</em><em>n_samples</em><em>,</em><em>)</em><em>, </em><em>default=None</em>) – Group labels for the samples used while splitting the dataset
 into train/test set. Only used in conjunction with a “Group”
-<a class="reference external" href="https://scikit-learn.org/stable/glossary.html#term-cv" title="(in scikit-learn v1.2)"><span class="xref std std-term">cv</span></a> instance
-(e.g., <a class="reference external" href="https://scikit-learn.org/stable/modules/generated/sklearn.model_selection.GroupKFold.html#sklearn.model_selection.GroupKFold" title="(in scikit-learn v1.2)"><code class="xref py py-class docutils literal notranslate"><span class="pre">GroupKFold</span></code></a>).</p></li>
+<a class="reference external" href="https://scikit-learn.org/stable/glossary.html#term-cv" title="(in scikit-learn v1.3)"><span class="xref std std-term">cv</span></a> instance
+(e.g., <a class="reference external" href="https://scikit-learn.org/stable/modules/generated/sklearn.model_selection.GroupKFold.html#sklearn.model_selection.GroupKFold" title="(in scikit-learn v1.3)"><code class="xref py py-class docutils literal notranslate"><span class="pre">GroupKFold</span></code></a>).</p></li>
 <li><p><strong>**fit_params</strong> – Parameters passed to the <cite>fit</cite> method of the estimator.
 If a fit parameter is an array-like whose length is equal to
 <cite>num_samples</cite> then it will be split across CV groups along with
-<cite>X</cite> and <cite>y</cite>. For example, the <a class="reference external" href="https://scikit-learn.org/stable/glossary.html#term-sample_weight" title="(in scikit-learn v1.2)"><span class="xref std std-term">sample_weight</span></a> parameter
+<cite>X</cite> and <cite>y</cite>. For example, the <a class="reference external" href="https://scikit-learn.org/stable/glossary.html#term-sample_weight" title="(in scikit-learn v1.3)"><span class="xref std std-term">sample_weight</span></a> parameter
 is split because <cite>len(sample_weights) = len(X)</cite>.</p></li>
 </ul>
 </dd>
@@ -832,6 +898,23 @@ the best found parameters.</p>
 </dd>
 <dt class="field-odd">Return type<span class="colon">:</span></dt>
 <dd class="field-odd"><p>ndarray of shape (n_samples,) or (n_samples, n_classes)                 or (n_samples, n_classes * (n_classes-1) / 2)</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sparselm.model_selection.LineSearchCV.get_metadata_routing">
+<span class="sig-name descname"><span class="pre">get_metadata_routing</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#sparselm.model_selection.LineSearchCV.get_metadata_routing" title="Permalink to this definition">#</a></dt>
+<dd><p>Get metadata routing of this object.</p>
+<p>Please check <a class="reference external" href="https://scikit-learn.org/stable/metadata_routing.html#metadata-routing" title="(in scikit-learn v1.3)"><span class="xref std std-ref">User Guide</span></a> on how the routing
+mechanism works.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>routing</strong> – A <code class="xref py py-class docutils literal notranslate"><span class="pre">MetadataRequest</span></code> encapsulating
+routing information.</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>MetadataRequest</p>
 </dd>
 </dl>
 </dd></dl>
@@ -878,7 +961,7 @@ estimator with the best found parameters.</p>
 <dl class="py property">
 <dt class="sig sig-object py" id="sparselm.model_selection.LineSearchCV.n_features_in_">
 <em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">n_features_in_</span></span><a class="headerlink" href="#sparselm.model_selection.LineSearchCV.n_features_in_" title="Permalink to this definition">#</a></dt>
-<dd><p>Number of features seen during <a class="reference external" href="https://scikit-learn.org/stable/glossary.html#term-fit" title="(in scikit-learn v1.2)"><span class="xref std std-term">fit</span></a>.</p>
+<dd><p>Number of features seen during <a class="reference external" href="https://scikit-learn.org/stable/glossary.html#term-fit" title="(in scikit-learn v1.3)"><span class="xref std std-term">fit</span></a>.</p>
 <p>Only available when <cite>refit=True</cite>.</p>
 </dd></dl>
 
@@ -917,7 +1000,7 @@ underlying estimator.</p>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
 <dd class="field-even"><p><strong>y_pred</strong> – Predicted class log-probabilities for <cite>X</cite> based on the estimator
 with the best found parameters. The order of the classes
-corresponds to that in the fitted attribute <a class="reference external" href="https://scikit-learn.org/stable/glossary.html#term-classes_" title="(in scikit-learn v1.2)"><span class="xref std std-term">classes_</span></a>.</p>
+corresponds to that in the fitted attribute <a class="reference external" href="https://scikit-learn.org/stable/glossary.html#term-classes_" title="(in scikit-learn v1.3)"><span class="xref std std-term">classes_</span></a>.</p>
 </dd>
 <dt class="field-odd">Return type<span class="colon">:</span></dt>
 <dd class="field-odd"><p>ndarray of shape (n_samples,) or (n_samples, n_classes)</p>
@@ -939,7 +1022,7 @@ underlying estimator.</p>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
 <dd class="field-even"><p><strong>y_pred</strong> – Predicted class probabilities for <cite>X</cite> based on the estimator with
 the best found parameters. The order of the classes corresponds
-to that in the fitted attribute <a class="reference external" href="https://scikit-learn.org/stable/glossary.html#term-classes_" title="(in scikit-learn v1.2)"><span class="xref std std-term">classes_</span></a>.</p>
+to that in the fitted attribute <a class="reference external" href="https://scikit-learn.org/stable/glossary.html#term-classes_" title="(in scikit-learn v1.3)"><span class="xref std std-term">classes_</span></a>.</p>
 </dd>
 <dt class="field-odd">Return type<span class="colon">:</span></dt>
 <dd class="field-odd"><p>ndarray of shape (n_samples,) or (n_samples, n_classes)</p>
@@ -996,11 +1079,54 @@ of the underlying estimator.</p>
 </dd></dl>
 
 <dl class="py method">
+<dt class="sig sig-object py" id="sparselm.model_selection.LineSearchCV.set_fit_request">
+<span class="sig-name descname"><span class="pre">set_fit_request</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">groups</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'$UNCHANGED$'</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sparselm.model_selection.LineSearchCV.set_fit_request" title="Permalink to this definition">#</a></dt>
+<dd><p>Request metadata passed to the <code class="docutils literal notranslate"><span class="pre">fit</span></code> method.</p>
+<p>Note that this method is only relevant if
+<code class="docutils literal notranslate"><span class="pre">enable_metadata_routing=True</span></code> (see <a class="reference external" href="https://scikit-learn.org/stable/modules/generated/sklearn.set_config.html#sklearn.set_config" title="(in scikit-learn v1.3)"><code class="xref py py-func docutils literal notranslate"><span class="pre">sklearn.set_config()</span></code></a>).
+Please see <a class="reference external" href="https://scikit-learn.org/stable/metadata_routing.html#metadata-routing" title="(in scikit-learn v1.3)"><span class="xref std std-ref">User Guide</span></a> on how the routing
+mechanism works.</p>
+<p>The options for each parameter are:</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">True</span></code>: metadata is requested, and passed to <code class="docutils literal notranslate"><span class="pre">fit</span></code> if provided. The request is ignored if metadata is not provided.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">False</span></code>: metadata is not requested and the meta-estimator will not pass it to <code class="docutils literal notranslate"><span class="pre">fit</span></code>.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">None</span></code>: metadata is not requested, and the meta-estimator will raise an error if the user provides it.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">str</span></code>: metadata should be passed to the meta-estimator with this given alias instead of the original name.</p></li>
+</ul>
+<p>The default (<code class="docutils literal notranslate"><span class="pre">sklearn.utils.metadata_routing.UNCHANGED</span></code>) retains the
+existing request. This allows you to change the request for some
+parameters and not others.</p>
+<div class="versionadded">
+<p><span class="versionmodified added">New in version 1.3.</span></p>
+</div>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>This method is only relevant if this estimator is used as a
+sub-estimator of a meta-estimator, e.g. used inside a
+<code class="xref py py-class docutils literal notranslate"><span class="pre">pipeline.Pipeline</span></code>. Otherwise it has no effect.</p>
+</div>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>groups</strong> (<a class="reference external" href="https://docs.python.org/3.9/library/stdtypes.html#str" title="(in Python v3.9)"><em>str</em></a><em>, </em><em>True</em><em>, </em><em>False</em><em>, or </em><em>None</em><em>,                     </em><em>default=sklearn.utils.metadata_routing.UNCHANGED</em>) – Metadata routing for <code class="docutils literal notranslate"><span class="pre">groups</span></code> parameter in <code class="docutils literal notranslate"><span class="pre">fit</span></code>.</p></li>
+<li><p><strong>self</strong> (<a class="reference internal" href="#sparselm.model_selection.LineSearchCV" title="sparselm.model_selection.LineSearchCV"><em>LineSearchCV</em></a>) – </p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p><strong>self</strong> – The updated object.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3.9/library/functions.html#object" title="(in Python v3.9)">object</a></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
 <dt class="sig sig-object py" id="sparselm.model_selection.LineSearchCV.set_params">
 <span class="sig-name descname"><span class="pre">set_params</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">params</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sparselm.model_selection.LineSearchCV.set_params" title="Permalink to this definition">#</a></dt>
 <dd><p>Set the parameters of this estimator.</p>
 <p>The method works on simple estimators as well as on nested objects
-(such as <a class="reference external" href="https://scikit-learn.org/stable/modules/generated/sklearn.pipeline.Pipeline.html#sklearn.pipeline.Pipeline" title="(in scikit-learn v1.2)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Pipeline</span></code></a>). The latter have
+(such as <a class="reference external" href="https://scikit-learn.org/stable/modules/generated/sklearn.pipeline.Pipeline.html#sklearn.pipeline.Pipeline" title="(in scikit-learn v1.3)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Pipeline</span></code></a>). The latter have
 parameters of the form <code class="docutils literal notranslate"><span class="pre">&lt;component&gt;__&lt;parameter&gt;</span></code> so that it’s
 possible to update each component of a nested object.</p>
 <dl class="field-list simple">
@@ -1100,6 +1226,7 @@ the best found parameters.</p>
 <li><a class="reference internal" href="#sparselm.model_selection.GridSearchCV.fit"><code class="docutils literal notranslate"><span class="pre">GridSearchCV.fit()</span></code></a></li>
 <li><a class="reference internal" href="#sparselm.model_selection.GridSearchCV.classes_"><code class="docutils literal notranslate"><span class="pre">GridSearchCV.classes_</span></code></a></li>
 <li><a class="reference internal" href="#sparselm.model_selection.GridSearchCV.decision_function"><code class="docutils literal notranslate"><span class="pre">GridSearchCV.decision_function()</span></code></a></li>
+<li><a class="reference internal" href="#sparselm.model_selection.GridSearchCV.get_metadata_routing"><code class="docutils literal notranslate"><span class="pre">GridSearchCV.get_metadata_routing()</span></code></a></li>
 <li><a class="reference internal" href="#sparselm.model_selection.GridSearchCV.get_params"><code class="docutils literal notranslate"><span class="pre">GridSearchCV.get_params()</span></code></a></li>
 <li><a class="reference internal" href="#sparselm.model_selection.GridSearchCV.inverse_transform"><code class="docutils literal notranslate"><span class="pre">GridSearchCV.inverse_transform()</span></code></a></li>
 <li><a class="reference internal" href="#sparselm.model_selection.GridSearchCV.n_features_in_"><code class="docutils literal notranslate"><span class="pre">GridSearchCV.n_features_in_</span></code></a></li>
@@ -1108,6 +1235,7 @@ the best found parameters.</p>
 <li><a class="reference internal" href="#sparselm.model_selection.GridSearchCV.predict_proba"><code class="docutils literal notranslate"><span class="pre">GridSearchCV.predict_proba()</span></code></a></li>
 <li><a class="reference internal" href="#sparselm.model_selection.GridSearchCV.score"><code class="docutils literal notranslate"><span class="pre">GridSearchCV.score()</span></code></a></li>
 <li><a class="reference internal" href="#sparselm.model_selection.GridSearchCV.score_samples"><code class="docutils literal notranslate"><span class="pre">GridSearchCV.score_samples()</span></code></a></li>
+<li><a class="reference internal" href="#sparselm.model_selection.GridSearchCV.set_fit_request"><code class="docutils literal notranslate"><span class="pre">GridSearchCV.set_fit_request()</span></code></a></li>
 <li><a class="reference internal" href="#sparselm.model_selection.GridSearchCV.set_params"><code class="docutils literal notranslate"><span class="pre">GridSearchCV.set_params()</span></code></a></li>
 <li><a class="reference internal" href="#sparselm.model_selection.GridSearchCV.transform"><code class="docutils literal notranslate"><span class="pre">GridSearchCV.transform()</span></code></a></li>
 </ul>
@@ -1116,6 +1244,7 @@ the best found parameters.</p>
 <li><a class="reference internal" href="#sparselm.model_selection.LineSearchCV.fit"><code class="docutils literal notranslate"><span class="pre">LineSearchCV.fit()</span></code></a></li>
 <li><a class="reference internal" href="#sparselm.model_selection.LineSearchCV.classes_"><code class="docutils literal notranslate"><span class="pre">LineSearchCV.classes_</span></code></a></li>
 <li><a class="reference internal" href="#sparselm.model_selection.LineSearchCV.decision_function"><code class="docutils literal notranslate"><span class="pre">LineSearchCV.decision_function()</span></code></a></li>
+<li><a class="reference internal" href="#sparselm.model_selection.LineSearchCV.get_metadata_routing"><code class="docutils literal notranslate"><span class="pre">LineSearchCV.get_metadata_routing()</span></code></a></li>
 <li><a class="reference internal" href="#sparselm.model_selection.LineSearchCV.get_params"><code class="docutils literal notranslate"><span class="pre">LineSearchCV.get_params()</span></code></a></li>
 <li><a class="reference internal" href="#sparselm.model_selection.LineSearchCV.inverse_transform"><code class="docutils literal notranslate"><span class="pre">LineSearchCV.inverse_transform()</span></code></a></li>
 <li><a class="reference internal" href="#sparselm.model_selection.LineSearchCV.n_features_in_"><code class="docutils literal notranslate"><span class="pre">LineSearchCV.n_features_in_</span></code></a></li>
@@ -1124,6 +1253,7 @@ the best found parameters.</p>
 <li><a class="reference internal" href="#sparselm.model_selection.LineSearchCV.predict_proba"><code class="docutils literal notranslate"><span class="pre">LineSearchCV.predict_proba()</span></code></a></li>
 <li><a class="reference internal" href="#sparselm.model_selection.LineSearchCV.score"><code class="docutils literal notranslate"><span class="pre">LineSearchCV.score()</span></code></a></li>
 <li><a class="reference internal" href="#sparselm.model_selection.LineSearchCV.score_samples"><code class="docutils literal notranslate"><span class="pre">LineSearchCV.score_samples()</span></code></a></li>
+<li><a class="reference internal" href="#sparselm.model_selection.LineSearchCV.set_fit_request"><code class="docutils literal notranslate"><span class="pre">LineSearchCV.set_fit_request()</span></code></a></li>
 <li><a class="reference internal" href="#sparselm.model_selection.LineSearchCV.set_params"><code class="docutils literal notranslate"><span class="pre">LineSearchCV.set_params()</span></code></a></li>
 <li><a class="reference internal" href="#sparselm.model_selection.LineSearchCV.transform"><code class="docutils literal notranslate"><span class="pre">LineSearchCV.transform()</span></code></a></li>
 </ul>

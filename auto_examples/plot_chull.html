@@ -1,0 +1,535 @@
+<!doctype html>
+<html class="no-js" lang="en">
+  <head><meta charset="utf-8"/>
+    <meta name="viewport" content="width=device-width,initial-scale=1"/>
+    <meta name="color-scheme" content="light dark"><meta name="viewport" content="width=device-width, initial-scale=1" />
+<link rel="index" title="Index" href="../genindex.html" /><link rel="search" title="Search" href="../search.html" /><link rel="next" title="Contributing" href="../contributing.html" /><link rel="prev" title="(Sparse) Group regression" href="plot_gl_sgl.html" />
+
+    <!-- Generated with Sphinx 7.0.1 and Furo 2023.05.20 -->
+        <title>Adding solution constraints - sparse-lm</title>
+      <link rel="stylesheet" type="text/css" href="../_static/pygments.css" />
+    <link rel="stylesheet" type="text/css" href="../_static/styles/furo.css?digest=e6660623a769aa55fea372102b9bf3151b292993" />
+    <link rel="stylesheet" type="text/css" href="../_static/sg_gallery.css" />
+    <link rel="stylesheet" type="text/css" href="../_static/sg_gallery-binder.css" />
+    <link rel="stylesheet" type="text/css" href="../_static/sg_gallery-dataframe.css" />
+    <link rel="stylesheet" type="text/css" href="../_static/sg_gallery-rendered-html.css" />
+    <link rel="stylesheet" type="text/css" href="../_static/styles/furo-extensions.css?digest=30d1aed668e5c3a91c3e3bf6a60b675221979f0e" />
+    <link rel="stylesheet" type="text/css" href="../_static/custom.css" />
+    
+    
+
+
+<style>
+  body {
+    --color-code-background: #eeffcc;
+  --color-code-foreground: black;
+  --admonition-font-size: 92%;
+  --admonition-title-font-size: 92%;
+  --font-stack: Lato,-apple-system,BlinkMacSystemFont,Segoe UI,Helvetica,Arial,sans-serif,Apple Color Emoji,Segoe UI Emoji;
+  --font-size--small: 92%;
+  --font-size--small--2: 87.5%;
+  --font-size--small--3: 87.5%;
+  --font-size--small--4: 87.5%;
+  
+  }
+  @media not print {
+    body[data-theme="dark"] {
+      --color-code-background: #272822;
+  --color-code-foreground: #f8f8f2;
+  --admonition-font-size: 92%;
+  --admonition-title-font-size: 92%;
+  --font-stack: Lato,-apple-system,BlinkMacSystemFont,Segoe UI,Helvetica,Arial,sans-serif,Apple Color Emoji,Segoe UI Emoji;
+  --font-size--small: 92%;
+  --font-size--small--2: 87.5%;
+  --font-size--small--3: 87.5%;
+  --font-size--small--4: 87.5%;
+  
+    }
+    @media (prefers-color-scheme: dark) {
+      body:not([data-theme="light"]) {
+        --color-code-background: #272822;
+  --color-code-foreground: #f8f8f2;
+  --admonition-font-size: 92%;
+  --admonition-title-font-size: 92%;
+  --font-stack: Lato,-apple-system,BlinkMacSystemFont,Segoe UI,Helvetica,Arial,sans-serif,Apple Color Emoji,Segoe UI Emoji;
+  --font-size--small: 92%;
+  --font-size--small--2: 87.5%;
+  --font-size--small--3: 87.5%;
+  --font-size--small--4: 87.5%;
+  
+      }
+    }
+  }
+</style></head>
+  <body>
+    
+    <script>
+      document.body.dataset.theme = localStorage.getItem("theme") || "auto";
+    </script>
+    
+
+<svg xmlns="http://www.w3.org/2000/svg" style="display: none;">
+  <symbol id="svg-toc" viewBox="0 0 24 24">
+    <title>Contents</title>
+    <svg stroke="currentColor" fill="currentColor" stroke-width="0" viewBox="0 0 1024 1024">
+      <path d="M408 442h480c4.4 0 8-3.6 8-8v-56c0-4.4-3.6-8-8-8H408c-4.4 0-8 3.6-8 8v56c0 4.4 3.6 8 8 8zm-8 204c0 4.4 3.6 8 8 8h480c4.4 0 8-3.6 8-8v-56c0-4.4-3.6-8-8-8H408c-4.4 0-8 3.6-8 8v56zm504-486H120c-4.4 0-8 3.6-8 8v56c0 4.4 3.6 8 8 8h784c4.4 0 8-3.6 8-8v-56c0-4.4-3.6-8-8-8zm0 632H120c-4.4 0-8 3.6-8 8v56c0 4.4 3.6 8 8 8h784c4.4 0 8-3.6 8-8v-56c0-4.4-3.6-8-8-8zM115.4 518.9L271.7 642c5.8 4.6 14.4.5 14.4-6.9V388.9c0-7.4-8.5-11.5-14.4-6.9L115.4 505.1a8.74 8.74 0 0 0 0 13.8z"/>
+    </svg>
+  </symbol>
+  <symbol id="svg-menu" viewBox="0 0 24 24">
+    <title>Menu</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather-menu">
+      <line x1="3" y1="12" x2="21" y2="12"></line>
+      <line x1="3" y1="6" x2="21" y2="6"></line>
+      <line x1="3" y1="18" x2="21" y2="18"></line>
+    </svg>
+  </symbol>
+  <symbol id="svg-arrow-right" viewBox="0 0 24 24">
+    <title>Expand</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather-chevron-right">
+      <polyline points="9 18 15 12 9 6"></polyline>
+    </svg>
+  </symbol>
+  <symbol id="svg-sun" viewBox="0 0 24 24">
+    <title>Light mode</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="feather-sun">
+      <circle cx="12" cy="12" r="5"></circle>
+      <line x1="12" y1="1" x2="12" y2="3"></line>
+      <line x1="12" y1="21" x2="12" y2="23"></line>
+      <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+      <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+      <line x1="1" y1="12" x2="3" y2="12"></line>
+      <line x1="21" y1="12" x2="23" y2="12"></line>
+      <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+      <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+    </svg>
+  </symbol>
+  <symbol id="svg-moon" viewBox="0 0 24 24">
+    <title>Dark mode</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="icon-tabler-moon">
+      <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+      <path d="M12 3c.132 0 .263 0 .393 0a7.5 7.5 0 0 0 7.92 12.446a9 9 0 1 1 -8.313 -12.454z" />
+    </svg>
+  </symbol>
+  <symbol id="svg-sun-half" viewBox="0 0 24 24">
+    <title>Auto light/dark mode</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="icon-tabler-shadow">
+      <path stroke="none" d="M0 0h24v24H0z" fill="none"/>
+      <circle cx="12" cy="12" r="9" />
+      <path d="M13 12h5" />
+      <path d="M13 15h4" />
+      <path d="M13 18h1" />
+      <path d="M13 9h4" />
+      <path d="M13 6h1" />
+    </svg>
+  </symbol>
+</svg>
+
+<input type="checkbox" class="sidebar-toggle" name="__navigation" id="__navigation">
+<input type="checkbox" class="sidebar-toggle" name="__toc" id="__toc">
+<label class="overlay sidebar-overlay" for="__navigation">
+  <div class="visually-hidden">Hide navigation sidebar</div>
+</label>
+<label class="overlay toc-overlay" for="__toc">
+  <div class="visually-hidden">Hide table of contents sidebar</div>
+</label>
+
+
+
+<div class="page">
+  <header class="mobile-header">
+    <div class="header-left">
+      <label class="nav-overlay-icon" for="__navigation">
+        <div class="visually-hidden">Toggle site navigation sidebar</div>
+        <i class="icon"><svg><use href="#svg-menu"></use></svg></i>
+      </label>
+    </div>
+    <div class="header-center">
+      <a href="../index.html"><div class="brand">sparse-lm</div></a>
+    </div>
+    <div class="header-right">
+      <div class="theme-toggle-container theme-toggle-header">
+        <button class="theme-toggle">
+          <div class="visually-hidden">Toggle Light / Dark / Auto color theme</div>
+          <svg class="theme-icon-when-auto"><use href="#svg-sun-half"></use></svg>
+          <svg class="theme-icon-when-dark"><use href="#svg-moon"></use></svg>
+          <svg class="theme-icon-when-light"><use href="#svg-sun"></use></svg>
+        </button>
+      </div>
+      <label class="toc-overlay-icon toc-header-icon no-toc" for="__toc">
+        <div class="visually-hidden">Toggle table of contents sidebar</div>
+        <i class="icon"><svg><use href="#svg-toc"></use></svg></i>
+      </label>
+    </div>
+  </header>
+  <aside class="sidebar-drawer">
+    <div class="sidebar-container">
+      
+      <div class="sidebar-sticky"><a class="sidebar-brand" href="../index.html">
+  
+  
+  <span class="sidebar-brand-text">sparse-lm</span>
+  
+</a><form class="sidebar-search-container" method="get" action="../search.html" role="search">
+  <input class="sidebar-search" placeholder="Search" name="q" aria-label="Search">
+  <input type="hidden" name="check_keywords" value="yes">
+  <input type="hidden" name="area" value="default">
+</form>
+<div id="searchbox"></div><div class="sidebar-scroll"><div class="sidebar-tree">
+  <p class="caption" role="heading"><span class="caption-text">Getting Started</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../install.html">Install</a></li>
+<li class="toctree-l1 current has-children"><a class="reference internal" href="index.html">Examples</a><input checked="" class="toctree-checkbox" id="toctree-checkbox-1" name="toctree-checkbox-1" role="switch" type="checkbox"/><label for="toctree-checkbox-1"><div class="visually-hidden">Toggle navigation of Examples</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="plot_sparse_signal.html">Recovering sparse signals</a></li>
+<li class="toctree-l2"><a class="reference internal" href="plot_adaptive.html">Using adaptive regularization</a></li>
+<li class="toctree-l2"><a class="reference internal" href="plot_gl_sgl.html">(Sparse) Group regression</a></li>
+<li class="toctree-l2 current current-page"><a class="current reference internal" href="#">Adding solution constraints</a></li>
+</ul>
+</li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Information</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../contributing.html">Contributing</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../license.html">License</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://github.com/CederGroupHub/sparse-lm">GitHub</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Reference</span></p>
+<ul>
+<li class="toctree-l1 has-children"><a class="reference internal" href="../api.html">API</a><input class="toctree-checkbox" id="toctree-checkbox-2" name="toctree-checkbox-2" role="switch" type="checkbox"/><label for="toctree-checkbox-2"><div class="visually-hidden">Toggle navigation of API</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
+<li class="toctree-l2"><a class="reference internal" href="../sparselm.model.html">sparselm.model</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../sparselm.stepwise.html">sparselm.stepwise</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../sparselm.model_selection.html">sparselm.model_selection</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../sparselm.tools.html">sparselm.tools</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../genindex.html">Index</a></li>
+</ul>
+
+</div>
+</div>
+
+      </div>
+      
+    </div>
+  </aside>
+  <div class="main">
+    <div class="content">
+      <div class="article-container">
+        <a href="#" class="back-to-top muted-link">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+            <path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8v12z"></path>
+          </svg>
+          <span>Back to top</span>
+        </a>
+        <div class="content-icon-container">
+          
+<div class="theme-toggle-container theme-toggle-content">
+            <button class="theme-toggle">
+              <div class="visually-hidden">Toggle Light / Dark / Auto color theme</div>
+              <svg class="theme-icon-when-auto"><use href="#svg-sun-half"></use></svg>
+              <svg class="theme-icon-when-dark"><use href="#svg-moon"></use></svg>
+              <svg class="theme-icon-when-light"><use href="#svg-sun"></use></svg>
+            </button>
+          </div>
+          <label class="toc-overlay-icon toc-content-icon no-toc" for="__toc">
+            <div class="visually-hidden">Toggle table of contents sidebar</div>
+            <i class="icon"><svg><use href="#svg-toc"></use></svg></i>
+          </label>
+        </div>
+        <article role="main">
+          <div class="sphx-glr-download-link-note admonition note">
+<p class="admonition-title">Note</p>
+<p><a class="reference internal" href="#sphx-glr-download-auto-examples-plot-chull-py"><span class="std std-ref">Go to the end</span></a>
+to download the full example code</p>
+</div>
+<section class="sphx-glr-example-title" id="adding-solution-constraints">
+<span id="sphx-glr-auto-examples-plot-chull-py"></span><h1>Adding solution constraints<a class="headerlink" href="#adding-solution-constraints" title="Permalink to this heading">#</a></h1>
+<p><strong>sparse-lm</strong> allows including external solution constraints to the regression objective
+by exposing the underlying <strong>cvxpy</strong> problem objects. This is useful to solve regression
+problems with additional constraints, such as non-negativity.</p>
+<p><strong>NOTE</strong>: That this functionality does not fully align with the requirements for
+compatible scikit-learn estimators, meaning that using an estimator with additional
+constraints added in a ski-kit learn pipeline or model selection is not supported.</p>
+<p>To show how to include constraints, we will solve a common problem in materials science:
+predicting the formation energy of many configurations of an alloy. In such problems,
+it is usually very important to ensure that the predicted formation energies for
+“ground-states” (i.e. energies that define the lower convex-hull of the energy vs
+composition graph) remain on the convex-hull. Similarly, it is often important to
+ensure that the predicted formation energies that are not “ground-states” in the
+training data remain above the predicted convex-hull.</p>
+<p>The example follows the methodology described in this paper:
+<a class="reference external" href="https://www.nature.com/articles/s41524-017-0032-0">https://www.nature.com/articles/s41524-017-0032-0</a></p>
+<p>This example requires the <strong>pymatgen</strong> materials analysis package to be
+installed to easily plot convex-hulls: <a class="reference external" href="https://pymatgen.org/installation.html">https://pymatgen.org/installation.html</a></p>
+<p>The training data used in this example is taken from this
+tutorial: <a class="reference external" href="https://icet.materialsmodeling.org/tutorial.zip">https://icet.materialsmodeling.org/tutorial.zip</a> for the
+<strong>icet</strong> cluster expansion Python package (<a class="reference external" href="https://icet.materialsmodeling.org/">https://icet.materialsmodeling.org/</a>).</p>
+<ul class="sphx-glr-horizontal">
+<li><img src="../_images/sphx_glr_plot_chull_001.png" srcset="../_images/sphx_glr_plot_chull_001.png" alt="plot chull" class = "sphx-glr-multi-img"/></li>
+<li><img src="../_images/sphx_glr_plot_chull_002.png" srcset="../_images/sphx_glr_plot_chull_002.png" alt="plot chull" class = "sphx-glr-multi-img"/></li>
+<li><img src="../_images/sphx_glr_plot_chull_003.png" srcset="../_images/sphx_glr_plot_chull_003.png" alt="plot chull" class = "sphx-glr-multi-img"/></li>
+<li><img src="../_images/sphx_glr_plot_chull_004.png" srcset="../_images/sphx_glr_plot_chull_004.png" alt="plot chull" class = "sphx-glr-multi-img"/></li>
+<li><img src="../_images/sphx_glr_plot_chull_005.png" srcset="../_images/sphx_glr_plot_chull_005.png" alt="plot chull" class = "sphx-glr-multi-img"/></li>
+</ul>
+<div class="sphx-glr-script-out highlight-none notranslate"><div class="highlight"><pre><span></span>Lasso train RMSE:                 0.0028
+L2L0 train RMSE:                  0.0030
+L2L0 with constraings train RMSE: 0.0037
+</pre></div>
+</div>
+<div class="line-block">
+<div class="line"><br /></div>
+</div>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">json</span>
+
+<span class="kn">import</span> <span class="nn">matplotlib.pyplot</span> <span class="k">as</span> <span class="nn">plt</span>
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span class="kn">import</span> <span class="nn">pymatgen.analysis.phase_diagram</span> <span class="k">as</span> <span class="nn">pd</span>
+<span class="kn">from</span> <span class="nn">pymatgen.core</span> <span class="kn">import</span> <span class="n">Structure</span>
+<span class="kn">from</span> <span class="nn">sklearn.linear_model</span> <span class="kn">import</span> <span class="n">Lasso</span>
+<span class="kn">from</span> <span class="nn">sklearn.metrics</span> <span class="kn">import</span> <span class="n">mean_squared_error</span>
+
+<span class="kn">from</span> <span class="nn">sparselm.model</span> <span class="kn">import</span> <span class="n">L2L0</span>
+
+<span class="c1"># load training data</span>
+<a href="https://numpy.org/doc/stable/reference/generated/numpy.ndarray.html#numpy.ndarray" title="numpy.ndarray" class="sphx-glr-backref-module-numpy sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">X</span></a><span class="p">,</span> <a href="https://numpy.org/doc/stable/reference/generated/numpy.ndarray.html#numpy.ndarray" title="numpy.ndarray" class="sphx-glr-backref-module-numpy sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">y</span></a> <span class="o">=</span> <a href="https://numpy.org/doc/stable/reference/generated/numpy.load.html#numpy.load" title="numpy.load" class="sphx-glr-backref-module-numpy sphx-glr-backref-type-py-function"><span class="n">np</span><span class="o">.</span><span class="n">load</span></a><span class="p">(</span><span class="s2">&quot;corr.npy&quot;</span><span class="p">),</span> <a href="https://numpy.org/doc/stable/reference/generated/numpy.load.html#numpy.load" title="numpy.load" class="sphx-glr-backref-module-numpy sphx-glr-backref-type-py-function"><span class="n">np</span><span class="o">.</span><span class="n">load</span></a><span class="p">(</span><span class="s2">&quot;energy.npy&quot;</span><span class="p">)</span>
+
+<span class="c1"># load corresponding structure objects</span>
+<span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="s2">&quot;structures.json&quot;</span><span class="p">)</span> <span class="k">as</span> <a href="https://docs.python.org/3.9/library/io.html#io.TextIOWrapper" title="io.TextIOWrapper" class="sphx-glr-backref-module-io sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">fp</span></a><span class="p">:</span>
+    <a href="https://docs.python.org/3.9/library/stdtypes.html#list" title="builtins.list" class="sphx-glr-backref-module-builtins sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">structures</span></a> <span class="o">=</span> <a href="https://docs.python.org/3.9/library/json.html#json.load" title="json.load" class="sphx-glr-backref-module-json sphx-glr-backref-type-py-function"><span class="n">json</span><span class="o">.</span><span class="n">load</span></a><span class="p">(</span><a href="https://docs.python.org/3.9/library/io.html#io.TextIOWrapper" title="io.TextIOWrapper" class="sphx-glr-backref-module-io sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">fp</span></a><span class="p">)</span>
+
+<a href="https://docs.python.org/3.9/library/stdtypes.html#list" title="builtins.list" class="sphx-glr-backref-module-builtins sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">structures</span></a> <span class="o">=</span> <span class="p">[</span><span class="n">Structure</span><span class="o">.</span><span class="n">from_dict</span><span class="p">(</span><span class="n">s</span><span class="p">)</span> <span class="k">for</span> <span class="n">s</span> <span class="ow">in</span> <a href="https://docs.python.org/3.9/library/stdtypes.html#list" title="builtins.list" class="sphx-glr-backref-module-builtins sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">structures</span></a><span class="p">]</span>
+
+<span class="c1"># create regressors (the hyperparameters have already been tuned)</span>
+<span class="n">lasso_regressor</span> <span class="o">=</span> <span class="n">Lasso</span><span class="p">(</span><span class="n">fit_intercept</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">alpha</span><span class="o">=</span><span class="mf">1.29e-5</span><span class="p">)</span>
+<span class="c1"># alpha is the pseudo-l0 norm hyperparameter and eta is the l2-norm hyperparameter</span>
+<span class="n">l2l0_regressor</span> <span class="o">=</span> <span class="n">L2L0</span><span class="p">(</span>
+    <span class="n">fit_intercept</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+    <span class="n">alpha</span><span class="o">=</span><span class="mf">3.16e-7</span><span class="p">,</span>
+    <span class="n">eta</span><span class="o">=</span><span class="mf">1.66e-6</span><span class="p">,</span>
+    <span class="n">solver</span><span class="o">=</span><span class="s2">&quot;GUROBI&quot;</span><span class="p">,</span>
+    <span class="n">solver_options</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;Threads&quot;</span><span class="p">:</span> <span class="mi">4</span><span class="p">},</span>
+<span class="p">)</span>
+
+<span class="c1"># fit models</span>
+<span class="n">lasso_regressor</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><a href="https://numpy.org/doc/stable/reference/generated/numpy.ndarray.html#numpy.ndarray" title="numpy.ndarray" class="sphx-glr-backref-module-numpy sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">X</span></a><span class="p">,</span> <a href="https://numpy.org/doc/stable/reference/generated/numpy.ndarray.html#numpy.ndarray" title="numpy.ndarray" class="sphx-glr-backref-module-numpy sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">y</span></a><span class="p">)</span>
+<span class="n">l2l0_regressor</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><a href="https://numpy.org/doc/stable/reference/generated/numpy.ndarray.html#numpy.ndarray" title="numpy.ndarray" class="sphx-glr-backref-module-numpy sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">X</span></a><span class="p">,</span> <a href="https://numpy.org/doc/stable/reference/generated/numpy.ndarray.html#numpy.ndarray" title="numpy.ndarray" class="sphx-glr-backref-module-numpy sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">y</span></a><span class="p">)</span>
+
+<span class="c1"># create phase diagram entries with training data</span>
+<a href="https://docs.python.org/3.9/library/stdtypes.html#list" title="builtins.list" class="sphx-glr-backref-module-builtins sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">training_entries</span></a> <span class="o">=</span> <span class="p">[]</span>
+<span class="k">for</span> <a href="https://docs.python.org/3.9/library/functions.html#int" title="builtins.int" class="sphx-glr-backref-module-builtins sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">i</span></a><span class="p">,</span> <span class="n">structure</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><a href="https://docs.python.org/3.9/library/stdtypes.html#list" title="builtins.list" class="sphx-glr-backref-module-builtins sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">structures</span></a><span class="p">):</span>
+    <a href="https://numpy.org/doc/stable/reference/generated/numpy.ndarray.html#numpy.ndarray" title="numpy.ndarray" class="sphx-glr-backref-module-numpy sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">corrs</span></a> <span class="o">=</span> <a href="https://numpy.org/doc/stable/reference/generated/numpy.ndarray.html#numpy.ndarray" title="numpy.ndarray" class="sphx-glr-backref-module-numpy sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">X</span></a><span class="p">[</span>
+        <a href="https://docs.python.org/3.9/library/functions.html#int" title="builtins.int" class="sphx-glr-backref-module-builtins sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">i</span></a>
+    <span class="p">]</span>  <span class="c1"># in this problem the features of a sample are referred to as correlation vectors</span>
+    <a href="https://numpy.org/doc/stable/reference/arrays.scalars.html#numpy.float64" title="numpy.float64" class="sphx-glr-backref-module-numpy sphx-glr-backref-type-py-attribute"><span class="n">energy</span></a> <span class="o">=</span> <a href="https://numpy.org/doc/stable/reference/generated/numpy.ndarray.html#numpy.ndarray" title="numpy.ndarray" class="sphx-glr-backref-module-numpy sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">y</span></a><span class="p">[</span><a href="https://docs.python.org/3.9/library/functions.html#int" title="builtins.int" class="sphx-glr-backref-module-builtins sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">i</span></a><span class="p">]</span> <span class="o">*</span> <span class="nb">len</span><span class="p">(</span>
+        <span class="n">structure</span>
+    <span class="p">)</span>  <span class="c1"># the energy must be scaled by size to create the phase diagram</span>
+    <span class="n">entry</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">PDEntry</span><span class="p">(</span>
+        <span class="n">structure</span><span class="o">.</span><span class="n">composition</span><span class="p">,</span>
+        <a href="https://numpy.org/doc/stable/reference/arrays.scalars.html#numpy.float64" title="numpy.float64" class="sphx-glr-backref-module-numpy sphx-glr-backref-type-py-attribute"><span class="n">energy</span></a><span class="p">,</span>
+        <span class="n">attribute</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;corrs&quot;</span><span class="p">:</span> <a href="https://numpy.org/doc/stable/reference/generated/numpy.ndarray.html#numpy.ndarray" title="numpy.ndarray" class="sphx-glr-backref-module-numpy sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">corrs</span></a><span class="p">,</span> <span class="s2">&quot;size&quot;</span><span class="p">:</span> <span class="nb">len</span><span class="p">(</span><span class="n">structure</span><span class="p">)},</span>
+    <span class="p">)</span>
+    <a href="https://docs.python.org/3.9/library/stdtypes.html#list" title="builtins.list" class="sphx-glr-backref-module-builtins sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">training_entries</span></a><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">entry</span><span class="p">)</span>
+
+<span class="c1"># plot the training (true) phase diagram</span>
+<span class="n">training_pd</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">PhaseDiagram</span><span class="p">(</span><a href="https://docs.python.org/3.9/library/stdtypes.html#list" title="builtins.list" class="sphx-glr-backref-module-builtins sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">training_entries</span></a><span class="p">)</span>
+<span class="n">pplotter</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">PDPlotter</span><span class="p">(</span><span class="n">training_pd</span><span class="p">,</span> <span class="n">backend</span><span class="o">=</span><span class="s2">&quot;matplotlib&quot;</span><span class="p">,</span> <span class="n">show_unstable</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+<span class="n">pplotter</span><span class="o">.</span><span class="n">show</span><span class="p">(</span><span class="n">label_unstable</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+
+<span class="c1"># plot the phase diagram based on the energies predicted by the Lasso fit</span>
+<a href="https://numpy.org/doc/stable/reference/generated/numpy.ndarray.html#numpy.ndarray" title="numpy.ndarray" class="sphx-glr-backref-module-numpy sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">lasso_y</span></a> <span class="o">=</span> <span class="n">lasso_regressor</span><span class="o">.</span><span class="n">predict</span><span class="p">(</span><a href="https://numpy.org/doc/stable/reference/generated/numpy.ndarray.html#numpy.ndarray" title="numpy.ndarray" class="sphx-glr-backref-module-numpy sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">X</span></a><span class="p">)</span>
+<span class="n">lasso_pd</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">PhaseDiagram</span><span class="p">(</span>
+    <span class="p">[</span>
+        <span class="n">pd</span><span class="o">.</span><span class="n">PDEntry</span><span class="p">(</span><span class="n">s_i</span><span class="o">.</span><span class="n">composition</span><span class="p">,</span> <span class="n">y_i</span> <span class="o">*</span> <span class="nb">len</span><span class="p">(</span><span class="n">s_i</span><span class="p">))</span>
+        <span class="k">for</span> <span class="n">s_i</span><span class="p">,</span> <span class="n">y_i</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><a href="https://docs.python.org/3.9/library/stdtypes.html#list" title="builtins.list" class="sphx-glr-backref-module-builtins sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">structures</span></a><span class="p">,</span> <a href="https://numpy.org/doc/stable/reference/generated/numpy.ndarray.html#numpy.ndarray" title="numpy.ndarray" class="sphx-glr-backref-module-numpy sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">lasso_y</span></a><span class="p">)</span>
+    <span class="p">]</span>
+<span class="p">)</span>
+<span class="n">pplotter</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">PDPlotter</span><span class="p">(</span><span class="n">lasso_pd</span><span class="p">,</span> <span class="n">backend</span><span class="o">=</span><span class="s2">&quot;matplotlib&quot;</span><span class="p">,</span> <span class="n">show_unstable</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+<span class="n">pplotter</span><span class="o">.</span><span class="n">show</span><span class="p">(</span><span class="n">label_unstable</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+
+<span class="c1"># plot the phase diagram based on the energies predicted by the L2L0 fit</span>
+<a href="https://numpy.org/doc/stable/reference/generated/numpy.ndarray.html#numpy.ndarray" title="numpy.ndarray" class="sphx-glr-backref-module-numpy sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">l2l0_y</span></a> <span class="o">=</span> <span class="n">l2l0_regressor</span><span class="o">.</span><span class="n">predict</span><span class="p">(</span><a href="https://numpy.org/doc/stable/reference/generated/numpy.ndarray.html#numpy.ndarray" title="numpy.ndarray" class="sphx-glr-backref-module-numpy sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">X</span></a><span class="p">)</span>
+<span class="n">l2l0_pd</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">PhaseDiagram</span><span class="p">(</span>
+    <span class="p">[</span>
+        <span class="n">pd</span><span class="o">.</span><span class="n">PDEntry</span><span class="p">(</span><span class="n">s_i</span><span class="o">.</span><span class="n">composition</span><span class="p">,</span> <span class="n">y_i</span> <span class="o">*</span> <span class="nb">len</span><span class="p">(</span><span class="n">s_i</span><span class="p">))</span>
+        <span class="k">for</span> <span class="n">s_i</span><span class="p">,</span> <span class="n">y_i</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><a href="https://docs.python.org/3.9/library/stdtypes.html#list" title="builtins.list" class="sphx-glr-backref-module-builtins sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">structures</span></a><span class="p">,</span> <a href="https://numpy.org/doc/stable/reference/generated/numpy.ndarray.html#numpy.ndarray" title="numpy.ndarray" class="sphx-glr-backref-module-numpy sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">l2l0_y</span></a><span class="p">)</span>
+    <span class="p">]</span>
+<span class="p">)</span>
+<span class="n">pplotter</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">PDPlotter</span><span class="p">(</span><span class="n">l2l0_pd</span><span class="p">,</span> <span class="n">backend</span><span class="o">=</span><span class="s2">&quot;matplotlib&quot;</span><span class="p">,</span> <span class="n">show_unstable</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+<span class="n">pplotter</span><span class="o">.</span><span class="n">show</span><span class="p">(</span><span class="n">label_unstable</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+
+<span class="c1"># we notice that both the Lasso fit and the L2L0 fit miss the ground-state Ag5Pd3</span>
+<span class="c1"># and also add spurious ground-states not present in the training convex hull</span>
+
+
+<span class="c1"># create matrices for two types of contraints to keep the predicted hull unchanged</span>
+<span class="c1"># 1) keep non-ground states above the hull</span>
+<span class="c1"># 2) ensure ground-states stay on the hull</span>
+
+<span class="c1"># 1) compute the correlation matrix for unstable structures and</span>
+<span class="c1"># the weighted correlation matrix of the decomposition products</span>
+<a href="https://numpy.org/doc/stable/reference/generated/numpy.ndarray.html#numpy.ndarray" title="numpy.ndarray" class="sphx-glr-backref-module-numpy sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">X_unstable</span></a> <span class="o">=</span> <a href="https://numpy.org/doc/stable/reference/generated/numpy.zeros.html#numpy.zeros" title="numpy.zeros" class="sphx-glr-backref-module-numpy sphx-glr-backref-type-py-function"><span class="n">np</span><span class="o">.</span><span class="n">zeros</span></a><span class="p">(</span><span class="n">shape</span><span class="o">=</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">training_pd</span><span class="o">.</span><span class="n">unstable_entries</span><span class="p">),</span> <a href="https://docs.python.org/3.9/library/stdtypes.html#tuple" title="builtins.tuple" class="sphx-glr-backref-module-builtins sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">X</span><span class="o">.</span><span class="n">shape</span></a><span class="p">[</span><span class="mi">1</span><span class="p">]))</span>
+<a href="https://numpy.org/doc/stable/reference/generated/numpy.ndarray.html#numpy.ndarray" title="numpy.ndarray" class="sphx-glr-backref-module-numpy sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">X_decomp</span></a> <span class="o">=</span> <a href="https://numpy.org/doc/stable/reference/generated/numpy.zeros_like.html#numpy.zeros_like" title="numpy.zeros_like" class="sphx-glr-backref-module-numpy sphx-glr-backref-type-py-function"><span class="n">np</span><span class="o">.</span><span class="n">zeros_like</span></a><span class="p">(</span><a href="https://numpy.org/doc/stable/reference/generated/numpy.ndarray.html#numpy.ndarray" title="numpy.ndarray" class="sphx-glr-backref-module-numpy sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">X_unstable</span></a><span class="p">)</span>
+<span class="k">for</span> <a href="https://docs.python.org/3.9/library/functions.html#int" title="builtins.int" class="sphx-glr-backref-module-builtins sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">i</span></a><span class="p">,</span> <span class="n">entry</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">training_pd</span><span class="o">.</span><span class="n">unstable_entries</span><span class="p">):</span>
+    <span class="k">if</span> <span class="n">entry</span><span class="o">.</span><span class="n">is_element</span><span class="p">:</span>
+        <span class="k">continue</span>
+    <a href="https://numpy.org/doc/stable/reference/generated/numpy.ndarray.html#numpy.ndarray" title="numpy.ndarray" class="sphx-glr-backref-module-numpy sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">X_unstable</span></a><span class="p">[</span><a href="https://docs.python.org/3.9/library/functions.html#int" title="builtins.int" class="sphx-glr-backref-module-builtins sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">i</span></a><span class="p">]</span> <span class="o">=</span> <a href="https://docs.python.org/3.9/library/stdtypes.html#dict" title="builtins.dict" class="sphx-glr-backref-module-builtins sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">entry</span><span class="o">.</span><span class="n">attribute</span></a><span class="p">[</span><span class="s2">&quot;corrs&quot;</span><span class="p">]</span>
+    <a href="https://docs.python.org/3.9/library/stdtypes.html#dict" title="builtins.dict" class="sphx-glr-backref-module-builtins sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">decomp_entries</span></a><span class="p">,</span> <a href="https://numpy.org/doc/stable/reference/arrays.scalars.html#numpy.float64" title="numpy.float64" class="sphx-glr-backref-module-numpy sphx-glr-backref-type-py-attribute"><span class="n">ehull</span></a> <span class="o">=</span> <span class="n">training_pd</span><span class="o">.</span><span class="n">get_decomp_and_e_above_hull</span><span class="p">(</span><span class="n">entry</span><span class="p">)</span>
+    <span class="k">for</span> <span class="n">dentry</span><span class="p">,</span> <a href="https://numpy.org/doc/stable/reference/arrays.scalars.html#numpy.float64" title="numpy.float64" class="sphx-glr-backref-module-numpy sphx-glr-backref-type-py-attribute"><span class="n">amount</span></a> <span class="ow">in</span> <a href="https://docs.python.org/3.9/library/stdtypes.html#dict" title="builtins.dict" class="sphx-glr-backref-module-builtins sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">decomp_entries</span></a><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+        <a href="https://numpy.org/doc/stable/reference/arrays.scalars.html#numpy.float64" title="numpy.float64" class="sphx-glr-backref-module-numpy sphx-glr-backref-type-py-attribute"><span class="n">ratio</span></a> <span class="o">=</span> <span class="p">(</span>
+            <a href="https://numpy.org/doc/stable/reference/arrays.scalars.html#numpy.float64" title="numpy.float64" class="sphx-glr-backref-module-numpy sphx-glr-backref-type-py-attribute"><span class="n">amount</span></a>
+            <span class="o">*</span> <span class="p">(</span><span class="n">entry</span><span class="o">.</span><span class="n">composition</span><span class="o">.</span><span class="n">num_atoms</span> <span class="o">/</span> <span class="n">dentry</span><span class="o">.</span><span class="n">composition</span><span class="o">.</span><span class="n">num_atoms</span><span class="p">)</span>
+            <span class="o">*</span> <a href="https://docs.python.org/3.9/library/stdtypes.html#dict" title="builtins.dict" class="sphx-glr-backref-module-builtins sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">dentry</span><span class="o">.</span><span class="n">attribute</span></a><span class="p">[</span><span class="s2">&quot;size&quot;</span><span class="p">]</span>
+            <span class="o">/</span> <a href="https://docs.python.org/3.9/library/stdtypes.html#dict" title="builtins.dict" class="sphx-glr-backref-module-builtins sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">entry</span><span class="o">.</span><span class="n">attribute</span></a><span class="p">[</span><span class="s2">&quot;size&quot;</span><span class="p">]</span>
+        <span class="p">)</span>
+        <a href="https://numpy.org/doc/stable/reference/generated/numpy.ndarray.html#numpy.ndarray" title="numpy.ndarray" class="sphx-glr-backref-module-numpy sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">X_decomp</span></a><span class="p">[</span><a href="https://docs.python.org/3.9/library/functions.html#int" title="builtins.int" class="sphx-glr-backref-module-builtins sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">i</span></a><span class="p">]</span> <span class="o">+=</span> <a href="https://numpy.org/doc/stable/reference/arrays.scalars.html#numpy.float64" title="numpy.float64" class="sphx-glr-backref-module-numpy sphx-glr-backref-type-py-attribute"><span class="n">ratio</span></a> <span class="o">*</span> <a href="https://docs.python.org/3.9/library/stdtypes.html#dict" title="builtins.dict" class="sphx-glr-backref-module-builtins sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">dentry</span><span class="o">.</span><span class="n">attribute</span></a><span class="p">[</span><span class="s2">&quot;corrs&quot;</span><span class="p">]</span>
+
+<span class="c1"># 2) compute the ground-state correlation matrix</span>
+<span class="c1"># and the weighted correlation matrix of decomposition products if the ground state was not a ground-state</span>
+<a href="https://numpy.org/doc/stable/reference/generated/numpy.ndarray.html#numpy.ndarray" title="numpy.ndarray" class="sphx-glr-backref-module-numpy sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">X_stable</span></a> <span class="o">=</span> <a href="https://numpy.org/doc/stable/reference/generated/numpy.zeros.html#numpy.zeros" title="numpy.zeros" class="sphx-glr-backref-module-numpy sphx-glr-backref-type-py-function"><span class="n">np</span><span class="o">.</span><span class="n">zeros</span></a><span class="p">(</span><span class="n">shape</span><span class="o">=</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">training_pd</span><span class="o">.</span><span class="n">stable_entries</span><span class="p">),</span> <a href="https://docs.python.org/3.9/library/stdtypes.html#tuple" title="builtins.tuple" class="sphx-glr-backref-module-builtins sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">X</span><span class="o">.</span><span class="n">shape</span></a><span class="p">[</span><span class="mi">1</span><span class="p">]))</span>
+<a href="https://numpy.org/doc/stable/reference/generated/numpy.ndarray.html#numpy.ndarray" title="numpy.ndarray" class="sphx-glr-backref-module-numpy sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">X_gsdecomp</span></a> <span class="o">=</span> <a href="https://numpy.org/doc/stable/reference/generated/numpy.zeros_like.html#numpy.zeros_like" title="numpy.zeros_like" class="sphx-glr-backref-module-numpy sphx-glr-backref-type-py-function"><span class="n">np</span><span class="o">.</span><span class="n">zeros_like</span></a><span class="p">(</span><a href="https://numpy.org/doc/stable/reference/generated/numpy.ndarray.html#numpy.ndarray" title="numpy.ndarray" class="sphx-glr-backref-module-numpy sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">X_stable</span></a><span class="p">)</span>
+<span class="n">gs_pd</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">PhaseDiagram</span><span class="p">(</span><span class="n">training_pd</span><span class="o">.</span><span class="n">stable_entries</span><span class="p">)</span>
+<span class="k">for</span> <a href="https://docs.python.org/3.9/library/functions.html#int" title="builtins.int" class="sphx-glr-backref-module-builtins sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">i</span></a><span class="p">,</span> <span class="n">entry</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">gs_pd</span><span class="o">.</span><span class="n">stable_entries</span><span class="p">):</span>
+    <span class="k">if</span> <span class="n">entry</span><span class="o">.</span><span class="n">is_element</span><span class="p">:</span>
+        <span class="k">continue</span>
+    <a href="https://numpy.org/doc/stable/reference/generated/numpy.ndarray.html#numpy.ndarray" title="numpy.ndarray" class="sphx-glr-backref-module-numpy sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">X_stable</span></a><span class="p">[</span><a href="https://docs.python.org/3.9/library/functions.html#int" title="builtins.int" class="sphx-glr-backref-module-builtins sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">i</span></a><span class="p">]</span> <span class="o">=</span> <a href="https://docs.python.org/3.9/library/stdtypes.html#dict" title="builtins.dict" class="sphx-glr-backref-module-builtins sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">entry</span><span class="o">.</span><span class="n">attribute</span></a><span class="p">[</span><span class="s2">&quot;corrs&quot;</span><span class="p">]</span>
+    <a href="https://docs.python.org/3.9/library/stdtypes.html#dict" title="builtins.dict" class="sphx-glr-backref-module-builtins sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">decomp_entries</span></a><span class="p">,</span> <a href="https://numpy.org/doc/stable/reference/arrays.scalars.html#numpy.float64" title="numpy.float64" class="sphx-glr-backref-module-numpy sphx-glr-backref-type-py-attribute"><span class="n">ehull</span></a> <span class="o">=</span> <span class="n">gs_pd</span><span class="o">.</span><span class="n">get_decomp_and_phase_separation_energy</span><span class="p">(</span><span class="n">entry</span><span class="p">)</span>
+    <span class="k">for</span> <span class="n">dentry</span><span class="p">,</span> <a href="https://numpy.org/doc/stable/reference/arrays.scalars.html#numpy.float64" title="numpy.float64" class="sphx-glr-backref-module-numpy sphx-glr-backref-type-py-attribute"><span class="n">amount</span></a> <span class="ow">in</span> <a href="https://docs.python.org/3.9/library/stdtypes.html#dict" title="builtins.dict" class="sphx-glr-backref-module-builtins sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">decomp_entries</span></a><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+        <a href="https://numpy.org/doc/stable/reference/arrays.scalars.html#numpy.float64" title="numpy.float64" class="sphx-glr-backref-module-numpy sphx-glr-backref-type-py-attribute"><span class="n">ratio</span></a> <span class="o">=</span> <span class="p">(</span>
+            <a href="https://numpy.org/doc/stable/reference/arrays.scalars.html#numpy.float64" title="numpy.float64" class="sphx-glr-backref-module-numpy sphx-glr-backref-type-py-attribute"><span class="n">amount</span></a>
+            <span class="o">*</span> <span class="p">(</span><span class="n">entry</span><span class="o">.</span><span class="n">composition</span><span class="o">.</span><span class="n">num_atoms</span> <span class="o">/</span> <span class="n">dentry</span><span class="o">.</span><span class="n">composition</span><span class="o">.</span><span class="n">num_atoms</span><span class="p">)</span>
+            <span class="o">*</span> <a href="https://docs.python.org/3.9/library/stdtypes.html#dict" title="builtins.dict" class="sphx-glr-backref-module-builtins sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">dentry</span><span class="o">.</span><span class="n">attribute</span></a><span class="p">[</span><span class="s2">&quot;size&quot;</span><span class="p">]</span>
+            <span class="o">/</span> <a href="https://docs.python.org/3.9/library/stdtypes.html#dict" title="builtins.dict" class="sphx-glr-backref-module-builtins sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">entry</span><span class="o">.</span><span class="n">attribute</span></a><span class="p">[</span><span class="s2">&quot;size&quot;</span><span class="p">]</span>
+        <span class="p">)</span>
+        <a href="https://numpy.org/doc/stable/reference/generated/numpy.ndarray.html#numpy.ndarray" title="numpy.ndarray" class="sphx-glr-backref-module-numpy sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">X_gsdecomp</span></a><span class="p">[</span><a href="https://docs.python.org/3.9/library/functions.html#int" title="builtins.int" class="sphx-glr-backref-module-builtins sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">i</span></a><span class="p">]</span> <span class="o">+=</span> <a href="https://numpy.org/doc/stable/reference/arrays.scalars.html#numpy.float64" title="numpy.float64" class="sphx-glr-backref-module-numpy sphx-glr-backref-type-py-attribute"><span class="n">ratio</span></a> <span class="o">*</span> <a href="https://docs.python.org/3.9/library/stdtypes.html#dict" title="builtins.dict" class="sphx-glr-backref-module-builtins sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">dentry</span><span class="o">.</span><span class="n">attribute</span></a><span class="p">[</span><span class="s2">&quot;corrs&quot;</span><span class="p">]</span>
+
+
+<span class="n">constrained_regressor</span> <span class="o">=</span> <span class="n">L2L0</span><span class="p">(</span>
+    <span class="n">fit_intercept</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+    <span class="n">alpha</span><span class="o">=</span><span class="mf">3.16e-7</span><span class="p">,</span>
+    <span class="n">eta</span><span class="o">=</span><span class="mf">1.66e-6</span><span class="p">,</span>
+    <span class="n">solver</span><span class="o">=</span><span class="s2">&quot;GUROBI&quot;</span><span class="p">,</span>
+    <span class="n">solver_options</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;Threads&quot;</span><span class="p">:</span> <span class="mi">4</span><span class="p">},</span>
+<span class="p">)</span>
+
+<span class="c1"># now create the constraints by accessing the underlying cvxpy objects</span>
+<span class="c1"># if regressor.fit has not been called with the gigen data, we must call generate_problem to generate</span>
+<span class="c1"># the cvxpy objects that represent the regressino objective</span>
+<span class="n">constrained_regressor</span><span class="o">.</span><span class="n">generate_problem</span><span class="p">(</span><a href="https://numpy.org/doc/stable/reference/generated/numpy.ndarray.html#numpy.ndarray" title="numpy.ndarray" class="sphx-glr-backref-module-numpy sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">X</span></a><span class="p">,</span> <a href="https://numpy.org/doc/stable/reference/generated/numpy.ndarray.html#numpy.ndarray" title="numpy.ndarray" class="sphx-glr-backref-module-numpy sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">y</span></a><span class="p">)</span>
+<span class="n">J</span> <span class="o">=</span> <span class="p">(</span>
+    <span class="n">constrained_regressor</span><span class="o">.</span><span class="n">canonicals_</span><span class="o">.</span><span class="n">beta</span>
+<span class="p">)</span>  <span class="c1"># this is the cvxpy variable representing the coefficients</span>
+
+<span class="c1"># 1) add constraint to keep unstable structures above hull, ie no new ground states</span>
+<a href="https://docs.python.org/3.9/library/functions.html#float" title="builtins.float" class="sphx-glr-backref-module-builtins sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">epsilon</span></a> <span class="o">=</span> <span class="mf">0.0005</span>  <span class="c1"># solutions will be very sensitive to the size of this margin</span>
+<span class="n">constrained_regressor</span><span class="o">.</span><span class="n">add_constraints</span><span class="p">([</span><a href="https://numpy.org/doc/stable/reference/generated/numpy.ndarray.html#numpy.ndarray" title="numpy.ndarray" class="sphx-glr-backref-module-numpy sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">X_unstable</span></a> <span class="o">@</span> <span class="n">J</span> <span class="o">&gt;=</span> <a href="https://numpy.org/doc/stable/reference/generated/numpy.ndarray.html#numpy.ndarray" title="numpy.ndarray" class="sphx-glr-backref-module-numpy sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">X_decomp</span></a> <span class="o">@</span> <span class="n">J</span> <span class="o">+</span> <a href="https://docs.python.org/3.9/library/functions.html#float" title="builtins.float" class="sphx-glr-backref-module-builtins sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">epsilon</span></a><span class="p">])</span>
+
+<span class="c1"># 2) add constraint to keep all ground-states on the hull</span>
+<a href="https://docs.python.org/3.9/library/functions.html#float" title="builtins.float" class="sphx-glr-backref-module-builtins sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">epsilon</span></a> <span class="o">=</span> <span class="mf">1e-6</span>
+<span class="n">constrained_regressor</span><span class="o">.</span><span class="n">add_constraints</span><span class="p">([</span><a href="https://numpy.org/doc/stable/reference/generated/numpy.ndarray.html#numpy.ndarray" title="numpy.ndarray" class="sphx-glr-backref-module-numpy sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">X_stable</span></a> <span class="o">@</span> <span class="n">J</span> <span class="o">&lt;=</span> <a href="https://numpy.org/doc/stable/reference/generated/numpy.ndarray.html#numpy.ndarray" title="numpy.ndarray" class="sphx-glr-backref-module-numpy sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">X_gsdecomp</span></a> <span class="o">@</span> <span class="n">J</span> <span class="o">-</span> <a href="https://docs.python.org/3.9/library/functions.html#float" title="builtins.float" class="sphx-glr-backref-module-builtins sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">epsilon</span></a><span class="p">])</span>
+
+
+<span class="c1"># fit the constrained regressor</span>
+<span class="n">constrained_regressor</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><a href="https://numpy.org/doc/stable/reference/generated/numpy.ndarray.html#numpy.ndarray" title="numpy.ndarray" class="sphx-glr-backref-module-numpy sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">X</span></a><span class="p">,</span> <a href="https://numpy.org/doc/stable/reference/generated/numpy.ndarray.html#numpy.ndarray" title="numpy.ndarray" class="sphx-glr-backref-module-numpy sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">y</span></a><span class="p">)</span>
+
+<span class="c1"># look at the phase diagram based on the energies predicted by the L2L0 fit</span>
+<a href="https://numpy.org/doc/stable/reference/generated/numpy.ndarray.html#numpy.ndarray" title="numpy.ndarray" class="sphx-glr-backref-module-numpy sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">l2l0c_y</span></a> <span class="o">=</span> <span class="n">constrained_regressor</span><span class="o">.</span><span class="n">predict</span><span class="p">(</span><a href="https://numpy.org/doc/stable/reference/generated/numpy.ndarray.html#numpy.ndarray" title="numpy.ndarray" class="sphx-glr-backref-module-numpy sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">X</span></a><span class="p">)</span>
+<span class="n">constrained_pd</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">PhaseDiagram</span><span class="p">(</span>
+    <span class="p">[</span>
+        <span class="n">pd</span><span class="o">.</span><span class="n">PDEntry</span><span class="p">(</span><span class="n">s_i</span><span class="o">.</span><span class="n">composition</span><span class="p">,</span> <span class="n">y_i</span> <span class="o">*</span> <span class="nb">len</span><span class="p">(</span><span class="n">s_i</span><span class="p">))</span>
+        <span class="k">for</span> <span class="n">s_i</span><span class="p">,</span> <span class="n">y_i</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><a href="https://docs.python.org/3.9/library/stdtypes.html#list" title="builtins.list" class="sphx-glr-backref-module-builtins sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">structures</span></a><span class="p">,</span> <a href="https://numpy.org/doc/stable/reference/generated/numpy.ndarray.html#numpy.ndarray" title="numpy.ndarray" class="sphx-glr-backref-module-numpy sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">l2l0c_y</span></a><span class="p">)</span>
+    <span class="p">]</span>
+<span class="p">)</span>
+<span class="n">pplotter</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">PDPlotter</span><span class="p">(</span><span class="n">constrained_pd</span><span class="p">,</span> <span class="n">backend</span><span class="o">=</span><span class="s2">&quot;matplotlib&quot;</span><span class="p">,</span> <span class="n">show_unstable</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+<span class="n">pplotter</span><span class="o">.</span><span class="n">show</span><span class="p">(</span><span class="n">label_unstable</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+<span class="c1"># the constraints now force the fitted model to respect the trainind convex-hull</span>
+
+<span class="c1"># Plot the different estimated coefficients</span>
+<span class="n">fig</span><span class="p">,</span> <span class="n">ax</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">subplots</span><span class="p">()</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><a href="https://numpy.org/doc/stable/reference/generated/numpy.ndarray.html#numpy.ndarray" title="numpy.ndarray" class="sphx-glr-backref-module-numpy sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">lasso_regressor</span><span class="o">.</span><span class="n">coef_</span></a><span class="p">[</span><span class="mi">1</span><span class="p">:])</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><a href="https://numpy.org/doc/stable/reference/generated/numpy.ndarray.html#numpy.ndarray" title="numpy.ndarray" class="sphx-glr-backref-module-numpy sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">l2l0_regressor</span><span class="o">.</span><span class="n">coef_</span></a><span class="p">[</span><span class="mi">1</span><span class="p">:])</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><a href="https://numpy.org/doc/stable/reference/generated/numpy.ndarray.html#numpy.ndarray" title="numpy.ndarray" class="sphx-glr-backref-module-numpy sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">constrained_regressor</span><span class="o">.</span><span class="n">coef_</span></a><span class="p">[</span><span class="mi">1</span><span class="p">:])</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">set_xlabel</span><span class="p">(</span><span class="s2">&quot;covariate index&quot;</span><span class="p">)</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">set_ylabel</span><span class="p">(</span><span class="s2">&quot;coefficient value&quot;</span><span class="p">)</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">legend</span><span class="p">([</span><span class="s2">&quot;lasso&quot;</span><span class="p">,</span> <span class="s2">&quot;l2l0&quot;</span><span class="p">,</span> <span class="s2">&quot;l2l0 constrained&quot;</span><span class="p">])</span>
+<span class="n">fig</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
+
+<span class="c1"># print the resulting training RMSE from the different fits</span>
+<a href="https://numpy.org/doc/stable/reference/arrays.scalars.html#numpy.float64" title="numpy.float64" class="sphx-glr-backref-module-numpy sphx-glr-backref-type-py-attribute"><span class="n">lasso_rmse</span></a> <span class="o">=</span> <a href="https://numpy.org/doc/stable/reference/generated/numpy.ufunc.html#numpy.ufunc" title="numpy.ufunc" class="sphx-glr-backref-module-numpy sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">np</span><span class="o">.</span><span class="n">sqrt</span></a><span class="p">(</span><span class="n">mean_squared_error</span><span class="p">(</span><a href="https://numpy.org/doc/stable/reference/generated/numpy.ndarray.html#numpy.ndarray" title="numpy.ndarray" class="sphx-glr-backref-module-numpy sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">y</span></a><span class="p">,</span> <span class="n">lasso_regressor</span><span class="o">.</span><span class="n">predict</span><span class="p">(</span><a href="https://numpy.org/doc/stable/reference/generated/numpy.ndarray.html#numpy.ndarray" title="numpy.ndarray" class="sphx-glr-backref-module-numpy sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">X</span></a><span class="p">)))</span>
+<a href="https://numpy.org/doc/stable/reference/arrays.scalars.html#numpy.float64" title="numpy.float64" class="sphx-glr-backref-module-numpy sphx-glr-backref-type-py-attribute"><span class="n">l2l0_rmse</span></a> <span class="o">=</span> <a href="https://numpy.org/doc/stable/reference/generated/numpy.ufunc.html#numpy.ufunc" title="numpy.ufunc" class="sphx-glr-backref-module-numpy sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">np</span><span class="o">.</span><span class="n">sqrt</span></a><span class="p">(</span><span class="n">mean_squared_error</span><span class="p">(</span><a href="https://numpy.org/doc/stable/reference/generated/numpy.ndarray.html#numpy.ndarray" title="numpy.ndarray" class="sphx-glr-backref-module-numpy sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">y</span></a><span class="p">,</span> <span class="n">l2l0_regressor</span><span class="o">.</span><span class="n">predict</span><span class="p">(</span><a href="https://numpy.org/doc/stable/reference/generated/numpy.ndarray.html#numpy.ndarray" title="numpy.ndarray" class="sphx-glr-backref-module-numpy sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">X</span></a><span class="p">)))</span>
+<a href="https://numpy.org/doc/stable/reference/arrays.scalars.html#numpy.float64" title="numpy.float64" class="sphx-glr-backref-module-numpy sphx-glr-backref-type-py-attribute"><span class="n">l2l0c_rmse</span></a> <span class="o">=</span> <a href="https://numpy.org/doc/stable/reference/generated/numpy.ufunc.html#numpy.ufunc" title="numpy.ufunc" class="sphx-glr-backref-module-numpy sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">np</span><span class="o">.</span><span class="n">sqrt</span></a><span class="p">(</span><span class="n">mean_squared_error</span><span class="p">(</span><a href="https://numpy.org/doc/stable/reference/generated/numpy.ndarray.html#numpy.ndarray" title="numpy.ndarray" class="sphx-glr-backref-module-numpy sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">y</span></a><span class="p">,</span> <span class="n">constrained_regressor</span><span class="o">.</span><span class="n">predict</span><span class="p">(</span><a href="https://numpy.org/doc/stable/reference/generated/numpy.ndarray.html#numpy.ndarray" title="numpy.ndarray" class="sphx-glr-backref-module-numpy sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">X</span></a><span class="p">)))</span>
+
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Lasso train RMSE:                 </span><span class="si">{</span><a href="https://numpy.org/doc/stable/reference/arrays.scalars.html#numpy.float64" title="numpy.float64" class="sphx-glr-backref-module-numpy sphx-glr-backref-type-py-attribute"><span class="n">lasso_rmse</span></a><span class="si">:</span><span class="s2">.4f</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;L2L0 train RMSE:                  </span><span class="si">{</span><a href="https://numpy.org/doc/stable/reference/arrays.scalars.html#numpy.float64" title="numpy.float64" class="sphx-glr-backref-module-numpy sphx-glr-backref-type-py-attribute"><span class="n">l2l0_rmse</span></a><span class="si">:</span><span class="s2">.4f</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;L2L0 with constraings train RMSE: </span><span class="si">{</span><a href="https://numpy.org/doc/stable/reference/arrays.scalars.html#numpy.float64" title="numpy.float64" class="sphx-glr-backref-module-numpy sphx-glr-backref-type-py-attribute"><span class="n">l2l0c_rmse</span></a><span class="si">:</span><span class="s2">.4f</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+<p class="sphx-glr-timing"><strong>Total running time of the script:</strong> ( 0 minutes  2.965 seconds)</p>
+<div class="sphx-glr-footer sphx-glr-footer-example docutils container" id="sphx-glr-download-auto-examples-plot-chull-py">
+<div class="sphx-glr-download sphx-glr-download-python docutils container">
+<p><a class="reference download internal" download="" href="../_downloads/0b537d47053d1510a977109460626422/plot_chull.py"><code class="xref download docutils literal notranslate"><span class="pre">Download</span> <span class="pre">Python</span> <span class="pre">source</span> <span class="pre">code:</span> <span class="pre">plot_chull.py</span></code></a></p>
+</div>
+<div class="sphx-glr-download sphx-glr-download-jupyter docutils container">
+<p><a class="reference download internal" download="" href="../_downloads/95a4f904eef43a2cf2ada2dd46c03db6/plot_chull.ipynb"><code class="xref download docutils literal notranslate"><span class="pre">Download</span> <span class="pre">Jupyter</span> <span class="pre">notebook:</span> <span class="pre">plot_chull.ipynb</span></code></a></p>
+</div>
+</div>
+<p class="sphx-glr-signature"><a class="reference external" href="https://sphinx-gallery.github.io">Gallery generated by Sphinx-Gallery</a></p>
+</section>
+
+        </article>
+      </div>
+      <footer>
+        
+        <div class="related-pages">
+          <a class="next-page" href="../contributing.html">
+              <div class="page-info">
+                <div class="context">
+                  <span>Next</span>
+                </div>
+                <div class="title">Contributing</div>
+              </div>
+              <svg class="furo-related-icon"><use href="#svg-arrow-right"></use></svg>
+            </a>
+          <a class="prev-page" href="plot_gl_sgl.html">
+              <svg class="furo-related-icon"><use href="#svg-arrow-right"></use></svg>
+              <div class="page-info">
+                <div class="context">
+                  <span>Previous</span>
+                </div>
+                
+                <div class="title">(Sparse) Group regression</div>
+                
+              </div>
+            </a>
+        </div>
+        <div class="bottom-of-page">
+          <div class="left-details">
+            <div class="copyright">
+                Copyright &#169; 2022-2023, Ceder Group
+            </div>
+            Made with 
+            <a href="https://github.com/pradyunsg/furo">Furo</a>
+            
+          </div>
+          <div class="right-details">
+            
+          </div>
+        </div>
+        
+      </footer>
+    </div>
+    <aside class="toc-drawer no-toc">
+      
+      
+      
+    </aside>
+  </div>
+</div><script data-url_root="../" id="documentation_options" src="../_static/documentation_options.js"></script>
+    <script src="../_static/doctools.js"></script>
+    <script src="../_static/sphinx_highlight.js"></script>
+    <script src="../_static/scripts/furo.js"></script>
+    </body>
+</html>

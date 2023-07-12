@@ -2,13 +2,17 @@
 <html class="no-js" lang="en">
   <head><meta charset="utf-8"/>
     <meta name="viewport" content="width=device-width,initial-scale=1"/>
-    <meta name="color-scheme" content="light dark"><meta name="generator" content="Docutils 0.19: https://docutils.sourceforge.io/" />
-<link rel="index" title="Index" href="genindex.html" /><link rel="search" title="Search" href="search.html" /><link rel="next" title="Examples" href="examples.html" /><link rel="prev" title="Sparse Linear Regression Models" href="index.html" />
+    <meta name="color-scheme" content="light dark"><meta name="viewport" content="width=device-width, initial-scale=1" />
+<link rel="index" title="Index" href="genindex.html" /><link rel="search" title="Search" href="search.html" /><link rel="next" title="Examples" href="auto_examples/index.html" /><link rel="prev" title="Sparse Linear Regression Models" href="index.html" />
 
-    <!-- Generated with Sphinx 6.1.3 and Furo 2022.12.07 -->
+    <!-- Generated with Sphinx 7.0.1 and Furo 2023.05.20 -->
         <title>Install - sparse-lm</title>
       <link rel="stylesheet" type="text/css" href="_static/pygments.css" />
-    <link rel="stylesheet" type="text/css" href="_static/styles/furo.css?digest=91d0f0d1c444bdcb17a68e833c7a53903343c195" />
+    <link rel="stylesheet" type="text/css" href="_static/styles/furo.css?digest=e6660623a769aa55fea372102b9bf3151b292993" />
+    <link rel="stylesheet" type="text/css" href="_static/sg_gallery.css" />
+    <link rel="stylesheet" type="text/css" href="_static/sg_gallery-binder.css" />
+    <link rel="stylesheet" type="text/css" href="_static/sg_gallery-dataframe.css" />
+    <link rel="stylesheet" type="text/css" href="_static/sg_gallery-rendered-html.css" />
     <link rel="stylesheet" type="text/css" href="_static/styles/furo-extensions.css?digest=30d1aed668e5c3a91c3e3bf6a60b675221979f0e" />
     <link rel="stylesheet" type="text/css" href="_static/custom.css" />
     
@@ -179,7 +183,13 @@
   <p class="caption" role="heading"><span class="caption-text">Getting Started</span></p>
 <ul class="current">
 <li class="toctree-l1 current current-page"><a class="current reference internal" href="#">Install</a></li>
-<li class="toctree-l1"><a class="reference internal" href="examples.html">Examples</a></li>
+<li class="toctree-l1 has-children"><a class="reference internal" href="auto_examples/index.html">Examples</a><input class="toctree-checkbox" id="toctree-checkbox-1" name="toctree-checkbox-1" role="switch" type="checkbox"/><label for="toctree-checkbox-1"><div class="visually-hidden">Toggle navigation of Examples</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
+<li class="toctree-l2"><a class="reference internal" href="auto_examples/plot_sparse_signal.html">Recovering sparse signals</a></li>
+<li class="toctree-l2"><a class="reference internal" href="auto_examples/plot_adaptive.html">Using adaptive regularization</a></li>
+<li class="toctree-l2"><a class="reference internal" href="auto_examples/plot_gl_sgl.html">(Sparse) Group regression</a></li>
+<li class="toctree-l2"><a class="reference internal" href="auto_examples/plot_chull.html">Adding solution constraints</a></li>
+</ul>
+</li>
 </ul>
 <p class="caption" role="heading"><span class="caption-text">Information</span></p>
 <ul>
@@ -189,7 +199,7 @@
 </ul>
 <p class="caption" role="heading"><span class="caption-text">Reference</span></p>
 <ul>
-<li class="toctree-l1 has-children"><a class="reference internal" href="api.html">API</a><input class="toctree-checkbox" id="toctree-checkbox-1" name="toctree-checkbox-1" role="switch" type="checkbox"/><label for="toctree-checkbox-1"><div class="visually-hidden">Toggle child pages in navigation</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
+<li class="toctree-l1 has-children"><a class="reference internal" href="api.html">API</a><input class="toctree-checkbox" id="toctree-checkbox-2" name="toctree-checkbox-2" role="switch" type="checkbox"/><label for="toctree-checkbox-2"><div class="visually-hidden">Toggle navigation of API</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
 <li class="toctree-l2"><a class="reference internal" href="sparselm.model.html">sparselm.model</a></li>
 <li class="toctree-l2"><a class="reference internal" href="sparselm.stepwise.html">sparselm.stepwise</a></li>
 <li class="toctree-l2"><a class="reference internal" href="sparselm.model_selection.html">sparselm.model_selection</a></li>
@@ -250,6 +260,45 @@
 </pre></div>
 </div>
 </section>
+<section id="installing-miqp-solvers">
+<h2>Installing MIQP solvers<a class="headerlink" href="#installing-miqp-solvers" title="Permalink to this heading">#</a></h2>
+<p>Since <strong>cvxpy</strong> is used to specify and solve regression optimization problems, any of
+<a class="reference external" href="https://www.cvxpy.org/tutorial/advanced/index.html#solve-method-options">supported solvers</a>
+can be used with <strong>sparse-lm</strong> estimators. <strong>cvxpy</strong> is shipped with open source solvers
+(OSQP, SCS, and ECOS) which are usually enough to solve most convex regression problems.</p>
+<p>However, for the mixed integer quadratic programming (MIQP) formulations used in
+<code class="xref py py-class docutils literal notranslate"><span class="pre">BestSubsetSelection</span></code> and <code class="xref py py-class docutils literal notranslate"><span class="pre">RegularizedL0</span></code> based classes we highly
+recommend installing an MIQP capable solver. ECOS_BB can be used to solve MIQP problems,
+but it can be very slow and more importantly has recurring correctness issues. See the
+<a class="reference external" href="https://www.cvxpy.org/version/1.2/tutorial/advanced/index.html#mixed-integer-programs">mixed-integer program section</a>
+in the cvxpy documentation for more details.</p>
+<section id="gurobi">
+<h3>Gurobi<a class="headerlink" href="#gurobi" title="Permalink to this heading">#</a></h3>
+<p>For using <strong>sparse-lm</strong> with MIQP solvers, we highly recommend installing <strong>Gurobi</strong>.
+It can be installed directly from PyPi:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">pip</span> <span class="n">install</span> <span class="n">gurobipy</span>
+</pre></div>
+</div>
+<p>Without a license, a free trial <strong>Gurobi</strong> can be used to solve small problems. For
+larger problems a license is required. <strong>Gurobi</strong> grants
+<a class="reference external" href="https://www.gurobi.com/academia/academic-program-and-licenses/">free academic licenses</a>
+to students and academic researchers.</p>
+</section>
+<section id="scip">
+<h3>SCIP<a class="headerlink" href="#scip" title="Permalink to this heading">#</a></h3>
+<p>If installing a licensed solver is not an option, <strong>SCIP</strong> can be used as a free
+alternative. To use <strong>SCIP</strong>, the python interface <strong>PySCIPOpt</strong> must also be installed.
+<strong>PySCIPOpt</strong> can be installed from PyPi, however this requires building SCIP from
+source. See installation details <a class="reference external" href="https://github.com/scipopt/PySCIPOpt">here</a>.</p>
+<p>If you use conda, we recommend installing <strong>SCIP</strong> and <strong>PySCIPOpt</strong> using their
+conda-forge channel:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">conda</span> <span class="n">install</span> <span class="o">-</span><span class="n">c</span> <span class="n">conda</span><span class="o">-</span><span class="n">forge</span> <span class="n">scipopt</span> <span class="n">pyscipopt</span>
+</pre></div>
+</div>
+<p>The above command will install <strong>PySCIPOpt</strong> with a pre-built version of <strong>SCIP</strong>, and
+so you will not need to build it from source.</p>
+</section>
+</section>
 <section id="testing">
 <h2>Testing<a class="headerlink" href="#testing" title="Permalink to this heading">#</a></h2>
 <p>Unit tests can be run from the source folder using <code class="docutils literal notranslate"><span class="pre">pytest</span></code>. First, the requirements
@@ -269,7 +318,7 @@ to run tests must be installed:</p>
       <footer>
         
         <div class="related-pages">
-          <a class="next-page" href="examples.html">
+          <a class="next-page" href="auto_examples/index.html">
               <div class="page-info">
                 <div class="context">
                   <span>Next</span>
@@ -321,6 +370,11 @@ to run tests must be installed:</p>
 <li><a class="reference internal" href="#">Install</a><ul>
 <li><a class="reference internal" href="#pypi">PyPI</a></li>
 <li><a class="reference internal" href="#install-from-source">Install from source</a></li>
+<li><a class="reference internal" href="#installing-miqp-solvers">Installing MIQP solvers</a><ul>
+<li><a class="reference internal" href="#gurobi">Gurobi</a></li>
+<li><a class="reference internal" href="#scip">SCIP</a></li>
+</ul>
+</li>
 <li><a class="reference internal" href="#testing">Testing</a></li>
 </ul>
 </li>

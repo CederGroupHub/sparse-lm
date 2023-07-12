@@ -4,10 +4,14 @@
     <meta name="viewport" content="width=device-width,initial-scale=1"/>
     <meta name="color-scheme" content="light dark"><link rel="index" title="Index" href="../../../genindex.html" /><link rel="search" title="Search" href="../../../search.html" />
 
-    <!-- Generated with Sphinx 6.1.3 and Furo 2022.12.07 -->
+    <!-- Generated with Sphinx 7.0.1 and Furo 2023.05.20 -->
         <title>sparselm.model._lasso - sparse-lm</title>
       <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css" />
-    <link rel="stylesheet" type="text/css" href="../../../_static/styles/furo.css?digest=91d0f0d1c444bdcb17a68e833c7a53903343c195" />
+    <link rel="stylesheet" type="text/css" href="../../../_static/styles/furo.css?digest=e6660623a769aa55fea372102b9bf3151b292993" />
+    <link rel="stylesheet" type="text/css" href="../../../_static/sg_gallery.css" />
+    <link rel="stylesheet" type="text/css" href="../../../_static/sg_gallery-binder.css" />
+    <link rel="stylesheet" type="text/css" href="../../../_static/sg_gallery-dataframe.css" />
+    <link rel="stylesheet" type="text/css" href="../../../_static/sg_gallery-rendered-html.css" />
     <link rel="stylesheet" type="text/css" href="../../../_static/styles/furo-extensions.css?digest=30d1aed668e5c3a91c3e3bf6a60b675221979f0e" />
     <link rel="stylesheet" type="text/css" href="../../../_static/custom.css" />
     
@@ -178,7 +182,13 @@
   <p class="caption" role="heading"><span class="caption-text">Getting Started</span></p>
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="../../../install.html">Install</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../../examples.html">Examples</a></li>
+<li class="toctree-l1 has-children"><a class="reference internal" href="../../../auto_examples/index.html">Examples</a><input class="toctree-checkbox" id="toctree-checkbox-1" name="toctree-checkbox-1" role="switch" type="checkbox"/><label for="toctree-checkbox-1"><div class="visually-hidden">Toggle navigation of Examples</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../../auto_examples/plot_sparse_signal.html">Recovering sparse signals</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../auto_examples/plot_adaptive.html">Using adaptive regularization</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../auto_examples/plot_gl_sgl.html">(Sparse) Group regression</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../auto_examples/plot_chull.html">Adding solution constraints</a></li>
+</ul>
+</li>
 </ul>
 <p class="caption" role="heading"><span class="caption-text">Information</span></p>
 <ul>
@@ -188,7 +198,7 @@
 </ul>
 <p class="caption" role="heading"><span class="caption-text">Reference</span></p>
 <ul>
-<li class="toctree-l1 has-children"><a class="reference internal" href="../../../api.html">API</a><input class="toctree-checkbox" id="toctree-checkbox-1" name="toctree-checkbox-1" role="switch" type="checkbox"/><label for="toctree-checkbox-1"><div class="visually-hidden">Toggle child pages in navigation</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
+<li class="toctree-l1 has-children"><a class="reference internal" href="../../../api.html">API</a><input class="toctree-checkbox" id="toctree-checkbox-2" name="toctree-checkbox-2" role="switch" type="checkbox"/><label for="toctree-checkbox-2"><div class="visually-hidden">Toggle navigation of API</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
 <li class="toctree-l2"><a class="reference internal" href="../../../sparselm.model.html">sparselm.model</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../../../sparselm.stepwise.html">sparselm.stepwise</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../../../sparselm.model_selection.html">sparselm.model_selection</a></li>
@@ -503,7 +513,7 @@
         <span class="k">return</span> <span class="n">parameters</span><span class="o">.</span><span class="n">alpha</span> <span class="o">*</span> <span class="p">(</span><span class="n">parameters</span><span class="o">.</span><span class="n">group_weights</span> <span class="o">@</span> <span class="n">auxiliaries</span><span class="o">.</span><span class="n">group_norms</span><span class="p">)</span></div>
 
 
-<span class="c1"># TODO this implementation is not efficient, reimplement.</span>
+<span class="c1"># TODO this implementation is not efficient, reimplement, or simply deprecate.</span>
 <div class="viewcode-block" id="OverlapGroupLasso"><a class="viewcode-back" href="../../../sparselm.model.html#sparselm.model.OverlapGroupLasso">[docs]</a><span class="k">class</span> <span class="nc">OverlapGroupLasso</span><span class="p">(</span><span class="n">GroupLasso</span><span class="p">):</span>
 <span class="w">    </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;Overlap Group Lasso implementation.</span>
 
@@ -632,7 +642,13 @@
         <span class="n">parameters</span><span class="o">.</span><span class="n">group_weights</span> <span class="o">=</span> <span class="n">group_weights</span>
         <span class="k">return</span> <span class="n">parameters</span>
 
-<div class="viewcode-block" id="OverlapGroupLasso.generate_problem"><a class="viewcode-back" href="../../../sparselm.model.html#sparselm.model.OverlapGroupLasso.generate_problem">[docs]</a>    <span class="k">def</span> <span class="nf">generate_problem</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">ArrayLike</span><span class="p">,</span> <span class="n">y</span><span class="p">:</span> <span class="n">ArrayLike</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<div class="viewcode-block" id="OverlapGroupLasso.generate_problem"><a class="viewcode-back" href="../../../sparselm.model.html#sparselm.model.OverlapGroupLasso.generate_problem">[docs]</a>    <span class="k">def</span> <span class="nf">generate_problem</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">X</span><span class="p">:</span> <span class="n">ArrayLike</span><span class="p">,</span>
+        <span class="n">y</span><span class="p">:</span> <span class="n">ArrayLike</span><span class="p">,</span>
+        <span class="n">preprocess_data</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
+        <span class="n">sample_weight</span><span class="p">:</span> <span class="n">ArrayLike</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Initialize cvxpy problem from the generated objective function.</span>
 
 <span class="sd">        Args:</span>
@@ -640,7 +656,23 @@
 <span class="sd">                Covariate/Feature matrix</span>
 <span class="sd">            y (ArrayLike):</span>
 <span class="sd">                Target vector</span>
+<span class="sd">            preprocess_data (bool):</span>
+<span class="sd">                Whether to preprocess the data before generating the problem. If calling</span>
+<span class="sd">                generate_problem directly, this should be kept as True to ensure the</span>
+<span class="sd">                problem is generated correctly for a subsequent call to fit.</span>
+<span class="sd">            sample_weight (ArrayLike):</span>
+<span class="sd">                Individual weights for each sample of shape (n_samples,)</span>
+<span class="sd">                default=None. Only used if preprocess_data=True to rescale the data</span>
+<span class="sd">                accordingly.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="n">preprocess_data</span> <span class="ow">is</span> <span class="kc">True</span><span class="p">:</span>
+            <span class="n">X</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">_</span><span class="p">,</span> <span class="n">_</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_preprocess_data</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">sample_weight</span><span class="p">)</span>
+
+        <span class="c1"># X, y are cached to avoid re-generating problem if fit is called again with</span>
+        <span class="c1"># same data</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">cached_X_</span> <span class="o">=</span> <span class="n">X</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">cached_y_</span> <span class="o">=</span> <span class="n">y</span>
+
         <span class="c1"># need to generate the auxiliaries here since the problem data is &quot;augmented&quot;</span>
         <span class="c1"># based on them</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">group_list</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
@@ -684,6 +716,7 @@
             <span class="n">parameters</span><span class="o">=</span><span class="n">parameters</span><span class="p">,</span>
             <span class="n">auxiliaries</span><span class="o">=</span><span class="n">auxiliaries</span><span class="p">,</span>
             <span class="n">constraints</span><span class="o">=</span><span class="n">constraints</span><span class="p">,</span>
+            <span class="n">user_constraints</span><span class="o">=</span><span class="p">[],</span>
         <span class="p">)</span></div>
 
     <span class="k">def</span> <span class="nf">_solve</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">solver_options</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">NDArray</span><span class="p">[</span><span class="nb">float</span><span class="p">]:</span>

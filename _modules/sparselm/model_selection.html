@@ -4,10 +4,14 @@
     <meta name="viewport" content="width=device-width,initial-scale=1"/>
     <meta name="color-scheme" content="light dark"><link rel="index" title="Index" href="../../genindex.html" /><link rel="search" title="Search" href="../../search.html" />
 
-    <!-- Generated with Sphinx 6.1.3 and Furo 2022.12.07 -->
+    <!-- Generated with Sphinx 7.0.1 and Furo 2023.05.20 -->
         <title>sparselm.model_selection - sparse-lm</title>
       <link rel="stylesheet" type="text/css" href="../../_static/pygments.css" />
-    <link rel="stylesheet" type="text/css" href="../../_static/styles/furo.css?digest=91d0f0d1c444bdcb17a68e833c7a53903343c195" />
+    <link rel="stylesheet" type="text/css" href="../../_static/styles/furo.css?digest=e6660623a769aa55fea372102b9bf3151b292993" />
+    <link rel="stylesheet" type="text/css" href="../../_static/sg_gallery.css" />
+    <link rel="stylesheet" type="text/css" href="../../_static/sg_gallery-binder.css" />
+    <link rel="stylesheet" type="text/css" href="../../_static/sg_gallery-dataframe.css" />
+    <link rel="stylesheet" type="text/css" href="../../_static/sg_gallery-rendered-html.css" />
     <link rel="stylesheet" type="text/css" href="../../_static/styles/furo-extensions.css?digest=30d1aed668e5c3a91c3e3bf6a60b675221979f0e" />
     <link rel="stylesheet" type="text/css" href="../../_static/custom.css" />
     
@@ -178,7 +182,13 @@
   <p class="caption" role="heading"><span class="caption-text">Getting Started</span></p>
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="../../install.html">Install</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../examples.html">Examples</a></li>
+<li class="toctree-l1 has-children"><a class="reference internal" href="../../auto_examples/index.html">Examples</a><input class="toctree-checkbox" id="toctree-checkbox-1" name="toctree-checkbox-1" role="switch" type="checkbox"/><label for="toctree-checkbox-1"><div class="visually-hidden">Toggle navigation of Examples</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../auto_examples/plot_sparse_signal.html">Recovering sparse signals</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../auto_examples/plot_adaptive.html">Using adaptive regularization</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../auto_examples/plot_gl_sgl.html">(Sparse) Group regression</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../auto_examples/plot_chull.html">Adding solution constraints</a></li>
+</ul>
+</li>
 </ul>
 <p class="caption" role="heading"><span class="caption-text">Information</span></p>
 <ul>
@@ -188,7 +198,7 @@
 </ul>
 <p class="caption" role="heading"><span class="caption-text">Reference</span></p>
 <ul>
-<li class="toctree-l1 has-children"><a class="reference internal" href="../../api.html">API</a><input class="toctree-checkbox" id="toctree-checkbox-1" name="toctree-checkbox-1" role="switch" type="checkbox"/><label for="toctree-checkbox-1"><div class="visually-hidden">Toggle child pages in navigation</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
+<li class="toctree-l1 has-children"><a class="reference internal" href="../../api.html">API</a><input class="toctree-checkbox" id="toctree-checkbox-2" name="toctree-checkbox-2" role="switch" type="checkbox"/><label for="toctree-checkbox-2"><div class="visually-hidden">Toggle navigation of API</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
 <li class="toctree-l2"><a class="reference internal" href="../../sparselm.model.html">sparselm.model</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../../sparselm.stepwise.html">sparselm.stepwise</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../../sparselm.model_selection.html">sparselm.model_selection</a></li>
@@ -261,7 +271,7 @@
 
 <span class="sd">    Same as GridSearchCV but allows to use one standard error rule on all</span>
 <span class="sd">    non-negative numerical hyper-parameters, in order to get a</span>
-<span class="sd">    robust sparce estimation. Same documentation as scikit-learn&#39;s</span>
+<span class="sd">    robust sparse estimation. Same documentation as scikit-learn&#39;s</span>
 <span class="sd">    GridSearchCV.</span>
 
 <span class="sd">    An additional class variable opt_selection named opt_selection</span>
@@ -300,9 +310,7 @@
 <span class="sd">            values.</span>
 <span class="sd">            See :ref:`multimetric_grid_search` for an example.</span>
 <span class="sd">            In sparse-lm, using &quot;neg_root_mean_squared_error&quot; is default</span>
-<span class="sd">            because in cluster expansion it is more conventional to</span>
-<span class="sd">            analyze and present errors in the root-mean-square error format</span>
-<span class="sd">            compared to the r2_score.</span>
+<span class="sd">            in contrast to r2_score used in scikit-learn.</span>
 <span class="sd">        n_jobs (int, default=None):</span>
 <span class="sd">            Number of jobs to run in parallel.</span>
 <span class="sd">            ``None`` means 1 unless in a :obj:`joblib.parallel_backend`</span>
@@ -424,7 +432,7 @@
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Rewritten to implement one standard error rule.&quot;&quot;&quot;</span>
         <span class="c1"># Use rank_test_metric because some score like r2 needs to be</span>
         <span class="c1"># maximized, not minimized.</span>
-        <span class="k">if</span> <span class="n">callable</span><span class="p">(</span><span class="n">refit</span><span class="p">):</span>
+        <span class="k">if</span> <span class="nb">callable</span><span class="p">(</span><span class="n">refit</span><span class="p">):</span>
             <span class="c1"># If callable, refit is expected to return the index of the best</span>
             <span class="c1"># parameter set.</span>
             <span class="n">best_index</span> <span class="o">=</span> <span class="n">refit</span><span class="p">(</span><span class="n">results</span><span class="p">)</span>
@@ -486,7 +494,7 @@
         <span class="n">estimator</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">estimator</span>
         <span class="n">refit_metric</span> <span class="o">=</span> <span class="s2">&quot;score&quot;</span>
 
-        <span class="k">if</span> <span class="n">callable</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">scoring</span><span class="p">):</span>
+        <span class="k">if</span> <span class="nb">callable</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">scoring</span><span class="p">):</span>
             <span class="n">scorers</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">scoring</span>
         <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">scoring</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="nb">isinstance</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">scoring</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
             <span class="n">scorers</span> <span class="o">=</span> <span class="n">check_scoring</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">estimator</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">scoring</span><span class="p">)</span>
@@ -574,7 +582,7 @@
                 <span class="c1"># calling. If the return type is a dictionary, the error scores</span>
                 <span class="c1"># can now be inserted with the correct key. The type checking</span>
                 <span class="c1"># of out will be done in `_insert_error_scores`.</span>
-                <span class="k">if</span> <span class="n">callable</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">scoring</span><span class="p">):</span>
+                <span class="k">if</span> <span class="nb">callable</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">scoring</span><span class="p">):</span>
                     <span class="n">_insert_error_scores</span><span class="p">(</span><span class="n">out</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">error_score</span><span class="p">)</span>
 
                 <span class="n">all_candidate_params</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="n">candidate_params</span><span class="p">)</span>
@@ -599,7 +607,7 @@
             <span class="bp">self</span><span class="o">.</span><span class="n">multimetric_</span> <span class="o">=</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">first_test_score</span><span class="p">,</span> <span class="nb">dict</span><span class="p">)</span>
 
             <span class="c1"># check refit_metric now for a callabe scorer that is multimetric</span>
-            <span class="k">if</span> <span class="n">callable</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">scoring</span><span class="p">)</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">multimetric_</span><span class="p">:</span>
+            <span class="k">if</span> <span class="nb">callable</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">scoring</span><span class="p">)</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">multimetric_</span><span class="p">:</span>
                 <span class="bp">self</span><span class="o">.</span><span class="n">_check_refit_for_multimetric</span><span class="p">(</span><span class="n">first_test_score</span><span class="p">)</span>
                 <span class="n">refit_metric</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">refit</span>
 
@@ -620,7 +628,7 @@
                 <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">(</span>
                     <span class="sa">f</span><span class="s2">&quot;Method </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">opt_selection_method</span><span class="si">}</span><span class="s2">&quot;</span> <span class="sa">f</span><span class="s2">&quot; not implemented!&quot;</span>
                 <span class="p">)</span>
-            <span class="k">if</span> <span class="ow">not</span> <span class="n">callable</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">refit</span><span class="p">):</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="nb">callable</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">refit</span><span class="p">):</span>
                 <span class="c1"># With a non-custom callable, we can select the best score</span>
                 <span class="c1"># based on the best index</span>
                 <span class="bp">self</span><span class="o">.</span><span class="n">best_score_</span> <span class="o">=</span> <span class="n">results</span><span class="p">[</span><span class="sa">f</span><span class="s2">&quot;mean_test_</span><span class="si">{</span><span class="n">refit_metric</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">][</span>
@@ -727,9 +735,7 @@
 <span class="sd">                values.</span>
 <span class="sd">                See :ref:`multimetric_grid_search` for an example.</span>
 <span class="sd">                In sparse-lm, using &quot;neg_root_mean_squared_error&quot; is default</span>
-<span class="sd">                because in cluster expansion it is more conventional to</span>
-<span class="sd">                analyze and present errors in the root-mean-square error format</span>
-<span class="sd">                compared to the r2_score.</span>
+<span class="sd">                in contrast to r2_score used in scikit-learn.</span>
 <span class="sd">            n_jobs (int, default=None):</span>
 <span class="sd">                Number of jobs to run in parallel.</span>
 <span class="sd">                ``None`` means 1 unless in a :obj:`joblib.parallel_backend`</span>
