@@ -1,7 +1,7 @@
 """
-==============================
+===============================================================
 Using one-standard-deviation rule in hyperparameters selection
-==============================
+===============================================================
 
 One-standard-deviation rule is a technique to promote model robustness when
 cross validation results are noisy. The hyperparameter is chosen to
@@ -64,11 +64,12 @@ lasso_std_test = {
     "rmse": np.sqrt(mean_squared_error(y_test, lasso_cv_std.predict(X_test))),
 }
 
-print("Lasso performance metrics:")
+print("Lasso with 1-std performance metrics:")
 print(f"    train r2: {lasso_std_train['r2']:.3f}")
 print(f"    test r2: {lasso_std_test['r2']:.3f}")
 print(f"    train rmse: {lasso_std_train['rmse']:.3f}")
 print(f"    test rmse: {lasso_std_test['rmse']:.3f}")
+print(f"    sparsity: {sum(abs(lasso_cv_std.best_estimator_.coef_) > 1E-8)}")
 
 lasso_opt_train = {
     "r2": r2_score(y_train, lasso_cv_opt.predict(X_train)),
@@ -85,6 +86,7 @@ print(f"    train r2: {lasso_opt_train['r2']:.3f}")
 print(f"    test r2: {lasso_opt_test['r2']:.3f}")
 print(f"    train rmse: {lasso_opt_train['rmse']:.3f}")
 print(f"    test rmse: {lasso_opt_test['rmse']:.3f}")
+print(f"    sparsity: {sum(abs(lasso_cv_opt.best_estimator_.coef_) > 1E-8)}")
 
 # plot predicted values
 fig, ax = plt.subplots()

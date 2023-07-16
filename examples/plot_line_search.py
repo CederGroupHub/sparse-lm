@@ -1,7 +1,7 @@
 """
-==============================
+==============================================
 Using line search in hyperparameters selection
-==============================
+==============================================
 
 Line search can typically be used in optimizing regressors with multiple hyperparameters.
 Available in sparselm.model_selection.
@@ -18,9 +18,9 @@ from sparselm.model import L2L0
 from sparselm.model_selection import LineSearchCV
 
 X, y, coef = make_regression(
-    n_samples=200,
-    n_features=100,
-    n_informative=10,
+    n_samples=60,
+    n_features=30,
+    n_informative=8,
     noise=40.0,
     bias=-15.0,
     coef=True,
@@ -31,9 +31,10 @@ X_train, X_test, y_train, y_test = train_test_split(
     X, y, test_size=0.25, random_state=0
 )
 
-# create an l2l0 estimator. Groups for parameters must be provided.
-groups = np.arange(100, dtype=int)
-l2l0 = L2L0(groups, fit_intercept=True)
+# create an l2l0 estimator.
+# Groups for parameters must be provided each coefficient is in a singleton group.
+groups = np.arange(30, dtype=int)
+l2l0 = L2L0(groups, fit_intercept=True, solver="GUROBI", solver_options={"Threads": 4})
 
 # create cv search objects for each estimator
 cv5 = KFold(n_splits=5, shuffle=True, random_state=0)
@@ -42,9 +43,9 @@ cv5 = KFold(n_splits=5, shuffle=True, random_state=0)
 # iteration.
 # The following example specifies the parameter alpha to be scanned first, then the
 # parameter eta.
-params = [("alpha", np.logspace(-6, 1, 10)), ("eta", np.logspace(-7, -1, 10))]
+params = [("alpha", np.logspace(-6, 1, 5)), ("eta", np.logspace(-7, -1, 5))]
 
-l2l0_cv = LineSearchCV(l2l0, params, cv=cv5, n_jobs=-1)
+l2l0_cv = LineSearchCV(l2l0, params, cv=cv5, n_jobs=4)
 
 # fit models on training data
 l2l0_cv.fit(X_train, y_train)
@@ -60,7 +61,7 @@ l2l0_test = {
     "rmse": np.sqrt(mean_squared_error(y_test, l2l0_cv.predict(X_test))),
 }
 
-print("Lasso performance metrics:")
+print("Performance metrics:")
 print(f"    train r2: {l2l0_train['r2']:.3f}")
 print(f"    test r2: {l2l0_test['r2']:.3f}")
 print(f"    train rmse: {l2l0_train['rmse']:.3f}")

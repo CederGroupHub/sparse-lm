@@ -1,24 +1,29 @@
 """
-==============================
+========================
 Using stepwise estimator
-==============================
+========================
 
 Stepwise estimator can be used to implement stepwise fitting. It comprises several
 regressor, each responsible for fitting specific rows of the feature matrix to
 the target vector and passing the residual values down to be fitted by the subsequent
-regressors. For example, in fitting the cluster expansion of an ionic system, one might
-want to fit the energy to point and Ewald interactions first and subtract the point
-and Ewald contributions, then fit the residual of energy to other cluster interactions.
+regressors.
 
-This technique works well for complex ionic system with a large rank-deficiency. However,
-in well-determined metallic alloy systems, stepwise fitting is introduces too much model
-bias and should not be recommended!
+This example is purely for demonstration purpose and we do not expect any meaningful
+performance improvement.
+
+However, stepwise fitting can be useful in certain problems where groups of covariates
+have substantially different effects on the target vector.
+
+For example, in fitting the atomic configration energy of an crystalline solid using a
+cluster expansion of an ionic system, one might want to fit the energy to single site
+features first then subtract those main effects from the target, and fit the residual
+of energy to other cluster interactions.
 """
 
 import matplotlib.pyplot as plt
 import numpy as np
 from sklearn.datasets import make_regression
-from sklearn.linear_model import Lasso
+from sklearn.linear_model import Lasso, Ridge
 from sklearn.metrics import mean_squared_error, r2_score
 from sklearn.model_selection import KFold, train_test_split
 
@@ -41,11 +46,12 @@ X_train, X_test, y_train, y_test = train_test_split(
 
 # Create estimators for each step.
 # Only the first estimator is allowed to fit_intercept!
-estimator1 = Lasso(fit_intercept=True)
-lasso2 = Lasso(fit_intercept=False)
+ridge = Ridge(fit_intercept=True)
+lasso = Lasso(fit_intercept=False)
 cv5 = KFold(n_splits=5, shuffle=True, random_state=0)
 params = {"alpha": np.logspace(-1, 1, 10)}
-estimator2 = GridSearchCV(lasso2, params, cv=cv5, n_jobs=-1)
+estimator1 = GridSearchCV(ridge, params, cv=cv5, n_jobs=-1)
+estimator2 = GridSearchCV(lasso, params, cv=cv5, n_jobs=-1)
 
 # Create a StepwiseEstimator. It can be composed of either
 # regressors or GridSearchCV and LineSearchCV optimizers.
@@ -54,7 +60,7 @@ estimator2 = GridSearchCV(lasso2, params, cv=cv5, n_jobs=-1)
 # of the features with GridSearchCV to optimize the Lasso
 # hyperparameter.
 stepwise = StepwiseEstimator(
-    [("est1", estimator1), ("est2", estimator2)], ((0, 1, 2, 99), tuple(range(3, 99)))
+    [("est", estimator1), ("est2", estimator2)], ((0, 1, 2, 99), tuple(range(3, 99)))
 )
 
 # fit models on training data
@@ -89,7 +95,7 @@ fig.show()
 # plot model coefficients
 fig, ax = plt.subplots()
 ax.plot(coef, "o", label="True coefficients")
-ax.plot(stepwise.best_estimator_.coef_, "o", label="Stepwise", alpha=0.5)
+ax.plot(stepwise.coef_, "o", label="Stepwise", alpha=0.5)
 ax.set_xlabel("covariate index")
 ax.set_ylabel("coefficient value")
 fig.show()
