@@ -3,7 +3,7 @@
   <head><meta charset="utf-8"/>
     <meta name="viewport" content="width=device-width,initial-scale=1"/>
     <meta name="color-scheme" content="light dark"><meta name="viewport" content="width=device-width, initial-scale=1" />
-<link rel="index" title="Index" href="../genindex.html" /><link rel="search" title="Search" href="../search.html" /><link rel="next" title="Adding solution constraints" href="plot_chull.html" /><link rel="prev" title="Using adaptive regularization" href="plot_adaptive.html" />
+<link rel="index" title="Index" href="../genindex.html" /><link rel="search" title="Search" href="../search.html" /><link rel="next" title="Adding solution constraints" href="plot_chull.html" /><link rel="prev" title="Using one-standard-deviation rule in hyperparameters selection" href="plot_one_std.html" />
 
     <!-- Generated with Sphinx 7.0.1 and Furo 2023.05.20 -->
         <title>(Sparse) Group regression - sparse-lm</title>
@@ -185,7 +185,10 @@
 <li class="toctree-l1"><a class="reference internal" href="../install.html">Install</a></li>
 <li class="toctree-l1 current has-children"><a class="reference internal" href="index.html">Examples</a><input checked="" class="toctree-checkbox" id="toctree-checkbox-1" name="toctree-checkbox-1" role="switch" type="checkbox"/><label for="toctree-checkbox-1"><div class="visually-hidden">Toggle navigation of Examples</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul class="current">
 <li class="toctree-l2"><a class="reference internal" href="plot_sparse_signal.html">Recovering sparse signals</a></li>
+<li class="toctree-l2"><a class="reference internal" href="plot_line_search.html">Using line search in hyperparameters selection</a></li>
+<li class="toctree-l2"><a class="reference internal" href="plot_stepwise.html">Using stepwise estimator</a></li>
 <li class="toctree-l2"><a class="reference internal" href="plot_adaptive.html">Using adaptive regularization</a></li>
+<li class="toctree-l2"><a class="reference internal" href="plot_one_std.html">Using one-standard-deviation rule in hyperparameters selection</a></li>
 <li class="toctree-l2 current current-page"><a class="current reference internal" href="#">(Sparse) Group regression</a></li>
 <li class="toctree-l2"><a class="reference internal" href="plot_chull.html">Adding solution constraints</a></li>
 </ul>
@@ -462,7 +465,7 @@ Sparse Group Lasso performance metrics:
 <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;    test rmse: </span><span class="si">{</span><a href="https://docs.python.org/3.9/library/stdtypes.html#dict" title="builtins.dict" class="sphx-glr-backref-module-builtins sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">sglasso_test</span></a><span class="p">[</span><span class="s1">&#39;rmse&#39;</span><span class="p">]</span><span class="si">:</span><span class="s2">.3f</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
 </pre></div>
 </div>
-<p class="sphx-glr-timing"><strong>Total running time of the script:</strong> ( 0 minutes  15.541 seconds)</p>
+<p class="sphx-glr-timing"><strong>Total running time of the script:</strong> ( 0 minutes  20.218 seconds)</p>
 <div class="sphx-glr-footer sphx-glr-footer-example docutils container" id="sphx-glr-download-auto-examples-plot-gl-sgl-py">
 <div class="sphx-glr-download sphx-glr-download-python docutils container">
 <p><a class="reference download internal" download="" href="../_downloads/d80fbc936f3cb8d9e602dcc4435647cc/plot_gl_sgl.py"><code class="xref download docutils literal notranslate"><span class="pre">Download</span> <span class="pre">Python</span> <span class="pre">source</span> <span class="pre">code:</span> <span class="pre">plot_gl_sgl.py</span></code></a></p>
@@ -488,14 +491,14 @@ Sparse Group Lasso performance metrics:
               </div>
               <svg class="furo-related-icon"><use href="#svg-arrow-right"></use></svg>
             </a>
-          <a class="prev-page" href="plot_adaptive.html">
+          <a class="prev-page" href="plot_one_std.html">
               <svg class="furo-related-icon"><use href="#svg-arrow-right"></use></svg>
               <div class="page-info">
                 <div class="context">
                   <span>Previous</span>
                 </div>
                 
-                <div class="title">Using adaptive regularization</div>
+                <div class="title">Using one-standard-deviation rule in hyperparameters selection</div>
                 
               </div>
             </a>
