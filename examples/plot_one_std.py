@@ -90,16 +90,6 @@ print(f"    train rmse: {lasso_opt_train['rmse']:.3f}")
 print(f"    test rmse: {lasso_opt_test['rmse']:.3f}")
 print(f"    sparsity: {sum(abs(lasso_cv_opt.best_estimator_.coef_) > 1E-8)}")
 
-# plot model coefficients
-fig, ax = plt.subplots()
-ax.plot(coef, "o", label="True coefficients")
-ax.plot(lasso_cv_std.best_estimator_.coef_, "o", label="One std", alpha=0.5)
-ax.plot(lasso_cv_opt.best_estimator_.coef_, "o", label="Max score", alpha=0.5)
-ax.set_xlabel("covariate index")
-ax.set_ylabel("coefficient value")
-ax.legend()
-fig.show()
-
 # plot cross validation scores
 fig, ax = plt.subplots()
 ax.plot(
@@ -121,4 +111,14 @@ ax.plot(
 ax.set_xlabel("alpha")
 ax.set_ylabel("rmse")
 ax.legend(["mean", "std"])
+fig.show()
+
+# plot model coefficients
+fig, ax = plt.subplots()
+ax.plot(coef, "o", label="True coefficients")
+ax.plot(lasso_cv_std.best_estimator_.coef_, "o", label="One std", alpha=0.5)
+ax.plot(lasso_cv_opt.best_estimator_.coef_, "o", label="Max score", alpha=0.5)
+ax.set_xlabel("covariate index")
+ax.set_ylabel("coefficient value")
+ax.legend()
 fig.show()
