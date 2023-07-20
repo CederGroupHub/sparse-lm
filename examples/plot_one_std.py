@@ -1,7 +1,7 @@
 """
-===============================================================
-Using one-standard-deviation rule in hyperparameters selection
-===============================================================
+=========================================
+Hyperparameters selection with 1-std rule
+=========================================
 
 One-standard-deviation rule is a technique to promote model robustness when
 cross validation results are noisy. The hyperparameter is chosen to
@@ -40,7 +40,7 @@ lasso = Lasso(fit_intercept=True)
 
 # create cv search objects for each estimator
 cv5 = KFold(n_splits=5, shuffle=True, random_state=0)
-params = {"alpha": np.logspace(-1, 1, 10)}
+params = {"alpha": np.logspace(-1, 1.5, 20)}
 
 lasso_cv_std = GridSearchCV(
     lasso, params, opt_selection_method="one_std_score", cv=cv5, n_jobs=-1
@@ -64,7 +64,8 @@ lasso_std_test = {
     "rmse": np.sqrt(mean_squared_error(y_test, lasso_cv_std.predict(X_test))),
 }
 
-print("Lasso with 1-std performance metrics:")
+print("Lasso with 1-std:")
+print(f"    alpha value: {lasso_cv_std.best_params_['alpha']}")
 print(f"    train r2: {lasso_std_train['r2']:.3f}")
 print(f"    test r2: {lasso_std_test['r2']:.3f}")
 print(f"    train rmse: {lasso_std_train['rmse']:.3f}")
@@ -81,22 +82,13 @@ lasso_opt_test = {
     "rmse": np.sqrt(mean_squared_error(y_test, lasso_cv_opt.predict(X_test))),
 }
 
-print("Lasso performance metrics:")
+print("Lasso performance:")
+print(f"    alpha value: {lasso_cv_std.best_params_['alpha']}")
 print(f"    train r2: {lasso_opt_train['r2']:.3f}")
 print(f"    test r2: {lasso_opt_test['r2']:.3f}")
 print(f"    train rmse: {lasso_opt_train['rmse']:.3f}")
 print(f"    test rmse: {lasso_opt_test['rmse']:.3f}")
 print(f"    sparsity: {sum(abs(lasso_cv_opt.best_estimator_.coef_) > 1E-8)}")
-
-# plot predicted values
-fig, ax = plt.subplots()
-ax.plot(y_test, lasso_cv_std.predict(X_test), "o", label="One std", alpha=0.5)
-ax.plot(y_test, lasso_cv_opt.predict(X_test), "o", label="Max score", alpha=0.5)
-ax.plot([y_test.min(), y_test.max()], [y_test.min(), y_test.max()], "k--")
-ax.set_xlabel("true values")
-ax.set_ylabel("predicted values")
-ax.legend()
-fig.show()
 
 # plot model coefficients
 fig, ax = plt.subplots()
@@ -105,4 +97,28 @@ ax.plot(lasso_cv_std.best_estimator_.coef_, "o", label="One std", alpha=0.5)
 ax.plot(lasso_cv_opt.best_estimator_.coef_, "o", label="Max score", alpha=0.5)
 ax.set_xlabel("covariate index")
 ax.set_ylabel("coefficient value")
+ax.legend()
+fig.show()
+
+# plot cross validation scores
+fig, ax = plt.subplots()
+ax.plot(
+    lasso_cv_std.cv_results_["param_alpha"].data,
+    -lasso_cv_std.cv_results_["mean_test_score"],
+    "o-",
+    label="One std",
+)
+ax.plot(
+    lasso_cv_std.cv_results_["param_alpha"].data,
+    -lasso_cv_opt.cv_results_["mean_test_score"] + lasso_cv_std.cv_results_["std_test_score"],
+    'k--', alpha=0.5
+)
+ax.plot(
+    lasso_cv_std.cv_results_["param_alpha"].data,
+    -lasso_cv_opt.cv_results_["mean_test_score"] - lasso_cv_std.cv_results_["std_test_score"],
+    'k--', alpha=0.5
+)
+ax.set_xlabel("alpha")
+ax.set_ylabel("rmse")
+ax.legend(["mean", "std"])
 fig.show()
