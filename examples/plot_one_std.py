@@ -100,13 +100,17 @@ ax.plot(
 )
 ax.plot(
     lasso_cv_std.cv_results_["param_alpha"].data,
-    -lasso_cv_opt.cv_results_["mean_test_score"] + lasso_cv_std.cv_results_["std_test_score"],
-    'k--', alpha=0.5
+    -lasso_cv_opt.cv_results_["mean_test_score"]
+    + lasso_cv_std.cv_results_["std_test_score"],
+    "k--",
+    alpha=0.5,
 )
 ax.plot(
     lasso_cv_std.cv_results_["param_alpha"].data,
-    -lasso_cv_opt.cv_results_["mean_test_score"] - lasso_cv_std.cv_results_["std_test_score"],
-    'k--', alpha=0.5
+    -lasso_cv_opt.cv_results_["mean_test_score"]
+    - lasso_cv_std.cv_results_["std_test_score"],
+    "k--",
+    alpha=0.5,
 )
 ax.set_xlabel("alpha")
 ax.set_ylabel("rmse")
