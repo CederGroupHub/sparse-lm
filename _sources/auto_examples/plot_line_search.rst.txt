@@ -28,26 +28,9 @@ uncorrelated hyperparameters.
 This example also showcases the usage of mixed L0 regressor where using a standard
 grid search can be too computationally expensive..
 
-.. GENERATED FROM PYTHON SOURCE LINES 12-88
+.. GENERATED FROM PYTHON SOURCE LINES 12-70
 
 
-
-.. rst-class:: sphx-glr-horizontal
-
-
-    *
-
-      .. image-sg:: /auto_examples/images/sphx_glr_plot_line_search_001.png
-         :alt: plot line search
-         :srcset: /auto_examples/images/sphx_glr_plot_line_search_001.png
-         :class: sphx-glr-multi-img
-
-    *
-
-      .. image-sg:: /auto_examples/images/sphx_glr_plot_line_search_002.png
-         :alt: plot line search
-         :srcset: /auto_examples/images/sphx_glr_plot_line_search_002.png
-         :class: sphx-glr-multi-img
 
 
 .. rst-class:: sphx-glr-script-out
@@ -70,7 +53,6 @@ grid search can be too computationally expensive..
 .. code-block:: default
 
 
-    import matplotlib.pyplot as plt
     import numpy as np
     from sklearn.datasets import make_regression
     from sklearn.metrics import mean_squared_error, r2_score
@@ -129,27 +111,10 @@ grid search can be too computationally expensive..
     print(f"    train rmse: {l2l0_train['rmse']:.3f}")
     print(f"    test rmse: {l2l0_test['rmse']:.3f}")
 
-    # plot predicted values
-    fig, ax = plt.subplots()
-    ax.plot(y_test, l2l0_cv.predict(X_test), "o", label="L2L0 line search", alpha=0.5)
-    ax.plot([y_test.min(), y_test.max()], [y_test.min(), y_test.max()], "k--")
-    ax.set_xlabel("true values")
-    ax.set_ylabel("predicted values")
-    ax.legend()
-    fig.show()
-
-    # plot model coefficients
-    fig, ax = plt.subplots()
-    ax.plot(coef, "o", label="True coefficients")
-    ax.plot(l2l0_cv.best_estimator_.coef_, "o", label="L2L0 line search", alpha=0.5)
-    ax.set_xlabel("covariate index")
-    ax.set_ylabel("coefficient value")
-    fig.show()
-
 
 .. rst-class:: sphx-glr-timing
 
-   **Total running time of the script:** ( 0 minutes  22.422 seconds)
+   **Total running time of the script:** ( 0 minutes  22.493 seconds)
 
 
 .. _sphx_glr_download_auto_examples_plot_line_search.py:

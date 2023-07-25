@@ -132,7 +132,7 @@ https://scikit-learn.org/stable/auto_examples/linear_model/plot_omp.html#sphx-gl
 
 .. rst-class:: sphx-glr-timing
 
-   **Total running time of the script:** ( 0 minutes  4.474 seconds)
+   **Total running time of the script:** ( 1 minutes  7.889 seconds)
 
 
 .. _sphx_glr_download_auto_examples_plot_sparse_signal.py:

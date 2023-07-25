@@ -6,20 +6,20 @@
 
 Computation times
 =================
-**00:52.127** total execution time for **auto_examples** files:
+**01:56.300** total execution time for **auto_examples** files:
 
 +---------------------------------------------------------------------------------+-----------+--------+
-| :ref:`sphx_glr_auto_examples_plot_line_search.py` (``plot_line_search.py``)     | 00:22.422 | 0.0 MB |
+| :ref:`sphx_glr_auto_examples_plot_sparse_signal.py` (``plot_sparse_signal.py``) | 01:07.889 | 0.0 MB |
 +---------------------------------------------------------------------------------+-----------+--------+
-| :ref:`sphx_glr_auto_examples_plot_gl_sgl.py` (``plot_gl_sgl.py``)               | 00:17.202 | 0.0 MB |
+| :ref:`sphx_glr_auto_examples_plot_line_search.py` (``plot_line_search.py``)     | 00:22.493 | 0.0 MB |
 +---------------------------------------------------------------------------------+-----------+--------+
-| :ref:`sphx_glr_auto_examples_plot_sparse_signal.py` (``plot_sparse_signal.py``) | 00:04.474 | 0.0 MB |
+| :ref:`sphx_glr_auto_examples_plot_gl_sgl.py` (``plot_gl_sgl.py``)               | 00:17.688 | 0.0 MB |
 +---------------------------------------------------------------------------------+-----------+--------+
-| :ref:`sphx_glr_auto_examples_plot_adaptive.py` (``plot_adaptive.py``)           | 00:03.544 | 0.0 MB |
+| :ref:`sphx_glr_auto_examples_plot_chull.py` (``plot_chull.py``)                 | 00:03.509 | 0.0 MB |
 +---------------------------------------------------------------------------------+-----------+--------+
-| :ref:`sphx_glr_auto_examples_plot_chull.py` (``plot_chull.py``)                 | 00:03.348 | 0.0 MB |
+| :ref:`sphx_glr_auto_examples_plot_adaptive.py` (``plot_adaptive.py``)           | 00:03.484 | 0.0 MB |
 +---------------------------------------------------------------------------------+-----------+--------+
-| :ref:`sphx_glr_auto_examples_plot_one_std.py` (``plot_one_std.py``)             | 00:00.609 | 0.0 MB |
+| :ref:`sphx_glr_auto_examples_plot_stepwise.py` (``plot_stepwise.py``)           | 00:00.645 | 0.0 MB |
 +---------------------------------------------------------------------------------+-----------+--------+
-| :ref:`sphx_glr_auto_examples_plot_stepwise.py` (``plot_stepwise.py``)           | 00:00.528 | 0.0 MB |
+| :ref:`sphx_glr_auto_examples_plot_one_std.py` (``plot_one_std.py``)             | 00:00.593 | 0.0 MB |
 +---------------------------------------------------------------------------------+-----------+--------+

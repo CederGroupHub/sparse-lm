@@ -38,7 +38,7 @@ cluster expansion of an ionic system, one might want to fit the energy to single
 features first then subtract those main effects from the target, and fit the residual
 of energy to other cluster interactions.
 
-.. GENERATED FROM PYTHON SOURCE LINES 22-102
+.. GENERATED FROM PYTHON SOURCE LINES 22-103
 
 
 
@@ -70,6 +70,7 @@ of energy to other cluster interactions.
         train rmse: 45.437
         test rmse: 60.245
 
+    <matplotlib.legend.Legend object at 0x7f82e24639a0>
 
 
 
@@ -143,6 +144,16 @@ of energy to other cluster interactions.
     print(f"    train rmse: {stepwise_train['rmse']:.3f}")
     print(f"    test rmse: {stepwise_test['rmse']:.3f}")
 
+    # plot model coefficients
+    fig, ax = plt.subplots()
+    ax.plot(coef, "o", label="True coefficients")
+    ax.plot(stepwise.coef_[[0, 1, 2, 99]], "o", label="Stepwise (ridge)", alpha=0.5)
+    ax.plot(stepwise.coef_[range(3, 99)], "o", label="Stepwise (lasso)", alpha=0.5)
+    ax.set_xlabel("covariate index")
+    ax.set_ylabel("coefficient value")
+    ax.legend()
+    fig.show()
+
     # plot predicted values
     fig, ax = plt.subplots()
     ax.plot(y_test, stepwise.predict(X_test), "o", label="Stepwise", alpha=0.5)
@@ -150,20 +161,11 @@ of energy to other cluster interactions.
     ax.set_xlabel("true values")
     ax.set_ylabel("predicted values")
     ax.legend()
-    fig.show()
-
-    # plot model coefficients
-    fig, ax = plt.subplots()
-    ax.plot(coef, "o", label="True coefficients")
-    ax.plot(stepwise.coef_, "o", label="Stepwise", alpha=0.5)
-    ax.set_xlabel("covariate index")
-    ax.set_ylabel("coefficient value")
-    fig.show()
 
 
 .. rst-class:: sphx-glr-timing
 
-   **Total running time of the script:** ( 0 minutes  0.528 seconds)
+   **Total running time of the script:** ( 0 minutes  0.645 seconds)
 
 
 .. _sphx_glr_download_auto_examples_plot_stepwise.py:
