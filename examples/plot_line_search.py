@@ -68,20 +68,3 @@ print(f"    train r2: {l2l0_train['r2']:.3f}")
 print(f"    test r2: {l2l0_test['r2']:.3f}")
 print(f"    train rmse: {l2l0_train['rmse']:.3f}")
 print(f"    test rmse: {l2l0_test['rmse']:.3f}")
-
-# plot predicted values
-fig, ax = plt.subplots()
-ax.plot(y_test, l2l0_cv.predict(X_test), "o", label="L2L0 line search", alpha=0.5)
-ax.plot([y_test.min(), y_test.max()], [y_test.min(), y_test.max()], "k--")
-ax.set_xlabel("true values")
-ax.set_ylabel("predicted values")
-ax.legend()
-fig.show()
-
-# plot model coefficients
-fig, ax = plt.subplots()
-ax.plot(coef, "o", label="True coefficients")
-ax.plot(l2l0_cv.best_estimator_.coef_, "o", label="L2L0 line search", alpha=0.5)
-ax.set_xlabel("covariate index")
-ax.set_ylabel("coefficient value")
-fig.show()

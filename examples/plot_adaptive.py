@@ -79,6 +79,16 @@ print(f"    test r2: {alasso_test['r2']:.3f}")
 print(f"    train rmse: {alasso_train['rmse']:.3f}")
 print(f"    test rmse: {alasso_test['rmse']:.3f}")
 
+# plot model coefficients
+fig, ax = plt.subplots()
+ax.plot(coef, "o", label="True coefficients")
+ax.plot(lasso_cv.best_estimator_.coef_, "o", label="Lasso", alpha=0.5)
+ax.plot(alasso_cv.best_estimator_.coef_, "o", label="Adaptive Lasso", alpha=0.5)
+ax.set_xlabel("covariate index")
+ax.set_ylabel("coefficient value")
+ax.legend()
+fig.show()
+
 # plot predicted values
 fig, ax = plt.subplots()
 ax.plot(y_test, lasso_cv.predict(X_test), "o", label="lasso", alpha=0.5)
@@ -89,11 +99,3 @@ ax.set_ylabel("predicted values")
 ax.legend()
 fig.show()
 
-# plot model coefficients
-fig, ax = plt.subplots()
-ax.plot(coef, "o", label="True coefficients")
-ax.plot(lasso_cv.best_estimator_.coef_, "o", label="Lasso", alpha=0.5)
-ax.plot(alasso_cv.best_estimator_.coef_, "o", label="Adaptive Lasso", alpha=0.5)
-ax.set_xlabel("covariate index")
-ax.set_ylabel("coefficient value")
-fig.show()

@@ -83,6 +83,16 @@ print(f"    test r2: {stepwise_test['r2']:.3f}")
 print(f"    train rmse: {stepwise_train['rmse']:.3f}")
 print(f"    test rmse: {stepwise_test['rmse']:.3f}")
 
+# plot model coefficients
+fig, ax = plt.subplots()
+ax.plot(coef, "o", label="True coefficients")
+ax.plot(stepwise.coef_[[0, 1, 2, 99]], "o", label="Stepwise (ridge)", alpha=0.5)
+ax.plot(stepwise.coef_[range(3, 99)], "o", label="Stepwise (lasso)", alpha=0.5)
+ax.set_xlabel("covariate index")
+ax.set_ylabel("coefficient value")
+ax.legend()
+fig.show()
+
 # plot predicted values
 fig, ax = plt.subplots()
 ax.plot(y_test, stepwise.predict(X_test), "o", label="Stepwise", alpha=0.5)
@@ -90,12 +100,3 @@ ax.plot([y_test.min(), y_test.max()], [y_test.min(), y_test.max()], "k--")
 ax.set_xlabel("true values")
 ax.set_ylabel("predicted values")
 ax.legend()
-fig.show()
-
-# plot model coefficients
-fig, ax = plt.subplots()
-ax.plot(coef, "o", label="True coefficients")
-ax.plot(stepwise.coef_, "o", label="Stepwise", alpha=0.5)
-ax.set_xlabel("covariate index")
-ax.set_ylabel("coefficient value")
-fig.show()
