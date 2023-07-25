@@ -33,7 +33,7 @@ used in the same way as the linear regression models in **scikit-learn**.
 
 .. raw:: html
 
-    <div class="sphx-glr-thumbcontainer" tooltip="Line search can typically be used in optimizing regressors with multiple hyperparameters. Avail...">
+    <div class="sphx-glr-thumbcontainer" tooltip="Line search can typically be used in optimizing regressors with multiple weakly or uncorrelated...">
 
 .. only:: html
 
@@ -44,7 +44,7 @@ used in the same way as the linear regression models in **scikit-learn**.
 
 .. raw:: html
 
-      <div class="sphx-glr-thumbnail-title">Using line search in hyperparameters selection</div>
+      <div class="sphx-glr-thumbnail-title">Tuning hyperparameters with line search</div>
     </div>
 
 
@@ -95,7 +95,7 @@ used in the same way as the linear regression models in **scikit-learn**.
 
 .. raw:: html
 
-      <div class="sphx-glr-thumbnail-title">Using one-standard-deviation rule in hyperparameters selection</div>
+      <div class="sphx-glr-thumbnail-title">Hyperparameters selection with 1-std rule</div>
     </div>
 
 

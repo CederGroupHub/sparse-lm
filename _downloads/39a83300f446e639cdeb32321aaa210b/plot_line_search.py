@@ -1,11 +1,13 @@
 """
-==============================================
-Using line search in hyperparameters selection
-==============================================
+=======================================
+Tuning hyperparameters with line search
+=======================================
 
-Line search can typically be used in optimizing regressors with multiple hyperparameters.
-Available in sparselm.model_selection.
-This example also showcases the usage of mixed L0 regressor.
+Line search can typically be used in optimizing regressors with multiple weakly or
+uncorrelated hyperparameters.
+
+This example also showcases the usage of mixed L0 regressor where using a standard
+grid search can be too computationally expensive..
 """
 
 import matplotlib.pyplot as plt

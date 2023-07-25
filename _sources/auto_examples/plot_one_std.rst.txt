@@ -18,9 +18,9 @@
 .. _sphx_glr_auto_examples_plot_one_std.py:
 
 
-===============================================================
-Using one-standard-deviation rule in hyperparameters selection
-===============================================================
+=========================================
+Hyperparameters selection with 1-std rule
+=========================================
 
 One-standard-deviation rule is a technique to promote model robustness when
 cross validation results are noisy. The hyperparameter is chosen to
@@ -30,7 +30,7 @@ be equal to the maximum value that yields:
 One-standard-deviation rule is available in both GridSearchCV and LineSearchCV
 under sparselm.model_selection.
 
-.. GENERATED FROM PYTHON SOURCE LINES 14-109
+.. GENERATED FROM PYTHON SOURCE LINES 14-129
 
 
 
@@ -56,18 +56,20 @@ under sparselm.model_selection.
 
  .. code-block:: none
 
-    Lasso with 1-std performance metrics:
-        train r2: 0.961
-        test r2: 0.945
-        train rmse: 42.082
-        test rmse: 45.472
-        sparsity: 15
-    Lasso performance metrics:
-        train r2: 0.969
+    Lasso with 1-std:
+        alpha value: 6.9519279617756045
+        train r2: 0.957
+        test r2: 0.941
+        train rmse: 44.083
+        test rmse: 47.177
+        sparsity: 13
+    Lasso performance:
+        alpha value: 6.9519279617756045
+        train r2: 0.968
         test r2: 0.952
-        train rmse: 37.434
-        test rmse: 42.415
-        sparsity: 25
+        train rmse: 37.854
+        test rmse: 42.665
+        sparsity: 22
 
 
 
@@ -107,7 +109,7 @@ under sparselm.model_selection.
 
     # create cv search objects for each estimator
     cv5 = KFold(n_splits=5, shuffle=True, random_state=0)
-    params = {"alpha": np.logspace(-1, 1, 10)}
+    params = {"alpha": np.logspace(-1, 1.5, 20)}
 
     lasso_cv_std = GridSearchCV(
         lasso, params, opt_selection_method="one_std_score", cv=cv5, n_jobs=-1
@@ -131,7 +133,8 @@ under sparselm.model_selection.
         "rmse": np.sqrt(mean_squared_error(y_test, lasso_cv_std.predict(X_test))),
     }
 
-    print("Lasso with 1-std performance metrics:")
+    print("Lasso with 1-std:")
+    print(f"    alpha value: {lasso_cv_std.best_params_['alpha']}")
     print(f"    train r2: {lasso_std_train['r2']:.3f}")
     print(f"    test r2: {lasso_std_test['r2']:.3f}")
     print(f"    train rmse: {lasso_std_train['rmse']:.3f}")
@@ -148,21 +151,39 @@ under sparselm.model_selection.
         "rmse": np.sqrt(mean_squared_error(y_test, lasso_cv_opt.predict(X_test))),
     }
 
-    print("Lasso performance metrics:")
+    print("Lasso performance:")
+    print(f"    alpha value: {lasso_cv_std.best_params_['alpha']}")
     print(f"    train r2: {lasso_opt_train['r2']:.3f}")
     print(f"    test r2: {lasso_opt_test['r2']:.3f}")
     print(f"    train rmse: {lasso_opt_train['rmse']:.3f}")
     print(f"    test rmse: {lasso_opt_test['rmse']:.3f}")
     print(f"    sparsity: {sum(abs(lasso_cv_opt.best_estimator_.coef_) > 1E-8)}")
 
-    # plot predicted values
+    # plot cross validation scores
     fig, ax = plt.subplots()
-    ax.plot(y_test, lasso_cv_std.predict(X_test), "o", label="One std", alpha=0.5)
-    ax.plot(y_test, lasso_cv_opt.predict(X_test), "o", label="Max score", alpha=0.5)
-    ax.plot([y_test.min(), y_test.max()], [y_test.min(), y_test.max()], "k--")
-    ax.set_xlabel("true values")
-    ax.set_ylabel("predicted values")
-    ax.legend()
+    ax.plot(
+        lasso_cv_std.cv_results_["param_alpha"].data,
+        -lasso_cv_std.cv_results_["mean_test_score"],
+        "o-",
+        label="One std",
+    )
+    ax.plot(
+        lasso_cv_std.cv_results_["param_alpha"].data,
+        -lasso_cv_opt.cv_results_["mean_test_score"]
+        + lasso_cv_std.cv_results_["std_test_score"],
+        "k--",
+        alpha=0.5,
+    )
+    ax.plot(
+        lasso_cv_std.cv_results_["param_alpha"].data,
+        -lasso_cv_opt.cv_results_["mean_test_score"]
+        - lasso_cv_std.cv_results_["std_test_score"],
+        "k--",
+        alpha=0.5,
+    )
+    ax.set_xlabel("alpha")
+    ax.set_ylabel("rmse")
+    ax.legend(["mean", "std"])
     fig.show()
 
     # plot model coefficients
@@ -172,12 +193,13 @@ under sparselm.model_selection.
     ax.plot(lasso_cv_opt.best_estimator_.coef_, "o", label="Max score", alpha=0.5)
     ax.set_xlabel("covariate index")
     ax.set_ylabel("coefficient value")
+    ax.legend()
     fig.show()
 
 
 .. rst-class:: sphx-glr-timing
 
-   **Total running time of the script:** ( 0 minutes  0.368 seconds)
+   **Total running time of the script:** ( 0 minutes  0.609 seconds)
 
 
 .. _sphx_glr_download_auto_examples_plot_one_std.py:

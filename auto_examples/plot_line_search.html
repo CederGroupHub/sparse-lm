@@ -5,14 +5,14 @@
     <meta name="color-scheme" content="light dark"><meta name="viewport" content="width=device-width, initial-scale=1" />
 <link rel="index" title="Index" href="../genindex.html" /><link rel="search" title="Search" href="../search.html" /><link rel="next" title="Using stepwise estimator" href="plot_stepwise.html" /><link rel="prev" title="Recovering sparse signals" href="plot_sparse_signal.html" />
 
-    <!-- Generated with Sphinx 7.0.1 and Furo 2023.05.20 -->
-        <title>Using line search in hyperparameters selection - sparse-lm</title>
-      <link rel="stylesheet" type="text/css" href="../_static/pygments.css" />
+    <!-- Generated with Sphinx 7.1.0 and Furo 2023.05.20 -->
+        <title>Tuning hyperparameters with line search - sparse-lm</title>
+      <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=b76e3c8a" />
     <link rel="stylesheet" type="text/css" href="../_static/styles/furo.css?digest=e6660623a769aa55fea372102b9bf3151b292993" />
-    <link rel="stylesheet" type="text/css" href="../_static/sg_gallery.css" />
-    <link rel="stylesheet" type="text/css" href="../_static/sg_gallery-binder.css" />
-    <link rel="stylesheet" type="text/css" href="../_static/sg_gallery-dataframe.css" />
-    <link rel="stylesheet" type="text/css" href="../_static/sg_gallery-rendered-html.css" />
+    <link rel="stylesheet" type="text/css" href="../_static/sg_gallery.css?v=61a4c737" />
+    <link rel="stylesheet" type="text/css" href="../_static/sg_gallery-binder.css?v=f4aeca0c" />
+    <link rel="stylesheet" type="text/css" href="../_static/sg_gallery-dataframe.css?v=e5fbc548" />
+    <link rel="stylesheet" type="text/css" href="../_static/sg_gallery-rendered-html.css?v=1277b6f3" />
     <link rel="stylesheet" type="text/css" href="../_static/styles/furo-extensions.css?digest=30d1aed668e5c3a91c3e3bf6a60b675221979f0e" />
     <link rel="stylesheet" type="text/css" href="../_static/custom.css" />
     
@@ -185,10 +185,10 @@
 <li class="toctree-l1"><a class="reference internal" href="../install.html">Install</a></li>
 <li class="toctree-l1 current has-children"><a class="reference internal" href="index.html">Examples</a><input checked="" class="toctree-checkbox" id="toctree-checkbox-1" name="toctree-checkbox-1" role="switch" type="checkbox"/><label for="toctree-checkbox-1"><div class="visually-hidden">Toggle navigation of Examples</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul class="current">
 <li class="toctree-l2"><a class="reference internal" href="plot_sparse_signal.html">Recovering sparse signals</a></li>
-<li class="toctree-l2 current current-page"><a class="current reference internal" href="#">Using line search in hyperparameters selection</a></li>
+<li class="toctree-l2 current current-page"><a class="current reference internal" href="#">Tuning hyperparameters with line search</a></li>
 <li class="toctree-l2"><a class="reference internal" href="plot_stepwise.html">Using stepwise estimator</a></li>
 <li class="toctree-l2"><a class="reference internal" href="plot_adaptive.html">Using adaptive regularization</a></li>
-<li class="toctree-l2"><a class="reference internal" href="plot_one_std.html">Using one-standard-deviation rule in hyperparameters selection</a></li>
+<li class="toctree-l2"><a class="reference internal" href="plot_one_std.html">Hyperparameters selection with 1-std rule</a></li>
 <li class="toctree-l2"><a class="reference internal" href="plot_gl_sgl.html">(Sparse) Group regression</a></li>
 <li class="toctree-l2"><a class="reference internal" href="plot_chull.html">Adding solution constraints</a></li>
 </ul>
@@ -249,11 +249,12 @@
 <p><a class="reference internal" href="#sphx-glr-download-auto-examples-plot-line-search-py"><span class="std std-ref">Go to the end</span></a>
 to download the full example code</p>
 </div>
-<section class="sphx-glr-example-title" id="using-line-search-in-hyperparameters-selection">
-<span id="sphx-glr-auto-examples-plot-line-search-py"></span><h1>Using line search in hyperparameters selection<a class="headerlink" href="#using-line-search-in-hyperparameters-selection" title="Permalink to this heading">#</a></h1>
-<p>Line search can typically be used in optimizing regressors with multiple hyperparameters.
-Available in sparselm.model_selection.
-This example also showcases the usage of mixed L0 regressor.</p>
+<section class="sphx-glr-example-title" id="tuning-hyperparameters-with-line-search">
+<span id="sphx-glr-auto-examples-plot-line-search-py"></span><h1>Tuning hyperparameters with line search<a class="headerlink" href="#tuning-hyperparameters-with-line-search" title="Permalink to this heading">#</a></h1>
+<p>Line search can typically be used in optimizing regressors with multiple weakly or
+uncorrelated hyperparameters.</p>
+<p>This example also showcases the usage of mixed L0 regressor where using a standard
+grid search can be too computationally expensive..</p>
 <ul class="sphx-glr-horizontal">
 <li><img src="../_images/sphx_glr_plot_line_search_001.png" srcset="../_images/sphx_glr_plot_line_search_001.png" alt="plot line search" class = "sphx-glr-multi-img"/></li>
 <li><img src="../_images/sphx_glr_plot_line_search_002.png" srcset="../_images/sphx_glr_plot_line_search_002.png" alt="plot line search" class = "sphx-glr-multi-img"/></li>
@@ -345,7 +346,7 @@ This example also showcases the usage of mixed L0 regressor.</p>
 <span class="n">fig</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
 </pre></div>
 </div>
-<p class="sphx-glr-timing"><strong>Total running time of the script:</strong> ( 0 minutes  18.701 seconds)</p>
+<p class="sphx-glr-timing"><strong>Total running time of the script:</strong> ( 0 minutes  22.422 seconds)</p>
 <div class="sphx-glr-footer sphx-glr-footer-example docutils container" id="sphx-glr-download-auto-examples-plot-line-search-py">
 <div class="sphx-glr-download sphx-glr-download-python docutils container">
 <p><a class="reference download internal" download="" href="../_downloads/39a83300f446e639cdeb32321aaa210b/plot_line_search.py"><code class="xref download docutils literal notranslate"><span class="pre">Download</span> <span class="pre">Python</span> <span class="pre">source</span> <span class="pre">code:</span> <span class="pre">plot_line_search.py</span></code></a></p>
@@ -405,9 +406,9 @@ This example also showcases the usage of mixed L0 regressor.</p>
       
     </aside>
   </div>
-</div><script data-url_root="../" id="documentation_options" src="../_static/documentation_options.js"></script>
-    <script src="../_static/doctools.js"></script>
-    <script src="../_static/sphinx_highlight.js"></script>
-    <script src="../_static/scripts/furo.js"></script>
+</div><script data-url_root="../" id="documentation_options" src="../_static/documentation_options.js?v=b2a6ce83"></script>
+    <script src="../_static/doctools.js?v=888ff710"></script>
+    <script src="../_static/sphinx_highlight.js?v=4825356b"></script>
+    <script src="../_static/scripts/furo.js?v=32e29ea5"></script>
     </body>
 </html>

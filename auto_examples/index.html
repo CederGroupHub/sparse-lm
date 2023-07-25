@@ -5,14 +5,14 @@
     <meta name="color-scheme" content="light dark"><meta name="viewport" content="width=device-width, initial-scale=1" />
 <link rel="index" title="Index" href="../genindex.html" /><link rel="search" title="Search" href="../search.html" /><link rel="next" title="Recovering sparse signals" href="plot_sparse_signal.html" /><link rel="prev" title="Install" href="../install.html" />
 
-    <!-- Generated with Sphinx 7.0.1 and Furo 2023.05.20 -->
+    <!-- Generated with Sphinx 7.1.0 and Furo 2023.05.20 -->
         <title>Examples - sparse-lm</title>
-      <link rel="stylesheet" type="text/css" href="../_static/pygments.css" />
+      <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=b76e3c8a" />
     <link rel="stylesheet" type="text/css" href="../_static/styles/furo.css?digest=e6660623a769aa55fea372102b9bf3151b292993" />
-    <link rel="stylesheet" type="text/css" href="../_static/sg_gallery.css" />
-    <link rel="stylesheet" type="text/css" href="../_static/sg_gallery-binder.css" />
-    <link rel="stylesheet" type="text/css" href="../_static/sg_gallery-dataframe.css" />
-    <link rel="stylesheet" type="text/css" href="../_static/sg_gallery-rendered-html.css" />
+    <link rel="stylesheet" type="text/css" href="../_static/sg_gallery.css?v=61a4c737" />
+    <link rel="stylesheet" type="text/css" href="../_static/sg_gallery-binder.css?v=f4aeca0c" />
+    <link rel="stylesheet" type="text/css" href="../_static/sg_gallery-dataframe.css?v=e5fbc548" />
+    <link rel="stylesheet" type="text/css" href="../_static/sg_gallery-rendered-html.css?v=1277b6f3" />
     <link rel="stylesheet" type="text/css" href="../_static/styles/furo-extensions.css?digest=30d1aed668e5c3a91c3e3bf6a60b675221979f0e" />
     <link rel="stylesheet" type="text/css" href="../_static/custom.css" />
     
@@ -185,10 +185,10 @@
 <li class="toctree-l1"><a class="reference internal" href="../install.html">Install</a></li>
 <li class="toctree-l1 current has-children current-page"><a class="current reference internal" href="#">Examples</a><input checked="" class="toctree-checkbox" id="toctree-checkbox-1" name="toctree-checkbox-1" role="switch" type="checkbox"/><label for="toctree-checkbox-1"><div class="visually-hidden">Toggle navigation of Examples</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
 <li class="toctree-l2"><a class="reference internal" href="plot_sparse_signal.html">Recovering sparse signals</a></li>
-<li class="toctree-l2"><a class="reference internal" href="plot_line_search.html">Using line search in hyperparameters selection</a></li>
+<li class="toctree-l2"><a class="reference internal" href="plot_line_search.html">Tuning hyperparameters with line search</a></li>
 <li class="toctree-l2"><a class="reference internal" href="plot_stepwise.html">Using stepwise estimator</a></li>
 <li class="toctree-l2"><a class="reference internal" href="plot_adaptive.html">Using adaptive regularization</a></li>
-<li class="toctree-l2"><a class="reference internal" href="plot_one_std.html">Using one-standard-deviation rule in hyperparameters selection</a></li>
+<li class="toctree-l2"><a class="reference internal" href="plot_one_std.html">Hyperparameters selection with 1-std rule</a></li>
 <li class="toctree-l2"><a class="reference internal" href="plot_gl_sgl.html">(Sparse) Group regression</a></li>
 <li class="toctree-l2"><a class="reference internal" href="plot_chull.html">Adding solution constraints</a></li>
 </ul>
@@ -252,9 +252,9 @@ used in the same way as the linear regression models in <strong>scikit-learn</st
 <div class="sphx-glr-thumbnails"><div class="sphx-glr-thumbcontainer" tooltip="In this example we compare the results obtained from BestSubsetSelection with those obtained us..."><img alt="" src="../_images/sphx_glr_plot_sparse_signal_thumb.png" />
 <p><a class="reference internal" href="plot_sparse_signal.html#sphx-glr-auto-examples-plot-sparse-signal-py"><span class="std std-ref">Recovering sparse signals</span></a></p>
   <div class="sphx-glr-thumbnail-title">Recovering sparse signals</div>
-</div><div class="sphx-glr-thumbcontainer" tooltip="Line search can typically be used in optimizing regressors with multiple hyperparameters. Avail..."><img alt="" src="../_images/sphx_glr_plot_line_search_thumb.png" />
-<p><a class="reference internal" href="plot_line_search.html#sphx-glr-auto-examples-plot-line-search-py"><span class="std std-ref">Using line search in hyperparameters selection</span></a></p>
-  <div class="sphx-glr-thumbnail-title">Using line search in hyperparameters selection</div>
+</div><div class="sphx-glr-thumbcontainer" tooltip="Line search can typically be used in optimizing regressors with multiple weakly or uncorrelated..."><img alt="" src="../_images/sphx_glr_plot_line_search_thumb.png" />
+<p><a class="reference internal" href="plot_line_search.html#sphx-glr-auto-examples-plot-line-search-py"><span class="std std-ref">Tuning hyperparameters with line search</span></a></p>
+  <div class="sphx-glr-thumbnail-title">Tuning hyperparameters with line search</div>
 </div><div class="sphx-glr-thumbcontainer" tooltip="Stepwise estimator can be used to implement stepwise fitting. It comprises several regressor, e..."><img alt="" src="../_images/sphx_glr_plot_stepwise_thumb.png" />
 <p><a class="reference internal" href="plot_stepwise.html#sphx-glr-auto-examples-plot-stepwise-py"><span class="std std-ref">Using stepwise estimator</span></a></p>
   <div class="sphx-glr-thumbnail-title">Using stepwise estimator</div>
@@ -262,8 +262,8 @@ used in the same way as the linear regression models in <strong>scikit-learn</st
 <p><a class="reference internal" href="plot_adaptive.html#sphx-glr-auto-examples-plot-adaptive-py"><span class="std std-ref">Using adaptive regularization</span></a></p>
   <div class="sphx-glr-thumbnail-title">Using adaptive regularization</div>
 </div><div class="sphx-glr-thumbcontainer" tooltip="One-standard-deviation rule is a technique to promote model robustness when cross validation re..."><img alt="" src="../_images/sphx_glr_plot_one_std_thumb.png" />
-<p><a class="reference internal" href="plot_one_std.html#sphx-glr-auto-examples-plot-one-std-py"><span class="std std-ref">Using one-standard-deviation rule in hyperparameters selection</span></a></p>
-  <div class="sphx-glr-thumbnail-title">Using one-standard-deviation rule in hyperparameters selection</div>
+<p><a class="reference internal" href="plot_one_std.html#sphx-glr-auto-examples-plot-one-std-py"><span class="std std-ref">Hyperparameters selection with 1-std rule</span></a></p>
+  <div class="sphx-glr-thumbnail-title">Hyperparameters selection with 1-std rule</div>
 </div><div class="sphx-glr-thumbcontainer" tooltip="This examples shows how to use group lasso and sparse group lasso to fit a simulated dataset wi..."><img alt="" src="../_images/sphx_glr_plot_gl_sgl_thumb.png" />
 <p><a class="reference internal" href="plot_gl_sgl.html#sphx-glr-auto-examples-plot-gl-sgl-py"><span class="std std-ref">(Sparse) Group regression</span></a></p>
   <div class="sphx-glr-thumbnail-title">(Sparse) Group regression</div>
@@ -331,9 +331,9 @@ used in the same way as the linear regression models in <strong>scikit-learn</st
       
     </aside>
   </div>
-</div><script data-url_root="../" id="documentation_options" src="../_static/documentation_options.js"></script>
-    <script src="../_static/doctools.js"></script>
-    <script src="../_static/sphinx_highlight.js"></script>
-    <script src="../_static/scripts/furo.js"></script>
+</div><script data-url_root="../" id="documentation_options" src="../_static/documentation_options.js?v=b2a6ce83"></script>
+    <script src="../_static/doctools.js?v=888ff710"></script>
+    <script src="../_static/sphinx_highlight.js?v=4825356b"></script>
+    <script src="../_static/scripts/furo.js?v=32e29ea5"></script>
     </body>
 </html>
