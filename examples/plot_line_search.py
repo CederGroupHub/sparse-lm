@@ -10,7 +10,6 @@ This example also showcases the usage of mixed L0 regressor where using a standa
 grid search can be too computationally expensive..
 """
 
-import matplotlib.pyplot as plt
 import numpy as np
 from sklearn.datasets import make_regression
 from sklearn.metrics import mean_squared_error, r2_score
