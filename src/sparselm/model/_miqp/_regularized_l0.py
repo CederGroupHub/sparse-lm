@@ -62,7 +62,7 @@ class RegularizedL0(MIQPl0):
             L0 pseudo-norm regularization hyper-parameter.
         big_M (float):
             Upper bound on the norm of coefficients associated with each
-            cluster (groups of coefficients) ||Beta_c||_2
+            groups of coefficients :math:`||\beta_c||_2`.
         hierarchy (list):
             A list of lists of integers storing hierarchy relations between
             groups.
@@ -196,7 +196,7 @@ class MixedL0(RegularizedL0, metaclass=ABCMeta):
                 standard norm regularization hyper-parameter (usually l1 or l2).
             big_M (float):
                 Upper bound on the norm of coefficients associated with each
-                cluster (groups of coefficients) ||Beta_c||_2
+
             hierarchy (list):
                 A list of lists of integers storing hierarchy relations between
                 coefficients.
@@ -288,7 +288,7 @@ class L1L0(MixedL0):
             L1 regularization hyper-parameter.
         big_M (float):
             Upper bound on the norm of coefficients associated with each
-            cluster (groups of coefficients) ||Beta_c||_2
+            groups of coefficients :math:`||\beta_c||_2`.
         hierarchy (list):
             A list of lists of integers storing hierarchy relations between
             coefficients.
@@ -441,7 +441,7 @@ class L2L0(TikhonovMixin, MixedL0):
             L2 regularization hyper-parameter.
         big_M (float):
             Upper bound on the norm of coefficients associated with each
-            cluster (groups of coefficients) ||Beta_c||_2
+            groups of coefficients :math:`||\beta_c||_2`.
         hierarchy (list):
             A list of lists of integers storing hierarchy relations between
             coefficients.

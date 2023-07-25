@@ -29,7 +29,7 @@ class GridSearchCV(_GridSearchCV):
 
     Same as GridSearchCV but allows to use one standard error rule on all
     non-negative numerical hyper-parameters, in order to get a
-    robust sparce estimation. Same documentation as scikit-learn's
+    robust sparse estimation. Same documentation as scikit-learn's
     GridSearchCV.
 
     An additional class variable opt_selection named opt_selection
@@ -68,9 +68,7 @@ class GridSearchCV(_GridSearchCV):
             values.
             See :ref:`multimetric_grid_search` for an example.
             In sparse-lm, using "neg_root_mean_squared_error" is default
-            because in cluster expansion it is more conventional to
-            analyze and present errors in the root-mean-square error format
-            compared to the r2_score.
+            in contrast to r2_score used in scikit-learn.
         n_jobs (int, default=None):
             Number of jobs to run in parallel.
             ``None`` means 1 unless in a :obj:`joblib.parallel_backend`
@@ -495,9 +493,7 @@ class LineSearchCV(BaseSearchCV):
                 values.
                 See :ref:`multimetric_grid_search` for an example.
                 In sparse-lm, using "neg_root_mean_squared_error" is default
-                because in cluster expansion it is more conventional to
-                analyze and present errors in the root-mean-square error format
-                compared to the r2_score.
+                in contrast to r2_score used in scikit-learn.
             n_jobs (int, default=None):
                 Number of jobs to run in parallel.
                 ``None`` means 1 unless in a :obj:`joblib.parallel_backend`

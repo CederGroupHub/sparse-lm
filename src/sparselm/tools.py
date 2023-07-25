@@ -18,16 +18,12 @@ def constrain_coefficients(
 ):
     """Constrain a fit method to keep coefficients within a specified range.
 
-    Decorator to enforce that a fit method fitting a cluster expansion that
-    contains an EwaldTerm to constrain the dielectric constant to be positive
-    and below the supplied value.
-
     Use this as a standard decorator with parameters:
     - At runtime:
-    coefs = constrain_coefficients(indices, high, low)(fit_method)(X, y)
+        coefs = constrain_coefficients(indices, high, low)(fit_method)(X, y)
     - In fit_method definitions:
-      @constrain_coefficients(indices, high, low)
-      def your_fit_method(X, y):
+        @constrain_coefficients(indices, high, low)
+        def your_fit_method(X, y):
 
     Args:
         indices (array or list):
@@ -60,7 +56,7 @@ def constrain_coefficients(
 
         Args:
             fit_method (callable):
-                the fit_method you will use to fit your cluster expansion.
+                the fit_method you will use to fit your regression model.
                 Must take the feature matrix X and target vector y as first
                 arguments. (i.e. fit_method(X, y, *args, **kwargs)
         """
