@@ -98,4 +98,3 @@ ax.set_xlabel("true values")
 ax.set_ylabel("predicted values")
 ax.legend()
 fig.show()
-
