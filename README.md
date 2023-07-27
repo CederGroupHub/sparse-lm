@@ -1,15 +1,12 @@
-<p align="center"><img src="docs/_static/logo.png" width="500px" alt=" "></p>
+<img src="docs/_static/logo.png" width="500px" alt=" ">
 
-<h1 align="center">Sparse Linear Regression Models</h1>
-
-<h4 align="center">
+Sparse Linear Regression Models
+===============================
 
 [![test](https://github.com/CederGroupHub/sparse-lm/actions/workflows/test.yml/badge.svg?branch=main)](https://github.com/CederGroupHub/sparse-lm/actions/workflows/test.yml)
 [![Codacy Badge](https://app.codacy.com/project/badge/Coverage/9b72db506d9c49b2a6c849348de8945e)](https://www.codacy.com/gh/CederGroupHub/sparse-lm/dashboard?utm_source=github.com&utm_medium=referral&utm_content=CederGroupHub/sparse-lm&utm_campaign=Badge_Coverage)
 [![pre-commit.ci status](https://results.pre-commit.ci/badge/github/CederGroupHub/sparse-lm/main.svg)](https://results.pre-commit.ci/latest/github/CederGroupHub/sparse-lm/main)
 [![pypi version](https://img.shields.io/pypi/v/sparse-lm?color=blue)](https://pypi.org/project/sparse-lm)
-
-</h4>
 
 **sparse-lm**  includes several (structured) sparse linear regression estimators that are absent in the
 `sklearn.linear_model` module. The estimators in **sparse-lm** are designed to fit right into
@@ -33,7 +30,7 @@ model like you would any linear model in **scikit-learn**:
 import numpy as np
 from sklearn.datasets import make_regression
 from sklearn.model_selection import GridSearchCV
-from sparselm import AdaptiveLasso
+from sparselm.model import AdaptiveLasso
 
 X, y = make_regression(n_samples=200, n_features=5000, random_state=0)
 alasso = AdaptiveLasso(fit_intercept=False)
