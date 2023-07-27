@@ -97,7 +97,7 @@ tutorial: https://icet.materialsmodeling.org/tutorial.zip for the
 
     Lasso train RMSE:                 0.0028
     L2L0 train RMSE:                  0.0030
-    L2L0 with constraings train RMSE: 0.0037
+    L2L0 with constraings train RMSE: 0.0036
 
 
 
@@ -295,7 +295,7 @@ tutorial: https://icet.materialsmodeling.org/tutorial.zip for the
 
 .. rst-class:: sphx-glr-timing
 
-   **Total running time of the script:** ( 0 minutes  3.703 seconds)
+   **Total running time of the script:** ( 0 minutes  2.705 seconds)
 
 
 .. _sphx_glr_download_auto_examples_plot_chull.py:
