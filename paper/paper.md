@@ -34,7 +34,7 @@ Best Subset Selection [@Hocking:1967] have been widely used in a variety of fiel
 However, many regression problems involve covariates that have natural underlying
 structure such as group or hierarchical relationships. Several generalizations of the
 Lasso [@Yuan:2006; @Friedman:2010; @Simon:2013; @Wang:2019] and Best Subset Selection
-[Bertsimas:2016-a; Bertsimas:2016-b] have been developed to effectively exploit
+[@Bertsimas:2016-a; @Bertsimas:2016-b] have been developed to effectively exploit
 additional structure in linear regression.
 
 (schematic of different forms of structured sparsity)
@@ -49,7 +49,7 @@ Lasso [@Yuan:2006; @Friedman:2010; @Simon:2013; @Wang:2019].
 The second method to obtain structured sparsity is by way of linear constraints
 introduced into the regression objective as is done in mixed integer quadratic
 programming (MIQP) formulations of the Best Subset Selection
-[Bertsimas:2016-a; Bertsimas:2016-b].
+[@Bertsimas:2016-a; @Bertsimas:2016-b].
 
 (general form of MIQP Best Subset Selection)
 
@@ -59,7 +59,7 @@ The `sparse-lm` Python package implements a variety of sparse linear regression 
 based on convex objectives (generalizations of the Lasso) and mixed integer quadratic
 programming objectives (generalizations of Best Subset Selection) that support a
 flexible range of ways to introduce structured sparsity. The linear models in
-`sparse-lm` are implemented to be compatible with `scikit-learn` [@Pedregosa:2011; Buitinck:2013],
+`sparse-lm` are implemented to be compatible with `scikit-learn` [@Pedregosa:2011; @Buitinck:2013],
 in order to interoperability with the wide range of tools and workflows available. The
 objective problems in `sparse-lm` are implemented and solved using `cvxpy` [@Diamond:2016],
 which permits a flexible use of a variety of open-source and proprietary solvers.
@@ -70,7 +70,7 @@ compatible sparse linear regression models---some of which are included in `spar
 among other linear models. `group-lasso` [@Moe:2020] is another `scikit-learn`
 compatible implementation of the Group Lasso. `skglm` [@Bertrand:2022] includes several
 implementations of sparse linear models based on regularization using combinations of
-$\ell_p$ ($p\in(1/2,2/3,1,2)$) norms and pseudo-norms. `abess` [@Zhu:2022] includes an
+$\ell_p$ ($p\in\{1/2,2/3,1,2\}$) norms and pseudo-norms. `abess` [@Zhu:2022] includes an
 implementation of Best Subset Selection and $\ell_0$ pseudo-norm regularization.
 
 The packages mentioned include highly performant implementations of the specific models
