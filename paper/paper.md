@@ -73,15 +73,20 @@ implementations of sparse linear models based on regularization using combinatio
 $\ell_p$ ($p\in\{1/2,2/3,1,2\}$) norms and pseudo-norms. `abess` [@Zhu:2022] includes an
 implementation of Best Subset Selection and $\ell_0$ pseudo-norm regularization.
 
-The packages mentioned include highly performant implementations of the specific models
-they implement; however, none of these packages implement the full range of sparse
-linear models  available in `sparse-lm`, nore do they support the flexibility to
-modify the optimization objective and choose among different available solvers.
+The pre-existing packages mentioned include highly performant implementations of the
+specific models they implement; however, none of these packages implement the full range
+of sparse linear models  available in `sparse-lm`, nore do they support the flexibility
+to modify the optimization objective and choose among different available solvers.
 `sparse-lm` therefore satisfies the need for a flexible and comprehensive library that
 enables easy experimentation and comparisons of different sparse linear regression
 algorithms.
 
 # Usage
+
+The linear regression models in `sparse-lm` are implemented to be compatible with
+`scikit-learn` [@Pedregosa:2011; @Buitinck:2013], and so can be used independently, in
+a hyperparameter selection class, or as part of a pipeline in the same way as any one
+of the available models in the `sklearn.linear_model` module.
 
 A variety of linear regression models with flexible regularization and feature selection
 options are implemented in `sparse-lm`. The implemented models are listed below:
