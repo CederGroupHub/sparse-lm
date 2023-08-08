@@ -32,8 +32,11 @@ easier to estimate and interpret than dense models [@Hastie:2015]. Regression ob
 resulting in sparse linear models such as the Lasso [@Tibshirani:1996; @Zou:2006] and
 Best Subset Selection [@Hocking:1967] have been widely used in a variety of fields.
 However, many regression problems involve covariates that have natural underlying
-structure such as group or hierarchical relationships. Several generalizations of the
-Lasso [@Yuan:2006; @Friedman:2010; @Simon:2013; @Wang:2019] and Best Subset Selection
+structure such as group or hierarchical relationships. A common example of sparse 
+regression problems with structure occurs in the context of multi-body expansion methods,
+used in chemistry and materials science, that involve a hierarchy among main effects and
+higher order corrections [@Leong:2019; @Barroso-Luque:2022]. Several generalizations of
+the Lasso [@Yuan:2006; @Friedman:2010; @Simon:2013; @Wang:2019] and Best Subset Selection
 [@Bertsimas:2016-a; @Bertsimas:2016-b] have been developed to effectively exploit
 additional structure in linear regression.
 
@@ -42,16 +45,52 @@ additional structure in linear regression.
 Structured sparsity can be introduced into regression problems in one of two ways. The
 first method to obtain structured sparsity is by using regularization as in
 generalizations of the Lasso such as the Group Lasso  and Sparse Group
-Lasso [@Yuan:2006; @Friedman:2010; @Simon:2013; @Wang:2019].
+Lasso [@Yuan:2006; @Friedman:2010; @Simon:2013; @Wang:2019]. The Sparse Group Lasso
+regression problem can be expressed as follows,
 
-(general form of Lasso and Group Lasso)
+\begin{equation}
+    \bm{\beta}^* = \underset{\bm{\beta}}{\text{argmin}}\;||\bm{X} \bm{\beta} - \bm{Y}||^2_2 + (1-\alpha)\lambda\sum_{\bm{g}\in G}\sqrt{|\bm{g}
+    }||\bm{\beta}_{\bm{g}}||_2 + \alpha\lambda||\bm{X}||_1
+\end{equation}
+
+where $\bm{X}$ is the design matrix, $\bm{Y}$ is the response vector, and $\bm{\beta}$ are
+the regression coefficients. $\bm{g}$ are the groups of covariate indices, $G$ is the
+set of all such groups being considered, and $\bm{\beta}_{\bm{g}}\in\mathbb{R}^{|\bm{g}|}$
+are the covariate coefficients in group $g$. $\lambda \in \R_{+}$ and $\alpha\in[0,1]$
+are regularization hyperparameters. The parameter $\alpha\in[0,1]$ controls the relative
+weight of the single covariate $\ell_1$ and group regularization terms, i.e. when
+$\alpha=0$ the Sparse Group Lasso is equivalent to the Group Lasso, and when $\alpha=1$
+the Sparse Group Lasso is equivalent to the Lasso.
+
+The (Sparse) Group Lasso can be directly used to obtain a grouped sparsity pattern, and
+can be extended to obtain hierarchical sparsity patterns by using the Overlap Group
+Lasso to introduce overlap between groups [@Hastie:2015].
 
 The second method to obtain structured sparsity is by way of linear constraints
 introduced into the regression objective as is done in mixed integer quadratic
 programming (MIQP) formulations of the Best Subset Selection
-[@Bertsimas:2016-a; @Bertsimas:2016-b].
+[@Bertsimas:2016-a; @Bertsimas:2016-b]. The general MIQP formulation of Best Subset
+Selection with group and hierarchical structure can be expressed as follows,
 
-(general form of MIQP Best Subset Selection)
+\begin{align}
+    \bm{\beta}^* = \underset{\bm{\beta}}{\text{argmin}}\; & \bm{\beta}^{\top}\left(\bm{X}^{\top}\bm{X} + \lambda\bm{I}\right)\bm{\beta} - 2\bm{Y}^{\top}\bm{X}\bm{\beta} +  \lambda_0 \\
+    &\begin{array}{r@{~}l@{}l@{\quad}l}
+    \text{subject to} \quad z_{\bm{g}} &\in \{0,1\} \\
+    -Mz_{\bm{g}}\bm{1} &\leq \bm{\beta}_{\bm{g}} \leq Mz_{\bm{g}}\bm{1} \\
+    \sum_{\bm{g}\in G} z_{\bm{g}} \le k
+    z_\bm{g} &\le z_\bm{h}
+    \end{array} \nonumber
+\end{align}
+
+where $z_\bm{g}$ is a binary slack variable that indicates whether the covariates in group
+$\bm{g}$ are included in the model. The first set of inequality constraints ensure that
+coefficients $\bm{\beta}_{\bm{g}}$ are nonzero if and only if their corresponding slack
+variable $z_{\bm{g}} = 1$. The second inequality constraint introduces general
+sparsity by ensuring that at most $k$ coefficients are nonzero. If $G$ includes only
+singleton groups of covariates then the MIQP formulation is equivalent to the Best
+Subset Selection problem. The final inequality constraint can be used to introduce
+hierarchical structure into the model. Finally, we have also included an $\ell_2$
+regularization term controlled by the hyperparameter $\lambda$.
 
 # Statement of need
 
