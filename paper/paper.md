@@ -54,7 +54,11 @@ flexible range of ways to introduce structured sparsity. The linear models in
 `sparse-lm` are implemented to be compatible with `scikit-learn` [@Pedregosa:2011; @Buitinck:2013],
 in order to interoperability with the wide range of tools and workflows available. The
 objective problems in `sparse-lm` are implemented and solved using `cvxpy` [@Diamond:2016],
-which permits a flexible use of a variety of open-source and proprietary solvers.
+which permits a choosing from a variety of open-source and proprietary solvers. In
+particular, for regression problems with mixed integer programming objectives, access
+to state-of-the-art proprietary solvers enables solving larger problem sizes that are
+otherwise unsolvable within reasonable time limits.
+
 
 A handful of pre-existing Python libraries implement a subset of `scikit-learn`
 compatible sparse linear regression models---some of which are included in `sparse-lm`.
