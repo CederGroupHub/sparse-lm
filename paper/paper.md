@@ -57,7 +57,7 @@ regression problem can be expressed as follows,
 where $\mathbf{X}$ is the design matrix, $\mathbf{Y}$ is the response vector, and
 $\mathbf{\beta}$ are  the regression coefficients. $\mathbf{g}$ are the groups of
 covariate indices, $G$ is the set of all such groups being considered, and
-$\mathbf{\beta}_{\mathbf{g}}\in\mathbb{R}^{|\mathbf{g}|}$ are the covariate coefficients
+$\mathbf{\beta}{\mathbf{g}}\in\mathbb{R}^{|\mathbf{g}|}$ are the covariate coefficients
 in group $g$. $\lambda \in \R_{+}$ and $\alpha\in[0,1]$  are regularization
 hyperparameters. The parameter $\alpha\in[0,1]$ controls the relative weight of the
 single covariate $\ell_1$ and group regularization terms, i.e. when $\alpha=0$ the
@@ -80,7 +80,7 @@ Selection with group and hierarchical structure can be expressed as follows,
     \lambda\mathbf{I}\right)\mathbf{\beta} - 2\mathbf{Y}^{\top}\mathbf{X}\mathbf{\beta}\\
     &\begin{array}{r@{~}l@{}l@{\quad}l}
     \text{subject to} \quad z_{\mathbf{g}} &\in \{0,1\} \\
-    -Mz_{\mathbf{g}}\mathbf{1} &\leq \mathbf{\beta}_{\mathbf{g}} \leq Mz_{\mathbf{g}}\mathbf{1} \\
+    -Mz_{\mathbf{g}}\mathbf{1} &\leq \mathbf{\beta}{\mathbf{g}} \leq Mz_{\mathbf{g}}\mathbf{1} \\
     \sum_{\mathbf{g}\in G} z_{\mathbf{g}} \le k
     z_\mathbf{g} &\le z_\mathbf{h}
     \end{array} \nonumber
@@ -88,7 +88,7 @@ Selection with group and hierarchical structure can be expressed as follows,
 
 where $z_\mathbf{g}$ is a binary slack variable that indicates whether the covariates in
 group $\mathbf{g}$ are included in the model. The first set of inequality constraints
-ensure that coefficients $\mathbf{\beta}_{\mathbf{g}}$ are nonzero if and only if their
+ensure that coefficients $\mathbf{\beta}{\mathbf{g}}$ are nonzero if and only if their
 corresponding slack variable $z_{\mathbf{g}} = 1$. The second inequality constraint
 introduces general sparsity by ensuring that at most $k$ coefficients are nonzero. If
 $G$ includes only singleton groups of covariates then the MIQP formulation is equivalent
