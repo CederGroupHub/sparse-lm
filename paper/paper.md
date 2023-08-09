@@ -42,11 +42,6 @@ Several generalizations of the Lasso [@Yuan:2006; @Friedman:2010; @Simon:2013; @
 and Best Subset Selection [@Bertsimas:2016-a; @Bertsimas:2016-b] have been developed to
 effectively exploit additional structure in linear regression.
 
-![Schematic of a linear model with grouped covariates with hierarchical relations.
-Groups of covariates are represented with different colors and hierarchical
-relationships are represented with arrows (i.e. group 3 depends on group 1). The figure
-was inspired by Ref. [@Richie-Halford:2021].](linear-model.pdf){ width=55% }
-
 # Statement of need
 
 The `sparse-lm` Python package implements a variety of sparse linear regression models
@@ -80,6 +75,11 @@ library that  enables easy experimentation and comparisons of different sparse
 linear regression algorithms within a single package.
 
 # Background
+
+![Schematic of a linear model with grouped covariates with hierarchical relations.
+Groups of covariates are represented with different colors and hierarchical
+relationships are represented with arrows (i.e. group 3 depends on group 1). The figure
+was inspired by Ref. [@Richie-Halford:2021].](linear-model.pdf){ width=55% }
 
 Structured sparsity can be introduced into regression problems in one of two ways. The
 first method to obtain structured sparsity is by using regularization by way of
