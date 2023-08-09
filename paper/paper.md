@@ -10,7 +10,7 @@ tags:
 authors:
   - name: Luis Barroso-Luque^[corresponding author]
     orcid: 0000-0002-6453-9545
-    affiliation: "1"
+    affiliation: "1, 2"
   - name: Fengyu Xie
     affiliation: "1, 2"
     orcid: 0000-0002-1169-1690
