@@ -25,24 +25,26 @@ bibliography: paper.bib
 
 # Summary
 
-Sparse linear regression models are a powerful tool to capture linear relationships
+Sparse linear regression models are a powerful tool for capturing linear relationships
 in high dimensional spaces. Sparse models have only a small number of nonzero parameters
 (even if the number of covariates used in estimation is large), and as a result can be
-easier to estimate and interpret than dense models [@Hastie:2015]. Regression objectives
+easier to fit and interpret compared to dense models [@Hastie:2015]. Regression objectives
 resulting in sparse linear models such as the Lasso [@Tibshirani:1996; @Zou:2006] and
 Best Subset Selection [@Hocking:1967] have been widely used in a variety of fields.
-However, many regression problems involve covariates that have natural underlying
-structure such as group or hierarchical relationships. A common example of sparse
-regression problems with structure occurs in the context of multi-body expansion methods,
-used in chemistry and materials science, that involve a hierarchy among main effects and
-higher order corrections [@Leong:2019; @Barroso-Luque:2022]. Several generalizations of
-the Lasso [@Yuan:2006; @Friedman:2010; @Simon:2013; @Wang:2019] and Best Subset Selection
-[@Bertsimas:2016-a; @Bertsimas:2016-b] have been developed to effectively exploit
-additional structure in linear regression.
+However, many regression problems involve covariates that have a natural underlying
+structure, such as group or hierarchical relationships between covariates, that can be
+leveraged to obtain improved model performance and interpretability. A common example of
+linear regression problems with sparsity structure occurs in chemistry and materials
+science when fitting multi-body expansions that involve a hierarchy among the main
+effects from chemical composition and higher order corrections
+aiming to capture the effects of chemical interactions [@Leong:2019; @Barroso-Luque:2022].
+Several generalizations of the Lasso [@Yuan:2006; @Friedman:2010; @Simon:2013; @Wang:2019]
+and Best Subset Selection [@Bertsimas:2016-a; @Bertsimas:2016-b] have been developed to
+effectively exploit additional structure in linear regression.
 
 ![Schematic of a linear model with grouped covariates with hierarchical relations.
-Groups of covaraites are represented with different colors and the hierarchical
-relationships are represented with arrows (i.e. group 3 depends on group 1). Image
+Groups of covariates are represented with different colors and hierarchical
+relationships are represented with arrows (i.e. group 3 depends on group 1). The figure
 was inspired by Ref. [@Richie-Halford:2021].](linear-model.pdf){ width=55% }
 
 # Statement of need
@@ -52,37 +54,36 @@ based on convex objectives (generalizations of the Lasso) and mixed integer quad
 programming objectives (generalizations of Best Subset Selection) that support a
 flexible range of ways to introduce structured sparsity. The linear models in
 `sparse-lm` are implemented to be compatible with `scikit-learn` [@Pedregosa:2011; @Buitinck:2013],
-in order to interoperability with the wide range of tools and workflows available. The
-objective problems in `sparse-lm` are implemented and solved using `cvxpy` [@Diamond:2016],
-which permits a choosing from a variety of open-source and proprietary solvers. In
-particular, for regression problems with mixed integer programming objectives, access
-to state-of-the-art proprietary solvers enables solving larger problem sizes that are
-otherwise unsolvable within reasonable time limits.
+in order to enable interoperability with the wide range of tools and workflows available.
+The regression optimization problems in `sparse-lm` are implemented and solved using
+`cvxpy` [@Diamond:2016], which allows users to choose from a variety of well-established
+open-source and proprietary solvers. In particular, for regression problems with mixed
+integer programming objectives, access to state-of-the-art proprietary solvers enables
+solving larger problems that would otherwise be unsolvable within reasonable time limits.
 
-
-A handful of pre-existing Python libraries implement a subset of `scikit-learn`
-compatible sparse linear regression models---some of which are included in `sparse-lm`.
-`celer` [@Massias:2018] and `groupyr` [@Richie-Halford:2021] include efficient
-implementations of the Lasso and Group Lasso, among other linear models.
-`group-lasso` [@Moe:2020] is another `scikit-learn` compatible implementation of the
-Group Lasso. `skglm` [@Bertrand:2022] includes several implementations of sparse linear
-models based on regularization using combinations of $\ell_p$ ($p\in\{1/2,2/3,1,2\}$)
-norms and pseudo-norms. `abess` [@Zhu:2022] includes an implementation of Best Subset
-Selection and $\ell_0$ pseudo-norm regularization.
+A handful of pre-existing Python libraries implement a handful of sparse linear
+regression models that are also `scikit-learn` compatible. `celer` [@Massias:2018] and
+`groupyr` [@Richie-Halford:2021] include efficient implementations of the Lasso and
+Group Lasso, among other linear models. `group-lasso` [@Moe:2020] is another
+`scikit-learn` compatible implementation of the Group Lasso. `skglm` [@Bertrand:2022]
+includes several implementations of sparse linear models based on regularization using
+combinations of $\ell_p$ ($p\in\{1/2,2/3,1,2\}$) norms and pseudo-norms.
+`abess` [@Zhu:2022] includes an implementation of Best Subset Selection and $\ell_0$
+pseudo-norm regularization.
 
 The pre-existing packages mentioned include highly performant implementations of the
-specific models they implement; however, none of these packages implement the full range
+specific models they implement. However, none of these packages implement the full range
 of sparse linear models  available in `sparse-lm`, nore do they support the flexibility
-to modify the optimization objective and choose among different available solvers.
-`sparse-lm` therefore satisfies the need for a flexible and comprehensive library that
-enables easy experimentation and comparisons of different sparse linear regression
-algorithms.
+to modify the optimization objective and choose among many open-source and commerically
+available solvers. `sparse-lm` satisfies the need for a flexible and comprehensive
+library that  enables easy experimentation and comparisons of different sparse
+linear regression algorithms within a single package.
 
 # Background
 
 Structured sparsity can be introduced into regression problems in one of two ways. The
-first method to obtain structured sparsity is by using regularization as in
-generalizations of the Lasso such as the Group Lasso  and Sparse Group
+first method to obtain structured sparsity is by using regularization by way of
+generalizations of the Lasso, such as the Group Lasso and the Sparse Group
 Lasso [@Yuan:2006; @Friedman:2010; @Simon:2013; @Wang:2019]. The Sparse Group Lasso
 regression problem can be expressed as follows,
 
@@ -93,22 +94,22 @@ regression problem can be expressed as follows,
 \end{equation}
 
 where $\mathbf{X}$ is the design matrix, $\mathbf{y}$ is the response vector, and
-$\mathbf{\beta}$ are  the regression coefficients. $\mathbf{g}$ are the groups of
+$\mathbf{\beta}$ are the regression coefficients. $\mathbf{g}$ are groups of
 covariate indices, $G$ is the set of all such groups being considered, and
 $\mathbf{\beta}_{\mathbf{g}}\in\mathbb{R}^{|\mathbf{g}|}$ are the covariate coefficients
 in group $\mathbf{g}$. $\lambda \in \mathbb{R}_{+}$ and $\alpha\in[0,1]$  are regularization
-hyperparameters. The parameter $\alpha\in[0,1]$ controls the relative weight of the
-single covariate $\ell_1$ and group regularization terms, i.e. when $\alpha=0$ the
-Sparse Group Lasso is equivalent to the Group Lasso, and when $\alpha=1$ the Sparse
-Group Lasso is equivalent to the Lasso.
+hyperparameters. The parameter $\alpha\in[0,1]$ controls the relative weight between the
+single covariate $\ell_1$ regularization and the group regularization term. When
+$\alpha=0$, the regression problem reduces to the Group Lasso objective, and when $\alpha=1$,
+the problem reduces to the Lasso objective.
 
-The (Sparse) Group Lasso can be directly used to obtain a grouped sparsity pattern, and
-can be extended to obtain hierarchical sparsity patterns by using the Overlap Group
-Lasso to introduce overlap between groups [@Hastie:2015].
+The (Sparse) Group Lasso can be directly used to obtain a grouped sparsity pattern.
+Hierarchical sparsity patterns can be obtained by extending the Group Lasso to allow
+overlapping groups, which is referred to as the Overlap Group Lasso [@Hastie:2015].
 
-The second method to obtain structured sparsity is by way of linear constraints
-introduced into the regression objective as is done in mixed integer quadratic
-programming (MIQP) formulations of the Best Subset Selection
+The second method to obtain structured sparsity is by introducing linear constraints
+into the regression objective. Introducing linear constraints is straight-forward in
+mixed integer quadratic programming (MIQP) formulations of the Best Subset Selection
 [@Bertsimas:2016-a; @Bertsimas:2016-b]. The general MIQP formulation of Best Subset
 Selection with group and hierarchical structure can be expressed as follows,
 
@@ -124,27 +125,28 @@ Selection with group and hierarchical structure can be expressed as follows,
     \end{array} \nonumber
 \end{align}
 
-where $z_\mathbf{g}$ is a binary slack variable that indicates whether the covariates in
-group $\mathbf{g}$ are included in the model. The first set of inequality constraints
+where $z_\mathbf{g}$ are binary slack variables that indicate whether the covariates in
+each group $\mathbf{g}$ are included in the model. The first set of inequality constraints
 ensure that coefficients $\mathbf{\beta}_{\mathbf{g}}$ are nonzero if and only if their
-corresponding slack variable $z_{\mathbf{g}} = 1$; $M$ is a parameter that can be
+corresponding slack variable $z_{\mathbf{g}} = 1$. $M$ is a fixed parameter that can be
 estimated from the data [@Bertsimas:2016-a]. The second inequality constraint
 introduces general sparsity by ensuring that at most $k$ coefficients are nonzero. If
 $G$ includes only singleton groups of covariates then the MIQP formulation is equivalent
-to the Best Subset Selection problem; otherwise it is a generalization allowed groups-level
-sparsity. The final inequality constraint can be used to introduce hierarchical
-structure into the model. Finally, we have also included an $\ell_2$ regularization term
-controlled by the hyperparameter $\lambda$.
+to the Best Subset Selection problem; otherwise it is a generalization that enables
+groups-level sparsity structure. The final inequality constraint can be used to
+introduce hierarchical structure into the model. Finally, we have also included an
+$\ell_2$ regularization term controlled by the hyperparameter $\lambda$, which is useful
+when dealing with poorly conditioned design matrices.
 
 # Usage
 
 Since the linear regression models in `sparse-lm` are implemented to be compatible with
-`scikit-learn` [@Pedregosa:2011; @Buitinck:2013], they can be used independently, or as
-part of a workflow such as in a hyperparameter selection class, or as part of a pipeline
-in the same way as any one of the available models in the `sklearn.linear_model` module.
+`scikit-learn` [@Pedregosa:2011; @Buitinck:2013], they can be used independently or as
+part of a workflow---such as in a hyperparameter selection class or a pipeline---
+in similar fashion to any of the available models in the `sklearn.linear_model` module.
 
 A variety of linear regression models with flexible regularization and feature selection
-options are implemented in `sparse-lm`. The implemented models are listed below:
+options are implemented. The implemented models are listed below:
 
 ## Implemented regression models
 
