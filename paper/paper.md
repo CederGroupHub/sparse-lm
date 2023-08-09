@@ -156,8 +156,8 @@ options are implemented. The implemented models are listed below:
 - Ridged Group Lasso & Adaptive Ridge Group Lasso
 - Best Subset Selection
 - Ridged Best Subset Selection
-- MIQP $\ell_0$ regularized regression
-- MIQP $\ell_0\ell_2$ regularized regression
+- $\ell_0$ pseudo-norm regularized regression
+- $\ell_0\ell_2$ mixed-norm regularized regression
 
 ## Implemented model selection and composition tools
 - One standard deviation rule grid search cross-validation
