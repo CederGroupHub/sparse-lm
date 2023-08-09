@@ -215,10 +215,9 @@ class GridSearchCV(_GridSearchCV):
                         params.append(p)
             params_sum = np.sum(params, axis=0)
             one_std_dists = np.abs(metrics - m + sig)
-            candidates = np.arange(len(metrics))[
-                one_std_dists < (np.min(one_std_dists) + 0.1 * sig)
-            ]
-            best_index = candidates[np.argmax(params_sum[candidates])]
+            # Guarantees that one-std rule always select larger params than max score.
+            candidates = np.arange(len(metrics))[params_sum >= params_sum[opt_index]]
+            best_index = candidates[np.argmin(one_std_dists[candidates])]
             return best_index
 
     # Overwrite original fit method to allow multiple optimal methods.

@@ -1,6 +1,9 @@
 import cvxpy as cp
 import numpy as np
 import pytest
+from sklearn.datasets import make_regression
+from sklearn.linear_model import Lasso
+from sklearn.model_selection import KFold, train_test_split
 
 from sparselm.model import L1L0, L2L0
 from sparselm.model_selection import GridSearchCV, LineSearchCV
@@ -113,6 +116,55 @@ def test_grid_search(random_energy_model, grid_search):
     # Overfit.
     if n_samples < n_features:
         assert -grid_search.best_score_ >= rmse
+
+
+# Guarantees that one-std rule always select larger params than max score.
+def test_onestd():
+    success = 0
+    for _ in range(10):
+        X, y, coef = make_regression(
+            n_samples=200,
+            n_features=100,
+            n_informative=10,
+            noise=40.0,
+            bias=-15.0,
+            coef=True,
+            random_state=0,
+        )
+
+        X_train, X_test, y_train, y_test = train_test_split(
+            X, y, test_size=0.25, random_state=0
+        )
+
+        # create estimators
+        lasso = Lasso(fit_intercept=True)
+
+        # create cv search objects for each estimator
+        cv5 = KFold(n_splits=5, shuffle=True, random_state=0)
+        params = {"alpha": np.logspace(-1, 1, 10)}
+
+        lasso_cv_std = GridSearchCV(
+            lasso, params, opt_selection_method="one_std_score", cv=cv5, n_jobs=-1
+        )
+        lasso_cv_opt = GridSearchCV(
+            lasso, params, opt_selection_method="max_score", cv=cv5, n_jobs=-1
+        )
+
+        # fit models on training data
+        lasso_cv_std.fit(X_train, y_train)
+        lasso_cv_opt.fit(X_train, y_train)
+
+        correct_params = (
+            lasso_cv_opt.best_params_["alpha"] <= lasso_cv_std.best_params_["alpha"]
+        )
+        sparsity_opt = np.sum(np.abs(lasso_cv_opt.best_estimator_.coef_) >= 1e-6)
+        sparsity_std = np.sum(np.abs(lasso_cv_std.best_estimator_.coef_) >= 1e-6)
+
+        if correct_params and sparsity_opt >= sparsity_std:
+            success += 1
+
+    # Allow some failure caused by randomness of CV splits.
+    assert success >= 8
 
 
 def test_line_search(random_energy_model, line_search):
