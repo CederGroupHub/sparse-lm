@@ -10,6 +10,7 @@ import numpy as np
 import pytest
 from cvxpy.error import SolverError
 from sklearn.utils.estimator_checks import check_estimator
+from sklearn.utils.fixes import threadpool_info
 
 import sparselm.model as spm
 from sparselm.model._miqp._base import MIQPl0
@@ -91,6 +92,17 @@ def test_add_constraints(estimator, random_model, rng):
         estimator.fit(new_X, y)
 
 
+@pytest.mark.xfail(
+    any(
+        True
+        for info in threadpool_info()
+        if info["internal_api"] == "openblas"
+        # Prudently assume Prescott might be the architecture if it is unknown.
+        and info.get("architecture", "prescott").lower() == "prescott"
+    ),
+    reason="On Github runner above is true and sklearn will throw an error by trying to create_mmemap_backed_arrays "
+           "with an estimator.",
+)
 def test_sklearn_compatible(estimator):
     """Test sklearn compatibility with no parameter inputs."""
     check_estimator(estimator)
