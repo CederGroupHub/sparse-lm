@@ -10,7 +10,6 @@ import numpy as np
 import pytest
 from cvxpy.error import SolverError
 from sklearn.utils.estimator_checks import check_estimator
-from sklearn.utils.fixes import threadpool_info
 
 import sparselm.model as spm
 from sparselm.model._miqp._base import MIQPl0
@@ -94,12 +93,4 @@ def test_add_constraints(estimator, random_model, rng):
 
 def test_sklearn_compatible(estimator):
     """Test sklearn compatibility with no parameter inputs."""
-    has_prescott_openblas = any(
-        True
-        for info in threadpool_info()
-        if info["internal_api"] == "openblas"
-        # Prudently assume Prescott might be the architecture if it is unknown.
-        and info.get("architecture", "prescott").lower() == "prescott"
-    )
-    print("this claims to be prescott!!!", has_prescott_openblas)
     check_estimator(estimator)
