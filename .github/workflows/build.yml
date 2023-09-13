@@ -1,13 +1,6 @@
 name: build
 
-# Use this workflow to manually trigger a build for testing purposes.
-# Download it from artifacts to test installation, or upload directly to PyPI.
-on:
-  workflow_dispatch:
-    inputs:
-      release-pypi:
-        required: true
-        type: boolean
+on: [workflow_dispatch, workflow_call]
 
 jobs:
 
@@ -26,20 +19,3 @@ jobs:
       - uses: actions/upload-artifact@v3
         with:
           path: dist/*.tar.gz
-
-  release-pypi:
-    needs: [build_sdist]
-    runs-on: ubuntu-latest
-    if: github.event.inputs.release-pypi == 'true'
-
-    steps:
-      - uses: actions/download-artifact@v3
-        with:
-          name: artifact
-          path: dist
-
-      - uses: pypa/gh-action-pypi-publish@release/v1
-        with:
-          verbose: true
-          user: __token__
-          password: ${{ secrets.PYPI_API_TOKEN }}
