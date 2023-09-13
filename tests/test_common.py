@@ -101,7 +101,7 @@ def test_add_constraints(estimator, random_model, rng):
         and info.get("architecture", "prescott").lower() == "prescott"
     ),
     reason="On Github runner above is true and sklearn will throw an error by trying to create_mmemap_backed_arrays "
-           "with an estimator.",
+    "with an estimator.",
 )
 def test_sklearn_compatible(estimator):
     """Test sklearn compatibility with no parameter inputs."""
