@@ -7,6 +7,8 @@ Sparse Linear Regression Models
 [![Codacy Badge](https://app.codacy.com/project/badge/Coverage/9b72db506d9c49b2a6c849348de8945e)](https://www.codacy.com/gh/CederGroupHub/sparse-lm/dashboard?utm_source=github.com&utm_medium=referral&utm_content=CederGroupHub/sparse-lm&utm_campaign=Badge_Coverage)
 [![pre-commit.ci status](https://results.pre-commit.ci/badge/github/CederGroupHub/sparse-lm/main.svg)](https://results.pre-commit.ci/latest/github/CederGroupHub/sparse-lm/main)
 [![pypi version](https://img.shields.io/pypi/v/sparse-lm?color=blue)](https://pypi.org/project/sparse-lm)
+[![Static Badge](https://img.shields.io/badge/python-3.9%2B-blue)](https://www.python.org/downloads/)
+
 
 **sparse-lm**  includes several (structured) sparse linear regression estimators that are absent in the
 `sklearn.linear_model` module. The estimators in **sparse-lm** are designed to fit right into
