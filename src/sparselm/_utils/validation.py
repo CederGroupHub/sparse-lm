@@ -1,14 +1,14 @@
 """Data and hyper-parameters validation utilities."""
 
 import numpy as np
-from numpy.typing import ArrayLike
+from numpy.typing import NDArray
 
 
-def _check_groups(groups: ArrayLike, n_features: int) -> None:
+def _check_groups(groups: NDArray, n_features: int) -> None:
     """Check that groups are 1D and of the correct length.
 
     Args:
-        groups (ArrayLike):
+        groups (NDArray):
             List of group labels
         n_features (int):
             Number of features/covariates being fit
@@ -30,11 +30,11 @@ def _check_groups(groups: ArrayLike, n_features: int) -> None:
         )
 
 
-def _check_group_weights(group_weights: ArrayLike, n_groups: int) -> None:
+def _check_group_weights(group_weights: NDArray, n_groups: int) -> None:
     """Check that group weights are 1D and of the correct length.
 
     Args:
-        group_weights (ArrayLike):
+        group_weights (NDArray):
             List of group weights
         n_groups (int):
             Number of groups

@@ -8,13 +8,13 @@ import warnings
 from functools import wraps
 
 import numpy as np
-from numpy.typing import ArrayLike
+from numpy.typing import NDArray, NDArray
 
 
 def constrain_coefficients(
-    indices: ArrayLike,
-    high: float | ArrayLike = None,
-    low: float | ArrayLike = None,
+    indices: NDArray,
+    high: NDArray | None = None,
+    low: NDArray | None = None,
 ):
     """Constrain a fit method to keep coefficients within a specified range.
 
@@ -98,18 +98,18 @@ def constrain_coefficients(
 
 
 def r2_score_to_cv_error(
-    score: float, y: ArrayLike, y_pred: ArrayLike, weights: ArrayLike | None = None
+    score: float, y: NDArray, y_pred: NDArray, weights: NDArray | None = None
 ):
     """Convert r2 score to cross-validation error.
 
     Args:
         score (float):
             An r2 score obtained from cross validation.
-        y (ArrayLike): 1D
+        y (NDArray): 1D
             The target vector.
-        y_pred (ArrayLike): 1D
+        y_pred (NDArray): 1D
             The fitted vector.
-        weights (ArrayLike): 1D
+        weights (NDArray): 1D
             The weights of each sample. Default to 1.
 
     Returns:

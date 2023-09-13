@@ -16,7 +16,7 @@ from typing import Any, NamedTuple
 
 import cvxpy as cp
 import numpy as np
-from numpy.typing import ArrayLike, NDArray
+from numpy.typing import NDArray, NDArray
 from sklearn.base import RegressorMixin
 from sklearn.linear_model._base import (
     LinearModel,
@@ -45,8 +45,8 @@ class CVXCanonicals(NamedTuple):
             Objective function.
         beta (cp.Variable):
             Variable to be optimized (corresponds to the estimated coef_ attribute).
-        parameters (SimpleNamespace of cp.Parameter or ArrayLike):
-            SimpleNamespace with named cp.Parameter objects or ArrayLike of parameters.
+        parameters (SimpleNamespace of cp.Parameter or NDArray):
+            SimpleNamespace with named cp.Parameter objects or NDArray of parameters.
             The namespace should be defined by the Regressor generating it.
         auxiliaries (SimpleNamespace of cp.Variable or cp.Expression):
             SimpleNamespace with auxiliary cp.Variable or cp.Expression objects.
@@ -62,8 +62,8 @@ class CVXCanonicals(NamedTuple):
     beta: cp.Variable
     parameters: SimpleNamespace | None
     auxiliaries: SimpleNamespace | None
-    constraints: list[cp.Expression | cp.Constraint] | None
-    user_constraints: list[cp.Expression | cp.Constraint] | None
+    constraints: list[cp.Constraint]
+    user_constraints: list[cp.Constraint]
 
 
 class CVXRegressor(RegressorMixin, LinearModel, metaclass=ABCMeta):
@@ -141,9 +141,9 @@ class CVXRegressor(RegressorMixin, LinearModel, metaclass=ABCMeta):
 
     def fit(
         self,
-        X: ArrayLike,
-        y: ArrayLike,
-        sample_weight: ArrayLike | None = None,
+        X: NDArray,
+        y: NDArray,
+        sample_weight: NDArray | None = None,
         *args,
         **kwargs,
     ):
@@ -154,12 +154,12 @@ class CVXRegressor(RegressorMixin, LinearModel, metaclass=ABCMeta):
         solver.
 
         Args:
-            X (ArrayLike):
+            X (NDArray):
                 Training data of shape (n_samples, n_features).
-            y (ArrayLike):
+            y (NDArray):
                 Target values. Will be cast to X's dtype if necessary
                 of shape (n_samples,) or (n_samples, n_targets)
-            sample_weight (ArrayLike):
+            sample_weight (NDArray):
                 Individual weights for each sample of shape (n_samples,)
                 default=None
             *args:
@@ -205,8 +205,8 @@ class CVXRegressor(RegressorMixin, LinearModel, metaclass=ABCMeta):
         return self
 
     def _preprocess_data(
-        self, X: ArrayLike, y: ArrayLike, sample_weight: ArrayLike | None = None
-    ) -> tuple[ArrayLike, ArrayLike, ArrayLike, ArrayLike, ArrayLike]:
+        self, X: NDArray, y: NDArray, sample_weight: NDArray | None = None
+    ) -> tuple[NDArray, NDArray, NDArray, NDArray, NDArray]:
         """Preprocess data for fitting."""
         if sample_weight is not None:
             sample_weight = _check_sample_weight(sample_weight, X, dtype=X.dtype)
@@ -226,7 +226,7 @@ class CVXRegressor(RegressorMixin, LinearModel, metaclass=ABCMeta):
 
         return X, y, X_offset, y_offset, X_scale
 
-    def _validate_params(self, X: ArrayLike, y: ArrayLike) -> None:
+    def _validate_params(self, X: NDArray, y: NDArray) -> None:
         """Validate hyperparameter values.
 
         Implement this in an Regressor for additional parameter value validation.
@@ -260,15 +260,15 @@ class CVXRegressor(RegressorMixin, LinearModel, metaclass=ABCMeta):
                         value = np.asarray(value)
                 cvx_parameter.value = value
 
-    def _generate_params(self, X: ArrayLike, y: ArrayLike) -> SimpleNamespace | None:
+    def _generate_params(self, X: NDArray, y: NDArray) -> SimpleNamespace | None:
         """Return the named tuple of cvxpy parameters for optimization problem.
 
         The cvxpy Parameters must be given values when generating.
 
         Args:
-            X (ArrayLike):
+            X (NDArray):
                 Covariate/Feature matrix
-            y (ArrayLike):
+            y (NDArray):
                 Target vector
 
         Returns:
@@ -336,14 +336,14 @@ class CVXRegressor(RegressorMixin, LinearModel, metaclass=ABCMeta):
         return SimpleNamespace(**cvx_parameters)
 
     def _generate_auxiliaries(
-        self, X: ArrayLike, y: ArrayLike, beta: cp.Variable, parameters: SimpleNamespace
+        self, X: NDArray, y: NDArray, beta: cp.Variable, parameters: SimpleNamespace
     ) -> SimpleNamespace | None:
         """Generate any auxiliary variables/expressions necessary to define objective.
 
         Args:
-            X (ArrayLike):
+            X (NDArray):
                 Covariate/Feature matrix
-            y (ArrayLike):
+            y (NDArray):
                 Target vector
             beta (cp.Variable):
                 cp.Variable representing the estimated coefs_
@@ -358,8 +358,8 @@ class CVXRegressor(RegressorMixin, LinearModel, metaclass=ABCMeta):
     @abstractmethod
     def _generate_objective(
         self,
-        X: ArrayLike,
-        y: ArrayLike,
+        X: NDArray,
+        y: NDArray,
         beta: cp.Variable,
         parameters: SimpleNamespace | None = None,
         auxiliaries: SimpleNamespace | None = None,
@@ -369,9 +369,9 @@ class CVXRegressor(RegressorMixin, LinearModel, metaclass=ABCMeta):
         The objective must be stated for a minimization problem.
 
         Args:
-            X (ArrayLike):
+            X (NDArray):
                 Covariate/Feature matrix
-            y (ArrayLike):
+            y (NDArray):
                 Target vector
             beta (cp.Variable):
                 cp.Variable representing the estimated coefs_
@@ -383,22 +383,21 @@ class CVXRegressor(RegressorMixin, LinearModel, metaclass=ABCMeta):
         Returns:
             cvxpy Expression
         """
-        return
 
     def _generate_constraints(
         self,
-        X: ArrayLike,
-        y: ArrayLike,
+        X: NDArray,
+        y: NDArray,
         beta: cp.Variable,
         parameters: SimpleNamespace | None = None,
         auxiliaries: SimpleNamespace | None = None,
-    ) -> list[cp.constraints]:
+    ) -> list[cp.Constraint]:
         """Generate constraints for optimization problem.
 
         Args:
-            X (ArrayLike):
+            X (NDArray):
                 Covariate/Feature matrix
-            y (ArrayLike):
+            y (NDArray):
                 Target vector
             beta (cp.Variable):
                 cp.Variable representing the estimated coefs_
@@ -414,10 +413,10 @@ class CVXRegressor(RegressorMixin, LinearModel, metaclass=ABCMeta):
 
     def generate_problem(
         self,
-        X: ArrayLike,
-        y: ArrayLike,
+        X: NDArray,
+        y: NDArray,
         preprocess_data: bool = True,
-        sample_weight: ArrayLike | None = None,
+        sample_weight: NDArray | None = None,
     ) -> None:
         """Generate regression problem and auxiliary cvxpy objects.
 
@@ -430,15 +429,15 @@ class CVXRegressor(RegressorMixin, LinearModel, metaclass=ABCMeta):
         problem variables.
 
         Args:
-            X (ArrayLike):
+            X (NDArray):
                 Covariate/Feature matrix
-            y (ArrayLike):
+            y (NDArray):
                 Target vector
             preprocess_data (bool):
                 Whether to preprocess the data before generating the problem. If calling
                 generate_problem directly, this should be kept as True to ensure the
                 problem is generated correctly for a subsequent call to fit.
-            sample_weight (ArrayLike):
+            sample_weight (NDArray):
                 Individual weights for each sample of shape (n_samples,)
                 default=None. Only used if preprocess_data=True to rescale the data
                 accordingly.
@@ -468,7 +467,7 @@ class CVXRegressor(RegressorMixin, LinearModel, metaclass=ABCMeta):
         )
 
     def add_constraints(
-        self, constraints: list[cp.constraint | cp.expressions]
+        self, constraints: list[cp.Constraint | cp.Expression]
     ) -> None:
         """Add a constraint to the problem.
 
@@ -513,8 +512,8 @@ class CVXRegressor(RegressorMixin, LinearModel, metaclass=ABCMeta):
         )
 
     def _solve(
-        self, X: ArrayLike, y: ArrayLike, solver_options: dict, *args, **kwargs
-    ) -> NDArray[float]:
+        self, X: NDArray, y: NDArray, solver_options: dict, *args, **kwargs
+    ) -> NDArray[np.floating]:
         """Solve the cvxpy problem."""
         self.canonicals_.problem.solve(
             solver=self.solver, warm_start=self.warm_start, **solver_options
@@ -532,8 +531,8 @@ class TikhonovMixin:
 
     def _generate_objective(
         self,
-        X: ArrayLike,
-        y: ArrayLike,
+        X: NDArray,
+        y: NDArray,
         beta: cp.Variable,
         parameters: SimpleNamespace | None = None,
         auxiliaries: SimpleNamespace | None = None,

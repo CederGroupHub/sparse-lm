@@ -24,7 +24,7 @@ def make_group_regression(
     shuffle: bool = True,
     coef: bool = False,
     random_state: int | RandomState | None = None,
-) -> tuple[np.ndarray, np.ndarray, np.ndarray, ...]:
+) -> tuple[np.ndarray, ...]:
     """Generate a random regression problem with grouped covariates.
 
     Args:

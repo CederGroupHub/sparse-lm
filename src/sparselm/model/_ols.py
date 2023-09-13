@@ -8,7 +8,7 @@ __author__ = "Fengyu Xie, Luis Barroso-Luque"
 from types import SimpleNamespace
 
 import cvxpy as cp
-from numpy.typing import ArrayLike
+from numpy.typing import NDArray
 
 from ._base import CVXRegressor
 
@@ -56,8 +56,8 @@ class OrdinaryLeastSquares(CVXRegressor):
 
     def _generate_objective(
         self,
-        X: ArrayLike,
-        y: ArrayLike,
+        X: NDArray,
+        y: NDArray,
         beta: cp.Variable,
         parameters: SimpleNamespace | None = None,
         auxiliaries: SimpleNamespace | None = None,

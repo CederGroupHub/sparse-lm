@@ -80,3 +80,10 @@ omit = ["*/__init__.py"]
 [tool.pydocstyle]
 convention = "google"
 add_ignore = ["D107"]
+
+[tool.mypy]
+plugins = ["numpy.typing.mypy_plugin"]
+
+[[tool.mypy.overrides]]
+module = ["sklearn.*", "scipy.linalg"]
+ignore_missing_imports = true
