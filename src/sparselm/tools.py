@@ -8,7 +8,7 @@ import warnings
 from functools import wraps
 
 import numpy as np
-from numpy.typing import NDArray, NDArray
+from numpy.typing import NDArray
 
 
 def constrain_coefficients(

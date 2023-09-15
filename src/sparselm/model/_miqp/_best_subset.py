@@ -11,9 +11,9 @@ from numbers import Real
 from types import SimpleNamespace
 from typing import Any
 
-import numpy as np
 import cvxpy as cp
-from numpy.typing import NDArray, NDArray
+import numpy as np
+from numpy.typing import NDArray
 from sklearn.utils._param_validation import Interval
 
 from sparselm.model._base import TikhonovMixin

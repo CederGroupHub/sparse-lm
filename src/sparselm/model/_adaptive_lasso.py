@@ -23,14 +23,14 @@ from __future__ import annotations
 __author__ = "Luis Barroso-Luque"
 
 import warnings
+from collections.abc import Sequence
 from numbers import Integral, Real
 from types import SimpleNamespace
 from typing import Any, Callable
-from collections.abc import Sequence
 
 import cvxpy as cp
 import numpy as np
-from numpy.typing import NDArray, ArrayLike
+from numpy.typing import ArrayLike, NDArray
 from sklearn.utils._param_validation import Interval
 
 from ._lasso import (
@@ -113,7 +113,8 @@ class AdaptiveLasso(Lasso):
         max_iter: int = 3,
         eps: float = 1e-6,
         tol: float = 1e-10,
-        update_function: Callable[[NDArray[np.floating], float], ArrayLike] | None = None,
+        update_function: Callable[[NDArray[np.floating], float], ArrayLike]
+        | None = None,
         fit_intercept: bool = False,
         copy_X: bool = True,
         warm_start: bool = True,
@@ -170,7 +171,9 @@ class AdaptiveLasso(Lasso):
         """Generate regularization term."""
         return cp.norm1(cp.multiply(parameters.adaptive_weights, beta))
 
-    def _get_update_function(self) -> Callable[[NDArray[np.floating], float], ArrayLike]:
+    def _get_update_function(
+        self,
+    ) -> Callable[[NDArray[np.floating], float], ArrayLike]:
         if self.update_function is None:
             return lambda beta, eps: self.alpha / (abs(beta) + eps)
         return self.update_function
@@ -304,7 +307,8 @@ class AdaptiveGroupLasso(AdaptiveLasso, GroupLasso):
         max_iter: int = 3,
         eps: float = 1e-6,
         tol: float = 1e-10,
-        update_function: Callable[[NDArray[np.floating], float], ArrayLike] | None = None,
+        update_function: Callable[[NDArray[np.floating], float], ArrayLike]
+        | None = None,
         standardize: bool = False,
         fit_intercept: bool = False,
         copy_X: bool = True,
@@ -448,7 +452,8 @@ class AdaptiveOverlapGroupLasso(OverlapGroupLasso, AdaptiveGroupLasso):
         max_iter: int = 3,
         eps: float = 1e-6,
         tol: float = 1e-10,
-        update_function: Callable[[NDArray[np.floating], float], ArrayLike] | None = None,
+        update_function: Callable[[NDArray[np.floating], float], ArrayLike]
+        | None = None,
         standardize: bool = False,
         fit_intercept: bool = False,
         copy_X: bool = True,
@@ -595,7 +600,8 @@ class AdaptiveSparseGroupLasso(AdaptiveLasso, SparseGroupLasso):
         max_iter: int = 3,
         eps: float = 1e-6,
         tol: float = 1e-10,
-        update_function: Callable[[NDArray[np.floating], float], ArrayLike] | None = None,
+        update_function: Callable[[NDArray[np.floating], float], ArrayLike]
+        | None = None,
         standardize: bool = False,
         fit_intercept: bool = False,
         copy_X: bool = True,
@@ -792,7 +798,8 @@ class AdaptiveRidgedGroupLasso(AdaptiveGroupLasso, RidgedGroupLasso):
         max_iter: int = 3,
         eps: float = 1e-6,
         tol: float = 1e-10,
-        update_function: Callable[[NDArray[np.floating], float], ArrayLike] | None = None,
+        update_function: Callable[[NDArray[np.floating], float], ArrayLike]
+        | None = None,
         standardize: bool = False,
         fit_intercept: bool = False,
         copy_X: bool = True,

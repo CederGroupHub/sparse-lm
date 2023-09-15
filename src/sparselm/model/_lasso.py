@@ -21,7 +21,7 @@ from typing import Any
 
 import cvxpy as cp
 import numpy as np
-from numpy.typing import NDArray, NDArray
+from numpy.typing import NDArray
 from scipy.linalg import sqrtm
 from sklearn.utils._param_validation import Interval
 from sklearn.utils.validation import check_scalar
@@ -464,7 +464,9 @@ class OverlapGroupLasso(GroupLasso):
             group_norms=group_norms, extended_coef_indices=beta_indices
         )
         objective = self._generate_objective(X_ext, y, beta, parameters, auxiliaries)
-        constraints = self._generate_constraints(X_ext, y, beta, parameters, auxiliaries)
+        constraints = self._generate_constraints(
+            X_ext, y, beta, parameters, auxiliaries
+        )
         problem = cp.Problem(cp.Minimize(objective), constraints)
 
         self.canonicals_ = CVXCanonicals(

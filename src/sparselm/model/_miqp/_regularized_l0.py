@@ -28,7 +28,7 @@ from typing import Any
 
 import cvxpy as cp
 import numpy as np
-from numpy.typing import NDArray, NDArray
+from numpy.typing import NDArray
 from sklearn.utils._param_validation import Interval
 
 from sparselm.model._base import TikhonovMixin

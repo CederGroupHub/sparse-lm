@@ -16,7 +16,7 @@ from typing import Any, NamedTuple
 
 import cvxpy as cp
 import numpy as np
-from numpy.typing import NDArray, NDArray
+from numpy.typing import NDArray
 from sklearn.base import RegressorMixin
 from sklearn.linear_model._base import (
     LinearModel,
@@ -466,9 +466,7 @@ class CVXRegressor(RegressorMixin, LinearModel, metaclass=ABCMeta):
             user_constraints=[],
         )
 
-    def add_constraints(
-        self, constraints: list[cp.Constraint | cp.Expression]
-    ) -> None:
+    def add_constraints(self, constraints: list[cp.Constraint | cp.Expression]) -> None:
         """Add a constraint to the problem.
 
         .. warning::
