@@ -9,7 +9,7 @@ changelog:
     - title: 🛠 Enhancements
       labels: [enhancement]
     - title: 📖 Documentation
-      labels: [docs]
+      labels: [documentation]
     - title: 💡 Refactoring
       labels: [refactor]
     - title: 🧪 Tests
