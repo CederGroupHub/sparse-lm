@@ -1,5 +1,7 @@
 """Stepwise model selection for piece-wise fitting."""
 
+from __future__ import annotations
+
 __author__ = "Fengyu Xie"
 
 from itertools import chain
