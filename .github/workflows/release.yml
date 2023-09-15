@@ -17,15 +17,15 @@ on:
 
 jobs:
   test:
-    uses: sparselm/sparselm/.github/workflows/test.yml@main
+    uses: ./.github/workflows/test.yml
 
   build:
     needs: test
-    uses: sparselm/sparselm/.github/workflows/build.yml@main
+    uses: ./.github/workflows/build.yml
 
   release-docs:
     needs: test
-    uses: sparselm/sparselm/.github/workflows/docs.yml@main
+    uses: ./.github/workflows/docs.yml
 
   release-pypi:
     needs: [build, docs]
