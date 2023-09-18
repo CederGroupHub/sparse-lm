@@ -4,7 +4,7 @@ import numpy as np
 from numpy.typing import NDArray
 
 
-def _check_groups(groups: NDArray, n_features: int) -> None:
+def _check_groups(groups: NDArray | None, n_features: int) -> None:
     """Check that groups are 1D and of the correct length.
 
     Args:
@@ -30,7 +30,7 @@ def _check_groups(groups: NDArray, n_features: int) -> None:
         )
 
 
-def _check_group_weights(group_weights: NDArray, n_groups: int) -> None:
+def _check_group_weights(group_weights: NDArray | None, n_groups: int) -> None:
     """Check that group weights are 1D and of the correct length.
 
     Args:

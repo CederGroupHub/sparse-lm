@@ -133,7 +133,7 @@ class BestSubsetSelection(MIQPl0):
     ) -> list[cp.Constraint]:
         """Generate the constraints for best subset selection."""
         constraints = super()._generate_constraints(X, y, beta, parameters, auxiliaries)
-        constraints += [cp.sum(auxiliaries.z0) <= parameters.sparse_bound]
+        constraints += [cp.sum(auxiliaries.z0) <= parameters.sparse_bound]  # type: ignore
         return constraints
 
 

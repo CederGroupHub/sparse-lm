@@ -211,7 +211,7 @@ class CVXRegressor(RegressorMixin, LinearModel, metaclass=ABCMeta):
         if sample_weight is not None:
             sample_weight = _check_sample_weight(sample_weight, X, dtype=X.dtype)
             # rescale sample_weight to sum to number of samples
-            sample_weight = sample_weight * (X.shape[0] / np.sum(sample_weight))
+            sample_weight = sample_weight * (X.shape[0] / np.sum(sample_weight))  # type: ignore
 
         X, y, X_offset, y_offset, X_scale = _preprocess_data(
             X,
@@ -452,7 +452,7 @@ class CVXRegressor(RegressorMixin, LinearModel, metaclass=ABCMeta):
 
         beta = cp.Variable(X.shape[1])
         parameters = self._generate_params(X, y)
-        auxiliaries = self._generate_auxiliaries(X, y, beta, parameters)
+        auxiliaries = self._generate_auxiliaries(X, y, beta, parameters)  # type: ignore
         objective = self._generate_objective(X, y, beta, parameters, auxiliaries)
         constraints = self._generate_constraints(X, y, beta, parameters, auxiliaries)
         problem = cp.Problem(cp.Minimize(objective), constraints)
@@ -466,7 +466,7 @@ class CVXRegressor(RegressorMixin, LinearModel, metaclass=ABCMeta):
             user_constraints=[],
         )
 
-    def add_constraints(self, constraints: list[cp.Constraint | cp.Expression]) -> None:
+    def add_constraints(self, constraints: list[cp.Constraint]) -> None:
         """Add a constraint to the problem.
 
         .. warning::
@@ -542,7 +542,7 @@ class TikhonovMixin:
             tikhonov_w = np.eye(X.shape[1])
 
         c0 = 2 * X.shape[0]  # keeps hyperparameter scale independent
-        objective = super()._generate_objective(X, y, beta, parameters, auxiliaries)
-        objective += c0 * parameters.eta * cp.sum_squares(tikhonov_w @ beta)
+        objective = super()._generate_objective(X, y, beta, parameters, auxiliaries)  # type: ignore
+        objective += c0 * parameters.eta * cp.sum_squares(tikhonov_w @ beta)  # type: ignore
 
         return objective

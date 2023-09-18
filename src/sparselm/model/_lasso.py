@@ -15,6 +15,7 @@ from __future__ import annotations
 __author__ = "Luis Barroso-Luque, Fengyu Xie"
 
 import warnings
+from collections.abc import Sequence
 from numbers import Real
 from types import SimpleNamespace
 from typing import Any
@@ -114,7 +115,7 @@ class Lasso(CVXRegressor):
         auxiliaries: SimpleNamespace | None = None,
     ) -> cp.Expression:
         # can also use cp.norm2(X @ beta - y)**2 not sure whats better
-        reg = self._generate_regularization(X, beta, parameters, auxiliaries)
+        reg = self._generate_regularization(X, beta, parameters, auxiliaries)  # type: ignore
         objective = 1 / (2 * X.shape[0]) * cp.sum_squares(X @ beta - y) + reg
         return objective
 
@@ -222,7 +223,7 @@ class GroupLasso(Lasso):
     def _set_param_values(self) -> None:
         super()._set_param_values()
         if self.group_weights is not None:
-            self.canonicals_.parameters.group_weights = self.group_weights
+            self.canonicals_.parameters.group_weights = self.group_weights  # type: ignore
 
     def _generate_params(self, X: NDArray, y: NDArray) -> SimpleNamespace | None:
         parameters = super()._generate_params(X, y)
@@ -230,7 +231,7 @@ class GroupLasso(Lasso):
         group_weights = (
             np.ones(n_groups) if self.group_weights is None else self.group_weights
         )
-        parameters.group_weights = group_weights
+        parameters.group_weights = group_weights  # type: ignore
         return parameters
 
     @staticmethod
@@ -268,7 +269,7 @@ class GroupLasso(Lasso):
         parameters: SimpleNamespace,
         auxiliaries: SimpleNamespace | None = None,
     ) -> cp.Expression:
-        return parameters.alpha * (parameters.group_weights @ auxiliaries.group_norms)
+        return parameters.alpha * (parameters.group_weights @ auxiliaries.group_norms)  # type: ignore
 
 
 # TODO this implementation is not efficient, reimplement, or simply deprecate.
@@ -397,7 +398,7 @@ class OverlapGroupLasso(GroupLasso):
         group_weights = (
             np.ones(n_groups) if self.group_weights is None else self.group_weights
         )
-        parameters.group_weights = group_weights
+        parameters.group_weights = group_weights  # type: ignore
         return parameters
 
     def generate_problem(
@@ -439,7 +440,7 @@ class OverlapGroupLasso(GroupLasso):
             group_list = self.group_list
 
         group_ids = np.sort(np.unique([gid for grp in group_list for gid in grp]))
-        beta_indices = [
+        beta_inds_list = [
             [i for i, grp in enumerate(group_list) if grp_id in grp]
             for grp_id in group_ids
         ]
@@ -449,10 +450,10 @@ class OverlapGroupLasso(GroupLasso):
                 * [
                     i,
                 ]
-                for i, g in enumerate(beta_indices)
+                for i, g in enumerate(beta_inds_list)
             ]
         )
-        beta_indices = np.concatenate(beta_indices)
+        beta_indices = np.concatenate(beta_inds_list)
 
         X_ext = X[:, beta_indices]
         beta = cp.Variable(X_ext.shape[1])
@@ -488,7 +489,7 @@ class OverlapGroupLasso(GroupLasso):
             [
                 sum(
                     self.canonicals_.beta.value[
-                        self.canonicals_.auxiliaries.extended_coef_indices == i
+                        self.canonicals_.auxiliaries.extended_coef_indices == i  # type: ignore
                     ]
                 )
                 for i in range(X.shape[1])
@@ -604,14 +605,14 @@ class SparseGroupLasso(GroupLasso):
 
     def _set_param_values(self) -> None:
         super()._set_param_values()
-        self.canonicals_.parameters.lambda1.value = self.l1_ratio * self.alpha
-        self.canonicals_.parameters.lambda2.value = (1 - self.l1_ratio) * self.alpha
+        self.canonicals_.parameters.lambda1.value = self.l1_ratio * self.alpha  # type: ignore
+        self.canonicals_.parameters.lambda2.value = (1 - self.l1_ratio) * self.alpha  # type: ignore
 
     def _generate_params(self, X: NDArray, y: NDArray) -> SimpleNamespace | None:
         """Generate parameters."""
         parameters = super()._generate_params(X, y)
-        # del parameters.alpha  # hacky but we don't need this
-        parameters.l1_ratio = self.l1_ratio  # save simply for infomation
+        # save for information purposes
+        parameters.l1_ratio = self.l1_ratio  # type: ignore
         parameters.lambda1 = cp.Parameter(nonneg=True, value=self.l1_ratio * self.alpha)
         parameters.lambda2 = cp.Parameter(
             nonneg=True, value=(1 - self.l1_ratio) * self.alpha
@@ -711,7 +712,7 @@ class RidgedGroupLasso(GroupLasso):
         self,
         groups: NDArray | None = None,
         alpha: float = 1.0,
-        delta: NDArray = (1.0,),
+        delta: NDArray | Sequence = (1.0,),
         group_weights: NDArray | None = None,
         standardize: bool = False,
         fit_intercept: bool = False,

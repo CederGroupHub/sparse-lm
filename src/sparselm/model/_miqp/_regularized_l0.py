@@ -155,7 +155,9 @@ class RegularizedL0(MIQPl0):
         c0 = 2 * X.shape[0]  # keeps hyperparameter scale independent
         objective = super()._generate_objective(
             X, y, beta, parameters, auxiliaries
-        ) + c0 * parameters.alpha * cp.sum(auxiliaries.z0)
+        ) + c0 * parameters.alpha * cp.sum(
+            auxiliaries.z0
+        )  # type: ignore
         return objective
 
 
@@ -372,7 +374,7 @@ class L1L0(MixedL0):
         """Generate the boolean slack variable."""
         auxiliaries = super()._generate_auxiliaries(X, y, beta, parameters)
         X.shape[1] if self.groups is None else len(np.unique(self.groups))
-        auxiliaries.z1 = cp.Variable(X.shape[1])
+        auxiliaries.z1 = cp.Variable(X.shape[1])  # type: ignore
         return auxiliaries
 
     def _generate_constraints(
@@ -386,7 +388,7 @@ class L1L0(MixedL0):
         """Generate the constraints used to solve l1l0 regularization."""
         constraints = super()._generate_constraints(X, y, beta, parameters, auxiliaries)
         # L1 constraints (why not do an l1 norm in the objective instead?)
-        constraints += [-auxiliaries.z1 <= beta, beta <= auxiliaries.z1]
+        constraints += [-auxiliaries.z1 <= beta, beta <= auxiliaries.z1]  # type: ignore
         return constraints
 
     def _generate_objective(
@@ -400,7 +402,8 @@ class L1L0(MixedL0):
         """Generate the objective function used in l1l0 regression model."""
         c0 = 2 * X.shape[0]  # keeps hyperparameter scale independent
         objective = super()._generate_objective(X, y, beta, parameters, auxiliaries)
-        objective += c0 * parameters.eta * cp.sum(auxiliaries.z1)
+        # L1 term
+        objective += c0 * parameters.eta * cp.sum(auxiliaries.z1)  # type: ignore
         return objective
 
 

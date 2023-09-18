@@ -159,7 +159,7 @@ class MIQPl0(CVXRegressor, metaclass=ABCMeta):
         z0_index = {gid: i for i, gid in enumerate(group_ids)}
         constraints = [
             z0[z0_index[high_id]] <= z0[z0_index[sub_id]]
-            for high_id, sub_ids in zip(group_ids, self.hierarchy)
+            for high_id, sub_ids in zip(group_ids, self.hierarchy)  # type: ignore
             for sub_id in sub_ids
         ]
         return constraints

@@ -185,7 +185,7 @@ class AdaptiveLasso(Lasso):
 
     def _check_convergence(
         self, parameters: SimpleNamespace, previous_weights: NDArray
-    ) -> bool:
+    ) -> np.bool_ | bool:
         """Check if weights have converged to set tolerance."""
         current_weights = parameters.adaptive_weights.value
         return np.linalg.norm(current_weights - previous_weights) <= self.tol
@@ -198,13 +198,13 @@ class AdaptiveLasso(Lasso):
     ) -> None:
         """Update the adaptive weights."""
         update = self._get_update_function()
-        parameters.adaptive_weights.value = self.alpha * update(beta, self.eps)
+        parameters.adaptive_weights.value = self.alpha * update(beta, self.eps)  # type: ignore
 
     def _solve(
         self, X: NDArray, y: NDArray, solver_options: dict, *args, **kwargs
     ) -> NDArray[np.floating]:
         """Solve Lasso problem iteratively adaptive weights."""
-        previous_weights = self._get_weights_value(self.canonicals_.parameters)
+        previous_weights = self._get_weights_value(self.canonicals_.parameters)  # type: ignore
         for i in range(self.max_iter):
             self.canonicals_.problem.solve(
                 solver=self.solver, warm_start=self.warm_start, **solver_options
@@ -218,13 +218,13 @@ class AdaptiveLasso(Lasso):
             self.n_iter_ = i + 1  # save number of iterations for sklearn
             self._iterative_update(
                 self.canonicals_.beta.value,
-                self.canonicals_.parameters,
+                self.canonicals_.parameters,  # type: ignore
                 self.canonicals_.auxiliaries,
             )
             # check convergence
-            if self._check_convergence(self.canonicals_.parameters, previous_weights):
+            if self._check_convergence(self.canonicals_.parameters, previous_weights):  # type: ignore
                 break
-            previous_weights = self._get_weights_value(self.canonicals_.parameters)
+            previous_weights = self._get_weights_value(self.canonicals_.parameters)  # type: ignore
         return self.canonicals_.beta.value
 
 
@@ -446,7 +446,7 @@ class AdaptiveOverlapGroupLasso(OverlapGroupLasso, AdaptiveGroupLasso):
 
     def __init__(
         self,
-        group_list: list[list[int]] = None,
+        group_list: list[list[int]] | None = None,
         alpha: float = 1.0,
         group_weights: NDArray | None = None,
         max_iter: int = 3,
@@ -709,7 +709,9 @@ class AdaptiveSparseGroupLasso(AdaptiveLasso, SparseGroupLasso):
         )
         parameters.adaptive_group_weights.value = (
             self.canonicals_.parameters.lambda2.value * parameters.group_weights
-        ) * update(auxiliaries.group_norms.value, self.eps)
+        ) * update(
+            auxiliaries.group_norms.value, self.eps
+        )  # type: ignore
 
 
 class AdaptiveRidgedGroupLasso(AdaptiveGroupLasso, RidgedGroupLasso):
