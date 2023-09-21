@@ -137,6 +137,7 @@ class MIQPl0(CVXRegressor, metaclass=ABCMeta):
         auxiliaries: SimpleNamespace | None = None,
     ) -> list[cp.Constraint]:
         """Generate the constraints used to solve l0 regularization."""
+        assert auxiliaries is not None and parameters is not None
         groups = np.arange(X.shape[1]) if self.groups is None else self.groups
         group_masks = [groups == i for i in np.sort(np.unique(groups))]
         constraints = []

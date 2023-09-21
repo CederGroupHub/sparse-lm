@@ -260,7 +260,7 @@ class CVXRegressor(RegressorMixin, LinearModel, metaclass=ABCMeta):
                         value = np.asarray(value)
                 cvx_parameter.value = value
 
-    def _generate_params(self, X: NDArray, y: NDArray) -> SimpleNamespace | None:
+    def _generate_params(self, X: NDArray, y: NDArray) -> SimpleNamespace:
         """Return the named tuple of cvxpy parameters for optimization problem.
 
         The cvxpy Parameters must be given values when generating.

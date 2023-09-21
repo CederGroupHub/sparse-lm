@@ -148,14 +148,16 @@ class AdaptiveLasso(Lasso):
     def _set_param_values(self) -> None:
         """Set parameter values."""
         super()._set_param_values()
+        assert self.canonicals_.parameters is not None
         length = len(self.canonicals_.parameters.adaptive_weights.value)
         self.canonicals_.parameters.adaptive_weights.value = self.alpha * np.ones(
             length
         )
 
-    def _generate_params(self, X: NDArray, y: NDArray) -> SimpleNamespace | None:
+    def _generate_params(self, X: NDArray, y: NDArray) -> SimpleNamespace:
         """Generate parameters for the problem."""
         parameters = super()._generate_params(X, y)
+        assert parameters is not None
         parameters.adaptive_weights = cp.Parameter(
             shape=X.shape[1], nonneg=True, value=self.alpha * np.ones(X.shape[1])
         )
@@ -335,7 +337,7 @@ class AdaptiveGroupLasso(AdaptiveLasso, GroupLasso):
             **kwargs,
         )
 
-    def _generate_params(self, X: NDArray, y: NDArray) -> SimpleNamespace | None:
+    def _generate_params(self, X: NDArray, y: NDArray) -> SimpleNamespace:
         # skip AdaptiveLasso in super
         parameters = super(AdaptiveLasso, self)._generate_params(X, y)
         n_groups = X.shape[1] if self.groups is None else len(np.unique(self.groups))
@@ -353,6 +355,7 @@ class AdaptiveGroupLasso(AdaptiveLasso, GroupLasso):
         parameters: SimpleNamespace,
         auxiliaries: SimpleNamespace | None = None,
     ) -> cp.Expression:
+        assert auxiliaries is not None
         return parameters.adaptive_weights @ auxiliaries.group_norms
 
     def _iterative_update(

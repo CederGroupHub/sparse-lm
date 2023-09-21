@@ -225,7 +225,7 @@ class GroupLasso(Lasso):
         if self.group_weights is not None:
             self.canonicals_.parameters.group_weights = self.group_weights  # type: ignore
 
-    def _generate_params(self, X: NDArray, y: NDArray) -> SimpleNamespace | None:
+    def _generate_params(self, X: NDArray, y: NDArray) -> SimpleNamespace:
         parameters = super()._generate_params(X, y)
         n_groups = X.shape[1] if self.groups is None else len(np.unique(self.groups))
         group_weights = (
@@ -387,7 +387,7 @@ class OverlapGroupLasso(GroupLasso):
 
         _check_group_weights(self.group_weights, n_groups)
 
-    def _generate_params(self, X: NDArray, y: NDArray) -> SimpleNamespace | None:
+    def _generate_params(self, X: NDArray, y: NDArray) -> SimpleNamespace:
         parameters = super()._generate_params(X, y)
 
         if self.group_list is None:
@@ -608,13 +608,13 @@ class SparseGroupLasso(GroupLasso):
         self.canonicals_.parameters.lambda1.value = self.l1_ratio * self.alpha  # type: ignore
         self.canonicals_.parameters.lambda2.value = (1 - self.l1_ratio) * self.alpha  # type: ignore
 
-    def _generate_params(self, X: NDArray, y: NDArray) -> SimpleNamespace | None:
+    def _generate_params(self, X: NDArray, y: NDArray) -> SimpleNamespace:
         """Generate parameters."""
         parameters = super()._generate_params(X, y)
         # save for information purposes
         parameters.l1_ratio = self.l1_ratio  # type: ignore
-        parameters.lambda1 = cp.Parameter(nonneg=True, value=self.l1_ratio * self.alpha)
-        parameters.lambda2 = cp.Parameter(
+        parameters.lambda1 = cp.Parameter(nonneg=True, value=self.l1_ratio * self.alpha)  # type: ignore
+        parameters.lambda2 = cp.Parameter(  # type: ignore
             nonneg=True, value=(1 - self.l1_ratio) * self.alpha
         )
         return parameters
@@ -626,6 +626,7 @@ class SparseGroupLasso(GroupLasso):
         parameters: SimpleNamespace,
         auxiliaries: SimpleNamespace | None = None,
     ) -> cp.Expression:
+        assert auxiliaries is not None
         group_regularization = parameters.lambda2 * (
             parameters.group_weights @ auxiliaries.group_norms
         )
@@ -746,7 +747,7 @@ class RidgedGroupLasso(GroupLasso):
                 f"delta must be an array of length 1 or equal to the number of groups {n_groups}."
             )
 
-    def _generate_params(self, X: NDArray, y: NDArray) -> SimpleNamespace | None:
+    def _generate_params(self, X: NDArray, y: NDArray) -> SimpleNamespace:
         """Generate parameters."""
         parameters = super()._generate_params(X, y)
         # force cvxpy delta to be an array of n_groups!
@@ -768,6 +769,7 @@ class RidgedGroupLasso(GroupLasso):
     ) -> cp.Expression:
         group_masks = [groups == i for i in np.sort(np.unique(groups))]
         if standardize:
+            assert parameters is not None
             group_norms = cp.hstack(
                 [
                     cp.norm2(
@@ -793,6 +795,7 @@ class RidgedGroupLasso(GroupLasso):
         auxiliaries: SimpleNamespace | None = None,
     ) -> cp.Expression:
         # repetitive code...
+        assert auxiliaries is not None
         groups = np.arange(X.shape[1]) if self.groups is None else self.groups
         group_masks = [groups == i for i in np.sort(np.unique(groups))]
         ridge = cp.hstack([cp.sum_squares(beta[mask]) for mask in group_masks])
