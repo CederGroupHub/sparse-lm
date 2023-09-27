@@ -1,4 +1,7 @@
 """Classes implementing parameters selection beyond GridsearchCV."""
+
+from __future__ import annotations
+
 __author__ = "Fengyu Xie"
 
 import numbers
