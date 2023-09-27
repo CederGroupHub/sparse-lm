@@ -132,8 +132,10 @@ class BestSubsetSelection(MIQPl0):
         auxiliaries: SimpleNamespace | None = None,
     ) -> list[cp.Constraint]:
         """Generate the constraints for best subset selection."""
+        assert parameters is not None
+        assert auxiliaries is not None
         constraints = super()._generate_constraints(X, y, beta, parameters, auxiliaries)
-        constraints += [cp.sum(auxiliaries.z0) <= parameters.sparse_bound]  # type: ignore
+        constraints += [cp.sum(auxiliaries.z0) <= parameters.sparse_bound]
         return constraints
 
 

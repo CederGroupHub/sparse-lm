@@ -452,7 +452,7 @@ class CVXRegressor(RegressorMixin, LinearModel, metaclass=ABCMeta):
 
         beta = cp.Variable(X.shape[1])
         parameters = self._generate_params(X, y)
-        auxiliaries = self._generate_auxiliaries(X, y, beta, parameters)  # type: ignore
+        auxiliaries = self._generate_auxiliaries(X, y, beta, parameters)  
         objective = self._generate_objective(X, y, beta, parameters, auxiliaries)
         constraints = self._generate_constraints(X, y, beta, parameters, auxiliaries)
         problem = cp.Problem(cp.Minimize(objective), constraints)
@@ -540,9 +540,9 @@ class TikhonovMixin:
             tikhonov_w = self.tikhonov_w
         else:
             tikhonov_w = np.eye(X.shape[1])
-
+        assert parameters is not None and hasattr(parameters, "eta")
         c0 = 2 * X.shape[0]  # keeps hyperparameter scale independent
         objective = super()._generate_objective(X, y, beta, parameters, auxiliaries)  # type: ignore
-        objective += c0 * parameters.eta * cp.sum_squares(tikhonov_w @ beta)  # type: ignore
+        objective += c0 * parameters.eta * cp.sum_squares(tikhonov_w @ beta)  
 
         return objective

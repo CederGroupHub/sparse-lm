@@ -115,7 +115,8 @@ class Lasso(CVXRegressor):
         auxiliaries: SimpleNamespace | None = None,
     ) -> cp.Expression:
         # can also use cp.norm2(X @ beta - y)**2 not sure whats better
-        reg = self._generate_regularization(X, beta, parameters, auxiliaries)  # type: ignore
+        assert parameters is not None
+        reg = self._generate_regularization(X, beta, parameters, auxiliaries)
         objective = 1 / (2 * X.shape[0]) * cp.sum_squares(X @ beta - y) + reg
         return objective
 
@@ -222,8 +223,9 @@ class GroupLasso(Lasso):
 
     def _set_param_values(self) -> None:
         super()._set_param_values()
+        assert self.canonicals_.parameters is not None
         if self.group_weights is not None:
-            self.canonicals_.parameters.group_weights = self.group_weights  # type: ignore
+            self.canonicals_.parameters.group_weights = self.group_weights
 
     def _generate_params(self, X: NDArray, y: NDArray) -> SimpleNamespace:
         parameters = super()._generate_params(X, y)
@@ -231,7 +233,7 @@ class GroupLasso(Lasso):
         group_weights = (
             np.ones(n_groups) if self.group_weights is None else self.group_weights
         )
-        parameters.group_weights = group_weights  # type: ignore
+        parameters.group_weights = group_weights  
         return parameters
 
     @staticmethod
@@ -269,7 +271,8 @@ class GroupLasso(Lasso):
         parameters: SimpleNamespace,
         auxiliaries: SimpleNamespace | None = None,
     ) -> cp.Expression:
-        return parameters.alpha * (parameters.group_weights @ auxiliaries.group_norms)  # type: ignore
+        assert auxiliaries is not None
+        return parameters.alpha * (parameters.group_weights @ auxiliaries.group_norms)  
 
 
 # TODO this implementation is not efficient, reimplement, or simply deprecate.
@@ -398,7 +401,7 @@ class OverlapGroupLasso(GroupLasso):
         group_weights = (
             np.ones(n_groups) if self.group_weights is None else self.group_weights
         )
-        parameters.group_weights = group_weights  # type: ignore
+        parameters.group_weights = group_weights  
         return parameters
 
     def generate_problem(
@@ -485,11 +488,12 @@ class OverlapGroupLasso(GroupLasso):
         self.canonicals_.problem.solve(
             solver=self.solver, warm_start=self.warm_start, **solver_options
         )
+        assert self.canonicals_.auxiliaries is not None
         beta = np.array(
             [
                 sum(
                     self.canonicals_.beta.value[
-                        self.canonicals_.auxiliaries.extended_coef_indices == i  # type: ignore
+                        self.canonicals_.auxiliaries.extended_coef_indices == i  
                     ]
                 )
                 for i in range(X.shape[1])
@@ -605,16 +609,17 @@ class SparseGroupLasso(GroupLasso):
 
     def _set_param_values(self) -> None:
         super()._set_param_values()
-        self.canonicals_.parameters.lambda1.value = self.l1_ratio * self.alpha  # type: ignore
-        self.canonicals_.parameters.lambda2.value = (1 - self.l1_ratio) * self.alpha  # type: ignore
+        assert self.canonicals_.parameters is not None
+        self.canonicals_.parameters.lambda1.value = self.l1_ratio * self.alpha  
+        self.canonicals_.parameters.lambda2.value = (1 - self.l1_ratio) * self.alpha  
 
     def _generate_params(self, X: NDArray, y: NDArray) -> SimpleNamespace:
         """Generate parameters."""
         parameters = super()._generate_params(X, y)
         # save for information purposes
-        parameters.l1_ratio = self.l1_ratio  # type: ignore
-        parameters.lambda1 = cp.Parameter(nonneg=True, value=self.l1_ratio * self.alpha)  # type: ignore
-        parameters.lambda2 = cp.Parameter(  # type: ignore
+        parameters.l1_ratio = self.l1_ratio  
+        parameters.lambda1 = cp.Parameter(nonneg=True, value=self.l1_ratio * self.alpha)  
+        parameters.lambda2 = cp.Parameter(  
             nonneg=True, value=(1 - self.l1_ratio) * self.alpha
         )
         return parameters

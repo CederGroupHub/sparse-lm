@@ -152,12 +152,14 @@ class RegularizedL0(MIQPl0):
         auxiliaries: SimpleNamespace | None = None,
     ) -> cp.Expression:
         """Generate the quadratic form and l0 regularization portion of objective."""
+        assert parameters is not None
+        assert auxiliaries is not None
         c0 = 2 * X.shape[0]  # keeps hyperparameter scale independent
         objective = super()._generate_objective(
             X, y, beta, parameters, auxiliaries
         ) + c0 * parameters.alpha * cp.sum(
             auxiliaries.z0
-        )  # type: ignore
+        )
         return objective
 
 
@@ -386,9 +388,10 @@ class L1L0(MixedL0):
         auxiliaries: SimpleNamespace | None = None,
     ) -> list[cp.Constraint]:
         """Generate the constraints used to solve l1l0 regularization."""
+        assert auxiliaries is not None
         constraints = super()._generate_constraints(X, y, beta, parameters, auxiliaries)
         # L1 constraints (why not do an l1 norm in the objective instead?)
-        constraints += [-auxiliaries.z1 <= beta, beta <= auxiliaries.z1]  # type: ignore
+        constraints += [-auxiliaries.z1 <= beta, beta <= auxiliaries.z1]
         return constraints
 
     def _generate_objective(
@@ -400,10 +403,12 @@ class L1L0(MixedL0):
         auxiliaries: SimpleNamespace | None = None,
     ) -> cp.Expression:
         """Generate the objective function used in l1l0 regression model."""
+        assert parameters is not None
+        assert auxiliaries is not None
         c0 = 2 * X.shape[0]  # keeps hyperparameter scale independent
         objective = super()._generate_objective(X, y, beta, parameters, auxiliaries)
         # L1 term
-        objective += c0 * parameters.eta * cp.sum(auxiliaries.z1)  # type: ignore
+        objective += c0 * parameters.eta * cp.sum(auxiliaries.z1)
         return objective
 
 

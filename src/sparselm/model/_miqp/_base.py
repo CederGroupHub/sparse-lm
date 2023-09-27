@@ -156,11 +156,12 @@ class MIQPl0(CVXRegressor, metaclass=ABCMeta):
         self, groups: NDArray, z0: cp.Variable
     ) -> list[cp.Constraint]:
         """Generate single feature hierarchy constraints."""
+        assert self.hierarchy is not None
         group_ids = np.sort(np.unique(groups))
         z0_index = {gid: i for i, gid in enumerate(group_ids)}
         constraints = [
             z0[z0_index[high_id]] <= z0[z0_index[sub_id]]
-            for high_id, sub_ids in zip(group_ids, self.hierarchy)  # type: ignore
+            for high_id, sub_ids in zip(group_ids, self.hierarchy)  
             for sub_id in sub_ids
         ]
         return constraints
