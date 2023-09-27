@@ -233,7 +233,7 @@ class GroupLasso(Lasso):
         group_weights = (
             np.ones(n_groups) if self.group_weights is None else self.group_weights
         )
-        parameters.group_weights = group_weights  
+        parameters.group_weights = group_weights
         return parameters
 
     @staticmethod
@@ -272,7 +272,7 @@ class GroupLasso(Lasso):
         auxiliaries: SimpleNamespace | None = None,
     ) -> cp.Expression:
         assert auxiliaries is not None
-        return parameters.alpha * (parameters.group_weights @ auxiliaries.group_norms)  
+        return parameters.alpha * (parameters.group_weights @ auxiliaries.group_norms)
 
 
 # TODO this implementation is not efficient, reimplement, or simply deprecate.
@@ -401,7 +401,7 @@ class OverlapGroupLasso(GroupLasso):
         group_weights = (
             np.ones(n_groups) if self.group_weights is None else self.group_weights
         )
-        parameters.group_weights = group_weights  
+        parameters.group_weights = group_weights
         return parameters
 
     def generate_problem(
@@ -493,7 +493,7 @@ class OverlapGroupLasso(GroupLasso):
             [
                 sum(
                     self.canonicals_.beta.value[
-                        self.canonicals_.auxiliaries.extended_coef_indices == i  
+                        self.canonicals_.auxiliaries.extended_coef_indices == i
                     ]
                 )
                 for i in range(X.shape[1])
@@ -610,16 +610,16 @@ class SparseGroupLasso(GroupLasso):
     def _set_param_values(self) -> None:
         super()._set_param_values()
         assert self.canonicals_.parameters is not None
-        self.canonicals_.parameters.lambda1.value = self.l1_ratio * self.alpha  
-        self.canonicals_.parameters.lambda2.value = (1 - self.l1_ratio) * self.alpha  
+        self.canonicals_.parameters.lambda1.value = self.l1_ratio * self.alpha
+        self.canonicals_.parameters.lambda2.value = (1 - self.l1_ratio) * self.alpha
 
     def _generate_params(self, X: NDArray, y: NDArray) -> SimpleNamespace:
         """Generate parameters."""
         parameters = super()._generate_params(X, y)
         # save for information purposes
-        parameters.l1_ratio = self.l1_ratio  
-        parameters.lambda1 = cp.Parameter(nonneg=True, value=self.l1_ratio * self.alpha)  
-        parameters.lambda2 = cp.Parameter(  
+        parameters.l1_ratio = self.l1_ratio
+        parameters.lambda1 = cp.Parameter(nonneg=True, value=self.l1_ratio * self.alpha)
+        parameters.lambda2 = cp.Parameter(
             nonneg=True, value=(1 - self.l1_ratio) * self.alpha
         )
         return parameters

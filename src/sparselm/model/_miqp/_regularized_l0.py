@@ -157,9 +157,7 @@ class RegularizedL0(MIQPl0):
         c0 = 2 * X.shape[0]  # keeps hyperparameter scale independent
         objective = super()._generate_objective(
             X, y, beta, parameters, auxiliaries
-        ) + c0 * parameters.alpha * cp.sum(
-            auxiliaries.z0
-        )
+        ) + c0 * parameters.alpha * cp.sum(auxiliaries.z0)
         return objective
 
 

@@ -207,7 +207,7 @@ class AdaptiveLasso(Lasso):
     ) -> NDArray[np.floating]:
         """Solve Lasso problem iteratively adaptive weights."""
         assert self.canonicals_.parameters is not None
-        previous_weights = self._get_weights_value(self.canonicals_.parameters)  
+        previous_weights = self._get_weights_value(self.canonicals_.parameters)
         for i in range(self.max_iter):
             self.canonicals_.problem.solve(
                 solver=self.solver, warm_start=self.warm_start, **solver_options
@@ -221,13 +221,13 @@ class AdaptiveLasso(Lasso):
             self.n_iter_ = i + 1  # save number of iterations for sklearn
             self._iterative_update(
                 self.canonicals_.beta.value,
-                self.canonicals_.parameters,  
+                self.canonicals_.parameters,
                 self.canonicals_.auxiliaries,
             )
             # check convergence
-            if self._check_convergence(self.canonicals_.parameters, previous_weights):  
+            if self._check_convergence(self.canonicals_.parameters, previous_weights):
                 break
-            previous_weights = self._get_weights_value(self.canonicals_.parameters)  
+            previous_weights = self._get_weights_value(self.canonicals_.parameters)
         return self.canonicals_.beta.value
 
 
@@ -719,9 +719,7 @@ class AdaptiveSparseGroupLasso(AdaptiveLasso, SparseGroupLasso):
         )
         parameters.adaptive_group_weights.value = (
             self.canonicals_.parameters.lambda2.value * parameters.group_weights
-        ) * update(
-            auxiliaries.group_norms.value, self.eps
-        )
+        ) * update(auxiliaries.group_norms.value, self.eps)
 
 
 class AdaptiveRidgedGroupLasso(AdaptiveGroupLasso, RidgedGroupLasso):

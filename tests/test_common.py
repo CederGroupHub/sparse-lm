@@ -17,7 +17,7 @@ from sparselm.model._miqp._base import MIQPl0
 
 ESTIMATORS = getmembers(spm, isclass)
 ESTIMATOR_NAMES = [est[0] for est in ESTIMATORS]
-ESTIMATORS = [est[1] for est in ESTIMATORS]
+ESTIMATORS = [est[1] for est in ESTIMATORS]  # type: ignore
 
 
 @pytest.fixture(params=ESTIMATORS, ids=ESTIMATOR_NAMES)

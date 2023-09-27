@@ -69,3 +69,8 @@ repos:
   - id: rst-backticks
   - id: rst-directive-colons
   - id: rst-inline-touching-normal
+
+-   repo: https://github.com/pre-commit/mirrors-mypy
+    rev: ''  # Use the sha / tag you want to point at
+    hooks:
+    -   id: mypy
