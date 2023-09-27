@@ -76,7 +76,7 @@ class MIQPl0(CVXRegressor, metaclass=ABCMeta):
     @abstractmethod  # force inspect.isabstract to return True
     def __init__(
         self,
-        groups: NDArray | None = None,
+        groups: NDArray[np.floating | np.integer] | None = None,
         big_M: int = 100,
         hierarchy: list[list[int]] | None = None,
         ignore_psd_check: bool = True,

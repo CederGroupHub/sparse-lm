@@ -151,7 +151,7 @@ class StepwiseEstimator(_BaseComposition, RegressorMixin, LinearModel):
         self,
         X: NDArray,
         y: NDArray,
-        sample_weight: NDArray | None = None,
+        sample_weight: NDArray[np.floating] | None = None,
         *args,
         **kwargs,
     ):

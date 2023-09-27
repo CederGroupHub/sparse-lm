@@ -99,7 +99,7 @@ class BestSubsetSelection(MIQPl0):
 
     def __init__(
         self,
-        groups: NDArray | None = None,
+        groups: NDArray[np.floating | np.integer] | None = None,
         sparse_bound=100,
         big_M: int = 100,
         hierarchy: list[list[int]] | None = None,
@@ -219,7 +219,7 @@ class RidgedBestSubsetSelection(TikhonovMixin, BestSubsetSelection):
 
     def __init__(
         self,
-        groups: NDArray | None = None,
+        groups: NDArray[np.floating | np.integer] | None = None,
         sparse_bound: int = 100,
         eta: float = 1.0,
         big_M: int = 100,

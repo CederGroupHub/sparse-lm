@@ -182,9 +182,9 @@ class GroupLasso(Lasso):
 
     def __init__(
         self,
-        groups: NDArray | None = None,
+        groups: NDArray[np.floating | np.integer] | None = None,
         alpha: float = 1.0,
-        group_weights: NDArray | None = None,
+        group_weights: NDArray[np.floating] | None = None,
         standardize: bool = False,
         fit_intercept: bool = False,
         copy_X: bool = True,
@@ -345,7 +345,7 @@ class OverlapGroupLasso(GroupLasso):
         self,
         group_list: list[list[int]] | None = None,
         alpha: float = 1.0,
-        group_weights: NDArray | None = None,
+        group_weights: NDArray[np.floating] | None = None,
         standardize: bool = False,
         fit_intercept: bool = False,
         copy_X: bool = True,
@@ -409,7 +409,7 @@ class OverlapGroupLasso(GroupLasso):
         X: NDArray,
         y: NDArray,
         preprocess_data: bool = True,
-        sample_weight: NDArray | None = None,
+        sample_weight: NDArray[np.floating] | None = None,
     ) -> None:
         """Initialize cvxpy problem from the generated objective function.
 
@@ -567,10 +567,10 @@ class SparseGroupLasso(GroupLasso):
 
     def __init__(
         self,
-        groups: NDArray | None = None,
+        groups: NDArray[np.floating | np.integer] | None = None,
         l1_ratio: float = 0.5,
         alpha: float = 1.0,
-        group_weights: NDArray | None = None,
+        group_weights: NDArray[np.floating] | None = None,
         standardize: bool = False,
         fit_intercept: bool = False,
         copy_X: bool = True,
@@ -716,10 +716,10 @@ class RidgedGroupLasso(GroupLasso):
 
     def __init__(
         self,
-        groups: NDArray | None = None,
+        groups: NDArray[np.floating | np.integer] | None = None,
         alpha: float = 1.0,
         delta: NDArray | Sequence = (1.0,),
-        group_weights: NDArray | None = None,
+        group_weights: NDArray[np.floating] | None = None,
         standardize: bool = False,
         fit_intercept: bool = False,
         copy_X: bool = True,

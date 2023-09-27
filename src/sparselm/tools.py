@@ -13,8 +13,8 @@ from numpy.typing import NDArray
 
 def constrain_coefficients(
     indices: NDArray,
-    high: NDArray | None = None,
-    low: NDArray | None = None,
+    high: NDArray[np.floating] | float | None = None,
+    low: NDArray[np.floating] | float | None = None,
 ):
     """Constrain a fit method to keep coefficients within a specified range.
 
@@ -98,7 +98,10 @@ def constrain_coefficients(
 
 
 def r2_score_to_cv_error(
-    score: float, y: NDArray, y_pred: NDArray, weights: NDArray | None = None
+    score: float,
+    y: NDArray,
+    y_pred: NDArray,
+    weights: NDArray[np.floating] | None = None,
 ):
     """Convert r2 score to cross-validation error.
 

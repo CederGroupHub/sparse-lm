@@ -304,9 +304,9 @@ class AdaptiveGroupLasso(AdaptiveLasso, GroupLasso):
 
     def __init__(
         self,
-        groups: NDArray | None = None,
+        groups: NDArray[np.floating | np.integer] | None = None,
         alpha: float = 1.0,
-        group_weights: NDArray | None = None,
+        group_weights: NDArray[np.floating] | None = None,
         max_iter: int = 3,
         eps: float = 1e-6,
         tol: float = 1e-10,
@@ -453,7 +453,7 @@ class AdaptiveOverlapGroupLasso(OverlapGroupLasso, AdaptiveGroupLasso):
         self,
         group_list: list[list[int]] | None = None,
         alpha: float = 1.0,
-        group_weights: NDArray | None = None,
+        group_weights: NDArray[np.floating] | None = None,
         max_iter: int = 3,
         eps: float = 1e-6,
         tol: float = 1e-10,
@@ -599,10 +599,10 @@ class AdaptiveSparseGroupLasso(AdaptiveLasso, SparseGroupLasso):
 
     def __init__(
         self,
-        groups: NDArray | None = None,
+        groups: NDArray[np.floating | np.integer] | None = None,
         l1_ratio: float = 0.5,
         alpha: float = 1.0,
-        group_weights: NDArray | None = None,
+        group_weights: NDArray[np.floating] | None = None,
         max_iter: int = 3,
         eps: float = 1e-6,
         tol: float = 1e-10,
@@ -801,10 +801,10 @@ class AdaptiveRidgedGroupLasso(AdaptiveGroupLasso, RidgedGroupLasso):
 
     def __init__(
         self,
-        groups: NDArray | None = None,
+        groups: NDArray[np.floating | np.integer] | None = None,
         alpha: float = 1.0,
         delta: NDArray | Sequence = (1.0,),
-        group_weights: NDArray | None = None,
+        group_weights: NDArray[np.floating] | None = None,
         max_iter: int = 3,
         eps: float = 1e-6,
         tol: float = 1e-10,

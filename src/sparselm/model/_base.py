@@ -143,7 +143,7 @@ class CVXRegressor(RegressorMixin, LinearModel, metaclass=ABCMeta):
         self,
         X: NDArray,
         y: NDArray,
-        sample_weight: NDArray | None = None,
+        sample_weight: NDArray[np.floating] | None = None,
         *args,
         **kwargs,
     ):
@@ -205,7 +205,7 @@ class CVXRegressor(RegressorMixin, LinearModel, metaclass=ABCMeta):
         return self
 
     def _preprocess_data(
-        self, X: NDArray, y: NDArray, sample_weight: NDArray | None = None
+        self, X: NDArray, y: NDArray, sample_weight: NDArray[np.floating] | None = None
     ) -> tuple[NDArray, NDArray, NDArray, NDArray, NDArray]:
         """Preprocess data for fitting."""
         if sample_weight is not None:
@@ -416,7 +416,7 @@ class CVXRegressor(RegressorMixin, LinearModel, metaclass=ABCMeta):
         X: NDArray,
         y: NDArray,
         preprocess_data: bool = True,
-        sample_weight: NDArray | None = None,
+        sample_weight: NDArray[np.floating] | None = None,
     ) -> None:
         """Generate regression problem and auxiliary cvxpy objects.
 

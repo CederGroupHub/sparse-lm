@@ -119,7 +119,7 @@ class RegularizedL0(MIQPl0):
 
     def __init__(
         self,
-        groups: NDArray | None = None,
+        groups: NDArray[np.floating | np.integer] | None = None,
         alpha: float = 1.0,
         big_M: int = 100,
         hierarchy: list[list[int]] | None = None,
@@ -171,7 +171,7 @@ class MixedL0(RegularizedL0, metaclass=ABCMeta):
 
     def __init__(
         self,
-        groups: NDArray | None = None,
+        groups: NDArray[np.floating | np.integer] | None = None,
         alpha: float = 1.0,
         eta: float = 1.0,
         big_M: int = 100,
@@ -342,7 +342,7 @@ class L1L0(MixedL0):
 
     def __init__(
         self,
-        groups: NDArray | None = None,
+        groups: NDArray[np.floating | np.integer] | None = None,
         alpha: float = 1.0,
         eta: float = 1.0,
         big_M: int = 100,
@@ -501,7 +501,7 @@ class L2L0(TikhonovMixin, MixedL0):
 
     def __init__(
         self,
-        groups: NDArray | None = None,
+        groups: NDArray[np.floating | np.integer] | None = None,
         alpha: float = 1.0,
         eta: float = 1.0,
         big_M: int = 100,
