@@ -17,6 +17,8 @@ solved by leveraging [cvxpy](https://www.cvxpy.org/).
 
 ---------------------------------------------------------------------------------------
 
+Some useless information...
+
 Available regression models
 ---------------------------
 - Lasso, Group Lasso, Overlap Group Lasso, Sparse Group Lasso & Ridged Group Lasso.
