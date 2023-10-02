@@ -75,7 +75,7 @@ class StepwiseEstimator(_BaseComposition, RegressorMixin, LinearModel):
                with correct hierarchy, groups and other parameters before
                wrapping them up with the composite!
 
-    Notes:
+    Note:
         1. Do not use GridSearchCV or LineSearchCV to search a StepwiseEstimator!
 
         2. No nesting is allowed for StepwiseEstimator, which means no step of a
