@@ -88,15 +88,15 @@ Lasso [@Yuan:2006; @Friedman:2010; @Simon:2013; @Wang:2019]. The Sparse Group La
 regression problem can be expressed as follows,
 
 \begin{equation}
-    \mathbf{\beta}^* = \underset{\mathbf{\beta}}{\text{argmin}}\;||\mathbf{X}
-    \mathbf{\beta} - \mathbf{y}||^2_2 + (1-\alpha)\lambda\sum_{\mathbf{g}\in G}\sqrt{|\mathbf{g}
-    }||\mathbf{\beta}_{\mathbf{g}}||_2 + \alpha\lambda||\mathbf{\beta}||_1
+    \beta^* = \underset{\beta}{\text{argmin}}\;||\mathbf{X}
+    \beta - \mathbf{y}||^2_2 + (1-\alpha)\lambda\sum_{\mathbf{g}\in G}\sqrt{|\mathbf{g}
+    }||\beta_{\mathbf{g}}||_2 + \alpha\lambda||\beta||_1
 \end{equation}
 
 where $\mathbf{X}$ is the design matrix, $\mathbf{y}$ is the response vector, and
-$\mathbf{\beta}$ are the regression coefficients. $\mathbf{g}$ are groups of
+$\beta$ are the regression coefficients. $\mathbf{g}$ are groups of
 covariate indices, $G$ is the set of all such groups being considered, and
-$\mathbf{\beta}_{\mathbf{g}}\in\mathbb{R}^{|\mathbf{g}|}$ are the covariate coefficients
+$\beta_{\mathbf{g}}\in\mathbb{R}^{|\mathbf{g}|}$ are the covariate coefficients
 in group $\mathbf{g}$. $\lambda \in \mathbb{R}_{+}$ and $\alpha\in[0,1]$  are regularization
 hyperparameters. The parameter $\alpha\in[0,1]$ controls the relative weight between the
 single covariate $\ell_1$ regularization and the group regularization term. When
@@ -114,12 +114,12 @@ mixed integer quadratic programming (MIQP) formulations of the Best Subset Selec
 Selection with group and hierarchical structure can be expressed as follows,
 
 \begin{align}
-    \mathbf{\beta}^* = \underset{\mathbf{\beta}}{\text{argmin}}\;
-    & \mathbf{\beta}^{\top}\left(\mathbf{X}^{\top}\mathbf{X} +
-    \lambda\mathbf{I}\right)\mathbf{\beta} - 2\mathbf{y}^{\top}\mathbf{X}\mathbf{\beta}\\
+    \beta^* = \underset{\beta}{\text{argmin}}\;
+    & \beta^{\top}\left(\mathbf{X}^{\top}\mathbf{X} +
+    \lambda\mathbf{I}\right)\beta - 2\mathbf{y}^{\top}\mathbf{X}\beta\\
     &\begin{array}{r@{~}l@{}l@{\quad}l}
     \text{subject to} \quad &z_{\mathbf{g}} \in \{0,1\} \\
-    &-Mz_{\mathbf{g}}\mathbf{1} \leq \mathbf{\beta}_{\mathbf{g}} \leq Mz_{\mathbf{g}}\mathbf{1} \\
+    &-Mz_{\mathbf{g}}\mathbf{1} \leq \beta_{\mathbf{g}} \leq Mz_{\mathbf{g}}\mathbf{1} \\
     &\sum_{\mathbf{g}\in G} z_{\mathbf{g}} \le k \\
     &z_\mathbf{g} \le z_\mathbf{h}
     \end{array} \nonumber
@@ -127,7 +127,7 @@ Selection with group and hierarchical structure can be expressed as follows,
 
 where $z_\mathbf{g}$ are binary slack variables that indicate whether the covariates in
 each group $\mathbf{g}$ are included in the model. The first set of inequality constraints
-ensure that coefficients $\mathbf{\beta}_{\mathbf{g}}$ are nonzero if and only if their
+ensure that coefficients $\beta_{\mathbf{g}}$ are nonzero if and only if their
 corresponding slack variable $z_{\mathbf{g}} = 1$. $M$ is a fixed parameter that can be
 estimated from the data [@Bertsimas:2016-a]. The second inequality constraint
 introduces general sparsity by ensuring that at most $k$ coefficients are nonzero. If
