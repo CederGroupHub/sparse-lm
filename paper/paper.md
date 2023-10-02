@@ -68,7 +68,7 @@ pseudo-norm regularization.
 
 The pre-existing packages mentioned include highly performant implementations of the
 specific models they implement. However, none of these packages implement the full range
-of sparse linear models  available in `sparse-lm`, nore do they support the flexibility
+of sparse linear models  available in `sparse-lm`, nor do they support the flexibility
 to modify the optimization objective and choose among many open-source and commerically
 available solvers. `sparse-lm` satisfies the need for a flexible and comprehensive
 library that  enables easy experimentation and comparisons of different sparse
