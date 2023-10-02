@@ -12,13 +12,15 @@ on:
     branches:
       - main
 
+  workflow_call:
+
 jobs:
   test:
     runs-on: ubuntu-20.04
     strategy:
       max-parallel: 10
       matrix:
-        python_version: ["3.8", "3.9", "3.10", "3.11"]  #  cvxopt install in python "3.11" fails
+        python_version: ["3.9", "3.10", "3.11"]
 
     steps:
       - uses: actions/checkout@v4
@@ -43,7 +45,7 @@ jobs:
         run: |
           pytest tests --cov=sparselm --cov-report=xml
 
-      - if: ${{ matrix.python_version == 3.10 && github.event_name == 'push' }}
+      - if: ${{ matrix.python_version == 3.11 && github.event_name == 'push' }}
         name: codacy-coverage-reporter
         uses: codacy/codacy-coverage-reporter-action@v1
         with:

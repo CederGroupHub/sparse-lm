@@ -12,7 +12,7 @@ from typing import Any
 import cvxpy as cp
 import numpy as np
 from cvxpy.atoms.affine.wraps import psd_wrap
-from numpy.typing import ArrayLike
+from numpy.typing import NDArray
 from sklearn.utils._param_validation import Interval
 
 from ..._utils.validation import _check_groups
@@ -76,7 +76,7 @@ class MIQPl0(CVXRegressor, metaclass=ABCMeta):
     @abstractmethod  # force inspect.isabstract to return True
     def __init__(
         self,
-        groups: ArrayLike | None = None,
+        groups: NDArray[np.floating | np.integer] | None = None,
         big_M: int = 100,
         hierarchy: list[list[int]] | None = None,
         ignore_psd_check: bool = True,
@@ -99,13 +99,13 @@ class MIQPl0(CVXRegressor, metaclass=ABCMeta):
         self.groups = groups
         self.big_M = big_M
 
-    def _validate_params(self, X: ArrayLike, y: ArrayLike) -> None:
+    def _validate_params(self, X: NDArray, y: NDArray) -> None:
         """Validate parameters."""
         super()._validate_params(X, y)
         _check_groups(self.groups, X.shape[1])
 
     def _generate_auxiliaries(
-        self, X: ArrayLike, y: ArrayLike, beta: cp.Variable, parameters: SimpleNamespace
+        self, X: NDArray, y: NDArray, beta: cp.Variable, parameters: SimpleNamespace
     ) -> SimpleNamespace | None:
         """Generate the boolean slack variable."""
         n_groups = X.shape[1] if self.groups is None else len(np.unique(self.groups))
@@ -113,8 +113,8 @@ class MIQPl0(CVXRegressor, metaclass=ABCMeta):
 
     def _generate_objective(
         self,
-        X: ArrayLike,
-        y: ArrayLike,
+        X: NDArray,
+        y: NDArray,
         beta: cp.Variable,
         parameters: SimpleNamespace | None = None,
         auxiliaries: SimpleNamespace | None = None,
@@ -130,13 +130,14 @@ class MIQPl0(CVXRegressor, metaclass=ABCMeta):
 
     def _generate_constraints(
         self,
-        X: ArrayLike,
-        y: ArrayLike,
+        X: NDArray,
+        y: NDArray,
         beta: cp.Variable,
         parameters: SimpleNamespace | None = None,
         auxiliaries: SimpleNamespace | None = None,
     ) -> list[cp.Constraint]:
         """Generate the constraints used to solve l0 regularization."""
+        assert auxiliaries is not None and parameters is not None
         groups = np.arange(X.shape[1]) if self.groups is None else self.groups
         group_masks = [groups == i for i in np.sort(np.unique(groups))]
         constraints = []
@@ -152,9 +153,10 @@ class MIQPl0(CVXRegressor, metaclass=ABCMeta):
         return constraints
 
     def _generate_hierarchy_constraints(
-        self, groups: ArrayLike, z0: cp.Variable
+        self, groups: NDArray, z0: cp.Variable
     ) -> list[cp.Constraint]:
         """Generate single feature hierarchy constraints."""
+        assert self.hierarchy is not None
         group_ids = np.sort(np.unique(groups))
         z0_index = {gid: i for i, gid in enumerate(group_ids)}
         constraints = [

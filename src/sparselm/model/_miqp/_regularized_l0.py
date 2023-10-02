@@ -28,7 +28,7 @@ from typing import Any
 
 import cvxpy as cp
 import numpy as np
-from numpy.typing import ArrayLike, NDArray
+from numpy.typing import NDArray
 from sklearn.utils._param_validation import Interval
 
 from sparselm.model._base import TikhonovMixin
@@ -52,7 +52,7 @@ class RegularizedL0(MIQPl0):
     valued slack variables.
 
     Args:
-        groups (ArrayLike):
+        groups (NDArray):
             1D array-like of integers specifying groups. Length should be the
             same as model, where each integer entry specifies the group
             each parameter corresponds to. If no grouping is needed pass a list
@@ -105,7 +105,7 @@ class RegularizedL0(MIQPl0):
                 - auxiliaries - auxiliary variables and expressions
                 - constraints - solution constraints
 
-    Notes:
+    Note:
         Installation of Gurobi is not a must, but highly recommended. An open source alternative
         is SCIP. ECOS_BB also works but can be very slow, and has recurring correctness issues.
         See the Mixed-integer programs section of the cvxpy docs:
@@ -119,7 +119,7 @@ class RegularizedL0(MIQPl0):
 
     def __init__(
         self,
-        groups: ArrayLike | None = None,
+        groups: NDArray[np.floating | np.integer] | None = None,
         alpha: float = 1.0,
         big_M: int = 100,
         hierarchy: list[list[int]] | None = None,
@@ -145,13 +145,15 @@ class RegularizedL0(MIQPl0):
 
     def _generate_objective(
         self,
-        X: ArrayLike,
-        y: ArrayLike,
+        X: NDArray,
+        y: NDArray,
         beta: cp.Variable,
         parameters: SimpleNamespace | None = None,
         auxiliaries: SimpleNamespace | None = None,
     ) -> cp.Expression:
         """Generate the quadratic form and l0 regularization portion of objective."""
+        assert parameters is not None
+        assert auxiliaries is not None
         c0 = 2 * X.shape[0]  # keeps hyperparameter scale independent
         objective = super()._generate_objective(
             X, y, beta, parameters, auxiliaries
@@ -169,7 +171,7 @@ class MixedL0(RegularizedL0, metaclass=ABCMeta):
 
     def __init__(
         self,
-        groups: ArrayLike | None = None,
+        groups: NDArray[np.floating | np.integer] | None = None,
         alpha: float = 1.0,
         eta: float = 1.0,
         big_M: int = 100,
@@ -184,7 +186,7 @@ class MixedL0(RegularizedL0, metaclass=ABCMeta):
         """Initialize Regressor.
 
         Args:
-            groups (ArrayLike):
+            groups (NDArray):
                 1D array-like of integers specifying groups. Length should be the
                 same as model, where each integer entry specifies the group
                 each parameter corresponds to. If no grouping is needed pass a list
@@ -242,8 +244,8 @@ class MixedL0(RegularizedL0, metaclass=ABCMeta):
     @abstractmethod
     def _generate_objective(
         self,
-        X: ArrayLike,
-        y: ArrayLike,
+        X: NDArray,
+        y: NDArray,
         beta: cp.Variable,
         parameters: SimpleNamespace | None = None,
         auxiliaries: SimpleNamespace | None = None,
@@ -276,7 +278,7 @@ class L1L0(MixedL0):
     valued slack variables.
 
     Args:
-        groups (ArrayLike):
+        groups (NDArray):
             1D array-like of integers specifying groups. Length should be the
             same as model, where each integer entry specifies the group
             each parameter corresponds to. If no grouping is needed pass a list
@@ -331,7 +333,7 @@ class L1L0(MixedL0):
                 - auxiliaries - auxiliary variables and expressions
                 - constraints - solution constraints
 
-    Notes:
+    Note:
         Installation of Gurobi is not a must, but highly recommended. An open source alternative
         is SCIP. ECOS_BB also works but can be very slow, and has recurring correctness issues.
         See the Mixed-integer programs section of the cvxpy docs:
@@ -340,7 +342,7 @@ class L1L0(MixedL0):
 
     def __init__(
         self,
-        groups: ArrayLike | None = None,
+        groups: NDArray[np.floating | np.integer] | None = None,
         alpha: float = 1.0,
         eta: float = 1.0,
         big_M: int = 100,
@@ -367,23 +369,24 @@ class L1L0(MixedL0):
         )
 
     def _generate_auxiliaries(
-        self, X: ArrayLike, y: ArrayLike, beta: cp.Variable, parameters: SimpleNamespace
+        self, X: NDArray, y: NDArray, beta: cp.Variable, parameters: SimpleNamespace
     ) -> SimpleNamespace | None:
         """Generate the boolean slack variable."""
         auxiliaries = super()._generate_auxiliaries(X, y, beta, parameters)
         X.shape[1] if self.groups is None else len(np.unique(self.groups))
-        auxiliaries.z1 = cp.Variable(X.shape[1])
+        auxiliaries.z1 = cp.Variable(X.shape[1])  # type: ignore
         return auxiliaries
 
     def _generate_constraints(
         self,
-        X: ArrayLike,
-        y: ArrayLike,
+        X: NDArray,
+        y: NDArray,
         beta: cp.Variable,
         parameters: SimpleNamespace | None = None,
         auxiliaries: SimpleNamespace | None = None,
-    ) -> list[cp.constraints]:
+    ) -> list[cp.Constraint]:
         """Generate the constraints used to solve l1l0 regularization."""
+        assert auxiliaries is not None
         constraints = super()._generate_constraints(X, y, beta, parameters, auxiliaries)
         # L1 constraints (why not do an l1 norm in the objective instead?)
         constraints += [-auxiliaries.z1 <= beta, beta <= auxiliaries.z1]
@@ -391,15 +394,18 @@ class L1L0(MixedL0):
 
     def _generate_objective(
         self,
-        X: ArrayLike,
-        y: ArrayLike,
+        X: NDArray,
+        y: NDArray,
         beta: cp.Variable,
         parameters: SimpleNamespace | None = None,
         auxiliaries: SimpleNamespace | None = None,
     ) -> cp.Expression:
         """Generate the objective function used in l1l0 regression model."""
+        assert parameters is not None
+        assert auxiliaries is not None
         c0 = 2 * X.shape[0]  # keeps hyperparameter scale independent
         objective = super()._generate_objective(X, y, beta, parameters, auxiliaries)
+        # L1 term
         objective += c0 * parameters.eta * cp.sum(auxiliaries.z1)
         return objective
 
@@ -429,7 +435,7 @@ class L2L0(TikhonovMixin, MixedL0):
     valued slack variables. W is a Tikhonov matrix.
 
     Args:
-        groups (ArrayLike):
+        groups (NDArray):
             1D array-like of integers specifying groups. Length should be the
             same as model, where each integer entry specifies the group
             each parameter corresponds to. If no grouping is needed pass a list
@@ -486,7 +492,7 @@ class L2L0(TikhonovMixin, MixedL0):
                 - auxiliaries - auxiliary variables and expressions
                 - constraints - solution constraints
 
-    Notes:
+    Note:
         Installation of Gurobi is not a must, but highly recommended. An open source alternative
         is SCIP. ECOS_BB also works but can be very slow, and has recurring correctness issues.
         See the Mixed-integer programs section of the cvxpy docs:
@@ -495,12 +501,12 @@ class L2L0(TikhonovMixin, MixedL0):
 
     def __init__(
         self,
-        groups: ArrayLike | None = None,
+        groups: NDArray[np.floating | np.integer] | None = None,
         alpha: float = 1.0,
         eta: float = 1.0,
         big_M: int = 100,
         hierarchy: list[list[int]] | None = None,
-        tikhonov_w: NDArray[float] | None = None,
+        tikhonov_w: NDArray[np.floating] | None = None,
         ignore_psd_check: bool = True,
         fit_intercept: bool = False,
         copy_X: bool = True,

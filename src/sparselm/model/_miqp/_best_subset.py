@@ -12,7 +12,8 @@ from types import SimpleNamespace
 from typing import Any
 
 import cvxpy as cp
-from numpy.typing import ArrayLike, NDArray
+import numpy as np
+from numpy.typing import NDArray
 from sklearn.utils._param_validation import Interval
 
 from sparselm.model._base import TikhonovMixin
@@ -26,7 +27,7 @@ class BestSubsetSelection(MIQPl0):
     Generalized best subset that allows grouping subsets.
 
     Args:
-        groups (ArrayLike):
+        groups (NDArray):
             array-like of integers specifying groups. Length should be the
             same as model, where each integer entry specifies the group
             each parameter corresponds to. If no grouping is required,
@@ -74,19 +75,19 @@ class BestSubsetSelection(MIQPl0):
         canonicals_ (SimpleNamespace):
             Namespace that contains underlying cvxpy objects used to define
             the optimization problem. The objects included are the following:
-                - objective - the objective function.
-                - beta - variable to be optimized (corresponds to the estimated coef_ attribute).
-                - parameters - hyper-parameters
-                - auxiliaries - auxiliary variables and expressions
-                - constraints - solution constraints
+            - objective - the objective function.
+            - beta - variable to be optimized (corresponds to the estimated coef_ attribute).
+            - parameters - hyper-parameters
+            - auxiliaries - auxiliary variables and expressions
+            - constraints - solution constraints
 
-    Notes:
+    Note:
         Installation of Gurobi is not a must, but highly recommended. An open source alternative
         is SCIP. ECOS_BB also works but can be very slow, and has recurring correctness issues.
         See the Mixed-integer programs section of the cvxpy docs:
         https://www.cvxpy.org/tutorial/advanced/index.html
 
-    WARNING:
+    Warning:
         Even with gurobi solver, this can take a very long time to converge for large problems and under-determined
         problems.
     """
@@ -98,7 +99,7 @@ class BestSubsetSelection(MIQPl0):
 
     def __init__(
         self,
-        groups: ArrayLike | None = None,
+        groups: NDArray[np.floating | np.integer] | None = None,
         sparse_bound=100,
         big_M: int = 100,
         hierarchy: list[list[int]] | None = None,
@@ -124,13 +125,15 @@ class BestSubsetSelection(MIQPl0):
 
     def _generate_constraints(
         self,
-        X: ArrayLike,
-        y: ArrayLike,
+        X: NDArray,
+        y: NDArray,
         beta: cp.Variable,
         parameters: SimpleNamespace | None = None,
         auxiliaries: SimpleNamespace | None = None,
-    ) -> list[cp.constraints]:
+    ) -> list[cp.Constraint]:
         """Generate the constraints for best subset selection."""
+        assert parameters is not None
+        assert auxiliaries is not None
         constraints = super()._generate_constraints(X, y, beta, parameters, auxiliaries)
         constraints += [cp.sum(auxiliaries.z0) <= parameters.sparse_bound]
         return constraints
@@ -140,7 +143,7 @@ class RidgedBestSubsetSelection(TikhonovMixin, BestSubsetSelection):
     r"""MIQP best subset selection Regressor with Ridge/Tihkonov regularization.
 
     Args:
-        groups (ArrayLike):
+        groups (NDArray):
             array-like of integers specifying groups. Length should be the
             same as model, where each integer entry specifies the group
             each parameter corresponds to. If no grouping is required,
@@ -198,13 +201,13 @@ class RidgedBestSubsetSelection(TikhonovMixin, BestSubsetSelection):
                 - auxiliaries - auxiliary variables and expressions
                 - constraints - solution constraints
 
-    Notes:
+    Note:
         Installation of Gurobi is not a must, but highly recommended. An open source alternative
         is SCIP. ECOS_BB also works but can be very slow, and has recurring correctness issues.
         See the Mixed-integer programs section of the cvxpy docs:
         https://www.cvxpy.org/tutorial/advanced/index.html
 
-    WARNING:
+    Warning:
         Even with gurobi solver, this can take a very long time to converge for large problems and under-determined
         problems.
     """
@@ -216,12 +219,12 @@ class RidgedBestSubsetSelection(TikhonovMixin, BestSubsetSelection):
 
     def __init__(
         self,
-        groups: ArrayLike | None = None,
+        groups: NDArray[np.floating | np.integer] | None = None,
         sparse_bound: int = 100,
         eta: float = 1.0,
         big_M: int = 100,
         hierarchy: list[list[int]] | None = None,
-        tikhonov_w: NDArray[float] | None = None,
+        tikhonov_w: NDArray[np.floating] | None = None,
         ignore_psd_check: bool = True,
         fit_intercept: bool = False,
         copy_X: bool = True,

@@ -1,11 +1,13 @@
 """Stepwise model selection for piece-wise fitting."""
 
+from __future__ import annotations
+
 __author__ = "Fengyu Xie"
 
 from itertools import chain
 
 import numpy as np
-from numpy.typing import ArrayLike
+from numpy.typing import NDArray
 from sklearn.base import RegressorMixin
 from sklearn.linear_model._base import LinearModel, _check_sample_weight
 from sklearn.utils._param_validation import InvalidParameterError
@@ -73,7 +75,7 @@ class StepwiseEstimator(_BaseComposition, RegressorMixin, LinearModel):
                with correct hierarchy, groups and other parameters before
                wrapping them up with the composite!
 
-    Notes:
+    Note:
         1. Do not use GridSearchCV or LineSearchCV to search a StepwiseEstimator!
 
         2. No nesting is allowed for StepwiseEstimator, which means no step of a
@@ -147,21 +149,21 @@ class StepwiseEstimator(_BaseComposition, RegressorMixin, LinearModel):
 
     def fit(
         self,
-        X: ArrayLike,
-        y: ArrayLike,
-        sample_weight: ArrayLike = None,
+        X: NDArray,
+        y: NDArray,
+        sample_weight: NDArray[np.floating] | None = None,
         *args,
         **kwargs,
     ):
         """Prepare fit input with sklearn help then call fit method.
 
         Args:
-            X (ArrayLike):
+            X (NDArray):
                 Training data of shape (n_samples, n_features).
-            y (ArrayLike):
+            y (NDArray):
                 Target values. Will be cast to X's dtype if necessary
                 of shape (n_samples,) or (n_samples, n_targets)
-            sample_weight (ArrayLike):
+            sample_weight (NDArray):
                 Individual weights for each sample of shape (n_samples,)
                 default=None
             *args:

@@ -9,7 +9,7 @@
 Regressors follow scikit-learn interface, but use cvxpy to set up and solve
 optimization problem.
 
-NOTE: In certain cases these can yield infeasible problems. This can cause
+Note: In certain cases these can yield infeasible problems. This can cause
 processes to die and as a result make a calculation hang indefinitely when
 using them in a multiprocess model selection tool such as sklearn
 GridSearchCV with n_jobs > 1.
@@ -23,6 +23,7 @@ from __future__ import annotations
 __author__ = "Luis Barroso-Luque"
 
 import warnings
+from collections.abc import Sequence
 from numbers import Integral, Real
 from types import SimpleNamespace
 from typing import Any, Callable
@@ -112,7 +113,8 @@ class AdaptiveLasso(Lasso):
         max_iter: int = 3,
         eps: float = 1e-6,
         tol: float = 1e-10,
-        update_function: Callable[[float, float], float] | None = None,
+        update_function: Callable[[NDArray[np.floating], float], ArrayLike]
+        | None = None,
         fit_intercept: bool = False,
         copy_X: bool = True,
         warm_start: bool = True,
@@ -134,7 +136,7 @@ class AdaptiveLasso(Lasso):
         self.eps = eps
         self.update_function = update_function
 
-    def _validate_params(self, X: ArrayLike, y: ArrayLike) -> None:
+    def _validate_params(self, X: NDArray, y: NDArray) -> None:
         super()._validate_params(X, y)
         if self.max_iter == 1:
             warnings.warn(
@@ -146,14 +148,16 @@ class AdaptiveLasso(Lasso):
     def _set_param_values(self) -> None:
         """Set parameter values."""
         super()._set_param_values()
+        assert self.canonicals_.parameters is not None
         length = len(self.canonicals_.parameters.adaptive_weights.value)
         self.canonicals_.parameters.adaptive_weights.value = self.alpha * np.ones(
             length
         )
 
-    def _generate_params(self, X: ArrayLike, y: ArrayLike) -> SimpleNamespace | None:
+    def _generate_params(self, X: NDArray, y: NDArray) -> SimpleNamespace:
         """Generate parameters for the problem."""
         parameters = super()._generate_params(X, y)
+        assert parameters is not None
         parameters.adaptive_weights = cp.Parameter(
             shape=X.shape[1], nonneg=True, value=self.alpha * np.ones(X.shape[1])
         )
@@ -161,7 +165,7 @@ class AdaptiveLasso(Lasso):
 
     def _generate_regularization(
         self,
-        X: ArrayLike,
+        X: NDArray,
         beta: cp.Variable,
         parameters: SimpleNamespace,
         auxiliaries: SimpleNamespace | None = None,
@@ -169,37 +173,40 @@ class AdaptiveLasso(Lasso):
         """Generate regularization term."""
         return cp.norm1(cp.multiply(parameters.adaptive_weights, beta))
 
-    def _get_update_function(self) -> Callable[[float, float], float]:
+    def _get_update_function(
+        self,
+    ) -> Callable[[NDArray[np.floating], float], ArrayLike]:
         if self.update_function is None:
             return lambda beta, eps: self.alpha / (abs(beta) + eps)
         return self.update_function
 
     @staticmethod
-    def _get_weights_value(parameters: SimpleNamespace) -> NDArray[float]:
+    def _get_weights_value(parameters: SimpleNamespace) -> NDArray[np.floating]:
         """Simply return a copy of the value of adaptive weights."""
         return parameters.adaptive_weights.value.copy()
 
     def _check_convergence(
-        self, parameters: SimpleNamespace, previous_weights: ArrayLike
-    ) -> bool:
+        self, parameters: SimpleNamespace, previous_weights: NDArray
+    ) -> np.bool_ | bool:
         """Check if weights have converged to set tolerance."""
         current_weights = parameters.adaptive_weights.value
         return np.linalg.norm(current_weights - previous_weights) <= self.tol
 
     def _iterative_update(
         self,
-        beta: ArrayLike,
+        beta: NDArray,
         parameters: SimpleNamespace,
         auxiliaries: SimpleNamespace | None = None,
     ) -> None:
         """Update the adaptive weights."""
         update = self._get_update_function()
-        parameters.adaptive_weights.value = self.alpha * update(beta, self.eps)
+        parameters.adaptive_weights.value = self.alpha * update(beta, self.eps)  # type: ignore
 
     def _solve(
-        self, X: ArrayLike, y: ArrayLike, solver_options: dict, *args, **kwargs
-    ) -> NDArray[float]:
+        self, X: NDArray, y: NDArray, solver_options: dict, *args, **kwargs
+    ) -> NDArray[np.floating]:
         """Solve Lasso problem iteratively adaptive weights."""
+        assert self.canonicals_.parameters is not None
         previous_weights = self._get_weights_value(self.canonicals_.parameters)
         for i in range(self.max_iter):
             self.canonicals_.problem.solve(
@@ -231,7 +238,7 @@ class AdaptiveGroupLasso(AdaptiveLasso, GroupLasso):
 
     .. math::
 
-        \min_{\beta} || X \beta - y ||^2_2 + \alpha * \sum_{G} w_G ||\beta_G||_2
+        \min_{\beta} || X \beta - y ||^2_2 + \alpha \sum_{G} w_G ||\beta_G||_2
 
     Where w represents a vector of weights that is iteratively updated.
 
@@ -297,13 +304,14 @@ class AdaptiveGroupLasso(AdaptiveLasso, GroupLasso):
 
     def __init__(
         self,
-        groups: ArrayLike | None = None,
+        groups: NDArray[np.floating | np.integer] | None = None,
         alpha: float = 1.0,
-        group_weights: ArrayLike | None = None,
+        group_weights: NDArray[np.floating] | None = None,
         max_iter: int = 3,
         eps: float = 1e-6,
         tol: float = 1e-10,
-        update_function: Callable[[float, float], float] | None = None,
+        update_function: Callable[[NDArray[np.floating], float], ArrayLike]
+        | None = None,
         standardize: bool = False,
         fit_intercept: bool = False,
         copy_X: bool = True,
@@ -330,7 +338,7 @@ class AdaptiveGroupLasso(AdaptiveLasso, GroupLasso):
             **kwargs,
         )
 
-    def _generate_params(self, X: ArrayLike, y: ArrayLike) -> SimpleNamespace | None:
+    def _generate_params(self, X: NDArray, y: NDArray) -> SimpleNamespace:
         # skip AdaptiveLasso in super
         parameters = super(AdaptiveLasso, self)._generate_params(X, y)
         n_groups = X.shape[1] if self.groups is None else len(np.unique(self.groups))
@@ -343,20 +351,22 @@ class AdaptiveGroupLasso(AdaptiveLasso, GroupLasso):
 
     def _generate_regularization(
         self,
-        X: ArrayLike,
+        X: NDArray,
         beta: cp.Variable,
         parameters: SimpleNamespace,
         auxiliaries: SimpleNamespace | None = None,
     ) -> cp.Expression:
+        assert auxiliaries is not None
         return parameters.adaptive_weights @ auxiliaries.group_norms
 
     def _iterative_update(
         self,
-        beta: ArrayLike,
+        beta: NDArray,
         parameters: SimpleNamespace,
         auxiliaries: SimpleNamespace | None = None,
     ) -> None:
         update = self._get_update_function()
+        assert auxiliaries is not None
         parameters.adaptive_weights.value = (
             self.alpha * parameters.group_weights
         ) * update(auxiliaries.group_norms.value, self.eps)
@@ -441,13 +451,14 @@ class AdaptiveOverlapGroupLasso(OverlapGroupLasso, AdaptiveGroupLasso):
 
     def __init__(
         self,
-        group_list: list[list[int]] = None,
+        group_list: list[list[int]] | None = None,
         alpha: float = 1.0,
-        group_weights: ArrayLike | None = None,
+        group_weights: NDArray[np.floating] | None = None,
         max_iter: int = 3,
         eps: float = 1e-6,
         tol: float = 1e-10,
-        update_function: Callable[[float, float], float] | None = None,
+        update_function: Callable[[NDArray[np.floating], float], ArrayLike]
+        | None = None,
         standardize: bool = False,
         fit_intercept: bool = False,
         copy_X: bool = True,
@@ -472,7 +483,7 @@ class AdaptiveOverlapGroupLasso(OverlapGroupLasso, AdaptiveGroupLasso):
             solver_options=solver_options,
         )
 
-    def _generate_params(self, X: ArrayLike, y: ArrayLike) -> SimpleNamespace | None:
+    def _generate_params(self, X: NDArray, y: NDArray) -> SimpleNamespace:
         parameters = super()._generate_params(X, y)
         if self.group_list is None:
             n_groups = X.shape[1]
@@ -488,8 +499,8 @@ class AdaptiveOverlapGroupLasso(OverlapGroupLasso, AdaptiveGroupLasso):
 
     def _generate_objective(
         self,
-        X: ArrayLike,
-        y: ArrayLike,
+        X: NDArray,
+        y: NDArray,
         beta: cp.Variable,
         parameters: SimpleNamespace | None = None,
         auxiliaries: SimpleNamespace | None = None,
@@ -499,8 +510,9 @@ class AdaptiveOverlapGroupLasso(OverlapGroupLasso, AdaptiveGroupLasso):
         )
 
     def _solve(
-        self, X: ArrayLike, y: ArrayLike, solver_options: dict, *args, **kwargs
-    ) -> NDArray[float]:
+        self, X: NDArray, y: NDArray, solver_options: dict, *args, **kwargs
+    ) -> NDArray[np.floating]:
+        assert self.canonicals_.auxiliaries is not None
         extended_indices = self.canonicals_.auxiliaries.extended_coef_indices
         beta = AdaptiveGroupLasso._solve(
             self, X[:, extended_indices], y, solver_options, *args, **kwargs
@@ -587,14 +599,15 @@ class AdaptiveSparseGroupLasso(AdaptiveLasso, SparseGroupLasso):
 
     def __init__(
         self,
-        groups: ArrayLike | None = None,
+        groups: NDArray[np.floating | np.integer] | None = None,
         l1_ratio: float = 0.5,
         alpha: float = 1.0,
-        group_weights: ArrayLike | None = None,
+        group_weights: NDArray[np.floating] | None = None,
         max_iter: int = 3,
         eps: float = 1e-6,
         tol: float = 1e-10,
-        update_function: Callable[[float, float], float] | None = None,
+        update_function: Callable[[NDArray[np.floating], float], ArrayLike]
+        | None = None,
         standardize: bool = False,
         fit_intercept: bool = False,
         copy_X: bool = True,
@@ -622,6 +635,7 @@ class AdaptiveSparseGroupLasso(AdaptiveLasso, SparseGroupLasso):
 
     def _set_param_values(self) -> None:
         SparseGroupLasso._set_param_values(self)
+        assert self.canonicals_.parameters is not None
         group_weights = self.canonicals_.parameters.adaptive_group_weights.value
         group_weights = self.canonicals_.parameters.lambda1.value * np.ones_like(
             group_weights
@@ -633,7 +647,7 @@ class AdaptiveSparseGroupLasso(AdaptiveLasso, SparseGroupLasso):
         )
         self.canonicals_.parameters.adaptive_coef_weights.value = coef_weights
 
-    def _generate_params(self, X: ArrayLike, y: ArrayLike) -> SimpleNamespace | None:
+    def _generate_params(self, X: NDArray, y: NDArray) -> SimpleNamespace:
         # skip AdaptiveLasso in super
         parameters = SparseGroupLasso._generate_params(self, X, y)
         n_groups = X.shape[1] if self.groups is None else len(np.unique(self.groups))
@@ -651,11 +665,12 @@ class AdaptiveSparseGroupLasso(AdaptiveLasso, SparseGroupLasso):
 
     def _generate_regularization(
         self,
-        X: ArrayLike,
+        X: NDArray,
         beta: cp.Variable,
         parameters: SimpleNamespace,
         auxiliaries: SimpleNamespace | None = None,
     ) -> cp.Expression:
+        assert auxiliaries is not None
         group_regularization = (
             parameters.adaptive_group_weights @ auxiliaries.group_norms
         )
@@ -665,7 +680,7 @@ class AdaptiveSparseGroupLasso(AdaptiveLasso, SparseGroupLasso):
         return group_regularization + l1_regularization
 
     @staticmethod
-    def _get_weights_value(parameters: SimpleNamespace) -> NDArray[float]:
+    def _get_weights_value(parameters: SimpleNamespace) -> NDArray[np.floating]:
         """Simply return a copy of the value of adaptive weights."""
         # does concatenate copy?
         concat_weights = np.concatenate(
@@ -677,8 +692,8 @@ class AdaptiveSparseGroupLasso(AdaptiveLasso, SparseGroupLasso):
         return concat_weights
 
     def _check_convergence(
-        self, parameters: SimpleNamespace, previous_weights: ArrayLike
-    ) -> bool:
+        self, parameters: SimpleNamespace, previous_weights: NDArray
+    ) -> np.bool_ | bool:
         """Check if weights have converged to set tolerance."""
         # This will technically check the norm of the concatenation instead of the sum
         # of the norm of each weight vector, so it's a bit of tighter tolerance.
@@ -692,11 +707,13 @@ class AdaptiveSparseGroupLasso(AdaptiveLasso, SparseGroupLasso):
 
     def _iterative_update(
         self,
-        beta: ArrayLike,
+        beta: NDArray,
         parameters: SimpleNamespace,
         auxiliaries: SimpleNamespace | None = None,
     ) -> None:
         update = self._get_update_function()
+        assert self.canonicals_.parameters is not None
+        assert auxiliaries is not None
         parameters.adaptive_coef_weights.value = (
             self.canonicals_.parameters.lambda1.value * update(beta, self.eps)
         )
@@ -784,14 +801,15 @@ class AdaptiveRidgedGroupLasso(AdaptiveGroupLasso, RidgedGroupLasso):
 
     def __init__(
         self,
-        groups: ArrayLike | None = None,
+        groups: NDArray[np.floating | np.integer] | None = None,
         alpha: float = 1.0,
-        delta: ArrayLike = (1.0,),
-        group_weights: ArrayLike | None = None,
+        delta: NDArray | Sequence = (1.0,),
+        group_weights: NDArray[np.floating] | None = None,
         max_iter: int = 3,
         eps: float = 1e-6,
         tol: float = 1e-10,
-        update_function: Callable[[float, float], float] | None = None,
+        update_function: Callable[[NDArray[np.floating], float], ArrayLike]
+        | None = None,
         standardize: bool = False,
         fit_intercept: bool = False,
         copy_X: bool = True,
@@ -816,12 +834,12 @@ class AdaptiveRidgedGroupLasso(AdaptiveGroupLasso, RidgedGroupLasso):
             solver_options=solver_options,
         )
 
-    def _generate_params(self, X: ArrayLike, y: ArrayLike) -> SimpleNamespace | None:
+    def _generate_params(self, X: NDArray, y: NDArray) -> SimpleNamespace:
         return super()._generate_params(X, y)
 
     def _generate_regularization(
         self,
-        X: ArrayLike,
+        X: NDArray,
         beta: cp.Variable,
         parameters: SimpleNamespace,
         auxiliaries: SimpleNamespace | None = None,

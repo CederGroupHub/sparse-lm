@@ -18,7 +18,7 @@ repos:
     args: ['--maxkb=500']
 
 - repo: https://github.com/psf/black
-  rev: 23.7.0
+  rev: 23.9.1
   hooks:
   - id: black
 
@@ -38,7 +38,7 @@ repos:
     - --profile=black
 
 - repo: https://github.com/asottile/pyupgrade
-  rev: v3.10.1
+  rev: v3.13.0
   hooks:
     - id: pyupgrade
       args: [--py38-plus]
@@ -69,3 +69,8 @@ repos:
   - id: rst-backticks
   - id: rst-directive-colons
   - id: rst-inline-touching-normal
+
+-   repo: https://github.com/pre-commit/mirrors-mypy
+    rev: 'v1.5.1'  # Use the sha / tag you want to point at
+    hooks:
+    -   id: mypy
