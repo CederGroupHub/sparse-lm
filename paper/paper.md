@@ -150,16 +150,25 @@ options are implemented. The implemented models are listed below:
 
 ## Implemented regression models
 
-- Lasso & Adaptive Lasso
-- Group Lasso & Adaptive Group Lasso
-- Sparse Group Lasso & Adaptive Sparse Group Lasso
-- Ridged Group Lasso & Adaptive Ridge Group Lasso
-- Best Subset Selection
-- Ridged Best Subset Selection
-- $\ell_0$ pseudo-norm regularized regression
-- $\ell_0\ell_2$ mixed-norm regularized regression
+The table below shows the regression models that are implemented in `sparse-lm` as well
+as available implementations in other Python packages.
+
+|             Model             | `sparse-lm` | `celer` | `groupyr` | `group-lasso`  | `skglm` | `abess` |
+|:-----------------------------:|:-----------:|:-------:|:---------:|:--------------:|:-------:|:-------:|
+|       (Adaptive) Lasso        |     ✔️      |   ✔️    |    ✔️     |       ✔️       |   ✔️    |   ✔️    |
+|    (Adaptive) Group Lasso     |     ✔️      |   ✔️    |    ✔️     |       ✔️       |   ✔️    |   ✔️    |
+| (Adaptive) Sparse Group Lasso |     ✔️      |   ✔️    |    ✔️     |       ✔️       |   ✔️    |   ✔️    |
+| (Adaptive) Ridged Group Lasso |     ✔️      |   ✔️    |    ✔️     |       ✔️       |   ✔️    |   ✔️    |
+|     Best Subset Selection     |     ✔️      |   ✔️    |    ✔️     |       ✔️       |   ✔️    |   ✔️    |
+| Ridged Best Subset Selection  |     ✔️      |   ✔️    |    ✔️     |       ✔️       |   ✔️    |   ✔️    |
+|     $\ell_0$ pseudo-norm      |     ✔️      |   ✔️    |    ✔️     |       ✔️       |   ✔️    |   ✔️    |
+|   $\ell_0\ell_2$ mixed-norm   |     ✔️      |   ✔️    |    ✔️     |       ✔️       |   ✔️    |   ✔️    |
 
 ## Implemented model selection and composition tools
+
+In addition to the regression models in the table above, a few model selection and composition models
+are also implemented. These models are listed below:
+
 - One standard deviation rule grid search cross-validation
 - Line search cross-validation
 - Stepwise composite estimator
