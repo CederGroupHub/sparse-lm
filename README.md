@@ -31,7 +31,7 @@ Installation
 pip install sparse-lm
 ```
 
-Additional information on installation can be found in the [here](https://cedergrouphub.github.io/sparse-lm/install.html).
+Additional information on installation can be found the documentation [here](https://cedergrouphub.github.io/sparse-lm/install.html).
 
 Basic usage
 -----------
