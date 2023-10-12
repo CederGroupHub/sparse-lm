@@ -56,8 +56,7 @@ class GridSearchCV(_GridSearchCV):
             "max_score", which means to maximize the score. Can also choose
             "one_std_score", which means to apply one standard error rule
             on scores.
-        scoring (str, callable, list, tuple or dict,
-        default="neg_root_mean_squared_error"):
+        scoring (str, callable, list, tuple or dict, default="neg_root_mean_squared_error"):
             Strategy to evaluate the performance of the cross-validated
             model on the test set.
             If `scoring` represents a single score, one can use:

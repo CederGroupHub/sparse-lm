@@ -23,6 +23,16 @@ Available regression models
 - Adaptive versions of Lasso, Group Lasso, Overlap Group Lasso, Sparse Group Lasso & Ridged Group Lasso.
 - Best Subset Selection, Ridged Best Subset, L0, L1L0 & L2L0 (all with optional grouping of parameters)
 
+Installation
+------------
+**sparse-lm** is available on [PyPI](https://pypi.org/project/sparse-lm/), and can be installed via pip:
+
+```bash
+pip install sparse-lm
+```
+
+Additional information on installation can be found the documentation [here](https://cedergrouphub.github.io/sparse-lm/install.html).
+
 Basic usage
 -----------
 If you already use **scikit-learn**, using **sparse-lm** will be very easy. Just use any
@@ -34,13 +44,21 @@ from sklearn.datasets import make_regression
 from sklearn.model_selection import GridSearchCV
 from sparselm.model import AdaptiveLasso
 
-X, y = make_regression(n_samples=200, n_features=5000, random_state=0)
+X, y = make_regression(n_samples=100, n_features=80, n_informative=10, random_state=0)
 alasso = AdaptiveLasso(fit_intercept=False)
-param_grid = {'alpha': np.logsppace(-7, -2)}
+param_grid = {'alpha': np.logspace(-8, 2, 10)}
 
 cvsearch = GridSearchCV(alasso, param_grid)
 cvsearch.fit(X, y)
 print(cvsearch.best_params_)
 ```
 
-For more details on use and functionality see the [documentation](https://cedergrouphub.github.io/sparse-lm/).
+For more details on use and functionality have a look at the
+[examples](https://cedergrouphub.github.io/sparse-lm/auto_examples/index.html) and
+[API](https://cedergrouphub.github.io/sparse-lm/api.html) sections of the documentation.
+
+Contributing
+------------
+
+We welcome any contributions that you think may improve the package! Please have a look at the
+[contribution guidelines](https://cedergrouphub.github.io/sparse-lm/contributing.html) in the documentation.

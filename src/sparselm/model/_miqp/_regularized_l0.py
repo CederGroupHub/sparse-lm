@@ -105,7 +105,7 @@ class RegularizedL0(MIQPl0):
                 - auxiliaries - auxiliary variables and expressions
                 - constraints - solution constraints
 
-    Notes:
+    Note:
         Installation of Gurobi is not a must, but highly recommended. An open source alternative
         is SCIP. ECOS_BB also works but can be very slow, and has recurring correctness issues.
         See the Mixed-integer programs section of the cvxpy docs:
@@ -333,7 +333,7 @@ class L1L0(MixedL0):
                 - auxiliaries - auxiliary variables and expressions
                 - constraints - solution constraints
 
-    Notes:
+    Note:
         Installation of Gurobi is not a must, but highly recommended. An open source alternative
         is SCIP. ECOS_BB also works but can be very slow, and has recurring correctness issues.
         See the Mixed-integer programs section of the cvxpy docs:
@@ -492,7 +492,7 @@ class L2L0(TikhonovMixin, MixedL0):
                 - auxiliaries - auxiliary variables and expressions
                 - constraints - solution constraints
 
-    Notes:
+    Note:
         Installation of Gurobi is not a must, but highly recommended. An open source alternative
         is SCIP. ECOS_BB also works but can be very slow, and has recurring correctness issues.
         See the Mixed-integer programs section of the cvxpy docs:

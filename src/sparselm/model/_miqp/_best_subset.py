@@ -75,19 +75,19 @@ class BestSubsetSelection(MIQPl0):
         canonicals_ (SimpleNamespace):
             Namespace that contains underlying cvxpy objects used to define
             the optimization problem. The objects included are the following:
-                - objective - the objective function.
-                - beta - variable to be optimized (corresponds to the estimated coef_ attribute).
-                - parameters - hyper-parameters
-                - auxiliaries - auxiliary variables and expressions
-                - constraints - solution constraints
+            - objective - the objective function.
+            - beta - variable to be optimized (corresponds to the estimated coef_ attribute).
+            - parameters - hyper-parameters
+            - auxiliaries - auxiliary variables and expressions
+            - constraints - solution constraints
 
-    Notes:
+    Note:
         Installation of Gurobi is not a must, but highly recommended. An open source alternative
         is SCIP. ECOS_BB also works but can be very slow, and has recurring correctness issues.
         See the Mixed-integer programs section of the cvxpy docs:
         https://www.cvxpy.org/tutorial/advanced/index.html
 
-    WARNING:
+    Warning:
         Even with gurobi solver, this can take a very long time to converge for large problems and under-determined
         problems.
     """
@@ -201,13 +201,13 @@ class RidgedBestSubsetSelection(TikhonovMixin, BestSubsetSelection):
                 - auxiliaries - auxiliary variables and expressions
                 - constraints - solution constraints
 
-    Notes:
+    Note:
         Installation of Gurobi is not a must, but highly recommended. An open source alternative
         is SCIP. ECOS_BB also works but can be very slow, and has recurring correctness issues.
         See the Mixed-integer programs section of the cvxpy docs:
         https://www.cvxpy.org/tutorial/advanced/index.html
 
-    WARNING:
+    Warning:
         Even with gurobi solver, this can take a very long time to converge for large problems and under-determined
         problems.
     """

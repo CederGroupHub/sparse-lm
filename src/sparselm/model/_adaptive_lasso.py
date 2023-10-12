@@ -9,7 +9,7 @@
 Regressors follow scikit-learn interface, but use cvxpy to set up and solve
 optimization problem.
 
-NOTE: In certain cases these can yield infeasible problems. This can cause
+Note: In certain cases these can yield infeasible problems. This can cause
 processes to die and as a result make a calculation hang indefinitely when
 using them in a multiprocess model selection tool such as sklearn
 GridSearchCV with n_jobs > 1.
@@ -238,7 +238,7 @@ class AdaptiveGroupLasso(AdaptiveLasso, GroupLasso):
 
     .. math::
 
-        \min_{\beta} || X \beta - y ||^2_2 + \alpha * \sum_{G} w_G ||\beta_G||_2
+        \min_{\beta} || X \beta - y ||^2_2 + \alpha \sum_{G} w_G ||\beta_G||_2
 
     Where w represents a vector of weights that is iteratively updated.
 
