@@ -151,18 +151,21 @@ options are implemented. The implemented models are listed below:
 ## Implemented regression models
 
 The table below shows the regression models that are implemented in `sparse-lm` as well
-as available implementations in other Python packages.
+as available implementations in other Python packages. $\checkmark$ indicates that the
 
-|             Model             | `sparse-lm` | `celer` | `groupyr` | `group-lasso`  | `skglm` | `abess` |
-|:-----------------------------:|:-----------:|:-------:|:---------:|:--------------:|:-------:|:-------:|
-|       (Adaptive) Lasso        |     ✔️      |   ✔️    |    ✔️     |       ✔️       |   ✔️    |   ✔️    |
-|    (Adaptive) Group Lasso     |     ✔️      |   ✔️    |    ✔️     |       ✔️       |   ✔️    |   ✔️    |
-| (Adaptive) Sparse Group Lasso |     ✔️      |   ✔️    |    ✔️     |       ✔️       |   ✔️    |   ✔️    |
-| (Adaptive) Ridged Group Lasso |     ✔️      |   ✔️    |    ✔️     |       ✔️       |   ✔️    |   ✔️    |
-|     Best Subset Selection     |     ✔️      |   ✔️    |    ✔️     |       ✔️       |   ✔️    |   ✔️    |
-| Ridged Best Subset Selection  |     ✔️      |   ✔️    |    ✔️     |       ✔️       |   ✔️    |   ✔️    |
-|     $\ell_0$ pseudo-norm      |     ✔️      |   ✔️    |    ✔️     |       ✔️       |   ✔️    |   ✔️    |
-|   $\ell_0\ell_2$ mixed-norm   |     ✔️      |   ✔️    |    ✔️     |       ✔️       |   ✔️    |   ✔️    |
+|             Model             | `sparse-lm`     |    `celer` |   `groupyr` | `group-lasso`      |    `skglm` |  `abess` |
+|:-----------------------------:|:---------------:|:---------:|:-----------:|:------------------:|:----------:|:--------:|
+|       (Adaptive) Lasso        |  $\checkmark$️  | $\checkmark$️ |             |                    | $\checkmark$️ |    ️     |
+|    (Adaptive) Group Lasso     |  $\checkmark$️  | $\checkmark$️ | $\checkmark$️ |   $\checkmark$️    | $\checkmark$ |    ️     |
+| (Adaptive) Sparse Group Lasso |  $\checkmark$️  |           | $\checkmark$️ |   $\checkmark$️    | $\checkmark$ |    ️     |
+| (Adaptive) Ridged Group Lasso |  $\checkmark$️  |           |             |                    | $\checkmark$ |          |
+|     Best Subset Selection     |  $\checkmark$️  |           |             |                    |            |    ️     |
+| Ridged Best Subset Selection  |  $\checkmark$️  |           |             |                    |            |    ️     |
+|     $\ell_0$ pseudo-norm      |  $\checkmark$️  |           |             |                    |            |    ️     |
+|   $\ell_0\ell_2$ mixed-norm   |  $\checkmark$️  |           |             |                    |            |          |
+
+Note that only `sparse-lm` includes adaptive versions of Lasso estimators. However, some of the third party packages,
+notably `skglm` and `abess`, include additional penalties and regression objectives that are not implemented in `sparse-lm`.
 
 ## Implemented model selection and composition tools
 
