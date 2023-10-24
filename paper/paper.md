@@ -33,14 +33,13 @@ resulting in sparse linear models such as the Lasso [@Tibshirani:1996; @Zou:2006
 Best Subset Selection [@Hocking:1967] have been widely used in a variety of fields.
 However, many regression problems involve covariates that have a natural underlying
 structure, such as group or hierarchical relationships between covariates, that can be
-leveraged to obtain improved model performance and interpretability. A common example of
-linear regression problems with sparsity structure occurs in chemistry and materials
-science when fitting multi-body expansions that involve a hierarchy among the main
-effects from chemical composition and higher order corrections
-aiming to capture the effects of chemical interactions [@Leong:2019; @Barroso-Luque:2022].
-Several generalizations of the Lasso [@Yuan:2006; @Friedman:2010; @Simon:2013; @Wang:2019]
-and Best Subset Selection [@Bertsimas:2016-a; @Bertsimas:2016-b] have been developed to
-effectively exploit additional structure in linear regression.
+leveraged to obtain improved model performance and interpretability, such problems occur
+in a wide range of fields including genomics [@Chen:2021], bioinformatics [@Ma:2007],
+medicine [@Kim:2012], econometrics [@Athey:2017], chemistry [@Gu:2018], and materials
+science [@Leong:2019]. Several generalizations of the Lasso
+[@Yuan:2006; @Friedman:2010; @Simon:2013; @Wang:2019] and Best Subset Selection
+[@Bertsimas:2016-a; @Bertsimas:2016-b] have been developed to effectively exploit
+additional structure in linear regression.
 
 # Statement of need
 
@@ -69,7 +68,7 @@ pseudo-norm regularization.
 The pre-existing packages mentioned include highly performant implementations of the
 specific models they implement. However, none of these packages implement the full range
 of sparse linear models  available in `sparse-lm`, nor do they support the flexibility
-to modify the optimization objective and choose among many open-source and commerically
+to modify the optimization objective and choose among many open-source and commercially
 available solvers. `sparse-lm` satisfies the need for a flexible and comprehensive
 library that  enables easy experimentation and comparisons of different sparse
 linear regression algorithms within a single package.
@@ -138,6 +137,18 @@ introduce hierarchical structure into the model. Finally, we have also included 
 $\ell_2$ regularization term controlled by the hyperparameter $\lambda$, which is useful
 when dealing with poorly conditioned design matrices.
 
+Statistical regression models with structured sparsity (involving grouped covariates,
+sparse grouped covariates, and hierarchical relationships between covariates terms)
+parametrized via Group Lasso or Best Subset Selection based objetives have been used in a
+wide range of scientific disciplines, including genomics [@Chen:2021], bioinformatics [@Ma:2007],
+medicine [@Kim:2012], econometrics [@Athey:2017], chemistry [@Gu:2018], and materials science
+[@Leong:2019]. The flexible implementation of sparse linear regression models in `sparse-lm`
+allows researchers to easily experiment and choose the best regression model for their
+specific problem. `sparse-lm` has already been used to build linear models with
+structured  sparsity in a handful of material science studies
+[@Barroso-Luque:2022; @Zhong:2022; @Xie:2023, @Zhong:2023].
+
+
 # Usage
 
 Since the linear regression models in `sparse-lm` are implemented to be compatible with
@@ -153,18 +164,20 @@ options are implemented. The implemented models are listed below:
 The table below shows the regression models that are implemented in `sparse-lm` as well
 as available implementations in other Python packages. $\checkmark$ indicates that the
 
-|             Model             | `sparse-lm`     |    `celer` |   `groupyr` | `group-lasso`      |    `skglm` |  `abess` |
-|:-----------------------------:|:---------------:|:---------:|:-----------:|:------------------:|:----------:|:--------:|
-|       (Adaptive) Lasso        |  $\checkmark$️  | $\checkmark$️ |             |                    | $\checkmark$️ |    ️     |
-|    (Adaptive) Group Lasso     |  $\checkmark$️  | $\checkmark$️ | $\checkmark$️ |   $\checkmark$️    | $\checkmark$ |    ️     |
-| (Adaptive) Sparse Group Lasso |  $\checkmark$️  |           | $\checkmark$️ |   $\checkmark$️    | $\checkmark$ |    ️     |
-| (Adaptive) Ridged Group Lasso |  $\checkmark$️  |           |             |                    | $\checkmark$ |          |
-|     Best Subset Selection     |  $\checkmark$️  |           |             |                    |            |    ️     |
-| Ridged Best Subset Selection  |  $\checkmark$️  |           |             |                    |            |    ️     |
-|     $\ell_0$ pseudo-norm      |  $\checkmark$️  |           |             |                    |            |    ️     |
-|   $\ell_0\ell_2$ mixed-norm   |  $\checkmark$️  |           |             |                    |            |          |
+|             Model             |  `sparse-lm` |    `celer` |   `groupyr` | `group-lasso` |    `skglm`   |  `abess` |
+|:-----------------------------:|:------------:|:---------:|:-----------:|:-----------:|:------------:|:--------:|
+|       (Adaptive) Lasso        | $\checkmark$️ | $\checkmark$️ |             |             | $\checkmark$️ |    ️     |
+|    (Adaptive) Group Lasso     | $\checkmark$️ | $\checkmark$️ | $\checkmark$️ | $\checkmark$️ | $\checkmark$ |    ️     |
+| (Adaptive) Sparse Group Lasso | $\checkmark$️ |           | $\checkmark$️ | $\checkmark$️ | $\checkmark$ |    ️     |
+| (Adaptive) Ridged Group Lasso | $\checkmark$️ |           |             |             | $\checkmark$ |          |
+|     Best Subset Selection     | $\checkmark$️ |           |             |             |              |    ️     |
+| Ridged Best Subset Selection  | $\checkmark$️ |           |             |             |              |    ️     |
+|     $\ell_0$ pseudo-norm      | $\checkmark$️ |           |             |             |              |    ️     |
+|   $\ell_0\ell_2$ mixed-norm   | $\checkmark$️ |           |             |             |              |          |
+|   $\ell_{1/2}$ psuedo-norm    |              |           |             |             | $\checkmark$ |          |
+|   $\ell_{2/3}$ psuedo-norm    |              |           |             |             | $\checkmark$ |          |
 
-Note that only `sparse-lm` includes adaptive versions of Lasso estimators. However, some of the third party packages,
+Note that only `sparse-lm` includes adaptive versions of Lasso based estimators. However, some of the third party packages,
 notably `skglm` and `abess`, include additional penalties and regression objectives that are not implemented in `sparse-lm`.
 
 ## Implemented model selection and composition tools
