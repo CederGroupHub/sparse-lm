@@ -73,6 +73,17 @@ available solvers. `sparse-lm` satisfies the need for a flexible and comprehensi
 library that  enables easy experimentation and comparisons of different sparse
 linear regression algorithms within a single package.
 
+Statistical regression models with structured sparsity (involving grouped covariates,
+sparse grouped covariates, and hierarchical relationships between covariates terms)
+parametrized via Group Lasso or Best Subset Selection based objetives have been used in a
+wide range of scientific disciplines, including genomics [@Chen:2021], bioinformatics [@Ma:2007],
+medicine [@Kim:2012], econometrics [@Athey:2017], chemistry [@Gu:2018], and materials science
+[@Leong:2019]. The flexible implementation of sparse linear regression models in `sparse-lm`
+allows researchers to easily experiment and choose the best regression model for their
+specific problem. `sparse-lm` has already been used to build linear models with
+structured  sparsity in a handful of material science studies
+[@Barroso-Luque:2022; @Zhong:2022; @Xie:2023, @Zhong:2023].
+
 # Background
 
 ![Schematic of a linear model with grouped covariates with hierarchical relations.
@@ -136,18 +147,6 @@ groups-level sparsity structure. The final inequality constraint can be used to
 introduce hierarchical structure into the model. Finally, we have also included an
 $\ell_2$ regularization term controlled by the hyperparameter $\lambda$, which is useful
 when dealing with poorly conditioned design matrices.
-
-Statistical regression models with structured sparsity (involving grouped covariates,
-sparse grouped covariates, and hierarchical relationships between covariates terms)
-parametrized via Group Lasso or Best Subset Selection based objetives have been used in a
-wide range of scientific disciplines, including genomics [@Chen:2021], bioinformatics [@Ma:2007],
-medicine [@Kim:2012], econometrics [@Athey:2017], chemistry [@Gu:2018], and materials science
-[@Leong:2019]. The flexible implementation of sparse linear regression models in `sparse-lm`
-allows researchers to easily experiment and choose the best regression model for their
-specific problem. `sparse-lm` has already been used to build linear models with
-structured  sparsity in a handful of material science studies
-[@Barroso-Luque:2022; @Zhong:2022; @Xie:2023, @Zhong:2023].
-
 
 # Usage
 
