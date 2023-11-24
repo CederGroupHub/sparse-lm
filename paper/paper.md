@@ -161,7 +161,7 @@ options are implemented. The implemented models are listed below:
 ## Implemented regression models
 
 The table below shows the regression models that are implemented in `sparse-lm` as well
-as available implementations in other Python packages. $\checkmark$ indicates that the model selected 
+as available implementations in other Python packages. $\checkmark$ indicates that the model selected
 is applicable by the package located in the corresponding column.
 
 
