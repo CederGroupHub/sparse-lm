@@ -75,7 +75,7 @@ linear regression algorithms within a single package.
 
 Statistical regression models with structured sparsity (involving grouped covariates,
 sparse grouped covariates, and hierarchical relationships between covariates terms)
-parametrized via Group Lasso or Best Subset Selection based objetives have been used in a
+parametrized via Group Lasso or Best Subset Selection based objectives have been used in a
 wide range of scientific disciplines, including genomics [@Chen:2021], bioinformatics [@Ma:2007],
 medicine [@Kim:2012], econometrics [@Athey:2017], chemistry [@Gu:2018], and materials science
 [@Leong:2019]. The flexible implementation of sparse linear regression models in `sparse-lm`
@@ -161,7 +161,9 @@ options are implemented. The implemented models are listed below:
 ## Implemented regression models
 
 The table below shows the regression models that are implemented in `sparse-lm` as well
-as available implementations in other Python packages. $\checkmark$ indicates that the
+as available implementations in other Python packages. $\checkmark$ indicates that the model selected 
+is applicable by the package located in the corresponding column.
+
 
 |             Model             |  `sparse-lm` |    `celer` |   `groupyr` | `group-lasso` |    `skglm`   |    `abess`   |
 |:-----------------------------:|:------------:|:---------:|:-----------:|:-----------:|:------------:|:------------:|
