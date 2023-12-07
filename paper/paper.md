@@ -39,7 +39,9 @@ bioinformatics [@Ma:2007],  medicine [@Kim:2012], econometrics [@Athey:2017],
 chemistry [@Gu:2018], and materials science [@Leong:2019]. Several generalizations of the
 Lasso [@Yuan:2006; @Friedman:2010; @Simon:2013; @Wang:2019] and Best Subset Selection
 [@Bertsimas:2016-a; @Bertsimas:2016-b] have been developed to effectively exploit
-additional structure in linear regression.
+additional structure in linear regression. The `sparse-lm` Python package provides
+a flexible, comprehensive, and user-friendly implementation of sparse linear regression
+models.
 
 # Statement of need
 
@@ -58,14 +60,14 @@ solving larger problems that would otherwise be unsolvable within reasonable tim
 A handful of pre-existing Python libraries implement a subset of sparse linear
 regression models that are also `scikit-learn` compatible. `celer` [@Massias:2018] and
 `groupyr` [@Richie-Halford:2021] include efficient implementations of the Lasso and
-Group Lasso, among other linear models. `group-lasso` [@Moe:2020] is another
+Group Lasso. `group-lasso` [@Moe:2020] is another
 `scikit-learn` compatible implementation of the Group Lasso. `skglm` [@Bertrand:2022]
 includes several implementations of sparse linear models based on regularization using
 combinations of $\ell_p$ ($p\in\{1/2,2/3,1,2\}$) norms and pseudo-norms.
 `abess` [@Zhu:2022] includes an implementation of Best Subset Selection and $\ell_0$
 pseudo-norm regularization.
 
-The pre-existing packages mentioned include highly performant implementations of the
+The aforementioned packages include highly performant versions of the
 specific models they implement. However, none of these packages implement the full range
 of sparse linear models  available in `sparse-lm`, nor do they support the flexibility
 to modify the optimization objective and choose among many open-source and commercially
@@ -111,7 +113,7 @@ The second method to obtain structured sparsity is by introducing linear constra
 into the regression objective. Introducing linear constraints is straight-forward in
 mixed integer quadratic programming (MIQP) formulations of the Best Subset Selection
 [@Bertsimas:2016-a; @Bertsimas:2016-b]. The general MIQP formulation of Best Subset
-Selection with group and hierarchical structure can be expressed as follows,
+Selection with grouped covariates and hierarchical constraints can be expressed as follows,
 
 \begin{align}
     \beta^* = \underset{\beta}{\text{argmin}}\;
@@ -132,8 +134,8 @@ corresponding slack variable $z_{\mathbf{g}} = 1$. $M$ is a fixed parameter that
 estimated from the data [@Bertsimas:2016-a]. The second inequality constraint
 introduces general sparsity by ensuring that at most $k$ coefficients are nonzero. If
 $G$ includes only singleton groups of covariates then the MIQP formulation is equivalent
-to the Best Subset Selection problem; otherwise it is a generalization that enables
-groups-level sparsity structure. The final inequality constraint can be used to
+to the Best Subset Selection problem, otherwise it is a generalization that enables
+group-level sparsity structure. The last inequality constraint can be used to
 introduce hierarchical structure into the model. Finally, we have also included an
 $\ell_2$ regularization term controlled by the hyperparameter $\lambda$, which is useful
 when dealing with poorly conditioned design matrices.
@@ -158,7 +160,7 @@ in similar fashion to any of the available models in the `sklearn.linear_model` 
 ## Implemented regression models
 
 The table below shows the regression models that are implemented in `sparse-lm` as well
-as available implementations in other Python packages. $\checkmark$ indicates that the
+as available implementations in other Python packages. A checkmark ($\checkmark$) indicates that the
 model selected is implemented in the package located in the corresponding column.
 
 
