@@ -27,21 +27,22 @@ bibliography: paper.bib
 
 Sparse linear regression models are a powerful tool for capturing linear relationships
 in high dimensional spaces. Sparse models have only a small number of nonzero parameters
-(even if the number of covariates used in estimation is large), and as a result can be
+---even if the number of covariates used in estimation is large---as a result they can be
 easier to fit and interpret compared to dense models [@Hastie:2015]. Regression objectives
 resulting in sparse linear models such as the Lasso [@Tibshirani:1996; @Zou:2006] and
 Best Subset Selection [@Hocking:1967] have been widely used in a variety of fields.
 However, many regression problems involve covariates that have a natural underlying
-structure, such as group or hierarchical relationships, that can be
+structure, such as group or hierarchical relationships, that can be further
 leveraged to obtain improved model performance and interpretability. Such structured
 regression problems occur in a wide range of fields including genomics [@Chen:2021],
 bioinformatics [@Ma:2007],  medicine [@Kim:2012], econometrics [@Athey:2017],
 chemistry [@Gu:2018], and materials science [@Leong:2019]. Several generalizations of the
 Lasso [@Yuan:2006; @Friedman:2010; @Simon:2013; @Wang:2019] and Best Subset Selection
 [@Bertsimas:2016-a; @Bertsimas:2016-b] have been developed to effectively exploit
-additional structure in linear regression. The `sparse-lm` Python package provides
-a flexible, comprehensive, and user-friendly implementation of sparse linear regression
-models.
+additional structure in linear regression. The `sparse-lm` Python package provides a
+flexible, comprehensive, and user-friendly implementation of (structured) sparse linear
+regression models, which allows researchers to easily experiment and choose the best
+regression model for their specific problem.
 
 # Statement of need
 
@@ -64,7 +65,7 @@ Group Lasso. `group-lasso` [@Moe:2020] is another
 `scikit-learn` compatible implementation of the Group Lasso. `skglm` [@Bertrand:2022]
 includes several implementations of sparse linear models based on regularization using
 combinations of $\ell_p$ ($p\in\{1/2,2/3,1,2\}$) norms and pseudo-norms.
-`abess` [@Zhu:2022] includes an implementation of Best Subset Selection and $\ell_0$
+And `abess` [@Zhu:2022] includes an implementation of Best Subset Selection and $\ell_0$
 pseudo-norm regularization.
 
 The aforementioned packages include highly performant versions of the
@@ -140,14 +141,12 @@ introduce hierarchical structure into the model. Finally, we have also included 
 $\ell_2$ regularization term controlled by the hyperparameter $\lambda$, which is useful
 when dealing with poorly conditioned design matrices.
 
-Statistical regression models with structured sparsity
-parametrized via Group Lasso or Best Subset Selection based objectives have been used in a
-wide range of scientific disciplines, including genomics [@Chen:2021], bioinformatics [@Ma:2007],
-medicine [@Kim:2012], econometrics [@Athey:2017], chemistry [@Gu:2018], and materials science
-[@Leong:2019]. The flexible implementation of sparse linear regression models in `sparse-lm`
-allows researchers to easily experiment and choose the best regression model for their
-specific problem. `sparse-lm` has already been used to build linear models with
-structured  sparsity in a handful of material science studies
+The user-friendly implementation of statistical regression models with structured sparsity
+parametrized via Group Lasso or Best Subset Selection based objectives in `sparse-lm`,
+along with the flexibility to choose from a variety of established solvers, enables
+researchers to quickly iterate, experiment and benchmark performance when choosing the
+best regression model for their specific problem. `sparse-lm` has already been used to
+build linear models with structured  sparsity in a handful of material science studies
 [@Barroso-Luque:2022; @Zhong:2022; @Xie:2023; @Zhong:2023].
 
 # Usage
