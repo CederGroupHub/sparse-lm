@@ -8,6 +8,7 @@ Sparse Linear Regression Models
 [![pre-commit.ci status](https://results.pre-commit.ci/badge/github/CederGroupHub/sparse-lm/main.svg)](https://results.pre-commit.ci/latest/github/CederGroupHub/sparse-lm/main)
 [![pypi version](https://img.shields.io/pypi/v/sparse-lm?color=blue)](https://pypi.org/project/sparse-lm)
 [![Static Badge](https://img.shields.io/badge/python-3.9%2B-blue)](https://www.python.org/downloads/)
+[![DOI](https://joss.theoj.org/papers/10.21105/joss.05867/status.svg)](https://doi.org/10.21105/joss.05867)
 
 
 **sparse-lm**  includes several (structured) sparse linear regression estimators that are absent in the
