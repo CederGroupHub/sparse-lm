@@ -1,4 +1,4 @@
-"""Sanity checks: literally just copied from sklearn tests... """
+"""Sanity checks: literally just copied from sklearn tests..."""
 
 import numpy as np
 import numpy.testing as npt
